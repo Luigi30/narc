@@ -1,4 +1,4 @@
-	.FILE	'NARCDYNA.ASM'
+	.FILE	"NARCDYNA.ASM"
 	.TITLE	" <<< N  A  R  C  -- DYNAMITE >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -20,7 +20,7 @@
 
 ;* stick this stuff into narcequ someday..
 DYNAZSIZ	EQU	[12,12] 
-DYNABOID	EQU	>0BE0|DYNAID
+DYNABOID	EQU	00BE0H|DYNAID
 
 ;* OFFSETS into process block.
 rot		.set	ESWTCH
@@ -236,9 +236,9 @@ BVEL_ADJ:
 	jruc	Grounded
 
 BOMBBNCE:
-	movi	>25000,A0
+	movi	025000H,A0
 	calla	RANDU
-	subi	>3000,A0
+	subi	03000H,A0
 	move	A0,A1
 	move	*A8(OXVEL),A0,L
 	CALLA	ABSSUB
@@ -261,7 +261,7 @@ BOMBBNCE:
 	jruc	UpdVels
 BFLYING:
 	move	*A8(OYVEL),A0,L
-	addi	>4000,A0
+	addi	04000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	UpdVels
 
@@ -515,7 +515,7 @@ BnceHght:
 	movb	*A13(fuselen),A2		;# pixels of fuse exposed..
 	addk	8,A2
 	mpys	A2,A3
-	addi	>4000,A3
+	addi	04000H,A3
 	sra	15,A3
 	add	A3,A0
 SkFuseHt:
@@ -569,8 +569,8 @@ MoveFuse:
 	move	*A0+,A7,W		;multiplier for Y offset
 	mpys	A4,A5
 	mpys	A4,A7
-	addi	>4000,A5
-	addi	>4000,A7
+	addi	04000H,A5
+	addi	04000H,A7
 	sra	15,A5		;A5 = X offset
 	sra	15,A7		;A7 = Y offset
 	add	A5,A3		;A3 = desired X coor of Fuse Anim Pt
@@ -766,13 +766,13 @@ FuseTbl:
 
 ;* The following #'s are 2's comp left shifted 15 bits
 sin00	.set	0
-sin30	.set	>4000
-sin60	.set	>6ED9
-sin90	.set >7FFF
-nsin30	.set	>C000
-nsin60	.set	>9127
-	;could go for >8000 but may as well have -1 be same magnitude as 1
-nsin90	.set	>8001
+sin30	.set	04000H
+sin60	.set	06ED9H
+sin90	.set 07FFFH
+nsin30	.set	0C000H
+nsin60	.set	09127H
+	;could go for 08000H but may as well have -1 be same magnitude as 1
+nsin90	.set	08001H
 
 
 CircleOff:

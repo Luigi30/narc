@@ -1,4 +1,4 @@
-	.FILE	'NARCCANS.ASM'
+	.FILE	"NARCCANS.ASM"
 	.TITLE	" <<< N  A  R  C  -- CANS, DUMPSTERS & THE LIKE >>>"
 
 **************************************************************************

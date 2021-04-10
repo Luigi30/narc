@@ -1,0 +1,248 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:34 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCSND.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      10                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      11                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      12                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      13                    
+      14                    *
+      15                    *GLOBALS IN THIS FILE
+      16                            .GLOBAL TUNELAB
+      17 00000000                   .data
+      18                    **************************************************************************
+      19                    *                                                                        *
+      20                    * THE NARC SOUND TABLE                                                   *
+      21                    *                                                                        *
+      22                    * CHANNEL #0    CVSD SOUNDS                                              *
+      23                    * CHANNEL #1    DAC A                                                    *
+      24                    * CHANNEL #2    DAC B                                                    *
+      25                    * CHANNEL #3    MUSIC                                                    *
+      26                    *                                                                        *
+      27                    **************************************************************************
+      28                    *------------------------------------------------------------------------*
+      29                    *SOUND DESCRIPTION= PRIORITY,TIME,SOUND CODE,(PRIORITY),(TIME),(SOUND CODE),0
+      30                    *SOUND ENDS IN 0000.
+      31                    *PRIORITY WORD = 1111IENNPPPPPPPP; I=1=NON-INTERRUPTABLE, E=1=NON-INT BY EQUAL
+      32                    *NN=CHANNEL #(0-3);
+      33                    *PP=PRIORITY (00-FF), FF=HIGHEST.
+      34                    *TIME WORD =TTTT (0000-7FFF X 16MS).
+      35                    *SOUND WORD =8SSS SSS=SOUND CODE(000-FFF).
+      36                    *SOUND WORD =4SSS SSS=SOUND CODE (ZERO TIME SOUND CODE)
+      37                    *------------------------------------------------------------------------*
+      38 00000000           SNDTAB:
+      39 00000000     f103  SND3A   .WORD   0F103H,040H,08005H,0            ;PLAYER 1 GUNSHOT
+      40 00000040     f203  SND3B   .WORD   0F203H,040H,08006H,0            ;PLAYER 2 GUNSHOT
+      41 00000080     f000  P1BHIT  .WORD   0F000H,010H,08014H,0            ;PLAYER 1 BULLET HIT
+      42 000000c0     f310  HHITSND .WORD   0F310H,03EH,08086H,0            ;PLAYER HIT BY HYPO
+      43 00000100     f3fe  HHITEND .WORD   0F3FEH,001H,0807FH,0            ;HYPO HIT ENDER HIGH PRIO.
+      44                    
+      45 00000140     f000  SND4    .WORD   0F000H,001H,08035H,0            ;ROCKET LAUNCH PRE-IGNITION
+      46 00000180     f00f  RLNCHSND .WORD  0F00FH,050H,08008H,0            ;ROCKET LAUNCH SOUND    
+      47                    
+      48 000001c0     f200  EBSND   .WORD   0F200H,040H,08004H,0            ;ENEMY BULLET SOUND
+      49                    
+      50 00000200     f300  DINGDUMP .WORD  0F300H,028H,08097H,0            ;DING ON A DUMPSTER
+      51 00000240     f000  DINGPSTR .WORD  0F000H,020H,08040H,0            ;DING ON A LAMP POST
+      52 00000280     f300  DINGCANR .WORD  0F300H,020H,0809CH,0            ;DING ON A GARBAGE CAN
+      53                    
+      54 000002c0     f021  CANSMSND .WORD  0F021H,048H,08010H,0            ;SMASH A CAN HARD
+      55 00000300     f021  CANWPSND .WORD  0F021H,03CH,0800AH,0            ;SMASH A CAN WIMPILY
+      56 00000340     f021  CANBCSND .WORD  0F021H,025H,0800BH,0            ;GARBAGE CAN BOUNCE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:34 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SOUND TABLE >>>                                  PAGE    2
+
+      57                    
+      58 00000380     f425  PCDMPSND .WORD  0F000H|NINTEQ|EXPLOPRI,010H,08010H      ;CAR EXPLODING AGAINST DUMPSTER
+      59 000003b0     0048           .WORD  048H,08007H,0
+      60                    
+      61                    ;* MrBig Sounds
+      62 000003e0     f040  MBLAUGH .WORD   0F040H,080H,08055H,0    ;laugh
+      63 00000420     f441  MBGETEM .WORD   0F041H|NINTEQ,080H,08056H,0     ;get em
+      64 00000460     f441  MBKILLEM .WORD  0F041H|NINTEQ,080H,08057H,0     ;kill em
+      65 000004a0     f441  MBYOUDIE .WORD  0F041H|NINTEQ,080H,08058H,0     ;you die cop
+      66 000004e0     f441  MBNTRY .WORD    0F041H|NINTEQ,080H,08059H,0     ;nice try narc
+      67                    
+      68                    ;* HypoMan Sounds
+      69 00000520     f305  SHYPOSND .WORD  0F305H,090H,08099H,0            ;knife throw (spinning)
+      70                    
+      71                    ;* Pimp Sounds
+      72 00000560     f000  BNCESND .WORD   0F000H,05H,08053H,0             ;roach foot click (dyna bnce)
+      73                    
+      74                    ;* Bug Sounds
+      75 000005a0     f700  HELLBUGS .WORD  0F300H|NINTEQ,01H,0809FH,0              ;bugs from hell..
+      76 000005e0     f330  SQISHSND .WORD  0F330H,030H,080A1H,0            ;pinbot fart squish
+      77 00000620     f020  BUGHTSND .WORD  0F020H,020H,0804EH,0            ;bug shot (slow crunch)
+      78 00000660     f001  BBITESND .WORD  0F001H,010H,0804AH,0            ;bug bite..
+      79                    
+      80 000006a0     f000  GRUNT1R .WORD   0F000H,03EH,08011H,0            ;GRUNT #1
+      81 000006e0     f000  GRUNT2R .WORD   0F000H,03EH,08013H,0            ;GRUNT #2
+      82 00000720     f000  GRUNT3R .WORD   0F000H,03EH,08015H,0            ;GRUNT #3
+      83 00000760     f000  GRUNT4R .WORD   0F000H,03EH,0803EH,0            ;GRUNT #4
+      84 000007a0     f000  GRUNT5R .WORD   0F000H,03EH,0803FH,0            ;GRUNT #5
+      85                    
+      86 000007e0     f420  YBUSTSND .WORD  0F400H|SPEAKPRI,038H,08020H,0   ;"YOU'RE BUSTED"
+      87 00000820     f420  YSCUMSND .WORD  0F400H|SPEAKPRI,01FH,08035H,0   ;"BUSTED"
+      88 00000860     f420  LEGOSND .WORD   0F400H|SPEAKPRI,023H,08027H,0   ;"LET'S GO"
+      89                    
+      90 000008a0     f420  DSHTSND .WORD   0F400H|SPEAKPRI,06AH,08034H,0   ;"DON'T SHOOT"
+      91 000008e0     f425  IGIVSND .WORD   0F400H|EXPLOPRI,020H,0802FH,0           ;"I GIVE UP"
+      92 00000920     f420  DSH2SND .WORD   0F400H|SPEAKPRI,02BH,0802EH,0   ;"DON'T SHOOT"
+      93 00000960     f420  CLENSND .WORD   0F400H|SPEAKPRI,02EH,08021H,0           ; I'M CLEAN"
+      94 000009a0     f420  SPRDSND .WORD   0F400H|SPEAKPRI,029H,0802CH,0           ;"SPREAD'EM"
+      95                    
+      96 000009e0     f420  HALTSND .WORD   0F400H|SPEAKPRI,051H,08033H,0           ;"POLICE, FREEZE"
+      97 00000a20     f420  FREZSND .WORD   0F400H|SPEAKPRI,025H,08024H,0           ;"FREEZE"
+      98 00000a60     f420  LETSGO  .WORD   0F400H|SPEAKPRI,023H,08027H,0           ;"LET'S GO!"
+      99                    
+     100 00000aa0     f025  SND1    .WORD   0F000H|EXPLOPRI,030H,08031H,0   ;LARGE EXPLOSION @ 20K
+     101 00000ae0     f025  SND2    .WORD   0F000H|EXPLOPRI,030H,08007H,0   ;MISSLE LARGE EXPLOSION
+     102 00000b20     f025  BOMBSND .WORD   0F000H|EXPLOPRI,030H,0803DH,0   ;BIG BOMB @ 30K
+     103 00000b60     f025  CEXSND1 .WORD   0F000H|EXPLOPRI,030H,08031H,0   ;LARGE EXPLOSION @ 30K
+     104 00000ba0     f025  CEXSND2 .WORD   0F000H|EXPLOPRI,030H,0803CH,0   ;BIG BOMB @ 20K
+     105                    
+     106 00000be0     f010  SIZZAIR .WORD   0F010H,020H,08016H,0            ;IN THE AIR ON FIRE
+     107 00000c20     f310  SIZZSND .WORD   0F310H,020H,0808BH,0            ;THE SIZZLE
+     108 00000c60     f310  FSIZZSND .WORD  0F310H,020H,08088H,0            ;THE FLAMER SIZZLE
+     109                    
+     110 00000ca0     f015  SQUEELSR .WORD  0F015H,005H,0800FH,0            ;CAR SQUEEL RIGHT
+     111 00000ce0     fb40  CADHORN .WORD   0F340H|NINT,03EH,080A0H,0               ;CADILLAC HORN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:34 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SOUND TABLE >>>                                  PAGE    3
+
+     112 00000d20     f320  CADSHLD .WORD   0F320H,03EH,0809BH,0            ;CADILLAC WINDSHIELD BREAKAGE
+     113 00000d60     f020  SPINSNDR .WORD  0F020H,064H,08017H,0            ;SPIN OUT SOUND
+     114 00000da0     f020  TRNKSNDR .WORD  0F020H,013H,08018H,0            ;TRUNK OPEN SOUND
+     115 00000de0     f010  CARREVR .WORD   0F010H,010H,0800EH,0            ;CAR REVVV RIGHT
+     116                    
+     117 00000e20     f010  PCSPINSD .WORD  0F010H,020H,0800DH,0            ;PLAYER CAR SPIN OUT SOUND
+     118 00000e60     f010  PCBRAKSD .WORD  0F010H,064H,08017H,0            ;PLAYER CAR BRAKING SOUND
+     119 00000ea0     f011  PCALLOFF .WORD  0F011H,001H,08002H,0            ;PLAYER CAR SOUND OFF
+     120                    
+     121 00000ee0     f000  DOOROSND .WORD  0F000H,013H,08018H,0            ;DOOR OPEN
+     122 00000f20     f000  DOORCSND .WORD  0F000H,014H,08019H,0            ;DOOR CLOSE
+     123                    
+     124 00000f60     f300  WAVESND .WORD   0F300H,020H,04060H,08085H,0             ;WAVE OVER
+     125                    ***WAVESND
+     126 00000fb0     f3fd          .WORD   0F3FDH,03CH,04020H,04060H,0800AH,001H,08040H,0
+     127                    
+     128 00001030     f300  BULLRSND .WORD  0F300H,010H,0809EH,0                    ;BULLETS REPLENISHED
+     129 00001070     f300  NOBONSND .WORD  0F300H,010H,0808DH,0            ;NO BONUS
+     130 000010b0     f300  BONCSND .WORD   0F300H,001H,08091H,0            ;BONUS COUNTDOWN SHORT <150K
+     131 000010f0     f300  BONCLSND .WORD  0F300H,001H,080ACH,0            ;BONUS COUNTDOWN LONG 0150HK
+     132 00001130     f315  CASHSND .WORD   0F315H,001H,08098H,0            ;CASH PICK-UP AWARD
+     133 00001170     f020  BUSTSND .WORD   0F000H|SPEAKPRI,008H,0804FH,0   ;BUST STAMP     
+     134 000011b0     f025  BUSTBONS .WORD  0F025H,020H,08049H,0            ;BUST STAMP FOR BONUS COUNT     
+     135 000011f0     f315  DRUGSND .WORD   0F315H,001H,0809DH,0            ;DOPE SOUND     
+     136 00001230     f015  CLIPSND .WORD   0F015H,009H,08041H,08041H,0             ;CLIP PICKUP SOUND      
+     137 00001280     f316  ROCKSND .WORD   0F316H,010H,0808EH,0            ;ROCKET PICKUP SOUND    
+     138 000012c0     f020  CARDSND1 .WORD  0F000H|SPEAKPRI,01EH,0802DH,0   ;"SAFE" CARD PICKUP 1 PLAYER
+     139 00001300     f020  CARDSND2 .WORD  0F000H|SPEAKPRI,01EH,0802DH,08027H,0 ;"SAFE" CARD PICKUP 2 PLAYERS
+     140                    
+     141 00001350     f020  OPENSD1 .WORD   0F000H|SPEAKPRI,01EH,0802AH,0   ;"OPEN UP"
+     142 00001390     f020  OPENSD2 .WORD   0F000H|SPEAKPRI,0AH,08044H,08044H
+     143 000013d0     001e          .WORD   01EH,0802AH,0                   ;KNOCK KNOCK, OPEN UP
+     144 00001400     f020  OPENSD3 .WORD   0F000H|SPEAKPRI,018H,08029H,01EH
+     145 00001440     802a          .WORD   0802AH,0                                ;POLICE, OPEN UP
+     146 00001460     f020  OPENSD4 .WORD   0F000H|SPEAKPRI,01EH,0802AH,018H
+     147 000014a0     8029          .WORD   08029H,0                                ;OPEN UP, POLICE
+     148 000014c0     f020  OPENSD5 .WORD   0F000H|SPEAKPRI,0AH,08044H,08044H
+     149 00001500     0018          .WORD   018H,08029H,0                   ;KNOCK KNOCK, POLICE
+     150 00001530     f315  OPENBEEP .WORD  0F315H,05H,080A4H,080A2H,080A5H
+     151 00001580     80a3          .WORD   080A3H,080A4H,0                 ;BEEPS, TO OPEN DOOR
+     152                    
+     153                    
+     154 000015b0     f020  KNOCKSND .WORD  0F000H|SPEAKPRI,010H,08044H,08044H,0 ;KNOCK KNOCK
+     155 00001600     f300  PBONSND .WORD   0F300H,001H,0808EH,0            ;PLAYER BONUS COUNT ANNOUNCE
+     156 00001640     f3df  FREESND .WORD   0F3DFH,010H,08089H,0            ;"FREE MAN" SOUND
+     157 00001680     f830  THECROWD .WORD  0F030H|NINT,0CFH,0801DH,0               ;CROWD CHEER
+     158 000016c0     f335  POWERSND .WORD  0F335H,0F8H,08092H,0            ;CHOPPER POWERUP
+     159 00001700     f335  CHOPCRUZ .WORD  0F335H,001H,08082H,0            ;CHOPPER CRUISE
+     160 00001740     f321  ALARMSND .WORD  0F321H,001H,080A6H,0            ;BURGLAR ALARM SOUND
+     161                    
+     162 00001780           GAMOVSND
+     163 00001780     f3fe          .WORD   0F3FEH,0FFH,04040H,08087H,0             ;GAME OVER SOUND
+     164 000017d0           TUNE1LO
+     165 000017d0     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08007H,0      ;NARC 1 THEME
+     166 00001830           TUNE2LO
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:34 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SOUND TABLE >>>                                  PAGE    4
+
+     167 00001830     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08001H,0      ;EUGENE GROOVE
+     168 00001890           TUNE3LO
+     169 00001890     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08003H,0      ;ROCK 
+     170 000018f0           TUNE4LO
+     171 000018f0     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08006H,0      ;BRIAN SPY/DRIVING THEME
+     172 00001950           TUNE5LO
+     173 00001950     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08007H,0
+     174 000019b0           TUNE6LO
+     175 000019b0     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08002H,0      ;MR. BIG THEME
+     176 00001a10           TUNE7LO
+     177 00001a10     f3fd          .WORD   0F3FDH,001H,0402FH,0406FH,08003H,0
+     178                    
+     179 00001a70           TUNE2
+     180 00001a70     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08002H,0      ;MR. BIGS
+     181 00001ad0           TUNE3
+     182 00001ad0     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08003H,0      ;LOCAS. 6/8
+     183 00001b30           TUNE6
+     184 00001b30     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08006H,0      ;DRIVING THEME
+     185 00001b90           TUNE7
+     186 00001b90     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08007H,0      ;NARC THEME
+     187 00001bf0           TUNE8   
+     188 00001bf0     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08008H,0      ;SR TRIB
+     189 00001c50           TUNE9
+     190 00001c50     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08009H,0      ;THE STICK
+     191 00001cb0           TUNE10
+     192 00001cb0     f3fd          .WORD   0F3FDH,001H,04021H,04061H,0800BH,0      ;THE STICK - "BASS JAM"
+     193                    
+     194 00001d10           TUNELAB
+     195 00001d10     f3fd          .WORD   0F3FDH,001H,04021H,04061H,08008H,080D1H,080D2H,080D3H,0D0D4H,0 ;SR TRIB
+     196                    
+     197 00001db0           RAPTUNE
+     198 00001db0     f3fd          .WORD   0F3FDH,001H,04020H,04060H,08004H,0
+     199                    
+     200 00001e10           FADEUP
+     201 00001e10     f3fd          .WORD   0F3FDH,010H,0402DH,0806DH,0402BH,0806BH
+     202 00001e70     4029          .WORD   04029H,08069H,04027H,08067H,04025H
+     203 00001ec0     8065          .WORD   08065H,04023H,08063H,0
+     204 00001f00           FADEDOWN
+     205 00001f00     f3fd          .WORD   0F3FDH,010H,04022H,08062H,04024H,08064H
+     206 00001f60     4026          .WORD   04026H,08066H,04028H,08068H,0402AH
+     207 00001fb0     806a          .WORD   0806AH,0402CH,0806CH,0402FH,0806FH,0
+     208 00002010           MUSICFUL
+     209 00002010     f3fe          .WORD   0F3FEH,01H,04020H,08060H,0              ;MUSIC TO FULL VOLUME
+     210 00002060           MUSICNRM
+     211 00002060     f3fe          .WORD   0F3FEH,01H,04023H,08063H,0              ;MUSIC NORMAL VOLUME
+     212                    *
+     213                    *HIGH PRIORITY OFF CODES, NOTHING SHOULD BEAT THESE
+     214 000020b0     f8ff  CVSDOFF  .WORD  0F0FFH|0800H,001H,08001H,0              ;CVSD BACKGROUND LOOP OFF
+     215 000020f0     f8ff  CVSDFOFF .WORD  0F0FFH|0800H,001H,08002H,0              ;CVSD FOREGROUND LOOP OFF
+     216 00002130     f8ff  SOUNDOFF .WORD  0F0FFH|0800H,001H,08000H,0              ;TURN SOUND SIDE OFF
+     217 00002170     f8ff  ALLOFF   .WORD  0F0FFH|0800H,001H,04000H,04001H,08002H,0        ;ALL CVSD & DAC SOUNDS OFF
+     218 000021d0     fbff  MUSICOFF .WORD  0F3FFH|0800H,001H,08000H,0              ;MUSIC HARD OFF
+     219 00002210     fbff  MUSITOFF .WORD  0F3FFH|0800H,001H,08040H,0              ;MUSIC TRANSITION OFF
+     220 00002250     fbff  YAMOFF   .WORD  0F3FFH|0800H,001H,0807FH,0              ;YAMAHA EFFECT OFF
+     221                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:34 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SOUND TABLE >>>                                  PAGE    5
+
+     222                            .END
+
+ No Errors,  No Warnings

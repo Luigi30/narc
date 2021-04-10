@@ -1,4 +1,4 @@
-	.FILE	'NARCTEST.ASM'
+	.FILE	"NARCTEST.ASM"
 	.TITLE	"TEST PROGRAM"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -835,12 +835,12 @@ WT_A6    CALLR   GET_ADV               ;SCAN THE BUTTON
          JRNZ    WT_ADV                ;NOT PRESSED. 
          RETP
 
-COINSND	.WORD	>F3DF,>10,>8085,0		;"COIN" SOUND
-BEEP_1   .WORD	>F3DF,>10,>80A2,0		;LOW BEEP 
-BEEP_2   .WORD	>F3DF,>10,>80A3,0		
-BEEP_3   .WORD	>F3DF,>10,>80A4,0		
-BEEP_4   .WORD	>F3DF,>10,>80A5,0		;HIGH BEEP
-CASH     .WORD	>F3DF,>10,>8098,0		;CASH REGGIE
+COINSND	.WORD	0F3DFH,010H,08085H,0		;"COIN" SOUND
+BEEP_1   .WORD	0F3DFH,010H,080A2H,0		;LOW BEEP 
+BEEP_2   .WORD	0F3DFH,010H,080A3H,0		
+BEEP_3   .WORD	0F3DFH,010H,080A4H,0		
+BEEP_4   .WORD	0F3DFH,010H,080A5H,0		;HIGH BEEP
+CASH     .WORD	0F3DFH,010H,08098H,0		;CASH REGGIE
 
 **************************************************************************
 *                                                                        *

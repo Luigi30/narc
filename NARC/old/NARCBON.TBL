@@ -1,0 +1,35 @@
+	.DATA
+HITB:
+	.word	52,11,0,0
+	.long	258F160H,bonbadge
+MAXB:
+	.word	76,10,0,0
+	.long	2590340H,bonbadge
+B999:
+	.word	28,10,0,0
+	.long	2591B00H,bonbadge
+B357:
+	.word	27,10,0,0
+	.long	25923C0H,bonbadge
+BADGE7a:
+	.word	111,80,0,0
+	.long	2592C80H,bonbadge
+EVIDENCE:
+	.word	104,22,0,0
+	.long	25A4480H,NARCS
+BONUS:
+	.word	76,22,0,0
+	.long	25A8C00H,NARCS
+BONBOLT:
+	.word	8,14,0,0
+	.long	25AC040H,NARCS
+BONANG2:
+	.word	16,16,0,0
+	.long	25AC3C0H,NARCS
+BONANG1:
+	.word	16,16,0,0
+	.long	25ACBC0H,NARCS
+BONANG3:
+	.word	16,16,0,0
+	.long	25AD3C0H,NARCS
+	.TEXT

@@ -1,4 +1,4 @@
- 	.FILE	'NARCPIMP.ASM'
+ 	.FILE	"NARCPIMP.ASM"
 	.TITLE	" <<< N  A  R  C  -- P I M P >>>"
 
 **************************************************************************
@@ -82,7 +82,7 @@ PIMP_FUNCS:
 	.long	BOOF
 	.long	GoDestV
 	.long	GetXVel
-	.long	>C000	;MaxXZAngle
+	.long	0C000H	;MaxXZAngle
 	.long	25	;FlipTiks
 ********************************************************************
 
@@ -110,7 +110,7 @@ PIMPCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -146,7 +146,7 @@ ColdX:
 PIMP:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 	INCW	@SLPPIMPS
@@ -201,7 +201,7 @@ GotDoor:
 	jrz	PIMP_DIE	;create failed
 
 	move	A11,*A8(OID),W
-	movi	->10000,A2	;X VELOCITY
+	movi	-010000H,A2	;X VELOCITY
 	movi	WALKOUT,A9     	;GET ANIMATION SCRIPT
 	JSRP	OUTDOOR
 	jruc	InitEnmy
@@ -346,15 +346,15 @@ GetXVel:
 
 	cmpi	PWX,A9
 	jrgt	NotWk
-	movi	WALKVEL+>1000,A0
+	movi	WALKVEL+01000H,A0
 	jruc	GotXvel
 NotWk:
 	cmpi	PMWKX,A9
 	jrgt	NotMwk
-	movi	MWALKVEL->1000,A0
+	movi	MWALKVEL-01000H,A0
 	jruc	GotXvel
 NotMwk:
-	movi	RUNVEL+>1000,A0
+	movi	RUNVEL+01000H,A0
 	jruc	GotXvel
 NoXvel:
 	clr	A0
@@ -762,7 +762,7 @@ SkDestDc:
 
 	movb	*A13(BUSTTIKS),A1
 	jrz	SkBustDc
-	andi	>FF,A1	;No o' this sign extended byte shit
+	andi	0FFH,A1	;No o' this sign extended byte shit
 	cmp	A5,A1
 	jrge	SkClrBst
 	move	A5,A1
@@ -774,7 +774,7 @@ SkBustDc:
 MoveSlp:
 	movb	*A13(FLIPTIKS),A1
 	jrz	SkFlipDc
-	andi	>FF,A1	;No o' this sign extended byte shit
+	andi	0FFH,A1	;No o' this sign extended byte shit
 	cmp	A5,A1
 	jrge	SkClrFlp
 	move	A5,A1
@@ -799,9 +799,9 @@ Chase:
 	cmpi	HIDE_T,A0
 	jreq	ChaseX
 
-	movi	>FFFF,A1		;A1 will be X coor of leftmost player.
+	movi	0FFFFH,A1		;A1 will be X coor of leftmost player.
 	move	A1,A2			;A2 will be Z coor of leftmost player.
-	movi	>7FFF,A3		;A3 is X coor of rghtmost player
+	movi	07FFFH,A3		;A3 is X coor of rghtmost player
 	move	A3,A4			;A4 is Z coor of rghtmost player
 	clr	A6			;A6 velocity of leftmost pl
 	clr	A7			;A7 velocity of rghtmost pl
@@ -885,7 +885,7 @@ ChaseX:
 SlpItOff:
 ; Finish off sleep for current animation frame to eliminate the flashes..
 ; Puts sleep time in A0, caller must call PRCSLP
-	movi	>FF,A7
+	movi	0FFH,A7
 	movb	*A13(ANIMTIKS),A0
 	and	A7,A0
 	jrnz	SkIncSlp
@@ -1066,7 +1066,7 @@ GotTF1:
 	movk	1,A1
 	jsrp	FRANIM
 	PULLP	A4		;Retrieve Player to Throw At
-	movi	>00380000,A0	;y:x offsets
+	movi	000380000H,A0	;y:x offsets
 	callr	ThrowD
 	movb	*A13(DEST_TAG),A0
 	cmpi	CHASE_T,A0
@@ -1813,12 +1813,12 @@ ThrowD:
 	sub	A0,A1
 	move	A1,A5
 	abs	A1
-	andi	>1FF,A1	;* max range of 512
+	andi	01FFH,A1	;* max range of 512
 	move	A1,A2
 	move	A1,A3
-	movi	>280,A0
+	movi	0280H,A0
 	CALLA	RANDU
-	addi	>130,A0
+	addi	0130H,A0
 	mpys	A0,A3
 	sll	11,A1	;* Yvel is 16.16 but dividing Xdelta by 32 to give YVel
 	sub	A3,A1
@@ -1866,7 +1866,7 @@ SkDeltXV:
 	srl	2,A4
 	sub	A4,A2
 	divs	A2,A5
-	movi	>10000,A0
+	movi	010000H,A0
 	sll	5,A2
 	sub	A2,A0
 	move	A0,A2
@@ -1929,7 +1929,7 @@ ThrowD2:
 	sub	A0,A1		;A1 = ThrowerX-PlX
 
 	;* determine X velocity
-	movi	>50000,A5
+	movi	050000H,A5
 	clr	A6		;rotate CW
 	move	A1,A1
 	jrn	SkNgXv
@@ -1942,7 +1942,7 @@ SkNgXv:
 	;* determine Z & Y vels.
 	;	Time = Xdelt / Xv
 	;	Zv = Zdelt / Time
-	;	Yv = Zv + >4000 * Time/2
+	;	Yv = Zv + 04000H * Time/2
 	abs	A5
 	abs	A1
 	sll	16,A1
@@ -1970,7 +1970,7 @@ MaxFLOK:
 	movb	A3,*A7(fuselen)
 	;* get Yv
 	srl	1,A1
-	movi	>4000,A3
+	movi	04000H,A3
 	mpyu	A1,A3
 	neg	A3
 	add	A5,A3
@@ -2199,9 +2199,9 @@ JmpAway:
 	move	A9,A11
 
 	;SET X VELOCITY AND FACING
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	RANDU
-	addi	>18000,A0
+	addi	018000H,A0
 	move	A0,A3		;Xvel
 	move	*A8(OXPOS),A1,W
 	move	@(WORLDTLX+16),A2,W				 
@@ -2221,9 +2221,9 @@ GotF:
 	move	A3,*A8(OXVEL),L
 
 	;SET Z VELOCITY AND FACING
-	movi	>C000,A0
+	movi	0C000H,A0
 	calla	RANDU
-	addi	>C000,A0
+	addi	0C000H,A0
 	move	A0,A3		;Zvel
 	move	@PLZMIN,A1,W
 	move	@PLZMAX,A2,W
@@ -2263,7 +2263,7 @@ PFLY0:
 	cmpi	35,A1
 	jrgt	PFLY1a
 	move	*A8(OYVEL),A0,L
-	addi	>C000,A0
+	addi	0C000H,A0
 	move	A0,*A8(OYVEL),L
 	move	*A8(OZVEL),A1,L
 	sub	A1,A0
@@ -2279,7 +2279,7 @@ PFLY1:
 	calla	PRCSLP
 	jrlt	PFLY2a
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	move	*A8(OZVEL),A1,L
 	sub	A1,A0
@@ -2294,7 +2294,7 @@ PFLY2:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	DFRMGRND
 	jrp	PFLY2
@@ -2470,7 +2470,7 @@ PIMP_DIE:
 	DIE
 BUSTED:
 	move	A11,A2
-	movi	>2500,A1
+	movi	02500H,A1
 	calla	SCORE
 	calla	PUT2x5K
 	move	@PIMPCNT,A0,W
@@ -2550,13 +2550,13 @@ PDIE
 	JAEQ	WEXPD			;DEATH BY EXPLOSION
 ;	jrnz	BullDeath
 ;			;DEATH BY EXPLOSION
-;	movi	>40000,A0
+;	movi	040000H,A0
 ;	calla	RANDU
-;	subi	>20000,A0
+;	subi	020000H,A0
 ;	move	A0,*A8(OXVEL),L
-;	movi	>40000,A0
+;	movi	040000H,A0
 ;	calla	RANDU
-;	addi	>50000,A0
+;	addi	050000H,A0
 ;	neg	A0
 ;	move	A0,*A8(OYVEL),L
 ;	jauc	PDEXP
@@ -2619,7 +2619,7 @@ GrndDth:
 	jrnz	SkThrowD1
 	calla	ClosestP
 	move	A0,A4		;Player to throw at.
-	movi	>00480000,A0	;y:x offsets
+	movi	000480000H,A0	;y:x offsets
 	callr	ThrowD
 	movi	PTD2,A9
 	MOVK	1,A1
@@ -2648,7 +2648,7 @@ DieToss:
 	mmtm	SP,A10
 	calla	ClosestP
 	move	A0,A4		;Player to throw at.
-	movi	>00480000,A0	;y:x offsets
+	movi	000480000H,A0	;y:x offsets
 	callr	ThrowD
 	mmfm	SP,A10
 	movi	PTD2,A9
@@ -2666,7 +2666,7 @@ SkAnim:
 	jrlt	HitGRND
 	move	*A8(OYVEL),A0,L
 GOINGUP:
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	UpdShadV
 	jruc	WFLp
@@ -2756,9 +2756,9 @@ PIMPTAB	.LONG	PIMPOFF
 *---> psp1,psp2,psp3,psp4,psp5,psp6,psp7,psp8,psp9,psp10
 *---> psp11,psp12,psp13,psp14,psp15
 ***********************************************************
-WALKVEL		.set	>18000
-MWALKVEL	.set   ->13000
-RUNVEL		.set	>2A000
+WALKVEL		.set	018000H
+MWALKVEL	.set   -013000H
+RUNVEL		.set	02A000H
 
 MOVETBL:
 PW:

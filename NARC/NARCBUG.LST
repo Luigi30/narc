@@ -1,0 +1,2593 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCBUG.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST
+       6                    
+       7                    ; To change from Delta movement to skaters, check the following
+       8                    ;       call to Zoff
+       9                    ;       animation scripts for walkslow, walkmed, walkfast
+      10                    ;       velocity set in functions goslow, gomed, gofast
+      11                    
+      12                    
+      13                    *       GET THE SYSTEM STUFF
+      14                            .INCLUDE        "\video\mprocEQU.ASM"   ;MPROC equates
+      15                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      16                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      17                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      18                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      19                    *       LOCAL STUFF
+      20                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      21                            .INCLUDE        "NARCTEQU.ASM"
+      22                            .include        "imgtbl.glo"
+      23                            .include        "narcxtra.glo"
+      24                            .INCLUDE        "NARCFRAG.GLO"
+      25                    
+      26 00000000                   .TEXT
+      27                    
+      28                            .include        "narcbug.tbl"
+      29                    
+      30                            .GLOBAL BUGBURN ;for WENDIE
+      31                    
+      32                    ;HELLBUGS .WORD 0F300H|NINTEQ,080H,0809FH,0     ;bugs from hell..
+      33                    ;BUGHTSND .WORD 0F320H,020H,00809DH,0           ;bug shot (fly away)
+      34                    
+      35                    
+      36                    ;* bug on player process block offsets
+      37              00e0  XDIFF   .set    ESWTCH
+      38              00e0  OLDXPOS .set    ESWTCH          ;* BUG under players feet
+      39              00f0  OnBack  .set    ESWTCH+16
+      40              01c0  VICTIMDATA .set ETEMP3
+      41              01e0  VICTIM  .set    ETEMP4
+      42              0200  OLDZPOS .set    ETEMP5
+      43              0210  OLDYPOS .set    ETEMP5+16
+      44              0220  VOLDXV  .set    ETEMP6
+      45              0230  BRAINCT .set    ETEMP6+16
+      46                    
+      47                    
+      48 00000000                   .BSS    pl1sqsh,16,1
+      49 00000010                   .BSS    pl2sqsh,16,1
+      50 00000020                   .BSS    bugcol,16,1
+      51                    
+      52                    ***************************************************************************
+      53                    ; BUG SUB_TYPES
+      54                    ; w/ no coors starts at PLZMIN and 1 to 2 full screens away from
+      55                    ;       players in X.  90% chance of coming up to the right.
+      56                    ; 0 - Crawler           - Brown
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    2
+
+      57                    ; 1 - Flier             - Red
+      58                    ; 2 - Jumper            - Green
+      59                    ; 3 - Fast Flier        - Blue
+      60 00000000           DTBL:
+      61 00000000 00000ee0'         .long   D0,D1,D2
+      62 00000060 00000e60'         .long   D1,D1,D1,D1,D1,D1
+      63 00000120 00000e60'         .long   D1,D1,D1,D1,D1,D1,D1
+      64                    
+      65 00000200           LocoTbl:
+      66 00000200 00003a30'         .long   Crawler
+      67 00000220 00003c30'         .long   Flier
+      68 00000240 00003450'         .long   Jumper
+      69 00000260 00003c30'         .long   Flier,Flier,Flier,Flier
+      70 000002e0 00003c30'         .long   Flier,Flier,Flier,Flier
+      71 00000360 00003c30'         .long   Flier,Flier,Flier,Flier
+      72 000003e0 00003c30'         .long   Flier,Flier,Flier,Flier
+      73                    ***************************************************************************
+      74                    
+      75                    ************************* FUNCTION TABLE ***************************
+      76 00000460           BUG_FUNCS:
+      77 00000460 00000500'         .long   BOOF
+      78 00000480 00000000!         .long   GoDestV
+      79 000004a0 00002bf0'         .long   GetXVel
+      80 000004c0 0000ffff          .long   0FFFFH  ;MaxXZAngle
+      81 000004e0 0000000a          .long   10      ;FlipTiks
+      82                    ;To catch a nulled dereference through BUG_FUNCS
+      83 00000500     c000  BOOF:   jruc    $
+         00000510     fffe  
+      84                    ********************************************************************
+      85                    
+      86                    ********** GEORGE -- COMMENT THIS STUFF OUT **************
+      87                    ;* Also uncomment RETS in GVARINIT
+      88                    ****    .BSS    bugmax,16,16            ;U - max # of active bugmen
+      89                    
+      90 00000520           VARINIT:
+      91 00000520     0960          rets               ;* <---------------------- remove ;
+      92 00000530     18c1          movk    6,A1
+      93 00000540     0581          move    A1,@bugmax,W
+         00000550 00000000! 
+      94 00000570     0960          rets
+      95                    **********************************************************
+      96                    
+      97                    **************************************************************************
+      98                    *INIT TABLE
+      99                    *       .LONG   OXVEL,OYVEL,OXVAL,XYVAL
+     100                    *       .WORD   OZPOS,OZVEL
+     101                    *       .LONG   OIMG,OZSIZ,OCVECT
+     102                    *       .WORD   OFLAGS,OID
+     103 00000580           BUGINIT
+     104 00000580 00000000          .LONG   0,0,0,0
+     105 00000600     0000          .WORD   0,0
+     106 00000620 00000000"         .LONG   bugwk1,0120012H,BUGCOLL         ;BUGZSIZ
+     107 00000680     8002          .WORD   DMAWNZ,BUGEOID
+     108 000006a0 00000000!         .LONG   BUGBLIP
+     109                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    3
+
+     110                    
+     111                    **************************************************************************
+     112 000006c0           BUGCOLD:
+     113                    ;* PARMS
+     114                    ; A5  - Y:X
+     115                    ; A6  - 0:Z     ;if A5 and A6=0 then Random Position
+     116                    ; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
+     117                    
+     118 000006c0     098f          mmtm    SP,A0,A1,A2,A7,A9,A10,A11
+         000006d0     e170  
+     119 000006e0     0d3f          callr   VARINIT
+         000006f0     ffe2  
+     120                            
+     121 00000700     05a0          move    @SLPBUGS,A0,W
+         00000710 00000000! 
+     122 00000730     0b40          cmpi    5,A0
+         00000740     fffa  
+     123 00000750     c51b          jrge    DoEnq
+     124                    
+     125 00000760     4ca9          move    A5,A9           ;Y:X in A9
+     126 00000770     4cca          move    A6,A10          ;0:Z in A10
+     127 00000780     4dcb          move    A14,A11         ;ID in A11
+     128                    
+     129 00000790     4dc0          move    A14,A0
+     130 000007a0     2580          sll     12,A0
+     131 000007b0     2c80          srl     28,A0
+     132 000007c0     ca03          jrz     SkRndCnt
+     133 000007d0     0d5f          calla   RANDU
+         000007e0 00000000! 
+     134 00000800           SkRndCnt:
+     135 00000800     4dc2          move    A14,A2
+     136 00000810     2502          sll     8,A2
+     137 00000820     2c82          srl     28,A2
+     138 00000830     4002          add     A0,A2
+     139 00000840           ColdLp: 
+     140 00000840                   CREATE  BUGEPID,BUGGER  ;allocate process?      (bashes A1,A7)
+     141 000008c0     ca01          jrz     ColdX
+     142 000008d0     3d42          dsjs    A2,ColdLp
+     143 000008e0           ColdX:
+     144 000008e0     09af          mmfm    SP,A0,A1,A2,A7,A9,A10,A11
+         000008f0     0e87  
+     145 00000900     0960          rets
+     146                    
+     147 00000910           DoEnq:
+     148                    ;       callr   EnqCold
+     149 00000910     c0fc          jruc    ColdX
+     150                    **************************************************************************
+     151                    
+     152                    **************************************************************************
+     153                    ;EnqCold:
+     154                    ;* stows away Bug Requests for later
+     155                    ;* Enqs are done at the Q head "COLDQ + COLDQH*32"
+     156                    ;       move    @COLDQ,A0,L
+     157                    ;       jrnz    SkMkQ
+     158                    ;       calla   GETOBJ
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    4
+
+     159                    ;       jrz     EnqX
+     160                    ;       move    A0,@COLDQ,L
+     161                    ;       clr     A1
+     162                    ;       movb    A1,@COLDQL
+     163                    ;       movb    A1,@COLDQH
+     164                    ;SkMkQ:
+     165                    ;
+     166                    ;       movk    1,A7    ;Enq request size in long words
+     167                    ;
+     168                    ;       ;* Enq request onto queue at A0
+     169                    ;       ;does Q have space for request?
+     170                    ;       movb    @COLDQL,A1
+     171                    ;       add     A7,A1
+     172                    ;       cmpi    OBSIZ/32,A1
+     173                    ;       jrgt    EnqX            ;Sorry, but Q is full
+     174                    ;
+     175                    ;       ;get ptr to place to make entry
+     176                    ;       
+     177                    ;
+     178                    ;EnqX:
+     179                    ;       rets
+     180                    **************************************************************************
+     181                    
+     182                    *********************  START OF BUGGER PROCESS  *************************
+     183 00000920           BUGGER:
+     184                    * A9  - Y:X
+     185                    * A10 - 0:Z     ;if A9,A10 = 0 generate random start pos.
+     186                    * A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
+     187                    ;based on sub-type, jump to appropriate routine
+     188                    
+     189 00000920                   INCW    @SLPBUGS
+     190 00000990           MaxWait:
+     191 00000990     1940          movk    10,A0
+     192 000009a0     0d5f          calla   RANDU
+         000009b0 00000000! 
+     193 000009d0     0d5f          calla   PRCSLP
+         000009e0 00000000! 
+     194 00000a00     05a0          move    @bugmax,A0,W
+         00000a10 00000000! 
+     195 00000a30     05a1          move    @BUGCNT,A1,W
+         00000a40 00000000! 
+     196 00000a60     4801          cmp     A0,A1
+     197 00000a70     c405          jrlt    MaxWaitX
+     198 00000a80                   SLEEP   30
+     199 00000ac0     c0ec          jruc    MaxWait
+     200 00000ad0           MaxWaitX:
+     201 00000ad0                   DECW    @SLPBUGS
+     202 00000b40     05a0          move    @SLPBUGS,A0,W
+         00000b50 00000000! 
+     203 00000b70     0b40          cmpi    3,A0
+         00000b80     fffc  
+     204 00000b90     0300          jrge    SkDeq
+     205                    ;       callr   DeqCold
+     206 00000ba0           SkDeq:
+     207 00000ba0     05a0          move    @BUGCNT,A0,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    5
+
+         00000bb0 00000000! 
+     208 00000bd0     cb08          jrnz    SkStrtWatch
+     209 00000be0                   CREATE  BUGWPID,BUGWATCH        ;allocate process?      (bashes A1,A7)
+     210 00000c60           SkStrtWatch:
+     211 00000c60                   INCW    @BUGCNT
+     212                    
+     213 00000cd0     4d60          move    A11,A0
+     214 00000ce0     2780          sll     28,A0
+     215 00000cf0     2c80          srl     28,A0
+     216 00000d00     24a0          sll     5,A0
+     217 00000d10     0b20          addi    DTBL,A0
+         00000d20 00000000' 
+     218 00000d40     8600          move    *A0,A0,L
+     219 00000d50     0160          jump    A0
+     220                    
+     221                    **************************************************************************
+     222 00000d60           D3:
+     223                    ;* Flier
+     224 00000d60     1860          movk    3,A0    ;Blue
+     225 00000d70     0580          move    A0,@bugcol,W
+         00000d80 00000020- 
+     226 00000da0     18a0          movk    5,A0
+     227 00000db0     ac0d          movb    A0,*A13(BRAINCT)
+         00000dc0     0230  
+     228 00000dd0     c017          jruc    DMain
+     229                    
+     230                    **************************************************************************
+     231 00000de0           D2:
+     232                    ;* Jumper
+     233 00000de0     1840          movk    2,A0    ;Green
+     234 00000df0     0580          move    A0,@bugcol,W
+         00000e00 00000020- 
+     235 00000e20     1940          movk    10,A0
+     236 00000e30     ac0d          movb    A0,*A13(BRAINCT)
+         00000e40     0230  
+     237 00000e50     c00f          jruc    DMain
+     238                    
+     239                    **************************************************************************
+     240 00000e60           D1:
+     241                    ;* Flier
+     242 00000e60     1820          movk    1,A0    ;Red
+     243 00000e70     0580          move    A0,@bugcol,W
+         00000e80 00000020- 
+     244 00000ea0     1940          movk    10,A0
+     245 00000eb0     ac0d          movb    A0,*A13(BRAINCT)
+         00000ec0     0230  
+     246 00000ed0     c007          jruc    DMain
+     247                    
+     248                    **************************************************************************
+     249 00000ee0           D0:     
+     250                    ;* Crawler
+     251 00000ee0     5600          clr     A0      ;brown
+     252 00000ef0     0580          move    A0,@bugcol,W
+         00000f00 00000020- 
+     253 00000f20     19e0          movk    15,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    6
+
+     254 00000f30     ac0d          movb    A0,*A13(BRAINCT)
+         00000f40     0230  
+     255                    ;       jruc    DMain
+     256                    
+     257 00000f50           DMain:
+     258 00000f50     4d20          move    A9,A0
+     259 00000f60     5540          or      A10,A0
+     260 00000f70     cb1f          jrnz    GotCoors
+     261                    
+     262                    *Enemy object initialization
+     263 00000f80     05a9          move    @(WORLDTLX+16),A9,W                              
+         00000f90 00000010! 
+     264 00000fb0     0be9          subi    300,A9
+         00000fc0     fed3  
+     265 00000fd0     09c0          movi    950,A0
+         00000fe0     03b6  
+     266 00000ff0     0d5f          calla   RANDPER
+         00001000 00000000! 
+     267 00001020     c902          jrnc    StrtLft
+     268 00001030     0b09          addi    1000,A9
+         00001040     03e8  
+     269 00001050           StrtLft:
+     270 00001050     09c0          movi    80,A0
+         00001060     0050  
+     271 00001070     0d5f          calla   RANDU
+         00001080 00000000! 
+     272 000010a0     4009          add     A0,A9
+     273                    
+     274 000010b0     05a1          move    @PLYMIN,A1,W                                                                     
+         000010c0 00000000! 
+     275 000010e0     09c0          movi    50,A0
+         000010f0     0032  
+     276 00001100     0d5f          calla   RANDU
+         00001110 00000000! 
+     277 00001130     4001          add     A0,A1
+     278 00001140     2601          sll     16,A1
+     279 00001150     ee29          movy    A1,A9   ;* initial position                                                      
+     280 00001160     574a          clr     A10
+     281                    
+     282 00001170           GotCoors:
+     283 00001170     4d21          move    A9,A1
+     284 00001180     09e6          movi    BUGTAB,A6
+         00001190 000077c0' 
+     285 000011b0     09ee          movi    BUGINIT,A14     
+         000011c0 00000580' 
+     286 000011e0     098f          mmtm    SP,A9,A10,A11
+         000011f0     0070  
+     287 00001200     0d5f          calla   ENINITLL                ;CREATE BUG
+         00001210 00000000! 
+     288 00001230     09af          mmfm    SP,A9,A10,A11
+         00001240     0e00  
+     289 00001250     ca00          jrz     BUG_DIE
+         00001260     02d4  
+     290                    ;Y:X in A9
+     291                    ;0:Z in A10
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    7
+
+     292 00001270     4d4a          move    A10,A10
+     293 00001280     cb04          jrnz    GotZC
+     294 00001290     ef2a          movy    A9,A10
+     295 000012a0     2e0a          srl     16,A10
+     296 000012b0     0bea          subi    ZORIGIN,A10
+         000012c0     ff37  
+     297 000012d0           GotZC:
+     298 000012d0     b128          move    A9,*A8(OXPOS),W
+         000012e0     0090  
+     299 000012f0     b148          move    A10,*A8(OZPOS),W
+         00001300     00d0  
+     300 00001310     0b0a          addi    ZORIGIN,A10
+         00001320     00c8  
+     301 00001330     b500          move    *A8(OSIZEY),A0,W
+         00001340     0150  
+     302 00001350     440a          sub     A0,A10
+     303 00001360     b148          move    A10,*A8(OYPOS),W
+         00001370     00b0  
+     304 00001380     b168          move    A11,*A8(OID),W
+         00001390     01a0  
+     305                    ;       jruc    InitEnmy
+     306                    
+     307                    ****************************************************************************
+     308 000013a0           InitEnmy:
+     309 000013a0     05a0          move    @bugcol,A0,W
+         000013b0 00000020- 
+     310 000013d0     ca11          jrz     SkNewCol
+     311 000013e0     24a0          sll     5,A0
+     312 000013f0     0b20          addi    BugColor,A0
+         00001400 00001650' 
+     313 00001420     8600          move    *A0,A0,L
+     314 00001430     0d5f          calla   GETFPAL
+         00001440 00000000! 
+     315 00001460     ca08          jrz     SkNewCol
+     316 00001470     4c01          move    A0,A1
+     317 00001480     b500          move    *A8(OPAL),A0,W
+         00001490     0160  
+     318 000014a0     0d5f          calla   FREEPAL
+         000014b0 00000000! 
+     319 000014d0     b028          move    A1,*A8(OPAL),W
+         000014e0     0160  
+     320 000014f0           SkNewCol:
+     321                    
+     322 000014f0     0d5f          calla   ClrVel
+         00001500 00000000! 
+     323 00001520     5600          clr     A0
+     324 00001530     b20d          move    A0,*A13(DEST),L
+         00001540     01e0  
+     325 00001550     b20d          move    A0,*A13(TEMPDEST),L
+         00001560     0200  
+     326 00001570     ac0d          movb    A0,*A13(DEST_TAG)
+         00001580     01c0  
+     327                    ;       movb    A0,*A13(ZPER)
+     328 00001590     b20d          move    A0,*A13(TIKCTRS),L
+         000015a0     01a0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    8
+
+     329 000015b0     b20d          move    A0,*A13(EBYTES),L
+         000015c0     0180  
+     330 000015d0     09e0          movi    BUG_FUNCS,A0
+         000015e0 00000460' 
+     331 00001600     b20d          move    A0,*A13(FUNCS),L
+         00001610     00e0  
+     332                    
+     333 00001620     0d3f          callr   GOCRAWL
+         00001630     017b  
+     334 00001640     c00e          jruc    BUG_MOVE
+     335                    **************************************************************************
+     336                    
+     337 00001650           BugColor:
+     338 00001650 00000000!         .long   brnbug,redbug,grnbug,blkbug
+     339                    
+     340                    **************************************************************************
+     341                    * BUGGER2 - THE bug broke free from player process
+     342 000016d0           BUGGER2:        
+     343                    *Enemy object initialization
+     344                    ;       move    A13,*A8(OPLINK),L       ;PROC LINK
+     345                    ;       clr     A0
+     346                    ;       move    A0,*A13(DEST),L
+     347                    ;       move    A0,*A13(TEMPDEST),L
+     348                    ;       movb    A0,*A13(DEST_TAG)
+     349                    ;       movb    A0,*A13(ZPER)
+     350                    ;       move    A0,*A13(TIKCTRS),L
+     351                    ;       move    A0,*A13(EBYTES),L
+     352 000016d0     09e0          movi    BUG_FUNCS,A0
+         000016e0 00000460' 
+     353 00001700     b20d          move    A0,*A13(FUNCS),L
+         00001710     00e0  
+     354                    
+     355 00001720     0300          jruc    BUG_MOVE
+     356                    **************************************************************************
+     357                    
+     358                    **************************************************************************
+     359 00001730           BUG_MOVE:
+     360                    ;********  CHECK if a DESTINATION has been reached, and what to do if so..
+     361 00001730     0d3f          callr   ZCHECK
+         00001740     00d9  
+     362                    
+     363 00001750     afa0          movb    *A13(FLYING),A0
+         00001760     0180  
+     364 00001770     ca64          jrz     OnGrnd                  ;flying = 0 - crawling
+     365 00001780     1420          dec     A0
+     366 00001790     ca62          jrz     BFlying                 ;flying = 1 - flying
+     367 000017a0     1420          dec     A0
+     368 000017b0     ca30          jrz     BJumping                ;flying = 2 - jumping
+     369 000017c0     1420          dec     A0
+     370 000017d0     ca2e          jrz     BJumping                ;flying = 3 - falling
+     371                    ;       jruc    BWiggle                 ;flying = 4 - wiggling on back
+     372                    
+     373                    ;BWiggle:
+     374 000017e0     18a0          movk    5,A0
+     375 000017f0     0d5f          calla   RANDU
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE    9
+
+         00001800 00000000! 
+     376 00001820     1460          subk    3,A0
+     377 00001830     b501          move    *A8(OXPOS),A1,W
+         00001840     0090  
+     378 00001850     4001          add     A0,A1
+     379 00001860     b028          move    A1,*A8(OXPOS),W
+         00001870     0090  
+     380 00001880     18a0          movk    5,A0
+     381 00001890     0d5f          calla   RANDU
+         000018a0 00000000! 
+     382 000018c0     1460          subk    3,A0
+     383 000018d0     b501          move    *A8(OYPOS),A1,W
+         000018e0     00b0  
+     384 000018f0     4001          add     A0,A1
+     385 00001900     b028          move    A1,*A8(OYPOS),W
+         00001910     00b0  
+     386 00001920     b501          move    *A8(OYPOS),A1,W
+         00001930     00b0  
+     387 00001940     4001          add     A0,A1
+     388 00001950     b028          move    A1,*A8(OYPOS),W
+         00001960     00b0  
+     389 00001970     1880          movk    4,A0
+     390 00001980     0d5f          calla   RANDU
+         00001990 00000000! 
+     391 000019b0     1420          dec     A0
+     392 000019c0     b501          move    *A8(OYPOS),A1,W
+         000019d0     00b0  
+     393 000019e0     4401          sub     A0,A1
+     394 000019f0     b028          move    A1,*A8(OYPOS),W
+         00001a00     00b0  
+     395                    
+     396 00001a10     0d5f          calla   DFRMGRND
+         00001a20 00000000! 
+     397 00001a40     ca06          jrz     HghtOk
+     398 00001a50     ce05          jrn     HghtOk
+     399 00001a60     b501          move    *A8(OYPOS),A1,W
+         00001a70     00b0  
+     400 00001a80     1041          addk    2,A1
+     401 00001a90     b028          move    A1,*A8(OYPOS),W
+         00001aa0     00b0  
+     402 00001ab0           HghtOk:
+     403 00001ab0     c03f          jruc    SkCkDest
+     404                    
+     405                    
+     406 00001ac0           BJumping:
+     407 00001ac0     b700          move    *A8(OYVEL),A0,L
+         00001ad0     0060  
+     408 00001ae0     b701          move    *A8(OZVEL),A1,L
+         00001af0     00e0  
+     409 00001b00     4420          sub     A1,A0
+     410 00001b10     ce06          jrn     GoingUp
+     411                    
+     412 00001b20     0d5f          calla   DFRMGRND
+         00001b30 00000000! 
+     413 00001b50     0b41          cmpi    2,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   10
+
+         00001b60     fffd  
+     414 00001b70     c615          jrle    HitGrnd
+     415 00001b80           GoingUp:
+     416 00001b80     afa0          movb    *A13(FLYING),A0
+         00001b90     0180  
+     417 00001ba0     0b40          cmpi    2,A0
+         00001bb0     fffd  
+     418 00001bc0     c708          jrgt    SkJmpYV
+     419 00001bd0     b700          move    *A8(OYVEL),A0,L
+         00001be0     0060  
+     420 00001bf0     0b20          addi    0B000H,A0
+         00001c00 0000b000  
+     421 00001c20     b208          move    A0,*A8(OYVEL),L
+         00001c30     0060  
+     422 00001c40     c026          jruc    SkCkDest
+     423 00001c50           SkJmpYV:
+     424 00001c50     b700          move    *A8(OYVEL),A0,L
+         00001c60     0060  
+     425 00001c70     0b20          addi    018000H,A0
+         00001c80 00018000  
+     426 00001ca0     b208          move    A0,*A8(OYVEL),L
+         00001cb0     0060  
+     427 00001cc0     c01e          jruc    SkCkDest
+     428                    
+     429 00001cd0           HitGrnd:
+     430 00001cd0     5600          clr     A0
+     431 00001ce0     ac0d          movb    A0,*A13(BRAINTIKS)
+         00001cf0     01b0  
+     432 00001d00     5600          clr     A0
+     433 00001d10     ac0d          movb    A0,*A13(FLYING)
+         00001d20     0180  
+     434 00001d30     bb08          move    *A8(OZVEL),*A8(OYVEL),L
+         00001d40     00e0  
+         00001d50     0060  
+     435 00001d60     0d3f          callr   DOCRAWL
+         00001d70     0104  
+     436 00001d80     4d00          move    A8,A0
+     437 00001d90     0d5f          calla   SETZPOS
+         00001da0 00000000! 
+     438                    
+     439 00001dc0           OnGrnd:
+     440 00001dc0           BFlying:
+     441 00001dc0     afa0          movb    *A13(DESTTIKS),A0
+         00001dd0     01a8  
+     442 00001de0     cb0c          jrnz    SkCkDest
+     443 00001df0     0d5f          calla   CkDest
+         00001e00 00000000! 
+     444 00001e20     c908          jrnc    NotYet
+     445                    
+     446                            ;* we have reached our destination, what to do??
+     447 00001e30     afa0          movb    *A13(DEST_TAG),A0
+         00001e40     01c0  
+     448 00001e50     ca05          jrz     SkCkDest                        ;* No Destination
+     449                    
+     450 00001e60           DestDone:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   11
+
+     451 00001e60     5600          clr     A0
+     452 00001e70     ac0d          movb    A0,*A13(BRAINTIKS)      ;Allow new course of action
+         00001e80     01b0  
+     453 00001e90     ac0d          movb    A0,*A13(DEST_TAG)
+         00001ea0     01c0  
+     454 00001eb0           NotYet:
+     455 00001eb0           SkCkDest:
+     456                    
+     457                    **** BRAIN functions *****
+     458 00001eb0     afa0          movb    *A13(BRAINTIKS),A0
+         00001ec0     01b0  
+     459 00001ed0     cb10          jrnz    BrainX
+     460 00001ee0     bdad          movb    *A13(BRAINCT),*A13(BRAINTIKS)           ;reset brain wait
+         00001ef0     0230  
+         00001f00     01b0  
+     461                    
+     462 00001f10     0d3f          callr   RollOver        ;is bug flipped on Back?
+         00001f20     008a  
+     463 00001f30     c80a          jrc     BrainX
+     464                    
+     465 00001f40     b500          move    *A8(OID),A0,W
+         00001f50     01a0  
+     466 00001f60     2780          sll     28,A0
+     467 00001f70     2c80          srl     28,A0
+     468 00001f80     24a0          sll     5,A0
+     469 00001f90     0b20          addi    LocoTbl,A0
+         00001fa0 00000200' 
+     470 00001fc0     8600          move    *A0,A0,L
+     471 00001fd0     0920          call    A0
+     472 00001fe0           BrainX:
+     473                    
+     474                    **** Animation check ****
+     475 00001fe0     afa0          movb    *A13(ANIMTIKS),A0
+         00001ff0     01a0  
+     476 00002000     cb0e          jrnz    AnimX
+     477                    
+     478 00002010     1881          movk    4,A1                    ;* one frame, no sleepin
+     479 00002020                   jsrp    FRANIM
+     480 00002090     8721          move    *A9,A1,L
+     481 000020a0     cb02          jrnz    ListLeft
+     482 000020b0     0d3f          callr   AnimCycle
+         000020c0     00af  
+     483 000020d0           ListLeft:
+     484 000020d0     ac0d          movb    A0,*A13(ANIMTIKS)
+         000020e0     01a0  
+     485 000020f0           AnimX:
+     486                    
+     487                    **** Find Next Event ****
+     488 000020f0     09c7          movi    0FFH,A7
+         00002100     00ff  
+     489 00002110     afa1          movb    *A13(BRAINTIKS),A1
+         00002120     01b0  
+     490 00002130     50e1          and     A7,A1
+     491 00002140     cb03          jrnz    BTok
+     492                    ;       jruc    $
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   12
+
+     493 00002150     1841          movk    2,A1
+     494 00002160     ac2d          movb    A1,*A13(BRAINTIKS)
+         00002170     01b0  
+     495 00002180           BTok:
+     496 00002180     afa3          movb    *A13(ANIMTIKS),A3
+         00002190     01a0  
+     497 000021a0     50e3          and     A7,A3
+     498 000021b0     cb03          jrnz    ATok
+     499                    ;       jruc    $
+     500 000021c0     1843          movk    2,A3
+     501 000021d0     ac6d          movb    A3,*A13(ANIMTIKS)
+         000021e0     01a0  
+     502 000021f0           ATok:
+     503 000021f0     afa0          movb    *A13(DEST_TAG),A0
+         00002200     01c0  
+     504 00002210     cb02          jrnz    SkNoDest
+     505 00002220     4c26          move    A1,A6
+     506 00002230     c009          jruc    SkMin1
+     507 00002240           SkNoDest:
+     508 00002240     afa2          movb    *A13(DESTTIKS),A2
+         00002250     01a8  
+     509 00002260     50e2          and     A7,A2
+     510 00002270     cb01          jrnz    SkMinDst
+     511 00002280     1822          movk    1,A2
+     512 00002290           SkMinDst:
+     513                    
+     514 00002290     4c46          move    A2,A6
+     515 000022a0     48c1          cmp     A6,A1
+     516 000022b0     c501          jrge    SkMin1
+     517 000022c0     4c26          move    A1,A6
+     518 000022d0           SkMin1:
+     519 000022d0     48c3          cmp     A6,A3
+     520 000022e0     c501          jrge    SkMin3
+     521 000022f0     4c66          move    A3,A6
+     522 00002300           SkMin3:
+     523                    
+     524 00002300     afa0          movb    *A13(DEST_TAG),A0
+         00002310     01c0  
+     525 00002320     ca03          jrz     SkDestDc
+     526 00002330     44c2          sub     A6,A2
+     527 00002340     ac4d          movb    A2,*A13(DESTTIKS)
+         00002350     01a8  
+     528 00002360           SkDestDc:
+     529 00002360     44c1          sub     A6,A1
+     530 00002370     ac2d          movb    A1,*A13(BRAINTIKS)
+         00002380     01b0  
+     531 00002390     44c3          sub     A6,A3
+     532 000023a0     ac6d          movb    A3,*A13(ANIMTIKS)
+         000023b0     01a0  
+     533                    
+     534 000023c0     afa1          movb    *A13(FLIPTIKS),A1
+         000023d0     01d8  
+     535 000023e0     ca07          jrz     SkFlipDc
+     536 000023f0     50e1          and     A7,A1   ;No o' this sign extended byte shit
+     537 00002400     48c1          cmp     A6,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   13
+
+     538 00002410     c501          jrge    SkClrFlp
+     539 00002420     4cc1          move    A6,A1
+     540 00002430           SkClrFlp:
+     541 00002430     44c1          sub     A6,A1
+     542 00002440     ac2d          movb    A1,*A13(FLIPTIKS)
+         00002450     01d8  
+     543 00002460           SkFlipDc:
+     544                    
+     545 00002460     4cc0          move    A6,A0
+     546 00002470     c101          jrp     Slp
+     547                    ;       jruc    $
+     548 00002480     1840          movk    2,A0
+     549 00002490           Slp:
+     550 00002490     0d5f          calla   PRCSLP
+         000024a0 00000000! 
+     551                    
+     552 000024c0     c000          jruc    BUG_MOVE
+         000024d0     ff25  
+     553                    **************************************************************************
+     554                    
+     555                    **************************************************************************
+     556 000024e0           ZCHECK:
+     557 000024e0     b501          move    *A8(OZPOS),A1,W
+         000024f0     00d0  
+     558 00002500     05a0          move    @PLZMIN,A0,W
+         00002510 00000000! 
+     559 00002530     10a0          addk    5,A0
+     560 00002540     4401          sub     A0,A1
+     561 00002550     cf0b          jrnn    ZMinOK
+     562 00002560     b008          move    A0,*A8(OZPOS),W
+         00002570     00d0  
+     563 00002580     b500          move    *A8(OYPOS),A0,W
+         00002590     00b0  
+     564 000025a0     4420          sub     A1,A0
+     565 000025b0     b008          move    A0,*A8(OYPOS),W
+         000025c0     00b0  
+     566 000025d0     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         000025e0     00e0  
+     567 000025f0     cf1c          jrnn    ZMaxOK
+     568 00002600     c013          jruc    SETZV
+     569 00002610           ZMinOK:
+     570 00002610     b501          move    *A8(OZPOS),A1,W
+         00002620     00d0  
+     571 00002630     05a0          move    @PLZMAX,A0,W
+         00002640 00000000! 
+     572 00002660     1460          subk    3,A0
+     573 00002670     4401          sub     A0,A1
+     574 00002680     ce13          jrn     ZMaxOK
+     575 00002690     b008          move    A0,*A8(OZPOS),W
+         000026a0     00d0  
+     576 000026b0     b500          move    *A8(OYPOS),A0,W
+         000026c0     00b0  
+     577 000026d0     4420          sub     A1,A0
+     578 000026e0     b008          move    A0,*A8(OYPOS),W
+         000026f0     00b0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   14
+
+     579 00002700     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         00002710     00e0  
+     580 00002720     ce09          jrn     ZMaxOK
+     581 00002730     ca08          jrz     ZMaxOK
+     582 00002740           SETZV:
+     583 00002740     b701          move    *A8(OYVEL),A1,L
+         00002750     0060  
+     584 00002760     4401          sub     A0,A1
+     585 00002770     b228          move    A1,*A8(OYVEL),L
+         00002780     0060  
+     586 00002790     5600          clr     A0
+     587 000027a0     b208          move    A0,*A8(OZVEL),L ;set Z velocity
+         000027b0     00e0  
+     588 000027c0           ZMaxOK:
+     589 000027c0     0960          rets
+     590                    **************************************************************************
+     591                    
+     592                    **************************************************************************
+     593 000027d0           RollOver:
+     594                    ;* check if bug is on back, if so try to roll over else squirm
+     595 000027d0     b500          move    *A8(OFLAGS),A0,W
+         000027e0     0100  
+     596 000027f0     1f40          btst    B_FLIPV,A0
+     597 00002800     ca39          jrz     NoRoll
+     598                    
+     599 00002810     1880          movk    4,A0
+     600 00002820     ac0d          movb    A0,*A13(FLYING)
+         00002830     0180  
+     601                    
+     602 00002840     0d5f          calla   ClrVel
+         00002850 00000000! 
+     603 00002870     0d5f          calla   DFRMGRND
+         00002880 00000000! 
+     604 000028a0     4c20          move    A1,A0
+     605 000028b0     0380          abs     A0
+     606 000028c0     24a0          sll     5,A0
+     607 000028d0     0b00          addi    50,A0
+         000028e0     0032  
+     608 000028f0     0d5f          calla   RANDPER
+         00002900 00000000! 
+     609 00002920     c81d          jrc     UnRoll
+     610                    
+     611 00002930     09e0          movi    BUGWIGGL,A0
+         00002940 00007c60' 
+     612 00002960     b7a1          move    *A13(ANIMPTR),A1,L
+         00002970     0120  
+     613 00002980     4801          cmp     A0,A1
+     614 00002990     ca01          jrz     SkAnRst
+     615 000029a0     4c09          move    A0,A9
+     616 000029b0           SkAnRst:
+     617 000029b0     b20d          move    A0,*A13(ANIMPTR),L
+         000029c0     0120  
+     618                    
+     619                            ;* Flip Bug horizontally??
+     620 000029d0     09c0          movi    600,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   15
+
+         000029e0     0258  
+     621 000029f0     0d5f          calla   RANDPER
+         00002a00 00000000! 
+     622 00002a20     c90b          jrnc    SkHFlp
+     623 00002a30     b500          move    *A8(OFLAGS),A0,W
+         00002a40     0100  
+     624 00002a50     1f60          btst    B_FLIPH,A0
+     625 00002a60     ca04          jrz     NotHFlp
+     626 00002a70     0d5f          calla   Ck_NOYFLP
+         00002a80 00000000! 
+     627 00002aa0     c003          jruc    SkHFlp
+     628 00002ab0           NotHFlp:
+     629 00002ab0     0d5f          calla   Ck_YFLP
+         00002ac0 00000000! 
+     630 00002ae0           SkHFlp:
+     631 00002ae0     0de0          setc    ;bug is on back
+     632 00002af0     0960          rets
+     633                    
+     634 00002b00           UnRoll:
+     635 00002b00     5600          clr     A0
+     636 00002b10     ac0d          movb    A0,*A13(FLYING)
+         00002b20     0180  
+     637 00002b30     b500          move    *A8(OFLAGS),A0,W
+         00002b40     0100  
+     638 00002b50     0b80          andni   M_FLIPV,A0
+         00002b60 00000020  
+     639 00002b80     b008          move    A0,*A8(OFLAGS),W
+         00002b90     0100  
+     640 00002ba0           NoRoll:
+     641 00002ba0     0320          clrc
+     642 00002bb0     0960          rets
+     643                    **************************************************************************
+     644                    
+     645                    ************************** Animation Cycler ******************************
+     646 00002bc0           AnimCycle:
+     647                    ;Resets animation loop
+     648 00002bc0     b7a9          move    *A13(ANIMPTR),A9,L
+         00002bd0     0120  
+     649 00002be0     0960          rets
+     650                    **************************************************************************
+     651                    
+     652                    **************************** GetXVel *************************************
+     653 00002bf0           GetXVel:
+     654 00002bf0     b7a0          move    *A13(ANIMPTR),A0,L
+         00002c00     0120  
+     655 00002c10     0b60          cmpi    BUGCRAWL,A0
+         00002c20 ffff861f' 
+     656 00002c40     ca09          jreq    CrawlV
+     657 00002c50     0b60          cmpi    BUGJUMP,A0
+         00002c60 ffff84df' 
+     658 00002c80     ca09          jreq    JumpV
+     659 00002c90     0b60          cmpi    BUGFLY,A0
+         00002ca0 ffff825f' 
+     660 00002cc0     ca09          jreq    FlyV
+     661                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   16
+
+     662 00002cd0     c00c          jruc    NoXvel
+     663 00002ce0           CrawlV:
+     664 00002ce0     09e0          movi    CRAWLXVEL,A0
+         00002cf0 00018000  
+     665 00002d10     c009          jruc    GotXvel
+     666 00002d20           JumpV:
+     667 00002d20     09e0          movi    JUMPXVEL,A0
+         00002d30 00030000  
+     668 00002d50     c005          jruc    GotXvel
+     669 00002d60           FlyV:
+     670 00002d60     09e0          movi    FLYXVEL,A0
+         00002d70 00038000  
+     671 00002d90     c001          jruc    GotXvel
+     672 00002da0           NoXvel:
+     673 00002da0     5600          clr     A0
+     674 00002db0           GotXvel:
+     675 00002db0     0960          rets
+     676                    **************************************************************************
+     677                    
+     678                    ******************************* Go Crawl *********************************
+     679 00002dc0           DOCRAWL:  ;alternate entry point which allows completion of last anim
+     680 00002dc0     098f          mmtm    SP,A0
+         00002dd0     8000  
+     681 00002de0     c00b          jruc    CrawlNxt
+     682                    
+     683 00002df0           GOCRAWL:
+     684 00002df0     098f          mmtm    SP,A0
+         00002e00     8000  
+     685 00002e10     b7a0          move    *A13(ANIMPTR),A0,L
+         00002e20     0120  
+     686 00002e30     0b60          cmpi    BUGCRAWL,A0
+         00002e40 ffff861f' 
+     687 00002e60     ca08          jreq    Crawling
+     688 00002e70     09e9          movi    BUGCRAWL,A9
+         00002e80 000079e0' 
+     689 00002ea0           CrawlNxt:
+     690 00002ea0     09e0          movi    BUGCRAWL,A0
+         00002eb0 000079e0' 
+     691 00002ed0     b20d          move    A0,*A13(ANIMPTR),L
+         00002ee0     0120  
+     692 00002ef0           Crawling:
+     693 00002ef0     0d5f          calla   DFRMGRND
+         00002f00 00000000! 
+     694 00002f20     0b40          cmpi    5,A0
+         00002f30     fffa  
+     695 00002f40     c71c          jrgt    StrtJump                ;don't fuck with Jump routine
+     696 00002f50     4d00          move    A8,A0
+     697 00002f60     0d5f          calla   SETZPOS
+         00002f70 00000000! 
+     698                            ;* set veloctiy for skaters
+     699 00002f90     b500          move    *A8(OFLAGS),A0,W
+         00002fa0     0100  
+     700 00002fb0     1f60          btst    B_FLIPH,A0
+     701 00002fc0     ca04          jrz     VelPos2
+     702 00002fd0     09e0          movi    -CRAWLXVEL,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   17
+
+         00002fe0 fffe8000  
+     703 00003000     c003          jruc    SetXV2
+     704 00003010           VelPos2:
+     705 00003010     09e0          movi    CRAWLXVEL,A0
+         00003020 00018000  
+     706 00003040           SetXV2:
+     707 00003040     b208          move    A0,*A8(OXVEL),L
+         00003050     0040  
+     708                    
+     709 00003060           GoCrawlX:
+     710 00003060     09af          mmfm    SP,A0
+         00003070     0001  
+     711 00003080     0960          rets
+     712                    **************************************************************************
+     713                    
+     714                    ***************************** Go Jump ************************************
+     715 00003090           GOJUMP:
+     716                    ;* GO CRAWL jumps into middle of this routine be careful!!!
+     717 00003090     098f          mmtm    SP,A0
+         000030a0     8000  
+     718 000030b0     b7a0          move    *A13(ANIMPTR),A0,L
+         000030c0     0120  
+     719 000030d0     0b60          cmpi    BUGJUMP,A0
+         000030e0 ffff84df' 
+     720 00003100     ca06          jreq    Jumping
+     721 00003110           StrtJump:
+     722 00003110     09e0          movi    BUGJUMP,A0
+         00003120 00007b20' 
+     723 00003140     b20d          move    A0,*A13(ANIMPTR),L
+         00003150     0120  
+     724 00003160     4c09          move    A0,A9
+     725 00003170           Jumping:
+     726                            ;* set veloctiy for skaters
+     727 00003170     b500          move    *A8(OFLAGS),A0,W
+         00003180     0100  
+     728 00003190     1f60          btst    B_FLIPH,A0
+     729 000031a0     ca04          jrz     VelPos3
+     730 000031b0     09e0          movi    -JUMPXVEL,A0
+         000031c0 fffd0000  
+     731 000031e0     c003          jruc    SetXV3
+     732 000031f0           VelPos3:
+     733 000031f0     09e0          movi    JUMPXVEL,A0
+         00003200 00030000  
+     734 00003220           SetXV3:
+     735 00003220     b208          move    A0,*A8(OXVEL),L
+         00003230     0040  
+     736                    
+     737 00003240           GoJumpX:
+     738 00003240     09af          mmfm    SP,A0
+         00003250     0001  
+     739 00003260     0960          rets
+     740                    **************************************************************************
+     741                    
+     742                    ***************************** Go Fly *************************************
+     743 00003270           GOFLY:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   18
+
+     744 00003270     098f          mmtm    SP,A0
+         00003280     8000  
+     745 00003290     b7a0          move    *A13(ANIMPTR),A0,L
+         000032a0     0120  
+     746 000032b0     0b60          cmpi    BUGFLY,A0
+         000032c0 ffff825f' 
+     747 000032e0     ca06          jreq    Flying
+     748 000032f0     09e0          movi    BUGFLY,A0
+         00003300 00007da0' 
+     749 00003320     b20d          move    A0,*A13(ANIMPTR),L
+         00003330     0120  
+     750 00003340     4c09          move    A0,A9
+     751 00003350           Flying:
+     752                            ;* set veloctiy for skaters
+     753 00003350     b500          move    *A8(OFLAGS),A0,W
+         00003360     0100  
+     754 00003370     1f60          btst    B_FLIPH,A0
+     755 00003380     ca04          jrz     VelPos4
+     756 00003390     09e0          movi    -FLYXVEL,A0
+         000033a0 fffc8000  
+     757 000033c0     c003          jruc    SetXV4
+     758 000033d0           VelPos4:
+     759 000033d0     09e0          movi    FLYXVEL,A0
+         000033e0 00038000  
+     760 00003400           SetXV4:
+     761 00003400     b208          move    A0,*A8(OXVEL),L
+         00003410     0040  
+     762                    
+     763 00003420           GoFlyX:
+     764 00003420     09af          mmfm    SP,A0
+         00003430     0001  
+     765 00003440     0960          rets
+     766                    **************************************************************************
+     767                    
+     768                    
+     769                    ****************************  Jumper  ************************************
+     770                    ;* bug homes in on player while jumping..
+     771 00003450           Jumper:
+     772 00003450     afa0          movb    *A13(FLYING),A0
+         00003460     0180  
+     773 00003470     cb5a          jrnz    JumperX
+     774 00003480     0d5f          calla   ClosestP
+         00003490 00000000! 
+     775 000034b0     4d07          move    A8,A7
+     776 000034c0     4c08          move    A0,A8
+     777 000034d0     0d5f          calla   GETANIX
+         000034e0 00000000! 
+     778 00003500     4d01          move    A8,A1           ;Ptr to Plyr
+     779 00003510     4c02          move    A0,A2           ;Xpos of Plyr
+     780 00003520     4ce8          move    A7,A8
+     781 00003530     0d5f          calla   GETANIX
+         00003540 00000000! 
+     782 00003560     4c07          move    A0,A7
+     783 00003570     4447          sub     A2,A7           ;A14 dist between bug and player
+     784 00003580     c703          jrgt    OnRght
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   19
+
+     785 00003590     0b00          addi    75,A0
+         000035a0     004b  
+     786 000035b0     c002          jruc    GotXD
+     787 000035c0           OnRght:
+     788 000035c0     0be0          subi    75,A0
+         000035d0     ffb4  
+     789 000035e0           GotXD:
+     790 000035e0     4c03          move    A0,A3
+     791                    
+     792 000035f0     19e0          movk    15,A0
+     793 00003600     0d5f          calla   RANDU
+         00003610 00000000! 
+     794 00003630     1140          addk    10,A0
+     795 00003640     07e2          movb    @RAND,A2
+         00003650 00000000! 
+     796 00003670     ce01          jrn     SkNeg
+     797 00003680     03a0          neg     A0
+     798 00003690           SkNeg:
+     799 00003690     b422          move    *A1(OZPOS),A2,W
+         000036a0     00d0  
+     800 000036b0     4002          add     A0,A2
+     801 000036c0     2602          sll     16,A2
+     802 000036d0     ee43          movy    A2,A3
+     803 000036e0     b26d          move    A3,*A13(DEST),L
+         000036f0     01e0  
+     804 00003700     0d5f          calla   ClipDest
+         00003710 00000000! 
+     805                    
+     806 00003730     1820          movk    DFLT_T,A0
+     807 00003740     ac0d          movb    A0,*A13(DEST_TAG)
+         00003750     01c0  
+     808                    
+     809 00003760     09c0          movi    300,A0
+         00003770     012c  
+     810 00003780     0387          abs     A7
+     811 00003790     44e0          sub     A7,A0
+     812 000037a0     ce04          jrn     NoJmp
+     813 000037b0     0d5f          calla   RANDPER
+         000037c0 00000000! 
+     814 000037e0     c809          jrc     GoJmp
+     815 000037f0           NoJmp:
+     816 000037f0     0d3f          callr   GOCRAWL
+         00003800     ff5e  
+     817 00003810     b7a0          move    *A13(FUNCS),A0,L        ;* choose appropriate godest func
+         00003820     00e0  
+     818 00003830     0b00          addi    GODEST,A0
+         00003840     0020  
+     819 00003850     8600          move    *A0,A0,L
+     820 00003860     0920          call    A0
+     821 00003870     c01a          jruc    JumperX
+     822 00003880           GoJmp:
+     823 00003880     0d3f          callr   GOJUMP
+         00003890     ff7f  
+     824 000038a0     b7a0          move    *A13(FUNCS),A0,L        ;* choose appropriate godest func
+         000038b0     00e0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   20
+
+     825 000038c0     0b00          addi    GODEST,A0
+         000038d0     0020  
+     826 000038e0     8600          move    *A0,A0,L
+     827 000038f0     0920          call    A0
+     828                    
+     829 00003900     1840          movk    2,A0
+     830 00003910     ac0d          movb    A0,*A13(FLYING)
+         00003920     0180  
+     831 00003930     09e0          movi    038000H,A0
+         00003940 00038000  
+     832 00003960     0d5f          calla   RANDU
+         00003970 00000000! 
+     833 00003990     0b20          addi    038000H,A0
+         000039a0 00038000  
+     834 000039c0     03a0          neg     A0
+     835 000039d0     b701          move    *A8(OYVEL),A1,L
+         000039e0     0060  
+     836 000039f0     4001          add     A0,A1
+     837 00003a00     b228          move    A1,*A8(OYVEL),L
+         00003a10     0060  
+     838 00003a20           JumperX:
+     839 00003a20     0960          rets
+     840                    **************************************************************************
+     841                    
+     842                    ****************************  Crawler  ************************************
+     843                    ;* bug homes in on player by CRAWLING.
+     844 00003a30           Crawler:
+     845 00003a30     0d5f          calla   ClosestP
+         00003a40 00000000! 
+     846 00003a60     4d07          move    A8,A7
+     847 00003a70     4c08          move    A0,A8
+     848 00003a80     0d5f          calla   GETANIX
+         00003a90 00000000! 
+     849 00003ab0     4d01          move    A8,A1           ;Ptr to Plyr
+     850 00003ac0     4c03          move    A0,A3           ;Xpos of Plyr
+     851 00003ad0     4ce8          move    A7,A8
+     852                    
+     853 00003ae0     b422          move    *A1(OZPOS),A2,W
+         00003af0     00d0  
+     854 00003b00     2602          sll     16,A2
+     855 00003b10     ee43          movy    A2,A3
+     856 00003b20     b26d          move    A3,*A13(DEST),L
+         00003b30     01e0  
+     857 00003b40     0d5f          calla   ClipDest
+         00003b50 00000000! 
+     858                    
+     859 00003b70     0d3f          callr   GOCRAWL
+         00003b80     ff26  
+     860 00003b90     1820          movk    DFLT_T,A0
+     861 00003ba0     ac0d          movb    A0,*A13(DEST_TAG)
+         00003bb0     01c0  
+     862                    
+     863 00003bc0     b7a0          move    *A13(FUNCS),A0,L        ;* choose appropriate godest func
+         00003bd0     00e0  
+     864 00003be0     0b00          addi    GODEST,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   21
+
+         00003bf0     0020  
+     865 00003c00     8600          move    *A0,A0,L
+     866 00003c10     0920          call    A0
+     867                    
+     868 00003c20     0960          rets
+     869                    **************************************************************************
+     870                    
+     871                    ****************************  Flier  ************************************
+     872                    ;* bug homes in on player by Flying
+     873 00003c30           Flier:
+     874 00003c30     0d5f          calla   ClosestP
+         00003c40 00000000! 
+     875 00003c60     4d07          move    A8,A7
+     876 00003c70     4c08          move    A0,A8
+     877 00003c80     0d5f          calla   GETANIX
+         00003c90 00000000! 
+     878 00003cb0     4d01          move    A8,A1           ;Ptr to Plyr
+     879 00003cc0     4c03          move    A0,A3           ;Xpos of Plyr
+     880 00003cd0     4ce8          move    A7,A8
+     881 00003ce0     b422          move    *A1(OZPOS),A2,W
+         00003cf0     00d0  
+     882 00003d00     2602          sll     16,A2
+     883 00003d10     ec02          movx    A0,A2
+     884 00003d20     b24d          move    A2,*A13(DEST),L
+         00003d30     01e0  
+     885 00003d40     0d5f          calla   ClipDest
+         00003d50 00000000! 
+     886                    
+     887 00003d70     1820          movk    DFLT_T,A0
+     888 00003d80     ac0d          movb    A0,*A13(DEST_TAG)
+         00003d90     01c0  
+     889                    
+     890 00003da0     0d3f          callr   GOFLY
+         00003db0     ff4b  
+     891 00003dc0     b7a0          move    *A13(FUNCS),A0,L        ;* choose appropriate godest func
+         00003dd0     00e0  
+     892 00003de0     0b00          addi    GODEST,A0
+         00003df0     0020  
+     893 00003e00     8600          move    *A0,A0,L
+     894 00003e10     0920          call    A0
+     895                    
+     896 00003e20     09d0          movi    5,B0            ;Min Y Height
+         00003e30     0005  
+     897 00003e40     09d1          movi    95,B1           ;Max Y Height
+         00003e50     005f  
+     898 00003e60     0d5f          calla   RANGRAND        ;A0 = desired Y Height
+         00003e70 00000000! 
+     899 00003e90     0d5f          calla   DFRMGRND        ;A1 = Current Y Height
+         00003ea0 00000000! 
+     900 00003ec0     4401          sub     A0,A1           ;A0 = Y Delta
+     901 00003ed0     2601          sll     16,A1
+     902 00003ee0     afa2          movb    *A13(BRAINCT),A2        ;A2 = Amt of time to get there
+         00003ef0     0230  
+     903                    ;       sll     1,A2
+     904 00003f00     5841          divs    A2,A1           ;A1 = new Y Velocity
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   22
+
+     905 00003f10     b700          move    *A8(OZVEL),A0,L
+         00003f20     00e0  
+     906 00003f30     4001          add     A0,A1
+     907 00003f40     b228          move    A1,*A8(OYVEL),L
+         00003f50     0060  
+     908                    
+     909 00003f60     0960          rets
+     910                    **************************************************************************
+     911                    
+     912                    **************************************************************************
+     913 00003f70           BUG_DONE:
+     914 00003f70     4d00          MOVE    A8,A0           ;GET THE POINTER TO THE OBJECT
+     915 00003f80     0d5f          calla   DELENEMY                        ;DELETE THE ENEMY
+         00003f90 00000000! 
+     916 00003fb0           BUG_DIE:
+     917 00003fb0                   DECW    @BUGCNT
+     918 00004020                   DIE
+     919                    **************************************************************************
+     920                    
+     921                    **************************************************************************
+     922 00004050           BUGCOL0:
+     923                    *A0 = PTR TO Bug OBJECT
+     924                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     925 00004050     b709          MOVE    *A8(OXVEL),A9,L         ;GET PROJECTILE DATA
+         00004060     0040  
+     926 00004070     b70a          MOVE    *A8(OYVEL),A10,L
+         00004080     0060  
+     927 00004090     b50b          MOVE    *A8(OID),A11,W          
+         000040a0     01a0  
+     928                    
+     929 000040b0     4d06          MOVE    A8,A6                   ;STORE KILLERS OBLOCK
+     930 000040c0     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+     931                    
+     932 000040d0     09ee          MOVI    DUMCOLL,A14
+         000040e0 00000000! 
+     933 00004100     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER
+         00004110     01d0  
+     934                    
+     935 00004120     b600          MOVE    *A0(OPLINK),A0,L
+         00004130     01f0  
+     936 00004140     0d5f          CALLA   KILL                    ;KILL CONTROL
+         00004150 00000000! 
+     937 00004170     4c0e          MOVE    A0,A14                  ;STORE THIS RELIC
+     938                            
+     939 00004180     09c1          MOVI    0EDh,A1
+         00004190     00ed  
+     940 000041a0     09e7          MOVI    WENDIE,A7
+         000041b0 00000000! 
+     941 000041d0     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         000041e0 00000000! 
+     942 00004200     ca0c          jrz     SkDie
+     943 00004210     bac0          MOVE    *A6(ODMAXY),*A0(PDATA),L        ;PASS KILLERS DMA XY POSITION
+         00004220     0210  
+         00004230     0060  
+     944 00004240     bac0          MOVE    *A6(OSIZE),*A0(PDATA+20H),L     ;AND KILLERS XY SIZE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   23
+
+         00004250     0140  
+         00004260     0080  
+     945 00004270     bbc0          move    *A14(EBCNTRS),*A0(EBCNTRS),L    ;and the booty counters
+         00004280     0140  
+         00004290     0140  
+     946 000042a0     bbc0          MOVE    *A14(EMAINT),*A0(EMAINT),L
+         000042b0     0100  
+         000042c0     0100  
+     947                    
+     948                    ;       move    *A6(OYPOS),A9,W
+     949                    ;       MOVI    0EDh,A1
+     950                    ;       movi    SPLATTER,A7
+     951                    ;       CALLA   GETPRC
+     952                    
+     953 000042d0           SkDie:
+     954 000042d0                   DECW    @BUGCNT
+     955                    
+     956 00004340     09e0          movi    BUGHTSND,A0
+         00004350 00000000! 
+     957 00004370     0d5f          calla   ONESND
+         00004380 00000000! 
+     958                    
+     959 000043a0     0320          CLRC            ;Don't delete in Coll routine
+     960 000043b0     0960          RETS
+     961                    *************************************************************************
+     962                    
+     963                    **************************************************************************
+     964 000043c0           BugPlCol:
+     965                    *A0 = PTR TO BUG OBJECT
+     966                    *A8 = PTR to Player
+     967                    ;* This routine kills the standard bug process.
+     968                    ;* If the player is travelling up, the bug bounces off.
+     969                    ;* If the player collided with is coming down, and the bug is on the
+     970                    ;* ground, the bug is smashed.
+     971                    ;* Else, the bug is switched to the attached-to-player process.
+     972                    
+     973 000043c0     4d06          move    A8,A6
+     974 000043d0     4c08          move    A0,A8
+     975                    
+     976 000043e0     4cc0          move    A6,A0
+     977 000043f0     0d5f          calla   GetPData
+         00004400 00000000! 
+     978 00004420     b600          move    *A0(PFLAGS),A0,L
+         00004430     0080  
+     979 00004440     0b80          andi    MJUMP2,A0
+         00004450 fffffffb  
+     980 00004470     ca42          jrz     GrabOn
+     981                    
+     982 00004480     b6ca          MOVE    *A6(OYVEL),A10,L
+         00004490     0060  
+     983 000044a0     b6cb          MOVE    *A6(OZVEL),A11,L
+         000044b0     00e0  
+     984 000044c0     456a          sub     A11,A10
+     985 000044d0     4d42          move    A10,A2
+     986 000044e0     0382          abs     A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   24
+
+     987 000044f0     0b42          cmpi    050H,A2
+         00004500     ffaf  
+     988 00004510     c438          jrlt    GrabOn
+     989 00004520     0b4a          cmpi    04000H,A10
+         00004530     bfff  
+     990 00004540     c471          jrlt    PlyrGoUp
+     991                    
+     992                            ;* Player coming down..
+     993 00004550     0d5f          calla   DFRMGRND
+         00004560 00000000! 
+     994 00004580     0b41          cmpi    10,A1
+         00004590     fff5  
+     995 000045a0     c66d          jrle    BugSplat
+     996                    
+     997 000045b0     4cc0          move    A6,A0
+     998 000045c0     0d5f          calla   GetPData
+         000045d0 00000000! 
+     999 000045f0     0d5f          calla   GETPBOTY
+         00004600 00000000! 
+    1000 00004620     b502          move    *A8(OYPOS),A2,W
+         00004630     00b0  
+    1001 00004640     15e2          subk    15,A2                   ;roughly half the height of a bug
+    1002 00004650     4422          sub     A1,A2
+    1003 00004660     0382          abs     A2
+    1004 00004670     0b42          cmpi    32,A2
+         00004680     ffdf  
+    1005 00004690     c720          jrgt    GrabOn
+    1006                    
+    1007                            ;* Bug is near players feet, drag it down to the pavement
+    1008 000046a0     b4cb          move    *A6(OID),A11,W
+         000046b0     01a0  
+    1009 000046c0     0d5f          calla   SCRKIL
+         000046d0 00000000! 
+    1010                    
+    1011 000046f0     09ee          MOVI    DUMCOLL,A14
+         00004700 00000000! 
+    1012 00004720     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER
+         00004730     01d0  
+    1013                    
+    1014 00004740     b700          MOVE    *A8(OPLINK),A0,L
+         00004750     01f0  
+    1015 00004760     0d5f          CALLA   KILL                    ;KILL CONTROL
+         00004770 00000000! 
+    1016 00004790     4c0e          move    A0,A14
+    1017                            
+    1018 000047a0     09c1          MOVI    BUGSPID,A1
+         000047b0     0e52  
+    1019 000047c0     09e7          MOVI    BugFall,A7
+         000047d0 00004e20' 
+    1020 000047f0     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00004800 00000000! 
+    1021 00004820     ca36          jrz     DelBug
+    1022 00004830     bbc0          move    *A14(EMAINT),*A0(EMAINT),L
+         00004840     0100  
+         00004850     0100  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   25
+
+    1023 00004860     b2c0          move    A6,*A0(VICTIM),L        ;PASS KILLERS DMA XY POSITION
+         00004870     01e0  
+    1024                    
+    1025 00004880     0320          CLRC            ;Don't delete in Coll routine
+    1026 00004890     0960          RETS
+    1027                            
+    1028 000048a0           GrabOn:
+    1029 000048a0     09c0          movi    180,A0
+         000048b0     00b4  
+    1030 000048c0     0d5f          calla   RANDPER
+         000048d0 00000000! 
+    1031 000048f0     c950          jrnc    BCOLX
+    1032                    
+    1033                            ;* is bug close enough to player?
+    1034 00004900     0d5f          calla   GETANIX
+         00004910 00000000! 
+    1035 00004930     4c02          move    A0,A2
+    1036 00004940     4d03          move    A8,A3
+    1037 00004950     4cc8          move    A6,A8
+    1038 00004960     0d5f          calla   GETANIX
+         00004970 00000000! 
+    1039 00004990     4c68          move    A3,A8
+    1040 000049a0     4402          sub     A0,A2
+    1041 000049b0     0382          abs     A2
+    1042 000049c0     0b42          cmpi    22,A2
+         000049d0     ffe9  
+    1043 000049e0     c741          jrgt    BCOLX
+    1044                    
+    1045                            ;* Attach bug to player
+    1046 000049f0     09ee          MOVI    BUGCOLL2,A14
+         00004a00 000070b0' 
+    1047 00004a20     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER
+         00004a30     01d0  
+    1048                    
+    1049 00004a40     b700          MOVE    *A8(OPLINK),A0,L
+         00004a50     01f0  
+    1050 00004a60     0d5f          CALLA   KILL                    ;KILL CONTROL
+         00004a70 00000000! 
+    1051 00004a90     4c0e          MOVE    A0,A14                  ;STORE THIS RELIC
+    1052                            
+    1053 00004aa0     09c1          MOVI    BUGPPID,A1
+         00004ab0     0e51  
+    1054 00004ac0     09e7          MOVI    BugOn,A7
+         00004ad0 00005c10' 
+    1055 00004af0     0d5f          CALLA   GETPRC
+         00004b00 00000000! 
+    1056 00004b20     ca06          jrz     DelBug
+    1057 00004b30     bbc0          move    *A14(EMAINT),*A0(EMAINT),L
+         00004b40     0100  
+         00004b50     0100  
+    1058 00004b60     b2c0          move    A6,*A0(VICTIM),L        ;PASS KILLERS DMA XY POSITION
+         00004b70     01e0  
+    1059 00004b80     c00b          jruc    SkDelBug
+    1060                    
+    1061 00004b90           DelBug:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   26
+
+    1062 00004b90     4d00          MOVE    A8,A0
+    1063 00004ba0     0d5f          calla   DELENEMY
+         00004bb0 00000000! 
+    1064 00004bd0                   DECW    @BUGCNT
+    1065 00004c40           SkDelBug:
+    1066 00004c40     0320          CLRC            ;Don't delete in Coll routine
+    1067 00004c50     0960          RETS
+    1068                    
+    1069                    
+    1070 00004c60           PlyrGoUp:
+    1071 00004c60     0320          CLRC            ;Don't delete in Coll routine
+    1072 00004c70     0960          RETS
+    1073                    
+    1074 00004c80           BugSplat:
+    1075 00004c80     b4cb          move    *A6(OID),A11,W
+         00004c90     01a0  
+    1076 00004ca0     0d5f          calla   SCRKIL
+         00004cb0 00000000! 
+    1077                    
+    1078 00004cd0     09ee          MOVI    DUMCOLL,A14
+         00004ce0 00000000! 
+    1079 00004d00     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER
+         00004d10     01d0  
+    1080                    
+    1081 00004d20     b700          MOVE    *A8(OPLINK),A0,L
+         00004d30     01f0  
+    1082 00004d40     0d5f          CALLA   KILL                    ;KILL CONTROL
+         00004d50 00000000! 
+    1083                            
+    1084 00004d70     09c1          MOVI    BUGSPID,A1
+         00004d80     0e52  
+    1085 00004d90     09e7          MOVI    BugSplt,A7
+         00004da0 000055b0' 
+    1086 00004dc0     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00004dd0 00000000! 
+    1087 00004df0     cad9          jrz     DelBug
+    1088                    
+    1089 00004e00           BCOLX:
+    1090 00004e00     0320          CLRC            ;Don't delete in Coll routine
+    1091 00004e10     0960          RETS
+    1092                    *************************************************************************
+    1093                    
+    1094                    
+    1095                    *************************************************************************
+    1096 00004e20           BugFall:
+    1097                    ;* The bug is trapped below the players feet and is carried to the
+    1098                    ;* pavement below.
+    1099 00004e20     b3a8          move    A13,*A8(OPLINK),L
+         00004e30     01f0  
+    1100                    
+    1101 00004e40     0d5f          calla   ClrVel
+         00004e50 00000000! 
+    1102 00004e70     b7a1          move    *A13(VICTIM),A1,L
+         00004e80     01e0  
+    1103 00004e90     b82d          move    *A1(OZPOS),*A13(OLDZPOS),W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   27
+
+         00004ea0     00d0  
+         00004eb0     0200  
+    1104 00004ec0     b82d          move    *A1(OYPOS),*A13(OLDYPOS),W
+         00004ed0     00b0  
+         00004ee0     0210  
+    1105 00004ef0     b82d          move    *A1(OXPOS),*A13(OLDXPOS),W
+         00004f00     0090  
+         00004f10     00e0  
+    1106                    
+    1107 00004f20     4c20          move    A1,A0
+    1108 00004f30     0d5f          calla   GetPData
+         00004f40 00000000! 
+    1109 00004f60     b20d          move    A0,*A13(VICTIMDATA),L
+         00004f70     01c0  
+    1110                    
+    1111 00004f80     09e9          movi    BUGFALL,A9
+         00004f90 00008150' 
+    1112 00004fb0     5600          clr     A0
+    1113                            
+    1114 00004fc0           FallLp:
+    1115 00004fc0     b7a0          move    *A13(VICTIMDATA),A0,L
+         00004fd0     01c0  
+    1116 00004fe0     b600          move    *A0(PLOBJ),A0,L
+         00004ff0     0120  
+    1117 00005000     0d5f          calla   DFRMGRND
+         00005010 00000000! 
+    1118 00005030     0b41          cmpi    20,A1
+         00005040     ffeb  
+    1119 00005050     c655          jrle    BugSplt
+    1120 00005060     b602          MOVE    *A0(OYVEL),A2,L
+         00005070     0060  
+    1121 00005080     b603          MOVE    *A0(OZVEL),A3,L
+         00005090     00e0  
+    1122 000050a0     4462          sub     A3,A2
+    1123 000050b0     0b42          cmpi    04000H,A2
+         000050c0     bfff  
+    1124 000050d0     c400          jrlt    BugOff
+         000050e0     01cb  
+    1125                    
+    1126 000050f0     b7a1          move    *A13(VICTIM),A1,L
+         00005100     01e0  
+    1127                    
+    1128 00005110     b422          move    *A1(OXPOS),A2,W
+         00005120     0090  
+    1129 00005130     b5a3          move    *A13(OLDXPOS),A3,W
+         00005140     00e0  
+    1130 00005150     b04d          move    A2,*A13(OLDXPOS),W
+         00005160     00e0  
+    1131 00005170     4462          sub     A3,A2
+    1132 00005180     b500          move    *A8(OXPOS),A0,W
+         00005190     0090  
+    1133 000051a0     4040          add     A2,A0
+    1134 000051b0     b008          move    A0,*A8(OXPOS),W
+         000051c0     0090  
+    1135                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   28
+
+    1136 000051d0     b422          move    *A1(OZPOS),A2,W
+         000051e0     00d0  
+    1137 000051f0     b5a3          move    *A13(OLDZPOS),A3,W
+         00005200     0200  
+    1138 00005210     b04d          move    A2,*A13(OLDZPOS),W
+         00005220     0200  
+    1139 00005230     4462          sub     A3,A2
+    1140 00005240     b500          move    *A8(OZPOS),A0,W
+         00005250     00d0  
+    1141 00005260     4040          add     A2,A0
+    1142 00005270     b008          move    A0,*A8(OZPOS),W
+         00005280     00d0  
+    1143                    
+    1144 00005290     b422          move    *A1(OYPOS),A2,W
+         000052a0     00b0  
+    1145 000052b0     b5a3          move    *A13(OLDYPOS),A3,W
+         000052c0     0210  
+    1146 000052d0     b04d          move    A2,*A13(OLDYPOS),W
+         000052e0     0210  
+    1147 000052f0     4462          sub     A3,A2
+    1148 00005300     b500          move    *A8(OYPOS),A0,W
+         00005310     00b0  
+    1149 00005320     4002          add     A0,A2
+    1150 00005330     1062          addk    3,A2
+    1151 00005340     b7a0          move    *A13(VICTIMDATA),A0,L
+         00005350     01c0  
+    1152 00005360     0d5f          calla   GETPBOTY
+         00005370 00000000! 
+    1153 00005390     14a1          subk    5,A1
+    1154 000053a0     4822          cmp     A1,A2
+    1155 000053b0     c401          jrlt    SetFallY
+    1156 000053c0     4c22          move    A1,A2
+    1157 000053d0           SetFallY:
+    1158 000053d0     b048          move    A2,*A8(OYPOS),W
+         000053e0     00b0  
+    1159                    
+    1160 000053f0     afa0          movb    *A13(ANIMTIKS),A0
+         00005400     01a0  
+    1161 00005410     cb0f          jrnz    AnimX2
+    1162 00005420     1881          movk    4,A1                    ;* one frame, no sleepin
+    1163 00005430                   jsrp    FRANIM
+    1164 000054a0     8721          move    *A9,A1,L
+    1165 000054b0     cb03          jrnz    LstLft2
+    1166                            ;* recycle animation
+    1167 000054c0     09e9          movi    BUGFALL,A9
+         000054d0 00008150' 
+    1168 000054f0           LstLft2:
+    1169 000054f0     ac0d          movb    A0,*A13(ANIMTIKS)
+         00005500     01a0  
+    1170 00005510           AnimX2:
+    1171 00005510     afa0          movb    *A13(ANIMTIKS),A0
+         00005520     01a0  
+    1172 00005530     1420          dec     A0
+    1173 00005540     ac0d          movb    A0,*A13(ANIMTIKS)
+         00005550     01a0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   29
+
+    1174                            
+    1175 00005560                   SLEEP   1
+    1176                    
+    1177 000055a0     c0a1          jruc    FallLp
+    1178                    *************************************************************************
+    1179                    
+    1180                    
+    1181                    *************************************************************************
+    1182 000055b0           BugSplt:
+    1183                    ; Squish the bug.
+    1184                    
+    1185                            ;* BUMP APPROPRIATE SQUISH CTR, GIVE BIG BONUS
+    1186 000055b0     052b          zext    A11,W
+    1187 000055c0     0b4b          cmpi    P2OID,A11
+         000055d0     dfff  
+    1188 000055e0     ca16          jreq    BMPP2CNT
+    1189 000055f0     05a0          move    @pl1sqsh,A0,W   
+         00005600 00000000- 
+    1190 00005620     1020          inc     A0
+    1191 00005630     0580          move    A0,@pl1sqsh,W
+         00005640 00000000- 
+    1192 00005660     0b40          cmpi    2,A0
+         00005670     fffd  
+    1193 00005680     c60b          jrle    SkBon1
+    1194                            ;GIVE BIG BONUS
+    1195 00005690     09e2          movi    P1DATA,A2
+         000056a0 00000000! 
+    1196 000056c0     09c1          movi    01000H,A1
+         000056d0     1000  
+    1197 000056e0     0d5f          calla   SCORE
+         000056f0 00000000! 
+    1198 00005710     0d5f          calla   PUT1K
+         00005720 00000000! 
+    1199 00005740           SkBon1:
+    1200 00005740     c015          jruc    SqshIncd
+    1201 00005750           BMPP2CNT:
+    1202 00005750     05a0          move    @pl2sqsh,A0,W   
+         00005760 00000010- 
+    1203 00005780     1020          inc     A0
+    1204 00005790     0580          move    A0,@pl2sqsh,W
+         000057a0 00000010- 
+    1205 000057c0     0b40          cmpi    2,A0
+         000057d0     fffd  
+    1206 000057e0     c60b          jrle    SkBon2
+    1207                            ;GIVE BIG BONUS
+    1208 000057f0     09e2          movi    P2DATA,A2
+         00005800 00000000! 
+    1209 00005820     09c1          movi    01000H,A1
+         00005830     1000  
+    1210 00005840     0d5f          calla   SCORE
+         00005850 00000000! 
+    1211 00005870     0d5f          calla   PUT1K
+         00005880 00000000! 
+    1212 000058a0           SkBon2:
+    1213 000058a0           SqshIncd:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   30
+
+    1214                    
+    1215 000058a0     09e0          movi    SQISHSND,A0
+         000058b0 00000000! 
+    1216 000058d0     0d5f          calla   ONESND
+         000058e0 00000000! 
+    1217 00005900     4d00          move    A8,A0
+    1218 00005910     0d5f          calla   SETTZPOS
+         00005920 00000000! 
+    1219 00005940     0d5f          calla   DELSHAD
+         00005950 00000000! 
+    1220 00005970     0d5f          calla   ZCHECK
+         00005980 000024e0' 
+    1221                    
+    1222 000059a0     0d5f          calla   ClrVel
+         000059b0 00000000! 
+    1223 000059d0     09e9          movi    SQUISH,A9
+         000059e0 000089a0' 
+    1224 00005a00     1821          movk    1,A1
+    1225 00005a10                   jsrp    FRANIM
+    1226                    
+    1227 00005a80                   DECW    @BUGCNT
+    1228                    
+    1229 00005af0                   SLEEP   20
+    1230 00005b30     09e9          MOVI    [1,1],A9
+         00005b40 00010001  
+    1231 00005b60                   CREATE  0DFh,ESINK
+    1232 00005be0                   DIE                        
+    1233                    *************************************************************************
+    1234                    
+    1235                    
+    1236                    *************************************************************************
+    1237 00005c10           BugOn:
+    1238                    ;* The bug slowly crawls up the players body,
+    1239                    ;* the higher the bug is on the body the more damage it does.
+    1240                    ;* If the Player jumps, the bug is knocked loose. 
+    1241 00005c10     0d5f          calla   ClrVel
+         00005c20 00000000! 
+    1242                    
+    1243 00005c40     b7a1          move    *A13(VICTIM),A1,L
+         00005c50     01e0  
+    1244 00005c60     ca00          jrz     BugOff
+         00005c70     0112  
+    1245 00005c80     b82d          move    *A1(OZPOS),*A13(OLDZPOS),W
+         00005c90     00d0  
+         00005ca0     0200  
+    1246 00005cb0     b82d          move    *A1(OYPOS),*A13(OLDYPOS),W
+         00005cc0     00b0  
+         00005cd0     0210  
+    1247 00005ce0     b82d          move    *A1(OXVEL+16),*A13(VOLDXV),W
+         00005cf0     0050  
+         00005d00     0220  
+    1248                    
+    1249 00005d10     0d5f          calla   GETANIX
+         00005d20 00000000! 
+    1250 00005d40     4c02          move    A0,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   31
+
+    1251 00005d50     4d03          move    A8,A3
+    1252 00005d60     4c28          move    A1,A8
+    1253 00005d70     0d5f          calla   GETANIX
+         00005d80 00000000! 
+    1254 00005da0     4d01          move    A8,A1
+    1255 00005db0     4c68          move    A3,A8
+    1256 00005dc0     4402          sub     A0,A2
+    1257 00005dd0     b04d          move    A2,*A13(XDIFF),W
+         00005de0     00e0  
+    1258                    
+    1259 00005df0     4c20          move    A1,A0
+    1260 00005e00     0d5f          calla   GetPData
+         00005e10 00000000! 
+    1261 00005e30     ca00          jrz     BugOff
+         00005e40     00f5  
+    1262 00005e50     b20d          move    A0,*A13(VICTIMDATA),L
+         00005e60     01c0  
+    1263                    
+    1264 00005e70     09e9          movi    BITE,A9
+         00005e80 00007ee0' 
+    1265 00005ea0     5600          clr     A0
+    1266 00005eb0     b422          move    *A1(OZPOS),A2,W
+         00005ec0     00d0  
+    1267 00005ed0     4c44          move    A2,A4
+    1268 00005ee0     1024          inc     A4
+    1269 00005ef0     b503          move    *A8(OZPOS),A3,W
+         00005f00     00d0  
+    1270 00005f10     4843          cmp     A2,A3
+    1271 00005f20     cf05          jrnn    SkOnBack
+    1272 00005f30     1820          movk    1,A0
+    1273 00005f40     1444          subk    2,A4
+    1274 00005f50     09e9          movi    BBITE,A9
+         00005f60 00008070' 
+    1275 00005f80           SkOnBack:       
+    1276 00005f80     ac0d          movb    A0,*A13(OnBack)
+         00005f90     00f0  
+    1277 00005fa0     b088          move    A4,*A8(OZPOS),W
+         00005fb0     00d0  
+    1278                    
+    1279                            ;* Don't always start anim on first frame..
+    1280 00005fc0     1860          movk    3,A0
+    1281 00005fd0     0d5f          calla   RANDU
+         00005fe0 00000000! 
+    1282 00006000     1420          dec     A0
+    1283 00006010     2480          sll     4,A0
+    1284 00006020     4009          add     A0,A9
+    1285 00006030     2420          sll     1,A0
+    1286 00006040     4009          add     A0,A9
+    1287                            
+    1288 00006050           CrawlLp:
+    1289 00006050     b7a1          move    *A13(VICTIMDATA),A1,L
+         00006060     01c0  
+    1290 00006070     b622          move    *A1(POBJ),A2,L
+         00006080     00a0  
+    1291 00006090     cb05          jrnz    SkNoPlay
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   32
+
+    1292 000060a0     0d5f          calla   ClrVel
+         000060b0 00000000! 
+    1293 000060d0     c000          jruc    BugOff
+         000060e0     00cb  
+    1294 000060f0           SkNoPlay:
+    1295 000060f0     b622          move    *A1(PFLAGS),A2,L
+         00006100     0080  
+    1296 00006110     1da2          btst    BDEAD,A2
+    1297 00006120     cb03          jrnz    SkObjRst
+    1298 00006130     ba2d          move    *A1(POBJ),*A13(VICTIM),L
+         00006140     00a0  
+         00006150     01e0  
+    1299 00006160           SkObjRst:
+    1300                    
+    1301                            ;* check if Player is changing directions
+    1302 00006160     b7a1          move    *A13(VICTIM),A1,L
+         00006170     01e0  
+    1303 00006180     b422          move    *A1(OXVEL+16),A2,W
+         00006190     0050  
+    1304 000061a0     b5a3          move    *A13(VOLDXV),A3,W
+         000061b0     0220  
+    1305 000061c0     4843          cmp     A2,A3
+    1306 000061d0     ca04          jreq    SkShake
+    1307 000061e0     b04d          move    A2,*A13(VOLDXV),W
+         000061f0     0220  
+    1308 00006200     c000          jruc    ShakeOff
+         00006210     0080  
+    1309 00006220           SkShake:
+    1310                            
+    1311                            ;* check if Player is jumping
+    1312                    ;       move    *A13(VICTIM),A1,L
+    1313                    ;       move    *A1(OYVEL),A2,L
+    1314                    ;       move    *A1(OZVEL),A3,L
+    1315                    ;       sub     A3,A2
+    1316                    ;       jrn     ShakeOff
+    1317                    
+    1318 00006220     0d5f          calla   GETANIX
+         00006230 00000000! 
+    1319 00006250     4c02          move    A0,A2
+    1320 00006260     4d03          move    A8,A3
+    1321 00006270     4c28          move    A1,A8
+    1322 00006280     0d5f          calla   GETANIX
+         00006290 00000000! 
+    1323 000062b0     4d01          move    A8,A1
+    1324 000062c0     4c68          move    A3,A8
+    1325 000062d0     4402          sub     A0,A2
+    1326 000062e0     b500          move    *A8(OXPOS),A0,W
+         000062f0     0090  
+    1327 00006300     4440          sub     A2,A0
+    1328 00006310     b5a3          move    *A13(XDIFF),A3,W
+         00006320     00e0  
+    1329 00006330     ca07          jrz     SkXDiff
+    1330 00006340     4060          add     A3,A0   
+    1331 00006350     4c63          move    A3,A3
+    1332 00006360     c101          jrp     SkIncXD
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   33
+
+    1333 00006370     1043          addk    2,A3
+    1334 00006380           SkIncXD:
+    1335 00006380     1423          dec     A3
+    1336 00006390     b06d          move    A3,*A13(XDIFF)
+         000063a0     00e0  
+    1337 000063b0           SkXDiff:
+    1338 000063b0     b008          move    A0,*A8(OXPOS),W
+         000063c0     0090  
+    1339                    
+    1340 000063d0     b420          move    *A1(OZPOS),A0,W
+         000063e0     00d0  
+    1341 000063f0     b5a2          move    *A13(OLDZPOS),A2,W
+         00006400     0200  
+    1342 00006410     b00d          move    A0,*A13(OLDZPOS),W
+         00006420     0200  
+    1343 00006430     4440          sub     A2,A0
+    1344 00006440     b502          move    *A8(OZPOS),A2,W
+         00006450     00d0  
+    1345 00006460     4002          add     A0,A2
+    1346 00006470     b048          move    A2,*A8(OZPOS),W
+         00006480     00d0  
+    1347                    
+    1348 00006490     b423          move    *A1(OYPOS),A3,W
+         000064a0     00b0  
+    1349 000064b0     4c64          move    A3,A4
+    1350 000064c0     10a4          addk    5,A4                            ;Max Height Bug will climb to...
+    1351 000064d0     b5a2          move    *A13(OLDYPOS),A2,W
+         000064e0     0210  
+    1352 000064f0     b06d          move    A3,*A13(OLDYPOS),W
+         00006500     0210  
+    1353 00006510     4443          sub     A2,A3
+    1354 00006520     1423          dec     A3
+    1355 00006530     b502          move    *A8(OYPOS),A2,W
+         00006540     00b0  
+    1356 00006550     4062          add     A3,A2
+    1357 00006560     4882          cmp     A4,A2
+    1358 00006570     c501          jrge    SkMaxY
+    1359 00006580     4c82          move    A4,A2
+    1360 00006590           SkMaxY:
+    1361 00006590     b048          move    A2,*A8(OYPOS),W
+         000065a0     00b0  
+    1362                    
+    1363                            ;* cause BITE damage
+    1364 000065b0     4482          sub     A4,A2           ;how many pixels from the top?
+    1365 000065c0     2502          sll     8,A2
+    1366 000065d0     09c0          movi    01E00H,A0
+         000065e0     1e00  
+    1367 000065f0     4440          sub     A2,A0
+    1368 00006600     b7a2          move    *A13(VICTIMDATA),A2,L
+         00006610     01c0  
+    1369 00006620     0d5f          calla   BUGBITE
+         00006630 00000000! 
+    1370                    
+    1371 00006650     afa0          movb    *A13(ANIMTIKS),A0
+         00006660     01a0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   34
+
+    1372 00006670     cb2d          jrnz    AnimX1
+    1373 00006680     1881          movk    4,A1                    ;* one frame, no sleepin
+    1374 00006690                   jsrp    FRANIM
+    1375 00006700     8721          move    *A9,A1,L
+    1376 00006710     cb21          jrnz    LstLft
+    1377                    
+    1378                            ;* recycle animation
+    1379 00006720     4c06          move    A0,A6
+    1380 00006730     09e0          MOVI    BBITESND,A0
+         00006740 00000000! 
+    1381 00006760     0d5f          CALLA   ONESND
+         00006770 00000000! 
+    1382 00006790     4cc0          move    A6,A0
+    1383 000067a0     07e1          movb    @RAND,A1
+         000067b0 00000000! 
+    1384 000067d0     ce0b          jrn     SkFlp
+    1385 000067e0     05a1          move    @RAND,A1,W
+         000067f0 00000000! 
+    1386 00006810     ce04          jrn     yflp
+    1387 00006820     0d5f          calla   NOYFLP
+         00006830 00000000! 
+    1388 00006850     c003          jruc    SkFlp
+    1389 00006860           yflp:   
+    1390 00006860     0d5f          calla   YFLP
+         00006870 00000000! 
+    1391 00006890           SkFlp:
+    1392 00006890     afa1          movb    *A13(OnBack),A1
+         000068a0     00f0  
+    1393 000068b0     cb04          jrnz    BackBite
+    1394 000068c0     09e9          movi    BITE2,A9
+         000068d0 00007f90' 
+    1395 000068f0     c003          jruc    LstLft
+    1396 00006900           BackBite:
+    1397 00006900     09e9          movi    BBITE,A9
+         00006910 00008070' 
+    1398 00006930           LstLft:
+    1399 00006930     ac0d          movb    A0,*A13(ANIMTIKS)
+         00006940     01a0  
+    1400 00006950           AnimX1:
+    1401 00006950     afa0          movb    *A13(ANIMTIKS),A0
+         00006960     01a0  
+    1402 00006970     1440          subk    2,A0
+    1403 00006980     cf01          jrnn    SkClrAnT
+    1404 00006990     5600          clr     A0
+    1405 000069a0           SkClrAnT:
+    1406 000069a0     ac0d          movb    A0,*A13(ANIMTIKS)
+         000069b0     01a0  
+    1407 000069c0                   SLEEP   2
+    1408 00006a00     c000          jruc    CrawlLp
+         00006a10     ff63  
+    1409                    
+    1410 00006a20           ShakeOff:
+    1411 00006a20     b622          move    *A1(OYVEL),A2,L
+         00006a30     0060  
+    1412 00006a40     09e0          movi    030000H,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   35
+
+         00006a50 00030000  
+    1413 00006a70     0d5f          calla   RANDU
+         00006a80 00000000! 
+    1414 00006aa0     0be0          subi    04000H,A0
+         00006ab0     bfff  
+    1415 00006ac0     4402          sub     A0,A2
+    1416 00006ad0     b248          move    A2,*A8(OYVEL),L
+         00006ae0     0060  
+    1417                    
+    1418 00006af0     b622          move    *A1(OZVEL),A2,L
+         00006b00     00e0  
+    1419 00006b10     09e0          movi    020000H,A0
+         00006b20 00020000  
+    1420 00006b40     0d5f          calla   RANDU
+         00006b50 00000000! 
+    1421 00006b70     0d00          subi    010000H,A0
+         00006b80 fffeffff  
+    1422 00006ba0     4002          add     A0,A2
+    1423 00006bb0     b248          move    A2,*A8(OZVEL),L
+         00006bc0     00e0  
+    1424                    
+    1425 00006bd0     b5a2          move    *A13(VOLDXV),A2,W
+         00006be0     0220  
+    1426 00006bf0     2602          sll     16,A2
+    1427 00006c00     09e0          movi    080000H,A0
+         00006c10 00080000  
+    1428 00006c30     0d5f          calla   RANDU
+         00006c40 00000000! 
+    1429 00006c60     0d00          subi    040000H,A0
+         00006c70 fffbffff  
+    1430 00006c90     4002          add     A0,A2
+    1431 00006ca0     b248          move    A2,*A8(OXVEL),L
+         00006cb0     0040  
+    1432                    
+    1433                            ;* Fling the Bug off    
+    1434 00006cc0     09e9          movi    BUGFLING,A9
+         00006cd0 00008290' 
+    1435 00006cf0     b32d          move    A9,*A13(ANIMPTR),L
+         00006d00     0120  
+    1436 00006d10     1860          movk    3,A0
+    1437 00006d20     ac0d          movb    A0,*A13(FLYING)
+         00006d30     0180  
+    1438 00006d40     09c0          movi    128,A0
+         00006d50     0080  
+    1439 00006d60     ac0d          movb    A0,*A13(BRAINTIKS)
+         00006d70     01b0  
+    1440 00006d80     ac0d          movb    A0,*A13(DESTTIKS)
+         00006d90     01a8  
+    1441                    
+    1442 00006da0           BugOff:
+    1443                            ;Switch back to regular Process
+    1444 00006da0     09ee          MOVI    BUGCOLL,A14
+         00006db0 00006e10' 
+    1445 00006dd0     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER
+         00006de0     01d0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   36
+
+    1446 00006df0     c000          jruc    BUGGER2
+         00006e00     fa8c  
+    1447                    *************************************************************************
+    1448                    
+    1449                    
+    1450                    *************************************************************************
+    1451 00006e10           BUGCOLL:
+    1452 00006e10     1000          .WORD   P1OID
+    1453 00006e20 000043c0'         .LONG   BugPlCol
+    1454 00006e40     2000          .WORD   P2OID
+    1455 00006e50 000043c0'         .LONG   BugPlCol
+    1456 00006e70     0b10          .WORD   B1OID|BULLETID
+    1457 00006e80 00004050'         .LONG   BUGCOL0
+    1458 00006ea0     0b12          .WORD   B1OID|EXPLODID
+    1459 00006eb0 00004050'         .LONG   BUGCOL0
+    1460 00006ed0     0b14          .WORD   B1OID|ROCKETID
+    1461 00006ee0 00004050'         .LONG   BUGCOL0
+    1462 00006f00     0b20          .WORD   B2OID|BULLETID
+    1463 00006f10 00004050'         .LONG   BUGCOL0
+    1464 00006f30     0b22          .WORD   B2OID|EXPLODID
+    1465 00006f40 00004050'         .LONG   BUGCOL0
+    1466 00006f60     0b24          .WORD   B2OID|ROCKETID
+    1467 00006f70 00004050'         .LONG   BUGCOL0
+    1468 00006f90     0be2          .WORD   BEOID|EXPLODID
+    1469 00006fa0 00004050'         .LONG   BUGCOL0
+    1470 00006fc0     0c00          .word   C1OID           ;ENEMY CAR #1 "CADILLAC" OBJECT I.D.
+    1471 00006fd0 00004050'         .LONG   BUGCOL0
+    1472 00006ff0     0c10          .word   CAR2OID         ;ENEMY CAR #2 "PORSCHE" OBJECT I.D.
+    1473 00007000 00004050'         .LONG   BUGCOL0
+    1474 00007020     0c20          .word   CAR3OID         ;ENEMY CAR #3 "BELL-JET" OBJECT I.D.
+    1475 00007030 00004050'         .LONG   BUGCOL0
+    1476 00007050     0c30          .word   TRAN1OID        ;PLAYER TRANSPORT #1 "PORSCHE" OBJECT I.D.
+    1477 00007060 00004050'         .LONG   BUGCOL0
+    1478 00007080     0000          .WORD   0
+    1479 00007090 00000000!         .LONG   DUMRTSG
+    1480                    *************************************************************************
+    1481                    
+    1482                    *************************************************************************
+    1483 000070b0           BUGCOLL2:
+    1484 000070b0     0b10          .WORD   B1OID|BULLETID
+    1485 000070c0 00004050'         .LONG   BUGCOL0
+    1486 000070e0     0b12          .WORD   B1OID|EXPLODID
+    1487 000070f0 00004050'         .LONG   BUGCOL0
+    1488 00007110     0b14          .WORD   B1OID|ROCKETID
+    1489 00007120 00004050'         .LONG   BUGCOL0
+    1490 00007140     0b20          .WORD   B2OID|BULLETID
+    1491 00007150 00004050'         .LONG   BUGCOL0
+    1492 00007170     0b22          .WORD   B2OID|EXPLODID
+    1493 00007180 00004050'         .LONG   BUGCOL0
+    1494 000071a0     0b24          .WORD   B2OID|ROCKETID
+    1495 000071b0 00004050'         .LONG   BUGCOL0
+    1496 000071d0     0000          .WORD   0
+    1497 000071e0 00000000!         .LONG   DUMRTSG
+    1498                    *************************************************************************
+    1499                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   37
+
+    1500                    
+    1501                    *************************************************************************
+    1502 00007200           BUGWATCH:
+    1503                    ;* PROCESS TO WATCH BUGS, awards multi squash bonus, controls bug theme song
+    1504                            
+    1505 00007200     576b          clr     A11             ;p2:p1 ctrs for clearing squash ctrs
+    1506 00007210     574a          clr     A10             ;last p2ct:last p1ct
+    1507 00007220           WatchLp:
+    1508 00007220     05a0          move    @BUGCNT,A0,W
+         00007230 00000000! 
+    1509 00007250     ca3e          jrz     WATCHX
+    1510                    
+    1511                            ;Trigger bug tune?
+    1512 00007260     05a0          move    @BUGCNT,A0,W
+         00007270 00000000! 
+    1513 00007290     0b40          cmpi    3,A0
+         000072a0     fffc  
+    1514 000072b0     c406          jrlt    SkTune
+    1515 000072c0     09e0          movi    HELLBUGS,A0
+         000072d0 00000000! 
+    1516 000072f0     0d5f          calla   ONESND
+         00007300 00000000! 
+    1517 00007320           SkTune:
+    1518                    
+    1519                            ;update time ctrs
+    1520 00007320     09e0          movi    [1,1],A0
+         00007330 00010001  
+    1521 00007350     e00b          addxy   A0,A11
+    1522                    
+    1523                            ;update pl1 last squish ct
+    1524 00007360     4d40          move    A10,A0
+    1525 00007370     0520          zext    A0,W
+    1526 00007380     05a1          move    @pl1sqsh,A1,W
+         00007390 00000000- 
+    1527 000073b0     4801          cmp     A0,A1
+    1528 000073c0     ca03          jreq    SkUpdSq1
+    1529 000073d0     ec2a          movx    A1,A10
+    1530 000073e0     5600          clr     A0
+    1531 000073f0     ec0b          movx    A0,A11
+    1532 00007400           SkUpdSq1:
+    1533                    
+    1534                            ;update pl2 last squish ct
+    1535 00007400     4d40          move    A10,A0
+    1536 00007410     2e00          srl     16,A0
+    1537 00007420     05a1          move    @pl2sqsh,A1,W
+         00007430 00000010- 
+    1538 00007450     4801          cmp     A0,A1
+    1539 00007460     ca04          jreq    SkUpdSq2
+    1540 00007470     2601          sll     16,A1
+    1541 00007480     ee2a          movy    A1,A10
+    1542 00007490     5600          clr     A0
+    1543 000074a0     ee0b          movy    A0,A11
+    1544 000074b0           SkUpdSq2:
+    1545                            
+    1546                            ;check to clear player 1's squash ctr
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   38
+
+    1547 000074b0     4d60          move    A11,A0
+    1548 000074c0     0520          zext    A0,W
+    1549 000074d0     0b40          cmpi    5,A0
+         000074e0     fffa  
+    1550 000074f0     c405          jrlt    SkClrCt1
+    1551 00007500     5600          clr     A0
+    1552 00007510     ec0b          movx    A0,A11
+    1553 00007520     0580          move    A0,@pl1sqsh,W
+         00007530 00000000- 
+    1554 00007550           SkClrCt1:
+    1555                    
+    1556                            ;check to clear player 2's squash ctr
+    1557 00007550     4d60          move    A11,A0
+    1558 00007560     2e00          srl     16,A0
+    1559 00007570     0b40          cmpi    5,A0
+         00007580     fffa  
+    1560 00007590     c405          jrlt    SkClrCt2
+    1561 000075a0     5600          clr     A0
+    1562 000075b0     ee0b          movy    A0,A11
+    1563 000075c0     0580          move    A0,@pl2sqsh,W
+         000075d0 00000010- 
+    1564 000075f0           SkClrCt2:
+    1565                    
+    1566 000075f0                   SLEEP   10
+    1567 00007630     c0be          jruc    WatchLp
+    1568                    
+    1569 00007640           WATCHX:
+    1570                            ;stop hellbugs
+    1571 00007640     09e0          movi    YAMOFF,A0
+         00007650 00000000! 
+    1572 00007670     0d5f          calla   ONESND
+         00007680 00000000! 
+    1573                    
+    1574 000076a0     5600          clr     A0
+    1575 000076b0     0580          move    A0,@pl1sqsh,W
+         000076c0 00000000- 
+    1576 000076e0     0580          move    A0,@pl2sqsh,W
+         000076f0 00000010- 
+    1577 00007710                   DIE
+    1578                    *************************************************************************
+    1579                    
+    1580                    
+    1581                    *************************************************************************
+    1582                    ;WALKING JUMPING DEATH FRAGMENT STANDING-SHOOT KNEELING-SHOOT
+    1583                    ;STANDING KNEELING
+    1584                    
+    1585 00007740     0001  BUGOFF  .WORD   1,3,4,9,18,34,50,50
+    1586                    *ANIMATION PTR TABLE, FIRST LONG WORD IS THE OFFSET PTR
+    1587                    *
+    1588 000077c0 00007740' BUGTAB  .LONG   BUGOFF
+    1589 000077e0 000079e0'         .LONG   BUGCRAWL,BUGCRAWL,BUGCRAWL,BUGDIE,BUGDIVE,BUGDIVE,BUGDIVE,BUGDIVE
+    1590                    
+    1591 000078e0 00000000          .LONG   0,FRAG1,FRAG2,FRAG3,FRAG4,FRAG5,FRAG6,0
+    1592                    *************************************************************************
+    1593                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   39
+
+    1594                    
+    1595                    **************************************************************************
+    1596                    * BUG FRAME TABLES      
+    1597          00018000  CRAWLXVEL       .set    018000H
+    1598          00030000  JUMPXVEL        .set    030000H
+    1599          00038000  FLYXVEL         .set    038000H
+    1600                    
+    1601                    
+    1602 000079e0           BUGCRAWL:
+    1603 000079e0 00000000"         .long   bugwk1
+    1604 00007a00     0005          .word   5
+    1605 00007a10 00000080"         .long   bugwk2
+    1606 00007a30     0005          .word   5
+    1607 00007a40 00000100"         .long   bugwk3
+    1608 00007a60     0005          .word   5
+    1609 00007a70 00000180"         .long   bugwk4
+    1610 00007a90     0005          .word   5
+    1611 00007aa0 00000200"         .long   bugwk5
+    1612 00007ac0     0005          .word   5
+    1613 00007ad0 00000280"         .long   bugwk6
+    1614 00007af0     0005          .word   5
+    1615 00007b00                   LONGNULL
+    1616 00007b20           BUGCRAWLX:
+    1617                    
+    1618 00007b20           BUGJUMP:
+    1619 00007b20 00000300"         .long   bugfly1
+    1620 00007b40     0002          .word   2
+    1621 00007b50 00000380"         .long   bugfly2
+    1622 00007b70     0002          .word   2
+    1623 00007b80 00000400"         .long   bugfly3
+    1624 00007ba0     0002          .word   2
+    1625 00007bb0 00000480"         .long   bugfly4
+    1626 00007bd0     0002          .word   2
+    1627 00007be0 00000400"         .long   bugfly3
+    1628 00007c00     0002          .word   2
+    1629 00007c10 00000380"         .long   bugfly2
+    1630 00007c30     0002          .word   2
+    1631 00007c40                   LONGNULL
+    1632 00007c60           BUGJUMPX:
+    1633                    
+    1634 00007c60           BUGWIGGL:
+    1635 00007c60 00000b00"         .long   bugfly5
+    1636 00007c80     0001          .word   1
+    1637 00007c90 00000b80"         .long   bugfly6
+    1638 00007cb0     0001          .word   1
+    1639 00007cc0 00000c00"         .long   bugfly7
+    1640 00007ce0     0001          .word   1
+    1641 00007cf0 00000c80"         .long   bugfly8
+    1642 00007d10     0001          .word   1
+    1643 00007d20 00000c00"         .long   bugfly7
+    1644 00007d40     0001          .word   1
+    1645 00007d50 00000b80"         .long   bugfly6
+    1646 00007d70     0001          .word   1
+    1647 00007d80                   LONGNULL
+    1648                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   40
+
+    1649 00007da0           BUGFLY:
+    1650 00007da0 00000b00"         .long   bugfly5
+    1651 00007dc0     0002          .word   2
+    1652 00007dd0 00000b80"         .long   bugfly6
+    1653 00007df0     0002          .word   2
+    1654 00007e00 00000c00"         .long   bugfly7
+    1655 00007e20     0002          .word   2
+    1656 00007e30 00000c80"         .long   bugfly8
+    1657 00007e50     0002          .word   2
+    1658 00007e60 00000c00"         .long   bugfly7
+    1659 00007e80     0002          .word   2
+    1660 00007e90 00000b80"         .long   bugfly6
+    1661 00007eb0     0002          .word   2
+    1662 00007ec0                   LONGNULL
+    1663 00007ee0           BUGFLYX:
+    1664                    
+    1665 00007ee0           BITE:
+    1666 00007ee0 00000500"         .long   bugjmp1
+    1667 00007f00     0005          .word   5
+    1668 00007f10 00000580"         .long   bugjmp2
+    1669 00007f30     0005          .word   5
+    1670 00007f40 00000600"         .long   bugjmp3
+    1671 00007f60     0005          .word   5
+    1672 00007f70                   LONGNULL
+    1673                    
+    1674 00007f90           BITE2:
+    1675 00007f90 00000680"         .long   bugjmp4
+    1676 00007fb0     0005          .word   5
+    1677 00007fc0 00000600"         .long   bugjmp3
+    1678 00007fe0     0005          .word   5
+    1679 00007ff0 00000580"         .long   bugjmp2
+    1680 00008010     0005          .word   5
+    1681 00008020 00000600"         .long   bugjmp3
+    1682 00008040     0005          .word   5
+    1683 00008050                   LONGNULL
+    1684                    
+    1685 00008070           BBITE:
+    1686 00008070 00000980"         .long   bugdie6
+    1687 00008090     0005          .word   5
+    1688 000080a0 00000900"         .long   bugdie5
+    1689 000080c0     0005          .word   5
+    1690 000080d0 00000880"         .long   bugdie4
+    1691 000080f0     0005          .word   5
+    1692 00008100 00000900"         .long   bugdie5
+    1693 00008120     0005          .word   5
+    1694 00008130                   LONGNULL
+    1695                    
+    1696 00008150           BUGFALL:
+    1697 00008150 00000300"         .long   bugfly1
+    1698 00008170     0001          .word   1
+    1699 00008180 00000380"         .long   bugfly2
+    1700 000081a0     0001          .word   1
+    1701 000081b0 00000a00"         .long   squish1
+    1702 000081d0     0001          .word   1
+    1703 000081e0 00000480"         .long   bugfly4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   41
+
+    1704 00008200     0001          .word   1
+    1705 00008210 00000a00"         .long   squish1
+    1706 00008230     0001          .word   1
+    1707 00008240 00000380"         .long   bugfly2
+    1708 00008260     0001          .word   1
+    1709 00008270                   LONGNULL
+    1710                    
+    1711 00008290           BUGFLING:
+    1712 00008290 00000500"         .long   bugjmp1
+    1713 000082b0     0004          .word   4
+    1714 000082c0 00000680"         .long   bugjmp4
+    1715 000082e0     0004          .word   4
+    1716 000082f0 00000780"         .long   bugdie2
+    1717 00008310     4004          .word   FLIPBITS|4,M_FLIPV
+    1718 00008330 00000800"         .long   bugdie3
+    1719 00008350     4004          .word   FLIPBITS|4,M_FLIPV
+    1720 00008370 00000880"         .long   bugdie4
+    1721 00008390     4004          .word   FLIPBITS|4,M_FLIPH
+    1722 000083b0 00000900"         .long   bugdie5
+    1723 000083d0     4004          .word   FLIPBITS|4,M_FLIPH
+    1724 000083f0                   LONGNULL
+    1725                    
+    1726 00008410           BUGDIVE:
+    1727 00008410 00000500"         .long   bugjmp1
+    1728 00008430     0004          .word   4
+    1729 00008440 00000680"         .long   bugjmp4
+    1730 00008460     0004          .word   4
+    1731 00008470 00000780"         .long   bugdie2
+    1732 00008490     4004          .word   FLIPBITS|4,M_FLIPV
+    1733 000084b0 00000800"         .long   bugdie3
+    1734 000084d0     4004          .word   FLIPBITS|4,M_FLIPV
+    1735 000084f0 00000880"         .long   bugdie4
+    1736 00008510     4004          .word   FLIPBITS|4,M_FLIPH
+    1737 00008530 00000900"         .long   bugdie5
+    1738 00008550     4004          .word   FLIPBITS|4,M_FLIPH
+    1739 00008570 00000900"         .long   bugdie5
+    1740 00008590     4004          .word   FLIPBITS|4,M_FLIPH|M_FLIPV
+    1741 000085b0 00000980"         .long   bugdie6
+    1742 000085d0     4004          .word   FLIPBITS|4,M_FLIPV|M_FLIPH
+    1743 000085f0 00000980"         .long   bugdie6
+    1744 00008610     4004          .word   FLIPBITS|4,M_FLIPV
+    1745 00008630 00000900"         .long   bugdie5
+    1746 00008650     4004          .word   FLIPBITS|4,M_FLIPV
+    1747 00008670 00000900"         .long   bugdie5
+    1748 00008690     0004          .word   4
+    1749 000086a0                   LONGNULL
+    1750                    
+    1751 000086c0           BUGDIE:
+    1752 000086c0 00000500"         .long   bugjmp1
+    1753 000086e0     0005          .word   5
+    1754 000086f0 00000780"         .long   bugdie2
+    1755 00008710     4005          .word   FLIPBITS|5,M_FLIPV
+    1756 00008730 00000800"         .long   bugdie3
+    1757 00008750     4005          .word   FLIPBITS|5,M_FLIPV
+    1758 00008770 00000880"         .long   bugdie4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   42
+
+    1759 00008790     4005          .word   FLIPBITS|5,M_FLIPH
+    1760 000087b0 00000900"         .long   bugdie5
+    1761 000087d0     4004          .word   FLIPBITS|4,M_FLIPH
+    1762 000087f0 00000900"         .long   bugdie5
+    1763 00008810     4004          .word   FLIPBITS|4,M_FLIPH|M_FLIPV
+    1764 00008830 00000980"         .long   bugdie6
+    1765 00008850     4004          .word   FLIPBITS|4,M_FLIPV|M_FLIPH
+    1766 00008870 00000980"         .long   bugdie6
+    1767 00008890     4004          .word   FLIPBITS|4,M_FLIPV
+    1768 000088b0 00000900"         .long   bugdie5
+    1769 000088d0     4004          .word   FLIPBITS|4,M_FLIPV
+    1770 000088f0 00000900"         .long   bugdie5
+    1771 00008910     0006          .word   6
+    1772 00008920 00000880"         .long   bugdie4
+    1773 00008940     0007          .word   7
+    1774 00008950 00000900"         .long   bugdie5
+    1775 00008970     0006          .word   6
+    1776 00008980                   LONGNULL
+    1777                    
+    1778 000089a0           SQUISH:
+    1779 000089a0 00000a80"         .long   squish2
+    1780 000089c0     000a          .word   10
+    1781 000089d0                   LONGNULL
+    1782                    
+    1783 000089f0           BUGBURN:
+    1784 000089f0 00000a00"         .long   squish1
+    1785 00008a10     000a          .word   10
+    1786 00008a20 00000a80"         .long   squish2
+    1787 00008a40     000a          .word   10
+    1788 00008a50                   LONGNULL
+    1789                    
+    1790 00008a70           FRAG1
+    1791 00008a70 00000000!         .long   CSHRAPA1
+    1792 00008a90     2003          .word   NEWPALET|3
+    1793 00008aa0 00000000!         .LONG   NARCS
+    1794 00008ac0 00000000!         .long   CSHRAPA2
+    1795 00008ae0     0003          .word   3
+    1796 00008af0 00000000!         .long   CSHRAPA3
+    1797 00008b10     0003          .word   3
+    1798 00008b20 00000000!         .long   CSHRAPA4
+    1799 00008b40     0003          .word   3
+    1800 00008b50 00000000!         .long   CSHRAPA5
+    1801 00008b70     0003          .word   3
+    1802 00008b80 00000000          .LONG   0
+    1803                    
+    1804 00008ba0           FRAG2
+    1805 00008ba0 00000000!         .long   CSHRAPB1
+    1806 00008bc0     2002          .word   NEWPALET|2
+    1807 00008bd0 00000000!         .LONG   NARCS
+    1808 00008bf0 00000000!         .long   CSHRAPB2
+    1809 00008c10     0002          .word   2
+    1810 00008c20 00000000!         .long   CSHRAPB3
+    1811 00008c40     0003          .word   3
+    1812 00008c50 00000000!         .long   CSHRAPB4
+    1813 00008c70     0002          .word   2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   43
+
+    1814 00008c80 00000000!         .long   CSHRAPB5
+    1815 00008ca0     0002          .word   2
+    1816 00008cb0 00000000          .LONG   0
+    1817                    
+    1818 00008cd0           FRAG3
+    1819 00008cd0 00000000!         .long   CSHRAPC1
+    1820 00008cf0     2002          .word   NEWPALET|2
+    1821 00008d00 00000000!         .LONG   NARCS
+    1822 00008d20 00000000!         .long   CSHRAPC2
+    1823 00008d40     0002          .word   2
+    1824 00008d50 00000000!         .long   CSHRAPC3
+    1825 00008d70     0003          .word   3
+    1826 00008d80 00000000!         .long   CSHRAPC4
+    1827 00008da0     0002          .word   2
+    1828 00008db0 00000000!         .long   CSHRAPC5
+    1829 00008dd0     0003          .word   3
+    1830 00008de0 00000000          .LONG   0
+    1831                    
+    1832 00008e00           FRAG4
+    1833 00008e00 00000000!         .long   CSHRAPD1
+    1834 00008e20     2003          .word   NEWPALET|3
+    1835 00008e30 00000000!         .LONG   NARCS
+    1836 00008e50 00000000!         .long   CSHRAPD2
+    1837 00008e70     0002          .word   2
+    1838 00008e80 00000000!         .long   CSHRAPD3
+    1839 00008ea0     0003          .word   3
+    1840 00008eb0 00000000!         .long   CSHRAPD4
+    1841 00008ed0     0002          .word   2
+    1842 00008ee0 00000000!         .long   CSHRAPD5
+    1843 00008f00     0003          .word   3
+    1844 00008f10 00000000          .LONG   0
+    1845                    
+    1846 00008f30           FRAG5
+    1847 00008f30 00000000!         .long   CSHRAPE1
+    1848 00008f50     2003          .word   NEWPALET|3
+    1849 00008f60 00000000!         .LONG   NARCS
+    1850 00008f80 00000000!         .long   CSHRAPE2
+    1851 00008fa0     0002          .word   2
+    1852 00008fb0 00000000!         .long   CSHRAPE3
+    1853 00008fd0     0003          .word   3
+    1854 00008fe0 00000000!         .long   CSHRAPE4
+    1855 00009000     0002          .word   2
+    1856 00009010 00000000!         .long   CSHRAPE5
+    1857 00009030     0003          .word   3
+    1858 00009040 00000000          .LONG   0
+    1859                    
+    1860 00009060           FRAG6
+    1861 00009060 00000000!         .long   CFRAG1
+    1862 00009080     2003          .word   NEWPALET|3
+    1863 00009090 00000000!         .LONG   NARCS
+    1864 000090b0 00000000!         .long   CFRAG2
+    1865 000090d0     0002          .word   2
+    1866 000090e0 00000000!         .long   CFRAG3
+    1867 00009100     0002          .word   2
+    1868 00009110 00000000!         .long   CFRAG4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:59 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- BUG >>>                                          PAGE   44
+
+    1869 00009130     0002          .word   2
+    1870 00009140 00000000!         .long   CFRAG5
+    1871 00009160     0002          .word   2
+    1872 00009170 00000000          .LONG   0
+    1873                    
+    1874                            .END
+
+ No Errors,  No Warnings

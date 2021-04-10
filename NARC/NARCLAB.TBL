@@ -1,272 +1,272 @@
 	.DATA
 BKhalf1:
 	.word	28,82,0,-26
-	.long	>332E100,BLUELAB
+	.long	0332E100H,BLUELAB
 BKhalf2:
 	.word	28,82,0,-26
-	.long	>33328C0,BLUELAB
+	.long	033328C0H,BLUELAB
 BKhalf3:
 	.word	28,82,0,-26
-	.long	>3337080,BLUELAB
+	.long	03337080H,BLUELAB
 BKhalf4:
 	.word	28,82,0,-26
-	.long	>333B840,BLUELAB
+	.long	0333B840H,BLUELAB
 BKhalf5:
 	.word	28,82,0,-26
-	.long	>3340000,BLUELAB
+	.long	03340000H,BLUELAB
 GBKhalf1:
 	.word	28,82,0,-26
-	.long	>332E100,GREENLAB
+	.long	0332E100H,GREENLAB
 GBKhalf2:
 	.word	28,82,0,-26
-	.long	>33328C0,GREENLAB
+	.long	033328C0H,GREENLAB
 GBKhalf3:
 	.word	28,82,0,-26
-	.long	>3337080,GREENLAB
+	.long	03337080H,GREENLAB
 GBKhalf4:
 	.word	28,82,0,-26
-	.long	>333B840,GREENLAB
+	.long	0333B840H,GREENLAB
 GBKhalf5:
 	.word	28,82,0,-26
-	.long	>3340000,GREENLAB
+	.long	03340000H,GREENLAB
 RBKhalf1:
 	.word	28,82,0,-26
-	.long	>332E100,REDLAB
+	.long	0332E100H,REDLAB
 RBKhalf2:
 	.word	28,82,0,-26
-	.long	>33328C0,REDLAB
+	.long	033328C0H,REDLAB
 RBKhalf3:
 	.word	28,82,0,-26
-	.long	>3337080,REDLAB
+	.long	03337080H,REDLAB
 RBKhalf4:
 	.word	28,82,0,-26
-	.long	>333B840,REDLAB
+	.long	0333B840H,REDLAB
 RBKhalf5:
 	.word	28,82,0,-26
-	.long	>3340000,REDLAB
+	.long	03340000H,REDLAB
 BOWLhalf1:
 	.word	28,53,0,-134
-	.long	>33447C0,BLUELAB
+	.long	033447C0H,BLUELAB
 BOWLhalf2:
 	.word	28,53,0,-134
-	.long	>3347620,BLUELAB
+	.long	03347620H,BLUELAB
 BOWLhalf3:
 	.word	28,53,0,-134
-	.long	>334A480,BLUELAB
+	.long	0334A480H,BLUELAB
 BOWLhalf4:
 	.word	28,53,0,-134
-	.long	>334D2E0,BLUELAB
+	.long	0334D2E0H,BLUELAB
 GBOWLhalf1:
 	.word	28,53,0,-134
-	.long	>33447C0,GREENLAB
+	.long	033447C0H,GREENLAB
 GBOWLhalf2:
 	.word	28,53,0,-134
-	.long	>3347620,GREENLAB
+	.long	03347620H,GREENLAB
 GBOWLhalf3:
 	.word	28,53,0,-134
-	.long	>334A480,GREENLAB
+	.long	0334A480H,GREENLAB
 GBOWLhalf4:
 	.word	28,53,0,-134
-	.long	>334D2E0,GREENLAB
+	.long	0334D2E0H,GREENLAB
 RBOWLhalf1:
 	.word	28,53,0,-134
-	.long	>33447C0,REDLAB
+	.long	033447C0H,REDLAB
 RBOWLhalf2:
 	.word	28,53,0,-134
-	.long	>3347620,REDLAB
+	.long	03347620H,REDLAB
 RBOWLhalf3:
 	.word	28,53,0,-134
-	.long	>334A480,REDLAB
+	.long	0334A480H,REDLAB
 RBOWLhalf4:
 	.word	28,53,0,-134
-	.long	>334D2E0,REDLAB
+	.long	0334D2E0H,REDLAB
 FLAShalf1:
 	.word	22,78,0,-18
-	.long	>3350140,BLUELAB
+	.long	03350140H,BLUELAB
 FLAShalf2:
 	.word	22,75,0,-21
-	.long	>3353BC0,BLUELAB
+	.long	03353BC0H,BLUELAB
 FLAShalf3:
 	.word	22,76,0,-20
-	.long	>3357400,BLUELAB
+	.long	03357400H,BLUELAB
 FLAShalf4:
 	.word	22,76,0,-20
-	.long	>335AD00,BLUELAB
+	.long	0335AD00H,BLUELAB
 GFLAShalf1:
 	.word	22,78,0,-18
-	.long	>3350140,GREENLAB
+	.long	03350140H,GREENLAB
 GFLAShalf2:
 	.word	22,75,0,-21
-	.long	>3353BC0,GREENLAB
+	.long	03353BC0H,GREENLAB
 GFLAShalf3:
 	.word	22,76,0,-20
-	.long	>3357400,GREENLAB
+	.long	03357400H,GREENLAB
 GFLAShalf4:
 	.word	22,76,0,-20
-	.long	>335AD00,GREENLAB
+	.long	0335AD00H,GREENLAB
 RFLAShalf1:
 	.word	22,78,0,-18
-	.long	>3350140,REDLAB
+	.long	03350140H,REDLAB
 RFLAShalf2:
 	.word	22,75,0,-21
-	.long	>3353BC0,REDLAB
+	.long	03353BC0H,REDLAB
 RFLAShalf3:
 	.word	22,76,0,-20
-	.long	>3357400,REDLAB
+	.long	03357400H,REDLAB
 RFLAShalf4:
 	.word	22,76,0,-20
-	.long	>335AD00,REDLAB
+	.long	0335AD00H,REDLAB
 PIPE1:
 	.word	18,93,12,-41
-	.long	>335E600,BLUELAB
+	.long	0335E600H,BLUELAB
 RPIPE1:
 	.word	18,93,12,-41
-	.long	>335E600,REDLAB
+	.long	0335E600H,REDLAB
 GPIPE1:
 	.word	18,93,12,-41
-	.long	>335E600,GREENLAB
+	.long	0335E600H,GREENLAB
 smoa1:
 	.word	54,24,53,-18
-	.long	>3362020,BLUELAB
+	.long	03362020H,BLUELAB
 smoa2:
 	.word	60,23,59,-18
-	.long	>3364A20,BLUELAB
+	.long	03364A20H,BLUELAB
 smoa3:
 	.word	53,21,52,-20
-	.long	>3367540,BLUELAB
+	.long	03367540H,BLUELAB
 smoa4:
 	.word	44,26,43,-15
-	.long	>3369A00,BLUELAB
+	.long	03369A00H,BLUELAB
 smoa5:
 	.word	46,29,45,-16
-	.long	>336BDC0,BLUELAB
+	.long	0336BDC0H,BLUELAB
 smoa6:
 	.word	49,35,48,-14
-	.long	>336E940,BLUELAB
+	.long	0336E940H,BLUELAB
 smob1:
 	.word	17,39,-58,-114
-	.long	>3372220,BLUELAB
+	.long	03372220H,BLUELAB
 smob2:
 	.word	20,42,-55,-114
-	.long	>3373A80,BLUELAB
+	.long	03373A80H,BLUELAB
 smob3:
 	.word	20,38,-54,-114
-	.long	>33754C0,BLUELAB
+	.long	033754C0H,BLUELAB
 smob4:
 	.word	17,43,-53,-114
-	.long	>3376C80,BLUELAB
+	.long	03376C80H,BLUELAB
 smob5:
 	.word	18,38,-51,-114
-	.long	>3378760,BLUELAB
+	.long	03378760H,BLUELAB
 smob6:
 	.word	21,31,-47,-114
-	.long	>3379F20,BLUELAB
+	.long	03379F20H,BLUELAB
 wheel1:
 	.word	133,67,63,-18
-	.long	>337B660,labweel
+	.long	0337B660H,labweel
 wheel2:
 	.word	133,68,63,-17
-	.long	>338D320,labweel
+	.long	0338D320H,labweel
 wheel3:
 	.word	134,67,64,-18
-	.long	>339F420,labweel
+	.long	0339F420H,labweel
 VALVhaf1:
 	.word	18,71,17,-15
-	.long	>33B10E0,lab12
+	.long	033B10E0H,lab12
 VALVhaf2:
 	.word	21,40,-10,-46
-	.long	>33B3D40,lab12
+	.long	033B3D40H,lab12
 rbsml1:
 	.word	28,15,13,7
-	.long	>33B5B40,BLUELAB
+	.long	033B5B40H,BLUELAB
 rbsml2:
 	.word	28,9,12,3
-	.long	>33B6860,BLUELAB
+	.long	033B6860H,BLUELAB
 rbsml3:
 	.word	29,8,15,4
-	.long	>33B7040,BLUELAB
+	.long	033B7040H,BLUELAB
 rbsml4:
 	.word	30,15,14,8
-	.long	>33B7840,BLUELAB
+	.long	033B7840H,BLUELAB
 rbsml5:
 	.word	26,15,11,7
-	.long	>33B8740,BLUELAB
+	.long	033B8740H,BLUELAB
 rbsml6:
 	.word	27,16,12,6
-	.long	>33B9460,BLUELAB
+	.long	033B9460H,BLUELAB
 rc1a:
 	.word	17,22,8,12
-	.long	>33BA260,BLUELAB
+	.long	033BA260H,BLUELAB
 rc2a:
 	.word	21,14,11,5
-	.long	>33BB020,BLUELAB
+	.long	033BB020H,BLUELAB
 rc3a:
 	.word	23,23,11,9
-	.long	>33BBAA0,BLUELAB
+	.long	033BBAA0H,BLUELAB
 rc4a:
 	.word	21,21,12,10
-	.long	>33BCBE0,BLUELAB
+	.long	033BCBE0H,BLUELAB
 rc5a:
 	.word	11,20,6,11
-	.long	>33BDBA0,BLUELAB
+	.long	033BDBA0H,BLUELAB
 rc6a:
 	.word	10,26,4,13
-	.long	>33BE320,BLUELAB
+	.long	033BE320H,BLUELAB
 FLblow3:
 	.word	60,28,32,-77
-	.long	>33BECE0,BLUELAB
+	.long	033BECE0H,BLUELAB
 BWblow3:
 	.word	56,32,29,-161
-	.long	>33C2160,BLUELAB
+	.long	033C2160H,BLUELAB
 BKblow3:
 	.word	64,40,33,-74
-	.long	>33C5960,BLUELAB
+	.long	033C5960H,BLUELAB
 RFLblow3:
 	.word	60,28,32,-77
-	.long	>33BECE0,REDLAB
+	.long	033BECE0H,REDLAB
 GFLblow3:
 	.word	60,28,32,-77
-	.long	>33BECE0,GREENLAB
+	.long	033BECE0H,GREENLAB
 RBKblow3:
 	.word	64,40,33,-74
-	.long	>33C5960,REDLAB
+	.long	033C5960H,REDLAB
 GBKblow3:
 	.word	64,40,33,-74
-	.long	>33C5960,GREENLAB
+	.long	033C5960H,GREENLAB
 RBWblow3:
 	.word	56,32,29,-161
-	.long	>33C2160,REDLAB
+	.long	033C2160H,REDLAB
 GBWblow3:
 	.word	56,32,29,-161
-	.long	>33C2160,GREENLAB
+	.long	033C2160H,GREENLAB
 water1:
 	.word	20,7,9,-9
-	.long	>33CA960,BLUELAB
+	.long	033CA960H,BLUELAB
 water2:
 	.word	29,8,13,-7
-	.long	>33CADC0,BLUELAB
+	.long	033CADC0H,BLUELAB
 water3:
 	.word	37,11,15,-6
-	.long	>33CB5C0,BLUELAB
+	.long	033CB5C0H,BLUELAB
 water4:
 	.word	27,8,0,0
-	.long	>33CC380,BLUELAB
+	.long	033CC380H,BLUELAB
 water5:
 	.word	33,8,0,0
-	.long	>33CCA80,BLUELAB
+	.long	033CCA80H,BLUELAB
 water6:
 	.word	37,11,0,0
-	.long	>33CD380,BLUELAB
+	.long	033CD380H,BLUELAB
 wdrop1:
 	.word	16,11,8,-11
-	.long	>33CE140,BLUELAB
+	.long	033CE140H,BLUELAB
 wdrop2:
 	.word	16,7,8,-12
-	.long	>33CE6C0,BLUELAB
+	.long	033CE6C0H,BLUELAB
 wdrop3:
 	.word	12,8,5,-12
-	.long	>33CEA40,BLUELAB
+	.long	033CEA40H,BLUELAB
 wdrop4:
 	.word	9,7,3,-13
-	.long	>33CED40,BLUELAB
+	.long	033CED40H,BLUELAB
 	.TEXT

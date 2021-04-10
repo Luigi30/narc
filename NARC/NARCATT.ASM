@@ -1,4 +1,4 @@
-	.FILE	'NARCATT.ASM'
+	.FILE	"NARCATT.ASM"
 	.TITLE	" <<< N  A  R  C  -- ATTRACT MODE >>>"
 
 	.OPTION	B,D,L

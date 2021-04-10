@@ -1,92 +1,92 @@
 	.DATA
 hkwlk1:
 	.word	20,85,9,-50
-	.long	>2ED1260,hookpal
+	.long	02ED1260H,hookpal
 hkwlk2:
 	.word	27,86,9,-49
-	.long	>2ED4780,hookpal
+	.long	02ED4780H,hookpal
 hkwlk3:
 	.word	40,83,14,-51
-	.long	>2ED92C0,hookpal
+	.long	02ED92C0H,hookpal
 hkwlk4:
 	.word	40,82,16,-51
-	.long	>2EDFA80,hookpal
+	.long	02EDFA80H,hookpal
 hkwlk5:
 	.word	23,85,9,-50
-	.long	>2EE6100,hookpal
+	.long	02EE6100H,hookpal
 hkwlk6:
 	.word	28,85,8,-50
-	.long	>2EEA0C0,hookpal
+	.long	02EEA0C0H,hookpal
 hkwlk7:
 	.word	45,82,18,-52
-	.long	>2EEEB20,hookpal
+	.long	02EEEB20H,hookpal
 hkwlk8:
 	.word	42,81,18,-52
-	.long	>2EF6620,hookpal
+	.long	02EF6620H,hookpal
 hkwlk9:
 	.word	23,82,8,-53
-	.long	>2EFD580,hookpal
+	.long	02EFD580H,hookpal
 hook1:
 	.word	19,82,8,-53
-	.long	>2F01300,hookpal
+	.long	02F01300H,hookpal
 hook2:
 	.word	23,80,8,-55
-	.long	>2F04640,hookpal
+	.long	02F04640H,hookpal
 hook3:
 	.word	27,80,9,-55
-	.long	>2F08240,hookpal
+	.long	02F08240H,hookpal
 seduc2:
 	.word	40,86,10,-50
-	.long	>2F10F20,hookpal
+	.long	02F10F20H,hookpal
 seduc3:
 	.word	46,86,12,-50
-	.long	>2F17AA0,hookpal
+	.long	02F17AA0H,hookpal
 seduc4:
 	.word	38,84,13,-51
-	.long	>2F1FBA0,hookpal
+	.long	02F1FBA0H,hookpal
 seduc5:
 	.word	33,84,13,-52
-	.long	>2F264A0,hookpal
+	.long	02F264A0H,hookpal
 seduc6:
 	.word	32,87,11,-49
-	.long	>2F2C320,hookpal
+	.long	02F2C320H,hookpal
 seduc7:
 	.word	30,86,10,-50
-	.long	>2F31A20,hookpal
+	.long	02F31A20H,hookpal
 seduc8:
 	.word	24,85,11,-51
-	.long	>2F37020,hookpal
+	.long	02F37020H,hookpal
 seduc9:
 	.word	32,85,16,-51
-	.long	>2F3AFE0,hookpal
+	.long	02F3AFE0H,hookpal
 seduc11:
 	.word	32,84,14,-52
-	.long	>2F404E0,hookpal
+	.long	02F404E0H,hookpal
 seduc13:
 	.word	32,86,18,-50
-	.long	>2F458E0,hookpal
+	.long	02F458E0H,hookpal
 seduc14:
 	.word	27,86,15,-50
-	.long	>2F4AEE0,hookpal
+	.long	02F4AEE0H,hookpal
 hkpose1:
 	.word	34,86,17,-50
-	.long	>2F4FA20,hookpal
+	.long	02F4FA20H,hookpal
 hkpose2:
 	.word	32,86,16,-49
-	.long	>2F55AE0,hookpal
+	.long	02F55AE0H,hookpal
 hkpose3:
 	.word	28,85,13,-50
-	.long	>2F5B0E0,hookpal
+	.long	02F5B0E0H,hookpal
 hkpose6:
 	.word	35,85,15,-50
-	.long	>2F5FB40,hookpal
+	.long	02F5FB40H,hookpal
 hkpose7:
 	.word	35,87,13,-49
-	.long	>2F65AE0,hookpal
+	.long	02F65AE0H,hookpal
 hkpose8:
 	.word	27,86,8,-50
-	.long	>2F6BCC0,hookpal
+	.long	02F6BCC0H,hookpal
 hkpose9:
 	.word	28,87,8,-48
-	.long	>2F70800,hookpal
+	.long	02F70800H,hookpal
 	.TEXT

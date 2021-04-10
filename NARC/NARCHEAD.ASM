@@ -1,4 +1,4 @@
- 	.FILE	'NARCHEAD.ASM'
+ 	.FILE	"NARCHEAD.ASM"
 	.TITLE	"<<< N  A  R  C  --  HEADMAN >>>"
 
 **************************************************************************
@@ -43,84 +43,84 @@
 	.BSS	FRAGCNT,16,1
 	.BSS	GOTCARD,16,1
 
-;BaseSND		.WORD	>F350,>13,>8080,0 ;player touches base
-BaseSND		.WORD	>F350,>13,>80D9,0 ;player touches base
-HedBlSND	.WORD	>F305,>3,>8096,0 ;head hit by bullet
-ChunkSND	.WORD	>F301|NINTEQ,>25,>80A1,0 ;chunk hits ground
-Bone1SND	.WORD	>F301|NINTEQ,>10,>8048,0 ;bone hits ground
-Bone2SND	.WORD	>F301|NINTEQ,>10,>8054,0 ;" hits ground
-Bone3SND	.WORD	>F301|NINTEQ,>15,>800c,0 ;" hits ground
-SpinStSND	.WORD	>F3FE,>400,>80B0,0 ;
-SpinSND		.WORD	>F3FE,>400,>8090,0 ;
-PitchSND	.WORD	>F3FE,>14,>80CC,0 ;incr pitch of Spin
-PClrSND		.WORD	>F3FE,>1,>80C6,1,>807F,0
+;BaseSND		.WORD	0F350H,013H,08080H,0 ;player touches base
+BaseSND		.WORD	0F350H,013H,080D9H,0 ;player touches base
+HedBlSND	.WORD	0F305H,03H,08096H,0 ;head hit by bullet
+ChunkSND	.WORD	0F301H|NINTEQ,025H,080A1H,0 ;chunk hits ground
+Bone1SND	.WORD	0F301H|NINTEQ,010H,08048H,0 ;bone hits ground
+Bone2SND	.WORD	0F301H|NINTEQ,010H,08054H,0 ;" hits ground
+Bone3SND	.WORD	0F301H|NINTEQ,015H,0800cH,0 ;" hits ground
+SpinStSND	.WORD	0F3FEH,0400H,080B0H,0 ;
+SpinSND		.WORD	0F3FEH,0400H,08090H,0 ;
+PitchSND	.WORD	0F3FEH,014H,080CCH,0 ;incr pitch of Spin
+PClrSND		.WORD	0F3FEH,01H,080C6H,1,0807FH,0
 
-HdExpSND .WORD	>F0FE,>8,>803d,>C,>8007,>18,>8007,>30,>8030,0,0,0,0,0,0 ;BIG SLOW EXPLO
-AgitSND	 .WORD	>F0FE,>A,>80C4,>80C9,>80C4,>80C9,0
-SkExpSND	.WORD	>F060,>8,>8007,>24,>8007,0 ;skull explode
-LaughSND	.WORD	>F040|NINTEQ,>90,>80b5,0 ;13.3Khz
-KillSND		.WORD	>F010|NINTEQ,>60,>80b7,0 ;13.3Khz
-GetSND		.WORD	>F010|NINTEQ,>60,>80b6,0 ;13.3Khz
-UDIE1SND	.WORD	>F040|NINTEQ,>90,>80b8,0 ;13.3Khz
-UDIE2SND	.WORD	>F040|NINTEQ,>90,>80ae,0 ;10Khz
-NTRYSND		.WORD	>F040|NINTEQ,>90,>80b9,0 ;13.3Khz
-BasBSND		.WORD	>F006,>5,>8040,0 ;base clang
-BiteSND		.WORD	>F005,>5,>804b,0 ;skeleton bite
+HdExpSND .WORD	0F0FEH,08H,0803dH,0CH,08007H,018H,08007H,030H,08030H,0,0,0,0,0,0 ;BIG SLOW EXPLO
+AgitSND	 .WORD	0F0FEH,0AH,080C4H,080C9H,080C4H,080C9H,0
+SkExpSND	.WORD	0F060H,08H,08007H,024H,08007H,0 ;skull explode
+LaughSND	.WORD	0F040H|NINTEQ,090H,080b5H,0 ;13.3Khz
+KillSND		.WORD	0F010H|NINTEQ,060H,080b7H,0 ;13.3Khz
+GetSND		.WORD	0F010H|NINTEQ,060H,080b6H,0 ;13.3Khz
+UDIE1SND	.WORD	0F040H|NINTEQ,090H,080b8H,0 ;13.3Khz
+UDIE2SND	.WORD	0F040H|NINTEQ,090H,080aeH,0 ;10Khz
+NTRYSND		.WORD	0F040H|NINTEQ,090H,080b9H,0 ;13.3Khz
+BasBSND		.WORD	0F006H,05H,08040H,0 ;base clang
+BiteSND		.WORD	0F005H,05H,0804bH,0 ;skeleton bite
 
 SKYFLASH	.set	(32*32*25)+(32*15)+31
 
-BASCCPID	.set	>E9C
-EYECCPID	.set	>E9D
-SKLCCPID	.set	>E9E
-HEADXPID	.set	>E9B
-CHUNKPID	.set	>E9A
-FLYHTPID	.set	>E99
-NUKEPID		.set	>E98
-TNGPID		.set	>E9F
+BASCCPID	.set	0E9CH
+EYECCPID	.set	0E9DH
+SKLCCPID	.set	0E9EH
+HEADXPID	.set	0E9BH
+CHUNKPID	.set	0E9AH
+FLYHTPID	.set	0E99H
+NUKEPID		.set	0E98H
+TNGPID		.set	0E9FH
 ;*PROC BLOCK OFFSETS FOR COLOR CYCLERS
 COLORLVL	.set	ETEMP1		;byte
 OLDCOLOR	.set	ETEMP1+8	;byte
 
-HEADZSIZ	.set	>00230000	;use Z plus only
+HEADZSIZ	.set	000230000H	;use Z plus only
 BASEZMIN	.set	5
-BASEZPOS	.set	>28
+BASEZPOS	.set	028H
 BASEZSIZ	.set	BASEZPOS*ZP+BASEZMIN
-TUNGZSIZ	.set	>00120012
+TUNGZSIZ	.set	000120012H
 
 MAXPARTS	.set	7	;# of parts at start
 ;* offsets in XObj-A10
 BASEL		.set	0
-BASER		.set	>20
-FACE		.set	>40
-STUMP			.set	>40
-HAT		.set	>60
-SKULL			.set	>60
-NECK		.set	>80
-JAW			.set	>80
-GLAS		.set	>A0
-STNG			.set	>A0	;skull tung
-TUNG		.set	>C0
-ANIS		.set	>100
-BASELANI	.set	>100
-BASERANI	.set	>120
-FACEANI		.set	>140
-STUMPANI		.set	>140
-HATANI		.set	>160
-SKLANIS			.set	>160
-SKULLANI		.set	>160
-NECKANI		.set	>180
-JAWANI			.set	>180
-GLASANI		.set	>1A0
-STNGANI			.set	>1A0
-TUNGANI		.set	>1C0
-NUMPARTS	.set	>200	;byte
-BASPARTS	.set	>208
-HEDPARTS	.set	>210	;byte
-SKLPARTS		.set	>210	;byte
-blah3		.set	>218
-INUSE		.set	>220	;byte
-ONLIST		.set	>228	;byte
-FLIPS		.set	>230	;byte
+BASER		.set	020H
+FACE		.set	040H
+STUMP			.set	040H
+HAT		.set	060H
+SKULL			.set	060H
+NECK		.set	080H
+JAW			.set	080H
+GLAS		.set	0A0H
+STNG			.set	0A0H	;skull tung
+TUNG		.set	0C0H
+ANIS		.set	0100H
+BASELANI	.set	0100H
+BASERANI	.set	0120H
+FACEANI		.set	0140H
+STUMPANI		.set	0140H
+HATANI		.set	0160H
+SKLANIS			.set	0160H
+SKULLANI		.set	0160H
+NECKANI		.set	0180H
+JAWANI			.set	0180H
+GLASANI		.set	01A0H
+STNGANI			.set	01A0H
+TUNGANI		.set	01C0H
+NUMPARTS	.set	0200H	;byte
+BASPARTS	.set	0208H
+HEDPARTS	.set	0210H	;byte
+SKLPARTS		.set	0210H	;byte
+blah3		.set	0218H
+INUSE		.set	0220H	;byte
+ONLIST		.set	0228H	;byte
+FLIPS		.set	0230H	;byte
 
 ;* offsets in PROC Block-A13
 HEALTH		.set	EMAINT		;word
@@ -152,7 +152,7 @@ HEADCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	
@@ -190,7 +190,7 @@ SkCMD:
 	move	A0,*A13(GANGTIKS),W
 	clr	A5
 	clr	A6
-	movi	>00330000|GANGEOID|1,A14
+	movi	000330000H|GANGEOID|1,A14
 	calla	GANGCOLD
 SkDisp:
 	rets
@@ -304,9 +304,9 @@ GotP:
 	movb	A0,*A13(COLSRVC)
 	movb	A0,*A13(LAUGH)
 
-	movi	>FF,A0		;top 6 bits correspond to first 6 parts
+	movi	0FFH,A0		;top 6 bits correspond to first 6 parts
 	movb	A0,*A10(ONLIST)	;all parts are on the list
-	movi	>FF,A0		
+	movi	0FFH,A0		
 	movb	A0,*A10(INUSE)	;all parts are active
 
 	;* set initial position of head
@@ -558,16 +558,16 @@ GotZdivX:
 	move	A2,A2
 	jrn	RgtUDir
 ;**facing right and down
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	Dir1
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	Dir2
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	Dir3
 	jruc	Dir4
 RgtUDir:
 ;**facing right and up
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	Dir1
 	jruc	Dir0
 
@@ -576,17 +576,17 @@ LftDir:
 	move	A2,A2
 	jrn	LftUDir
 ;**facing left and down
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	Dir7
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	Dir6
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	Dir5
 	jruc	Dir4
 
 LftUDir:
 ;**facing left and up
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	Dir7
 	jruc	Dir8
 
@@ -612,7 +612,7 @@ Dir8:	movk	8,A0
 SetBDir:
 	rets
 ZEROX:
-	movi	>7FFFFFFF,A3
+	movi	07FFFFFFFH,A3
 	jruc	GotZdivX
 ***************************************************************************
 
@@ -790,26 +790,26 @@ FlamOk:
 
 	move	*A10,A8,L
 	move	*A8(OXVEL),A0,L	; A0 - X velocity
-	movi	>38000,A1
+	movi	038000H,A1
 	calla	ABSADD	;* ADD A1 to A0 with respect to sign of A0
-	movi	>20000,A1	; A1 - Y velocity
+	movi	020000H,A1	; A1 - Y velocity
 	move	*A8(OZVEL),A2,L ; A2 - Z velocity
 	add	A2,A1
 
 	move	*A8(OXPOS),A3	;X coor of beginning anim pt
-	addi	>18,A3
-	movk	1,A6		;0->flame shoots to right, 1->flame to left
+	addi	018H,A3
+	movk	1,A6		;0-0fHlame shoots to right, 1-0fHlame to left
 	movb	*A13(DIR),A14
 	cmpi	1,A14
 	jrnz	SkAddFlp
-	subi	>30,A3
+	subi	030H,A3
 	clr	A6
 	move	*A8(OSIZEX),A14
 SkAddFlp:
 	add	A14,A3
 
 	move	*A8(OYPOS),A4	;Y coor
-	subi	>40,A4
+	subi	040H,A4
 	move	*A8(OZPOS),A5	;Z coor
 	addi	10,A5
 	calla	MAKEFLAM
@@ -967,11 +967,11 @@ SetBPoss:
 	add	A6,A11
 	;*Set Coors of Bottom Bone
 	move	*A11,A11,L     ;load ptr to final bone
-	addi	>180000,A5
+	addi	0180000H,A5
 	move	A5,*A11(OYVAL),L   
-	subi	>E0000,A3
+	subi	0E0000H,A3
 	move	A3,*A11(OXVAL),L   
-	addi	>100000,A14
+	addi	0100000H,A14
 	move	A14,*A11(OZVAL),L  
 
 UpdPX:
@@ -1251,7 +1251,7 @@ NxtAni:
 *A10=LEVEL OF 1-8
 BASCC:
 	movb	A10,*A13(COLORLVL)
-	movi	>FF,A0
+	movi	0FFH,A0
 	movb	A0,*A13(OLDCOLOR)
 	MOVI	basepal,A0
 	CALLA	FINDPAL
@@ -1637,7 +1637,7 @@ GotHlth0:
 	jreq	NoCC
 	movk	7,A5
 	sub	A2,A5
-	NOMATCHP	BASCCPID,>FFFF,NoCC
+	NOMATCHP	BASCCPID,0FFFFH,NoCC
 	movb	A5,*A0(COLORLVL)
 NoCC:
 SkDecH:
@@ -1681,9 +1681,9 @@ CkGlsHt:
 	sub	A1,A3
 	calla	DFRMGRND		;A8 must pt to rock obj
 	add	A3,A1
-	cmpi	>52,A1
+	cmpi	052H,A1
 	jrlt	NoHtGlas
-	cmpi	>75,A1
+	cmpi	075H,A1
 	jrgt	NoHtGlas
 
 	cmpi	2,A0
@@ -1707,7 +1707,7 @@ RckGls:
 	move	A6,A0
 	calla	BulToDat
 	move	A0,A2
-	movi	>25000,A1
+	movi	025000H,A1
 	calla	SCORE
 	calla	PUT25K
 
@@ -1729,9 +1729,9 @@ RckGls:
 	move	*A14(OXVEL),A0,L
 	sra	1,A0
 	move	A0,*A8(OXVEL),L
-	movi	->30000,A0	;YVEL
+	movi	-030000H,A0	;YVEL
 	move	A0,*A8(OYVEL),L
-	movi	>10000,A0
+	movi	010000H,A0
 	move	A0,*A8(OZVEL),L
 	jruc	GLASFLEW
 DelGlas:
@@ -1743,7 +1743,7 @@ GLASFLEW:
 
 	PULL	A0
 	movb	*A10(INUSE),A1	;all parts are active
-	andi	>FB,A1		;turn glasses off
+	andi	0FBH,A1		;turn glasses off
 	movb	A1,*A10(INUSE)
 
 	movi	FIREEYES,A1    	;Turn eyballs on.
@@ -1776,9 +1776,9 @@ CkEyeHt:
 	sub	A1,A3
 	calla	DFRMGRND		;A8 must pt to rock obj
 	add	A3,A1
-	cmpi	>59,A1
+	cmpi	059H,A1
 	jrlt	NoHtEyes
-	cmpi	>71,A1
+	cmpi	071H,A1
 	jrgt	NoHtEyes
 
 	cmpi	2,A0
@@ -1794,7 +1794,7 @@ CkEyeHt:
 RckEye:
 	;**** REMOVE THE EYES ****
 	PUSH	A0
-	NOMATCHP	EYECCPID,>FFFF,NoECC
+	NOMATCHP	EYECCPID,0FFFFH,NoECC
 	calla	KILL
 NoECC:
 	movi	UDIE2SND,A0
@@ -1803,7 +1803,7 @@ NoECC:
 	move	A6,A0
 	calla	BulToDat
 	move	A0,A2
-	movi	>25000,A1
+	movi	025000H,A1
 	calla	SCORE
 	calla	PUT25K
 
@@ -1831,7 +1831,7 @@ HlvlOk:
 	jreq	NoCC
 	movk	7,A5
 	sub	A2,A5
-	NOMATCHP	BASCCPID,>FFFF,NoCC1
+	NOMATCHP	BASCCPID,0FFFFH,NoCC1
 	movb	A5,*A0(COLORLVL)
 NoCC1:
 Injure1X:
@@ -1847,7 +1847,7 @@ NoHtEyes:
 **************************************************************************
 FLYGLAS:
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	SLEEP	3
 	calla	DFRMGRND
@@ -2249,7 +2249,7 @@ GotBOOM:
 	move	A9,*A13(ANIMPTR),L
 	movb	A1,*A13(DIR)
 
-	movi	>FF,A0		
+	movi	0FFH,A0		
 	movb	A0,*A10(INUSE)	;all parts are active
 	callr	AniHead
 
@@ -2358,7 +2358,7 @@ GotFlys:
 	movi	CHNKTBL5,A1
 	movi	CHUNKINI,A2
 	movi	CHNKSINK,A4
-	movi	>580000,A6 ;Y:X OFFSET of where to start chunks from object
+	movi	0580000H,A6 ;Y:X OFFSET of where to start chunks from object
 	move	*A10,A8,L
 	callr	DOCHUNKS
 
@@ -2366,14 +2366,14 @@ GotFlys:
 	jsrp	EXPLDSLP
 
 	;**** kill eye color cycler
-	NOMATCHP	EYECCPID,>FFFF,NoEyeCC
+	NOMATCHP	EYECCPID,0FFFFH,NoEyeCC
 	calla	KILL
 NoEyeCC:
 
 	movi	CHNKTBL2,A1
 	movi	CHNKTINI,A2
 	movi	CHNKSINK,A4
-	movi	>580000,A6 ;Y:X OFFSET of where to start chunks from object
+	movi	0580000H,A6 ;Y:X OFFSET of where to start chunks from object
 	move	*A10,A8,L
 	callr	DOCHUNKS
 
@@ -2383,7 +2383,7 @@ NoEyeCC:
 	movi	CHNKTBL1,A1
 	movi	CHUNKINI,A2
 	movi	CHNKSINK,A4
-	movi	>580000,A6 ;Y:X OFFSET of where to start chunks from object
+	movi	0580000H,A6 ;Y:X OFFSET of where to start chunks from object
 	move	*A10,A8,L
 	callr	DOCHUNKS
 
@@ -2393,7 +2393,7 @@ NoEyeCC:
 	movi	CHNKTBL1,A1
 	movi	CHUNKINI,A2
 	movi	CHNKSINK,A4
-	movi	>580000,A6 ;Y:X OFFSET of where to start chunks from object
+	movi	0580000H,A6 ;Y:X OFFSET of where to start chunks from object
 	move	*A10,A8,L
 	callr	DOCHUNKS
 
@@ -2401,16 +2401,16 @@ NoEyeCC:
 	jsrp	EXPLDSLP
 
 ;BUGCOLD; A5  - Y:X; A6  - 0:Z;
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;	move	*A10(SKULL),A8,L
 * GETANIXY - A8=OBJ -> A2=ANIPT OYVAL, A3=ANIPT OXVAL
 ;	calla	GETANIXY
 ;	srl	16,A3
 ;	movx	A3,A5
-;	subi	>480000,A2
+;	subi	0480000H,A2
 ;	movy	A2,A5
 ;	move	*A8(OZPOS),A6,W
-;	movi	>00330000|BUGEOID|1,A14
+;	movi	000330000H|BUGEOID|1,A14
 ;	calla	BUGCOLD
 
 	movk	5,A0
@@ -2419,7 +2419,7 @@ NoEyeCC:
 	movi	CHNKTBL1,A1
 	movi	CHUNKINI,A2
 	movi	CHNKSINK,A4
-	movi	>580000,A6 ;Y:X OFFSET of where to start chunks from object
+	movi	0580000H,A6 ;Y:X OFFSET of where to start chunks from object
 	move	*A10,A8,L
 	callr	DOCHUNKS
 
@@ -2446,7 +2446,7 @@ SLPX:
 **************************************************************************
 FlyHat:
 ;* PROCESS TO FLY HAT AND STUMP ..
-	movi	->80000,A0
+	movi	-080000H,A0
 	move	A0,*A8(OYVEL),L
 	move	A0,*A11(OYVEL),L
 
@@ -2465,14 +2465,14 @@ FlyHat:
 FlyFace:
 	movk	10,A0
 	calla	PRCSLP
-	movi	->80000,A0
+	movi	-080000H,A0
 	move	*A8(OFLAGS),A1,W
 	btst	B_FLIPH,A1
 	jrz	SkNgXV1
 	neg	A0
 SkNgXV1:
 	move	A0,*A8(OXVEL),L
-	movi	->40000,A0
+	movi	-040000H,A0
 	move	A0,*A8(OYVEL),L
 	movi	60,A0
 	calla	PRCSLP
@@ -2484,14 +2484,14 @@ SkNgXV1:
 FlyEar1:
 	movk	8,A0
 	calla	PRCSLP
-	movi	>80000,A0
+	movi	080000H,A0
 	move	*A8(OFLAGS),A1,W
 	btst	B_FLIPH,A1
 	jrz	SkNgXV2
 	neg	A0
 SkNgXV2:
 	move	A0,*A8(OXVEL),L
-	movi	->48000,A0
+	movi	-048000H,A0
 	move	A0,*A8(OYVEL),L
 	movi	55,A0
 	calla	PRCSLP
@@ -2503,14 +2503,14 @@ SkNgXV2:
 FlyEar2:
 	movk	8,A0
 	calla	PRCSLP
-	movi	>48000,A0
+	movi	048000H,A0
 	move	*A8(OFLAGS),A1,W
 	btst	B_FLIPH,A1
 	jrz	SkNgXV5
 	neg	A0
 SkNgXV5:
 	move	A0,*A8(OXVEL),L
-	movi	->40000,A0
+	movi	-040000H,A0
 	move	A0,*A8(OYVEL),L
 	movi	65,A0
 	calla	PRCSLP
@@ -2522,14 +2522,14 @@ SkNgXV5:
 FlyNeck:
 	movk	10,A0
 	calla	PRCSLP
-	movi	>20000,A0
+	movi	020000H,A0
 	move	*A8(OFLAGS),A1,W
 	btst	B_FLIPH,A1
 	jrz	SkNgXV3
 	neg	A0
 SkNgXV3:
 	move	A0,*A8(OXVEL),L
-	movi	->70000,A0
+	movi	-070000H,A0
 	move	A0,*A8(OYVEL),L
 	movi	60,A0
 	calla	PRCSLP
@@ -2541,14 +2541,14 @@ SkNgXV3:
 FlySNck:
 	movk	15,A0
 	calla	PRCSLP
-	movi	->20000,A0
+	movi	-020000H,A0
 	move	*A8(OFLAGS),A1,W
 	btst	B_FLIPH,A1
 	jrz	SkNgXV4
 	neg	A0
 SkNgXV4:
 	move	A0,*A8(OXVEL),L
-	movi	->68000,A0
+	movi	-068000H,A0
 	move	A0,*A8(OYVEL),L
 	movi	60,A0
 	calla	PRCSLP
@@ -2735,20 +2735,20 @@ CHUNKLP:
 	move	A0,@FRAGCNT,W
 
 	move	A3,*A7(PDATA),L	;FLAGS:ZPOS
-	movi	>40000,A0	;XVEL
+	movi	040000H,A0	;XVEL
 	calla	SRAND
-	move	A0,*A7(PDATA+>20),L
-	movi	>40000,A0	;YVEL
+	move	A0,*A7(PDATA+020H),L
+	movi	040000H,A0	;YVEL
 	calla	RANDU
 	neg	A0
-	subi	>30000,A0
-	move	A0,*A7(PDATA+>40),L
-	movi	>10000,A0	;ZVEL
+	subi	030000H,A0
+	move	A0,*A7(PDATA+040H),L
+	movi	010000H,A0	;ZVEL
 	calla	SRAND
-	move	A0,*A7(PDATA+>60),L
+	move	A0,*A7(PDATA+060H),L
 	clr	A0
-	move	A0,*A7(PDATA+>80),L
-	move	A4,*A7(PDATA+>A0),L	;GRND PROC
+	move	A0,*A7(PDATA+080H),L
+	move	A4,*A7(PDATA+0A0H),L	;GRND PROC
 	jruc	CHUNKLP
 
 CHUNKX:
@@ -2825,7 +2825,7 @@ Skeleton:
 	movk	3,A0
 	movb	A0,*A10(SKLPARTS)
 
-	movi	>FF,A0		
+	movi	0FFH,A0		
 	movb	A0,*A10(INUSE)	;all parts are active
 	movb	*A10(ONLIST),A0	;list is only for sklparts now
 	sll	3,A0
@@ -2940,7 +2940,7 @@ HedSpine:
 ;PARMS
 ; A0 - multiplier for portion of dist between previous and next bone
 ;	to place the current bone
-;	0=0%, >FFFF=99.99%
+;	0=0%, 0FFFFH=99.99%
 
 	mmtm	SP,A9
 
@@ -2948,8 +2948,8 @@ HedSpine:
 	move	*A10(SKULL),A8,L
 * GETANIXY - A8=OBJ -> A2=ANIPT OYVAL, A3=ANIPT OXVAL
 	calla	GETANIXY
-	addi	>10000,A2
-	subi	>E0000,A3
+	addi	010000H,A2
+	subi	0E0000H,A3
 	move	A2,A5		;A5 = Y coor of previous piece
 	move	A3,A7		;A7 = X coor of previous piece
 	move	*A8(OZVAL),A9,L	;A9 = Z coor of previous piece
@@ -2995,7 +2995,7 @@ BasSpine:
 ;PARMS
 ; A0 - multiplier for portion of dist between previous and next bone
 ;	to place the current bone
-;	0=0%, >FFFF=99.99%
+;	0=0%, 0FFFFH=99.99%
 
 	mmtm	SP,A9
 
@@ -3021,8 +3021,8 @@ SpineLp1:
 	move	*A10(SKULL),A8,L
 * GETANIXY - A8=OBJ -> A2=ANIPT OYVAL, A3=ANIPT OXVAL
 	calla	GETANIXY
-	addi	>10000,A2
-	subi	>E0000,A3
+	addi	010000H,A2
+	subi	0E0000H,A3
 	jruc	GtNCoor
 SkHd:
 	move	A11,A4
@@ -3076,8 +3076,8 @@ StSpineP:
 * GETANIXY - A8=OBJ -> A2=ANIPT OYVAL, A3=ANIPT OXVAL
 	calla	GETANIXY
 	move	*A8(OZVAL),A1,L
-	subi	>E0000,A3
-	addi	>10000,A2
+	subi	0E0000H,A3
+	addi	010000H,A2
 
 	move	*A13(SPINE),A11,L
 	movb	*A13(SPINELEN),A7
@@ -3174,9 +3174,9 @@ TngEntry:
 	movi	120,A0
 	movb	A0,*A7(BRAINTIKS)
 
-	movi	>C0000,A0
+	movi	0C0000H,A0
 	callr	SklBackV
-	movi	>30000,A0
+	movi	030000H,A0
 	callr	SklUpV
 
 	rets
@@ -3190,9 +3190,9 @@ ClSpnRck:
 	movi	70,A0
 	movb	A0,*A7(BRAINTIKS)
 	calla	SpineHit
-	movi	>60000,A0
+	movi	060000H,A0
 	callr	SklBackV
-	movi	>20000,A0
+	movi	020000H,A0
 	callr	SklUpV
 	rets
 **************************************************************************
@@ -3204,7 +3204,7 @@ ClSbsRck:
 	movi	60,A0
 	movb	A0,*A7(BRAINTIKS)
 
-	movi	>90000,A0
+	movi	090000H,A0
 	callr	BasBackV
 	rets
 **************************************************************************
@@ -3216,7 +3216,7 @@ ClSklBul:
 
 	movi	6,A0
 	callr	SkulBack
-	movi	>4000,A0
+	movi	04000H,A0
 	callr	SklBackV
 
 	rets
@@ -3228,9 +3228,9 @@ ClSpnBul:
 	move	A0,A8			;MB OBJ
 	move	*A0(OPLINK),A7,L	;MB OBJ
 	calla	SpineHit
-	movi	>4000,A0
+	movi	04000H,A0
 	callr	SklBackV
-	movi	>20000,A0
+	movi	020000H,A0
 	callr	SklUpV
 	rets
 **************************************************************************
@@ -3285,7 +3285,7 @@ CpySpn:
 	calla	BulToDat
 	jrz	SkScore
 	move	A0,A2
-	movi	>25000,A1
+	movi	025000H,A1
 	calla	SCORE
 	calla	PUT25K
 SkScore:
@@ -3308,7 +3308,7 @@ SkScore:
 	move	*A8(OXVEL),A1,L
 	add	A0,A1
 	move	A1,*A8(OXVEL),L
-	movi	>20000,A0	;YVEL
+	movi	020000H,A0	;YVEL
 	calla	RANDU
 	neg	A0
 	move	A0,*A8(OYVEL),L
@@ -3316,7 +3316,7 @@ SkScore:
 	move	A0,*A8(OZVEL),L
 
 	movi	BONESINK,A4
-	move	A4,*A7(PDATA+>A0),L	;GRND PROC
+	move	A4,*A7(PDATA+0A0H),L	;GRND PROC
 
 	;IF SPINELEN <= 6 BLOWUP SKULL
 	movb	*A13(SPINELEN),A0
@@ -3513,7 +3513,7 @@ AnimX:
 	abs	A0
 	add	A1,A0
 	srl	7,A0
-	addi	>00008000,A0,L
+	addi	000008000H,A0,L
 	callr	HedSpine
 
 **** Find Next Event ****
@@ -3644,7 +3644,7 @@ SkNgXOff:
 	sll	16,A3
 	divs	A14,A3
 	move	A3,A1
-	movi	>70000,A0
+	movi	070000H,A0
 	calla	ABSMAX
 	move	A1,*A8(OXVEL),L
 SkAttkX:
@@ -3655,7 +3655,7 @@ SkAttkX:
 	sll	16,A7
 	divs	A14,A7	;A7 YVEL
 	move	A7,A1
-	movi	>40000,A0
+	movi	040000H,A0
 	calla	ABSMAX
 	move	A1,A7
 
@@ -3663,7 +3663,7 @@ SkAttkX:
 	sll	16,A5
 	divs	A14,A5
 	move	A5,A1
-	movi	>28000,A0
+	movi	028000H,A0
 	calla	ABSMAX
 	move	A1,*A8(OZVEL),L
 	add	A1,A7
@@ -3703,7 +3703,7 @@ NeckCk:
 SkXMPY:
 	cmp	A3,A2
 	jrlt	SkNkXAdj
-	movi	>A000,A2
+	movi	0A000H,A2
 	move	A1,A1
 	jrn	SkNgXAdj
 	neg	A2
@@ -3733,7 +3733,7 @@ SkNkXAdj:
 SkYMPY
 	cmp	A3,A2
 	jrlt	SkNkYAdj
-	movi	>A000,A2
+	movi	0A000H,A2
 	move	A1,A1
 	jrn	SkNgYAdj
 	neg	A2
@@ -3755,7 +3755,7 @@ SkNkYAdj:
 	sll	1,A3
 	cmp	A3,A2
 	jrlt	SkNkZAdj
-	movi	>A000,A2
+	movi	0A000H,A2
 	move	A1,A1
 	jrn	SkNgZAdj
 	neg	A2
@@ -4089,20 +4089,20 @@ SGtZdivX:
 	move	A2,A2
 	jrn	SRgtUDir
 ;**facing right and down
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	SDir3
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	SDir2
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	SDir1
 	jruc	SDir0
 SRgtUDir:
 ;**facing right and up
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	SDir3
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	SDir4
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	SDir5
 	jruc	SDir6
 
@@ -4111,21 +4111,21 @@ SLftDir:
 	move	A2,A2
 	jrn	SLftUDir
 ;**facing left and down
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	SDir9
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	SDir10
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	SDir11
 	jruc	SDir0
 
 SLftUDir:
 ;**facing left and up
-	cmpi	>93cd,A3	;ANG < 30 deg		
+	cmpi	093cdH,A3	;ANG < 30 deg		
 	jrlt	SDir9
-	cmpi	>10000,A3	;ANG < 45 deg		
+	cmpi	010000H,A3	;ANG < 45 deg		
 	jrlt	SDir8
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	SDir7
 	jruc	SDir6
 
@@ -4157,7 +4157,7 @@ SDir11:	movk	11,A0
 SetSDir:
 	rets
 SZEROX:
-	movi	>7FFFFFFF,A3
+	movi	07FFFFFFFH,A3
 	jruc	SGtZdivX
 **************************************************************************
 
@@ -4222,9 +4222,9 @@ CkTilt:
 	move	*A1(OYVEL),A2,L
 	move	*A1(OZVEL),A3,L
 	sub	A3,A2
-	cmpi	->32000,A2	
+	cmpi	-032000H,A2	
 	jrlt	TILTUP
-	cmpi	>28000,A2	
+	cmpi	028000H,A2	
 	jrgt	TILTDN
 
 	callr	TRYBITE
@@ -4402,7 +4402,7 @@ ANIMX:
 	callr	UpdSkulV
 	callr	UpdBaseP
 	callr	UpdBaseV
-	movi	>00008800,A0,L
+	movi	000008800H,A0,L
 	callr	HedSpine
 
 	movb	*A13(ANIMTIKS),A0
@@ -4433,7 +4433,7 @@ SkClrAnT:
 	movi	CHNKTBL4,A1
 	movi	BONEINI,A2
 	movi	BONESINK,A4
-	movi	>0,A6	 ;Y:X OFFSET of where to start chunks from object
+	movi	00H,A6	 ;Y:X OFFSET of where to start chunks from object
 	move	*A8,A8,L
 	callr	DOCHUNKS
 	mmfm	SP,A8
@@ -4481,7 +4481,7 @@ SpinX:
 	movi	CHNKTBL3,A1
 	movi	BONEINI,A2
 	movi	BONESINK,A4
-	movi	>0,A6	 ;Y:X OFFSET of where to start chunks from object
+	movi	00H,A6	 ;Y:X OFFSET of where to start chunks from object
 	move	*A10(SKULL),A8,L
 	callr	DOCHUNKS
 
@@ -4494,14 +4494,14 @@ SpinX:
 	calla	PRCSLP
 
 	;**** kill eye color cycler
-	NOMATCHP	SKLCCPID,>FFFF,NoSkulCC
+	NOMATCHP	SKLCCPID,0FFFFH,NoSkulCC
 	calla	KILL
 NoSkulCC:
 
 	movi	CHNKTBL2,A1
 	movi	CHNKTINI,A2
 	movi	CHNKSINK,A4
-	movi	>0,A6	 ;Y:X OFFSET of where to start chunks from object
+	movi	00H,A6	 ;Y:X OFFSET of where to start chunks from object
 	move	*A10(SKULL),A8,L
 	callr	DOCHUNKS
 
@@ -4511,7 +4511,7 @@ NoSkulCC:
 	movi	CHNKTBL3,A1
 	movi	BONEINI,A2
 	movi	BONESINK,A4
-	movi	>0,A6	 ;Y:X OFFSET of where to start chunks from object
+	movi	00H,A6	 ;Y:X OFFSET of where to start chunks from object
 	move	*A10(SKULL),A8,L
 	callr	DOCHUNKS
 
@@ -4520,7 +4520,7 @@ NoSkulCC:
 
 	;* JUST THE BASE IS LEFT
 	;* set color cycler to black
-	NOMATCHP	BASCCPID,>FFFF,NoBCC
+	NOMATCHP	BASCCPID,0FFFFH,NoBCC
 	movk	8,A1
 	movb	A1,*A0(COLORLVL)
 NoBCC:
@@ -4606,7 +4606,7 @@ GotSnd:
 GRNDSKUL:
 ;	jruc	NoBnce
 ;
-;	movi	->30000,A0
+;	movi	-030000H,A0
 ;	move	A0,*A8(OYVEL),L
 ;
 ;BnceCk:
@@ -4615,7 +4615,7 @@ GRNDSKUL:
 ;
 ;	move	*A8(OYVEL),A0,L
 ;	sra	1,A0
-;	cmpi	>5000,A0
+;	cmpi	05000H,A0
 ;	jrlt	NoBnce
 ;	neg	A0
 ;	move	A0,*A8(OYVEL),L
@@ -4623,7 +4623,7 @@ GRNDSKUL:
 ;BnceLp:
 ;	SLEEP	1
 ;	move	*A8(OYVEL),A0,L
-;	addi	>3000,A0
+;	addi	03000H,A0
 ;	move	A0,*A8(OYVEL),L
 ;	jrn	BnceLp
 ;	calla	DFRMGRND
@@ -4644,7 +4644,7 @@ GRNDSKUL:
 	calla	ADDBB
 	movi	DUMPCOLL,A0
 	move	A0,*A8(OCVECT),L
-	movi	>00010012,A0
+	movi	000010012H,A0
 	move	A0,*A8(OZSIZ),L
 
 CarcLp:
@@ -4654,16 +4654,16 @@ CarcLp:
 	calla	PRCSLP
 
 ;BUGCOLD; A5  - Y:X; A6  - 0:Z;
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 * GETANIXY - A8=OBJ -> A2=ANIPT OYVAL, A3=ANIPT OXVAL
 	calla	GETANIXY
 	srl	16,A3
 	movx	A3,A5
-	subi	>80000,A2
+	subi	080000H,A2
 	movy	A2,A5
 	move	*A8(OZPOS),A6,W
 	subk	5,A6
-	movi	>00100000|BUGEOID|1,A14
+	movi	000100000H|BUGEOID|1,A14
 	calla	BUGCOLD
 
 	jruc	CarcLp
@@ -4704,19 +4704,19 @@ BlowemS:
 	movi	ENEMIES,A1
 	calla	DELSUPP
 
-	movi	>50000,A0	;XVEL
+	movi	050000H,A0	;XVEL
 	calla	SRAND
 	move	A0,*A8(OXVEL),L
-	movi	>50000,A0	;YVEL
+	movi	050000H,A0	;YVEL
 	calla	RANDU
 	neg	A0
-	subi	>40000,A0
+	subi	040000H,A0
 	move	A0,*A8(OYVEL),L
-	movi	>18000,A0	;ZVEL
+	movi	018000H,A0	;ZVEL
 	calla	SRAND
 	move	A0,*A8(OZVEL),L
 
-	move	A4,*A7(PDATA+>A0),L	;GRND PROC
+	move	A4,*A7(PDATA+0A0H),L	;GRND PROC
 	dsj	A6,BlowemS
 	jruc	FSpineX
 	
@@ -4761,7 +4761,7 @@ BlowSkLp:
 	CREATE	CHUNKPID,NTRAJEC1
 	jrz	NoFlySkl
 	move	*A4+,A1,L
-	move	A1,*A0(PDATA+>A0),L	;GRND PROC
+	move	A1,*A0(PDATA+0A0H),L	;GRND PROC
 	move	@FRAGCNT,A0,W
 	inc	A0
 	move	A0,@FRAGCNT,W
@@ -4770,15 +4770,15 @@ BlowSkLp:
 	move	A8,A0
 	calla	DELSUPP
 
-	movi	>10000,A0	;XVEL
+	movi	010000H,A0	;XVEL
 	calla	SRAND
 	move	A0,*A8(OXVEL),L
-	movi	>30000,A0	;YVEL
+	movi	030000H,A0	;YVEL
 	calla	RANDU
 	neg	A0
-	subi	>50000,A0
+	subi	050000H,A0
 	move	A0,*A8(OYVEL),L
-	movi	->10000,A0	;ZVEL
+	movi	-010000H,A0	;ZVEL
 	move	A0,*A8(OZVEL),L
 
 	dsj	A6,BlowSkLp
@@ -4808,13 +4808,13 @@ BmpSklV:
 	move	*A10(SKULL),A8,L
 	calla	RANDPER
 	jrnc	SkBmpY
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	RANDU
 	move	*A8(OYVEL),A1,L
 	sub	A0,A1
 	move	A1,*A8(OYVEL),L
 SkBmpY:
-	movi	>18000,A0
+	movi	018000H,A0
 	calla	SRAND
 	move	*A8(OXVEL),A1,L
 	add	A0,A1
@@ -4832,7 +4832,7 @@ BaseCent:
 	sub	A0,A1
 	sla	8,A1
 
-;	movi	>6000,A2
+;	movi	06000H,A2
 ;	cmp	A0,A1
 ;	jrgt	SkNgBXV
 ;	neg	A2
@@ -4842,10 +4842,10 @@ BaseCent:
 	move	A0,*A8(OXVEL),L
 
 	move	*A8(OYVEL),A0,L
-	addi	>400,A0
+	addi	0400H,A0
 	move	A0,*A8(OYVEL),L
 	move	*A8(OZVEL),A0,L
-	addi	>400,A0
+	addi	0400H,A0
 	move	A0,*A8(OZVEL),L
 	rets
 **************************************************************************
@@ -4950,7 +4950,7 @@ GotSlpT:
 GoingUp:
 	PULLP	A7		;pull sleep count
 AddGrav:
-	ADDI	>1A00,A5
+	ADDI	01A00H,A5
 	dsjs	A7,AddGrav
 	MOVE	A5,*A8(OYVEL),L
 	JRUC	TrajLp

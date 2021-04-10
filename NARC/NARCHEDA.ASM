@@ -1,4 +1,4 @@
- 	.FILE	'NARCHEDA.ASM'
+ 	.FILE	"NARCHEDA.ASM"
 	.TITLE	"<<< N  A  R  C  --  HEADMAN  Animations >>>"
 
 **************************************************************************
@@ -37,14 +37,14 @@
 	.GLOBL	baseflsh
 	.GLOBL	jawbite,jawbitef,FLYSPINE,FLYSKULL,BlowSkul
 
-FTungSND	.WORD	>F005,>10,>804e,0 ;fire tung
-TungHSND	.WORD	>F005,>15,>8015,0 ;tung hits player
+FTungSND	.WORD	0F005H,010H,0804eH,0 ;fire tung
+TungHSND	.WORD	0F005H,015H,08015H,0 ;tung hits player
 
-HEADZSIZ	.set	>00230000	;use Z plus only
+HEADZSIZ	.set	000230000H	;use Z plus only
 BASEZMIN	.set	5
-BASEZPOS	.set	>28
+BASEZPOS	.set	028H
 BASEZSIZ	.set	BASEZPOS*ZP+BASEZMIN
-TUNGZSIZ	.set	>00120012
+TUNGZSIZ	.set	000120012H
 
 **************************************************************************
 InitTbls:
@@ -103,7 +103,7 @@ TUNGini
 SpineIni:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	spine,>50005,SPNECOLL
+	.LONG	spine,050005H,SPNECOLL
 	.WORD	DMAWNZ,HEADEOID|7
 	.LONG	0
 
@@ -147,182 +147,182 @@ CHNKTBL5:
 hed90ft0:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG0
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft1:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG1
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft2:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG2
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft3:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG3
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft4:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG4
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft5:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG5
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft6:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG6
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft7:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG7
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft8:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG8
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90ft9:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG9
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 
 hed90t0:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG0
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t1:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG1
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t2:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG2
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t3:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG3
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t4:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG4
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t5:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG5
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t6:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG6
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t7:
 	.LONG	BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG7
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t8:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG8
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90t9:
 	.LONG	BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG9
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 
 
 hed120:
 	.LONG	BASElh2e,BASElh2e,HEAD4,0,0,GLAS4,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed120f:
 	.LONG	BASElh2e,BASElh2e,HEAD4,0,0,GLAS4,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed60:
 	.LONG	BASElh2e,BASElh2e,HEAD2,0,0,GLAS2,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed60f:
 	.LONG	BASElh2e,BASElh2e,HEAD2,0,0,GLAS2,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed30:
 	.LONG	BASElh2e,BASElh2e,HEAD1,0,0,GLAS1,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed30f:
 	.LONG	BASElh2e,BASElh2e,HEAD1,0,0,GLAS1,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed0:
 	.LONG	BASElh2e,BASElh2e,HEAD0,0,0,GLAS0,0
 	.BYTE	       0,      	0,    2,0,1,	3, 1 ;Zoff
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 
 
 recoil:
 	.LONG	BASElh2e,BASElh2e,HEAD3r,0,0,GLAS3r2,0
 	.BYTE	       0,      	0,     2,0,1,	  3,1	 ;Z off
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 recoilf:
 	.LONG	BASElh2e,BASElh2e,HEAD3r,0,0,GLAS3r2,0
 	.BYTE	       0,      	0,     2,0,1,	  3,1	 ;Z off
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 
 
 hedblow0:
 	.LONG	BASElh2e,BASElh2e,0,0,0,0,0
 	.BYTE	       0,      	0,     1,     2,     3,    2,    1 ;Z off
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 hedblow1:
 	.LONG	BASElh2e,BASElh2e,stump,skull4H,jaw4H,0,0
 	.BYTE	       0,      	0,    1,     2,     3,    2,    1 ;Z off
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 
 hedblo0f:
 	.LONG	BASElh2e,BASElh2e,0,0,0,0,0
 	.BYTE	       0,      	0,     1,     2,     3,    2,    1 ;Z off
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 hedblo1f:
 	.LONG	BASElh2e,BASElh2e,stump,skull4H,jaw4H,0,0
 	.BYTE	       0,      	0,    1,     2,     3,    2,    1 ;Z off
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 
 hed90f:
 	.LONG	BASElh2e,BASElh2e,HED3mou1,HED3hat,HED3neck,GLAS3,0
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>40 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	040H ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 hed90:
 	.LONG	BASElh2e,BASElh2e,HED3mou1,HED3hat,HED3neck,GLAS3,0
 	.BYTE	       0,      	0,	 2,	 0,	  1,	3,1 ;ZOFF
-	.BYTE	>BF ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	0BFH ;flip bits - top 6 bits correspond to first 6 parts
 	.EVEN
 
 
@@ -637,19 +637,19 @@ CHUNKINI:
 	.LONG	0,0,0,0
 	.WORD	0,0
 	.LONG	meat2a,0,DUMCOLL
-	.WORD	DMAWNZ,HEADEOID|>C
+	.WORD	DMAWNZ,HEADEOID|0CH
 	.LONG	0
 CHNKTINI:
 	.LONG	0,0,0,0
 	.WORD	0,0
 	.LONG	TUNG0C,0,DUMCOLL
-	.WORD	DMAWNZ,HEADEOID|>C
+	.WORD	DMAWNZ,HEADEOID|0CH
 	.LONG	0
 BONEINI:
 	.LONG	0,0,0,0
 	.WORD	0,0
 	.LONG	bonea0,0,DUMCOLL
-	.WORD	DMAWNZ,HEADEOID|>C
+	.WORD	DMAWNZ,HEADEOID|0CH
 	.LONG	0
 
 FLYSPINE:
@@ -1143,184 +1143,184 @@ BlowSkul:
 blowskul:
 	.LONG	skcarc,spine,spine,spine
 	.BYTE	0,     0,    0,	   0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skull0:
 	.LONG	skull1,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull0f:
 	.LONG	skull1,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull30:
 	.LONG	skull2,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull30f:
 	.LONG	skull2,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull60:
 	.LONG	skull3,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull60f:
 	.LONG	skull3,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skull90up:
 	.LONG	tiltup,0,0
 	.BYTE	0,     0,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90dn:
 	.LONG	tiltdn,0,0
 	.BYTE	0,     0,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90upf:
 	.LONG	tiltup,0,0
 	.BYTE	0,     0,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90dnf:
 	.LONG	tiltdn,0,0
 	.BYTE	0,     0,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skull90a:
 	.LONG	skull4,jaw1,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90b:
 	.LONG	skull4,jaw2,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 jawbite:
 	.LONG	skull4,jaw2,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90c:
 	.LONG	skull4,jaw3,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90d:
 	.LONG	skull4,jaw4,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skull90af:
 	.LONG	skull4,jaw1,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90bf:
 	.LONG	skull4,jaw2,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 jawbitef:
 	.LONG	skull4,jaw2,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90cf:
 	.LONG	skull4,jaw3,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull90df:
 	.LONG	skull4,jaw4,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skult90a:
 	.LONG	skull4,jaw1,0
 	.BYTE	0,     3,  -1
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90b:
 	.LONG	skull4,jaw2,TUNG0SF
 	.BYTE	0,     3, -1
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90c:
 	.LONG	skull4,jaw3,TUNG1SF
 	.BYTE	0,     3,   -1
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90d:
 	.LONG	skull4,jaw4,TUNG2SF
 	.BYTE	0,     3,  -1
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skult90af:
 	.LONG	skull4,jaw1,0
 	.BYTE	0,     3,   -1
-	.BYTE	>9C ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	09CH ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90bf:
 	.LONG	skull4,jaw2,TUNG0SF
 	.BYTE	0,     3,   -1
-	.BYTE	>9C ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	09CH ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90cf:
 	.LONG	skull4,jaw3,TUNG1SF
 	.BYTE	0,     3,   -1
-	.BYTE	>9C ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	09CH ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skult90df:
 	.LONG	skull4,jaw4,TUNG2SF
 	.BYTE	0,     3,   -1
-	.BYTE	>9C ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	09CH ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 skull120:
 	.LONG	skull5,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull120f:
 	.LONG	skull5,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull150:
 	.LONG	skull6,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull150f:
 	.LONG	skull6,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull180:
 	.LONG	skull7,0,0
 	.BYTE	0,     3,0
-	.BYTE	>80 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	080H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 skull180f:
 	.LONG	skull7,0,0
 	.BYTE	0,     3,0
-	.BYTE	>98 ;flip bits - top 6 bits correspond to first 6 parts
+	.BYTE	098H ;flip bits - top 6 bits correspond to first 6 parts
 	.even
 
 
@@ -1516,9 +1516,9 @@ FIRETUNG:
 	xori	M_FLIPH,A9
 SkHFlp:
 
-	MOVI	>2000,A0
+	MOVI	02000H,A0
 	CALLA	RANDU
-	ADDI	>2000,A0
+	ADDI	02000H,A0
 	MOVE	A0,A10		;SAVE Z ACCEL FACTOR IN A10
 	MOVI	500,A0
 	CALLA	RANDPER
@@ -1532,7 +1532,7 @@ FTUNG0
 	CALLA	YFLP		 ;FLIP THE DUDE IF APPROPRIATE
 FTUNG1:
 	CALLR	TNGVEL
-	ADDI	->20000,A1	 ;GET Y VELOCITY
+	ADDI	-020000H,A1	 ;GET Y VELOCITY
 	MOVE	A1,*A8(OYVEL),L
 	CALLA	SHVELCPY	 ;COPY VELOCITY TO SHADOW
 TNGJMP:
@@ -1570,7 +1570,7 @@ TNGOK1
 	MOVE	A0,*A8(OZVEL),L
 	MOVE	*A8(OYVEL),A0,L		;EFFECT OF GRAVITY
 	ADD	A1,A0			;ADD DELTA Z
-	ADDI	>4000,A0
+	ADDI	04000H,A0
 	MOVE	A0,*A8(OYVEL),L
 	MOVE	*A8(OZVEL),A1,L
 	SUB	A1,A0
@@ -1636,7 +1636,7 @@ TNGCLCK
 	MOVE	A14,*A8(OCVECT),L	;COLLISION POINTER NULL FOR NOW
 
 	CALLA	PSTOP
-	MOVI	>20000,A0
+	MOVI	020000H,A0
 	MOVE	A0,*A8(OYVEL),L		;INITIAL DOWNWARD THRUST
 	CALLA	SHVELCPY
 	PULL	A0			;BLOW OFF A WORD ON STACK
@@ -1647,7 +1647,7 @@ TNGCLX
 *COPY TO SHADOW AND FLIP OPPOSITE
 SHVLFLP1
 	CALLA	SHVELCPY
-	MOVE	*A8(OXVEL+>10),A14,W		;TEST X VELOCITY
+	MOVE	*A8(OXVEL+010H),A14,W		;TEST X VELOCITY
 	JAN	NOYFLP
 	JAUC	YFLP
 *
@@ -1661,7 +1661,7 @@ TNGVEL
 	MOVE	*A6(OXVAL),A1,L	 ;COMPUTE X VELOCITY
 	MOVE	*A8(OXVAL),A2,L
 	MOVE	*A6(OXVEL),A3,L
-	MOVI	>3F,A0
+	MOVI	03FH,A0
 	CALLA	SRAND
 	MOVE	A0,A4  		;SAVE FASTBALL INDICATOR
 	JRN	TUNGV1
@@ -1682,7 +1682,7 @@ TUNGV11
 	MOVE	*A6(OZVAL),A1,L	 ;COMPUTE Z VELOCITY
 	MOVE	*A8(OZVAL),A2,L
 	MOVE	*A6(OZVEL),A3,L
-	MOVI	>1F,A0
+	MOVI	01FH,A0
 	CALLA	SRAND
 	JRN	TUNGV2
 	CLR	A3
@@ -1716,7 +1716,7 @@ TNGROK
 	MOVE	A14,*A0(OCVECT),L	;COLLISION POINTER NULL FOR NOW
 
 	CALLA	PSTOP
-	MOVI	>20000,A0
+	MOVI	020000H,A0
 	MOVE	A0,*A8(OYVEL),L		;INITIAL DOWNWARD THRUST
 	CALLA	SHVELCPY
 	MOVI	TNGDIE,A7
@@ -1736,15 +1736,15 @@ TNGDIEL:
 	JRC	TNGDIE
 	SLEEP	3
 	MOVE	*A8(OYVEL),A0,L		;EFFECT OF GRAVITY
-	ADDI	>7FFF,A0
+	ADDI	07FFFH,A0
 	MOVE	A0,*A8(OYVEL),L
 	JRN	TNGDIEL			;CANT LAND WITH NEGATIVE Y VEL.
 	CALLA	DFRMGRND
 	JRNN	TNGDIEL			;STILL GOING
 
-	CMPI	>20000,A0
+	CMPI	020000H,A0
 	JRLS	TNGSINK
-	MOVI	>60000000,A1
+	MOVI	060000000H,A1
 	MPYU	A1,A0
 	NEG	A0
 	MOVE	A0,*A8(OYVEL),L		;CUT DOWN Y
@@ -1763,7 +1763,7 @@ TNGINIT:
 	.LONG	0,0,0,0
 	.WORD	0,0
 	.LONG	TUNG1C,LOFZ,TNGCOLL
-	.WORD	DMAWNZ,>E01
+	.WORD	DMAWNZ,0E01H
 	.LONG	0
 
 *COLLISION TABLE
@@ -1848,37 +1848,37 @@ TNGLK1:
 
 baseflsh:
 	.word	243
-	.word	>0,>0,>20,>400,>404,>424,>824,>428
-	.word	>828,>444,>448,>844,>848,>868,>C48,>C68
-	.word	>84C,>86C,>C4C,>C6C,>C70,>C8C,>C90,>106C
-	.word	>1070,>108C,>1090,>1490,>1094,>1494,>10B0,>10B4
-	.word	>14B0,>14B4,>14D4,>14B8,>14D8,>1CB4,>1CB8,>1CD4
-	.word	>1CD8,>1CF8,>1CD8,>1CF8,>1CDC,>1CFC,>1CDC,>1CFC
-	.word	>1CFF,>1D3C,>1D3F,>24FC,>24FF,>253C,>253F,>253F
-	.word	>255F,>255F,>253F,>255F,>253F,>253F,>255F,>255F
-	.word	>257F,>257F,>2D3F,>2D5F,>2D5F,>2D5F,>2D7F,>2D7F
-	.word	>2D9F,>2D7F,>2D9F,>2D7F,>2D9F,>2D7F,>2D9F,>359F
-	.word	>2D9F,>359F,>95F,>2DBF,>2DBF,>35BF,>35BF,>35DF
-	.word	>35BF,>35DF,>35BF,>35DF,>35BF,>35DF,>35DF,>35FF
-	.word	>35FF,>3DDF,>3DDF,>3DFF,>3DFF,>3DFF,>3DFF,>3DFF
-	.word	>3E1F,>3E1F,>3E1F,>3E1F,>3E5F,>3E1F,>3E5F,>4E1F
-	.word	>461F,>461F,>465F,>465F,>465F,>467F,>467F,>465F
-	.word	>465F,>467F,>467F,>469F,>4E7F,>4E9F,>467F,>469F
-	.word	>4E7F,>4E9F,>4E9F,>4E9F,>4E9F,>4EBF,>4EBF,>4EBF
-	.word	>4EBF,>4EBF,>4EDF,>4EDF,>4EFF,>56BF,>56DF,>56BF
-	.word	>56DF,>56DF,>56DF,>56DF,>5EDF,>56FF,>56FF,>56FF
-	.word	>56FF,>56FF,>571F,>571F,>571F,>573F,>5EFF,>5EFF
-	.word	>5F1F,>5F1F,>5F3F,>5F1F,>5F3F,>5F1F,>5F3F,>5F1F
-	.word	>5F3F,>5F3F,>673F,>673F,>5F7F,>677F,>5F7F,>677F
-	.word	>677F,>679F,>679F,>677F,>677F,>679F,>679F,>6F9F
-	.word	>679F,>6F9F,>67BF,>67BF,>6FBF,>6FBF,>6FDF,>6FBF
-	.word	>6FDF,>6FBF,>6FDF,>6FBF,>6FDF,>6FDF,>6FFF,>6FFF
-	.word	>77BF,>77DF,>77DF,>77FF,>77FF,>77FF,>77FF,>77FF
-	.word	>77FF,>77FF,>77FF,>77FF,>77FF,>77FF,>77FF,>7FFF
-	.word	>7FFF,>7FFF,>7FFF,>7FFF,>7FFF,>7FFF,>7FFF,>7FFF
-	.word	>7FFF,>7FFF,>7FDF,>7FDF,>7FFF,>7FFF,>7FFF,>7FFF
-	.word	>7FFF,>7FFF,>7FFF,>7FFF,>5F1F,>67BF,>6F9F,>769F
-	.word	>7EDF,>567F,>6E7F
+	.word	00H,00H,020H,0400H,0404H,0424H,0824H,0428H
+	.word	0828H,0444H,0448H,0844H,0848H,0868H,0C48H,0C68H
+	.word	084CH,086CH,0C4CH,0C6CH,0C70H,0C8CH,0C90H,0106CH
+	.word	01070H,0108CH,01090H,01490H,01094H,01494H,010B0H,010B4H
+	.word	014B0H,014B4H,014D4H,014B8H,014D8H,01CB4H,01CB8H,01CD4H
+	.word	01CD8H,01CF8H,01CD8H,01CF8H,01CDCH,01CFCH,01CDCH,01CFCH
+	.word	01CFFH,01D3CH,01D3FH,024FCH,024FFH,0253CH,0253FH,0253FH
+	.word	0255FH,0255FH,0253FH,0255FH,0253FH,0253FH,0255FH,0255FH
+	.word	0257FH,0257FH,02D3FH,02D5FH,02D5FH,02D5FH,02D7FH,02D7FH
+	.word	02D9FH,02D7FH,02D9FH,02D7FH,02D9FH,02D7FH,02D9FH,0359FH
+	.word	02D9FH,0359FH,095FH,02DBFH,02DBFH,035BFH,035BFH,035DFH
+	.word	035BFH,035DFH,035BFH,035DFH,035BFH,035DFH,035DFH,035FFH
+	.word	035FFH,03DDFH,03DDFH,03DFFH,03DFFH,03DFFH,03DFFH,03DFFH
+	.word	03E1FH,03E1FH,03E1FH,03E1FH,03E5FH,03E1FH,03E5FH,04E1FH
+	.word	0461FH,0461FH,0465FH,0465FH,0465FH,0467FH,0467FH,0465FH
+	.word	0465FH,0467FH,0467FH,0469FH,04E7FH,04E9FH,0467FH,0469FH
+	.word	04E7FH,04E9FH,04E9FH,04E9FH,04E9FH,04EBFH,04EBFH,04EBFH
+	.word	04EBFH,04EBFH,04EDFH,04EDFH,04EFFH,056BFH,056DFH,056BFH
+	.word	056DFH,056DFH,056DFH,056DFH,05EDFH,056FFH,056FFH,056FFH
+	.word	056FFH,056FFH,0571FH,0571FH,0571FH,0573FH,05EFFH,05EFFH
+	.word	05F1FH,05F1FH,05F3FH,05F1FH,05F3FH,05F1FH,05F3FH,05F1FH
+	.word	05F3FH,05F3FH,0673FH,0673FH,05F7FH,0677FH,05F7FH,0677FH
+	.word	0677FH,0679FH,0679FH,0677FH,0677FH,0679FH,0679FH,06F9FH
+	.word	0679FH,06F9FH,067BFH,067BFH,06FBFH,06FBFH,06FDFH,06FBFH
+	.word	06FDFH,06FBFH,06FDFH,06FBFH,06FDFH,06FDFH,06FFFH,06FFFH
+	.word	077BFH,077DFH,077DFH,077FFH,077FFH,077FFH,077FFH,077FFH
+	.word	077FFH,077FFH,077FFH,077FFH,077FFH,077FFH,077FFH,07FFFH
+	.word	07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH
+	.word	07FFFH,07FFFH,07FDFH,07FDFH,07FFFH,07FFFH,07FFFH,07FFFH
+	.word	07FFFH,07FFFH,07FFFH,07FFFH,05F1FH,067BFH,06F9FH,0769FH
+	.word	07EDFH,0567FH,06E7FH
 
 
 

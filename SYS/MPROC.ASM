@@ -1,4 +1,4 @@
-	.FILE	'MPROC.ASM'
+	.FILE	"MPROC.ASM"
 	.TITLE	"GSP MULTI-PROCESSING SYSTEM VERSION 1.0 EUGENE P. JARVIS"
 
 **************************************************************************
@@ -66,7 +66,7 @@ PRCWTSRT
 *TOS IS WAKEUP ADDR ,A0 = SLEEP TIME
 *
 PRCSLP:
-	MMFM	SP,A7		       ;CALLING PC->A7
+	MMFM	SP,A7		       ;CALLING PC-0A7H
 PRCLSP:
 	MMTM	A12,A7,A8,A9,A10,A11   ;SAVE REGS
 	MOVE	A0,*A13(PTIME)         ;SAVE SLEEP TIME

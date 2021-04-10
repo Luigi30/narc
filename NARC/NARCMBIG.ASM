@@ -1,4 +1,4 @@
-	.FILE	'NARCMBIG.ASM'
+	.FILE	"NARCMBIG.ASM"
 	.TITLE	" <<< N  A  R  C  -- Mister Big >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -49,8 +49,8 @@ DTBL:
 	.BSS	ShtVels,32*2*3,1
 	.BSS	ShtFPt,32,1
 
-MBigGrav	.set	>1600
-CrawlXV		.set	>40000
+MBigGrav	.set	01600H
+CrawlXV		.set	040000H
 
 ;Process Block Vars
 
@@ -60,35 +60,35 @@ CrawlXV		.set	>40000
 ;byte	TURNTIKS,TurnTiks,WantDir,TurnDir
 ;* BWANTIKS, SWANTIKS
 ;	Big/Small Wheel Animation TIKS, these Tiks are Bytes (signed 4.3) 
-BWHEEL	.set	>0
-SWHEEL	.set	>20
-WANTANIM	.set	>40
-ANIMNXT	.set >60
-SWANIM	.set	>80
-BWANIM	.set	>A0
-FranPtr	.set	>C0
-FaceDir	.set	>C8
-VDAMP	.set	>D0
-Spin		.set	>D8
-FwdSpin	.set	>E0
-BWhlOn	.set	>E8
-SWhlOn	.set	>F0
-MBigFly		.set	>F8
-BWANTIKS	.set	>100
-SWANTIKS	.set	>108
-TURNTIKS	.set	>110
-TurnTiks	.set	>118
-WantDir	.set	>120
-TurnDir	.set	>128
-ANIMTMP	.set	>130
-NANIMTMP	.set	>150
-YDEST	.set	>170
-FaceTiks	.set	>180
-burstct	.set	>188
-runmode	.set	>190
-HEALTH	.set	>198
-MBLIVES	.set	>1A0
-ROCKHIT .set	>1A8
+BWHEEL	.set	00H
+SWHEEL	.set	020H
+WANTANIM	.set	040H
+ANIMNXT	.set 060H
+SWANIM	.set	080H
+BWANIM	.set	0A0H
+FranPtr	.set	0C0H
+FaceDir	.set	0C8H
+VDAMP	.set	0D0H
+Spin		.set	0D8H
+FwdSpin	.set	0E0H
+BWhlOn	.set	0E8H
+SWhlOn	.set	0F0H
+MBigFly		.set	0F8H
+BWANTIKS	.set	0100H
+SWANTIKS	.set	0108H
+TURNTIKS	.set	0110H
+TurnTiks	.set	0118H
+WantDir	.set	0120H
+TurnDir	.set	0128H
+ANIMTMP	.set	0130H
+NANIMTMP	.set	0150H
+YDEST	.set	0170H
+FaceTiks	.set	0180H
+burstct	.set	0188H
+runmode	.set	0190H
+HEALTH	.set	0198H
+MBLIVES	.set	01A0H
+ROCKHIT .set	01A8H
 
 
 ;* direction for FaceDir
@@ -106,7 +106,7 @@ MBIG_FUNCS:
 	.long	BOOF
 	.long	GoDestV
 	.long	GetXVel		;GetXVel
-	.long	>7000	;MaxXZAngle
+	.long	07000H	;MaxXZAngle
 	.long	15	;FlipTiks
 ********************************************************************
 
@@ -157,7 +157,7 @@ MBIGCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -221,7 +221,7 @@ GOODINIT2:
 MBIG:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 	INCW	@SLPMBIGS
@@ -273,7 +273,7 @@ GotDoor:
 	move	A11,*A8(OID),W
 	move	A8,A0
 	calla	DELSHAD
-	movi	->10000,A2	;X VELOCITY
+	movi	-010000H,A2	;X VELOCITY
 	movi	WALKOUT,A9     	;GET ANIMATION SCRIPT
 	JSRP	OUTDOOR
 	move	A8,A0
@@ -383,7 +383,7 @@ MB_WARM:
 	movk	1,A0
 	movb	A0,*A10(Spin)
 
-	movi	>79,A0		;* should give approximately 5% Damping
+	movi	079H,A0		;* should give approximately 5% Damping
 	movb	A0,*A10(VDAMP)
 	movi	MBIGCOLL,A0
 	move	A0,*A8(OCVECT),L
@@ -428,7 +428,7 @@ ATok:
 ;	jruc	$
 	movk	8,A0
 BTok:
-	subk	>8,A0
+	subk	08H,A0
 	movb	A0,*A10(BWANTIKS)
 SkBWTIKS:
 
@@ -439,7 +439,7 @@ SkBWTIKS:
 ;	jruc	$
 	movk	8,A0
 STok:
-	subk	>8,A0
+	subk	08H,A0
 	movb	A0,*A10(SWANTIKS)
 SkSWTIKS:
 
@@ -729,10 +729,10 @@ GetDir:
 	clr	A0	;set Direction
 	divu	A4,A5	;A5 = A5/A4 = ABS(ZDELTA)/ABS(XDELTA) = TAN(THETA) 	
 	jrv	GotD0	;Overflow indicates XDELTA=0
-	cmpi	>269FB,A5	;Tan(22.5deg) = 2.414 as 16.16
+	cmpi	0269FBH,A5	;Tan(22.5deg) = 2.414 as 16.16
 	jrgt	GotD0
 	inc	A0
-	cmpi	>69FB,A5	;Tan(67.5deg) = .414 as 16.16
+	cmpi	069FBH,A5	;Tan(67.5deg) = .414 as 16.16
 	jrgt	GotD0
 	inc	A0
 
@@ -1122,7 +1122,7 @@ BullOff1:
 FLAMINIT:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	sflame0,>0,DUMCOLL	;ZSIZ
+	.LONG	sflame0,00H,DUMCOLL	;ZSIZ
 	.WORD	DMAWNZ,EFF0OID	;OBJ ID
 	.LONG	0
 **************************************************************************
@@ -1237,15 +1237,15 @@ BullXV0:
 	sll	4,A0
 	addi	BXVDTbl,A0
 	move	*A0,A0,W
-	movi	>C00,A3		;>A00 << 7  =  >50000
+	movi	0C00H,A3		;0A00H << 7  =  050000H
 	mpys	A0,A3
 	move	*A8(OXVEL),A0,L
 	add	A3,A0
 	mmfm	SP,A3
 	rets
 BXVDTbl:
-	;>7f = 1 in .8 fmt, >5A = .707 in .8 fmt
-	.word	0,>5A,>7F,>5A,0,->5A,->7F,->5A
+	;07fH = 1 in .8 fmt, 05AH = .707 in .8 fmt
+	.word	0,05AH,07FH,05AH,0,-05AH,-07FH,-05AH
 **************************************************************************
 
 **************************************************************************
@@ -1255,15 +1255,15 @@ BullZV0:
 	sll	4,A0
 	addi	BZVDTbl,A0
 	move	*A0,A0,W
-	movi	>C00,A3		;>A00 << 7  =  >50000
+	movi	0C00H,A3		;0A00H << 7  =  050000H
 	mpys	A0,A3
 	move	*A8(OZVEL),A0,L
 	add	A3,A0
 	mmfm	SP,A3
 	rets
 BZVDTbl:
-	;>7f = 1 in .8 fmt, >5A = .707 in .8 fmt
-	.word	->7F,->5A,0,>5A,>7F,>5A,0,->5A
+	;07fH = 1 in .8 fmt, 05AH = .707 in .8 fmt
+	.word	-07FH,-05AH,0,05AH,07FH,05AH,0,-05AH
 	rets
 **************************************************************************
 
@@ -1278,7 +1278,7 @@ BZVDTbl:
 BBullInit:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	bigbull,>00020002,BBullCol
+	.LONG	bigbull,000020002H,BBullCol
 	.WORD	DMAWNZ,BEOID
 	.LONG	0
 **************************************************************************
@@ -1419,7 +1419,7 @@ KilLaugh:
 ;* function to kill laugh watch procs
 	mmtm	SP,A0,A1
 KillLPID:
-	NOMATCHP	MBIGLPID,>FFFF,SkLKill
+	NOMATCHP	MBIGLPID,0FFFFH,SkLKill
 	calla	KILL
 	jruc	KillLPID
 SkLKill:
@@ -1665,7 +1665,7 @@ WheelAnim:
 	movi	48,A3			;Amount to increment animation ptr
 	movb	*A10(Spin),A1
 	jrnz	Sk0Delta
-	movi	>7F,A6
+	movi	07FH,A6
 	movb	A6,*A10(BWANTIKS)
 	move	*A10(BWANIM),A9,L
 	push	A8
@@ -1758,7 +1758,7 @@ SkBWAn:
 	jrp	SkSWAn
 	move	*A8(OXVEL),A1,L
 	jrnz	SkS0Delta
-	movi	>7F,A6
+	movi	07FH,A6
 	movb	A6,*A10(SWANTIKS)
 	move	*A10(SWANIM),A9,L
 	push	A8
@@ -1775,13 +1775,13 @@ SkS0Delta:
 	neg	A1
 SWNFlp:
 	abs	A3
-	movi	12*>23000,A7	
+	movi	12*023000H,A7	
 	cmp	A7,A3
 	jrge	MinSWTik
 	divu	A3,A7
-	cmpi	>7F,A7
+	cmpi	07FH,A7
 	jrlt	GotSWTik
-	movi	>7F,A7
+	movi	07FH,A7
 	jruc	GotSWTik
 MinSWTik:
 	movk	1,A7
@@ -1824,9 +1824,9 @@ SkSWAn:
 	rets
 
 BWSpin:
-	.byte	>0,>20,>8,>4,>3,>8
+	.byte	00H,020H,08H,04H,03H,08H
 SWSpin:
-	.byte	>0,>48,>12,>A,>7,>12
+	.byte	00H,048H,012H,0AH,07H,012H
 	.even
 **************************************************************************
 
@@ -1953,8 +1953,8 @@ VelAdj:
 	mmtm	SP,A0,A1,A2,A3,A4,A5,A6,A7
 	;* Damp Old Velocity -- only applicable if on ground
 	movb	*A10(VDAMP),A6
-	movi	>300,A1
-	movi	>3000,A2
+	movi	0300H,A1
+	movi	03000H,A2
 	move	A2,A3
 	neg	A3
 
@@ -2012,34 +2012,34 @@ SkZD:
 VelDirTbl:
 	.long	V0uv,V0ur,V0hr,V0dr,V0dv,V0dl,V0hl,V0ul
 
-	;>7f = 1 in .8 fmt, >5A = .707 in .8 fmt
+	;07fH = 1 in .8 fmt, 05AH = .707 in .8 fmt
 V0uv:
-	movi	->7F,A2
+	movi	-07FH,A2
 	jruc	AddThrust
 V0ur:
-	movi	->5A,A2
-	movi	>5A,A3
+	movi	-05AH,A2
+	movi	05AH,A3
 	jruc	AddThrust
 V0hr:
-	movi	>7F,A3
+	movi	07FH,A3
 	jruc	AddThrust
 V0dr:
-	movi	>5A,A2
-	movi	>5A,A3
+	movi	05AH,A2
+	movi	05AH,A3
 	jruc	AddThrust
 V0dv:
-	movi	>7F,A2
+	movi	07FH,A2
 	jruc	AddThrust
 V0dl:
-	movi	>5A,A2
-	movi	->5A,A3
+	movi	05AH,A2
+	movi	-05AH,A3
 	jruc	AddThrust
 V0hl:
-	movi	->7F,A3
+	movi	-07FH,A3
 	jruc	AddThrust
 V0ul:
-	movi	->5A,A2
-	movi	->5A,A3
+	movi	-05AH,A2
+	movi	-05AH,A3
 	jruc	AddThrust
 
 AddThrust:
@@ -2071,7 +2071,7 @@ SkNegThr:
 	rets
 
 SpinVTbl:
-	.word	>0,>12,>48,>6C,>90,>10
+	.word	00H,012H,048H,06CH,090H,010H
 **************************************************************************
 
 
@@ -2486,19 +2486,19 @@ SkCard:
 ExBWInit:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	weel1,>00020002,DUMCOLL   ;2nd entry is Zsiz
+	.LONG	weel1,000020002H,DUMCOLL   ;2nd entry is Zsiz
 	.WORD	DMAWNZ,EFF0OID
 	.LONG	0
 ExSWInit:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	sweel1,>00020002,DUMCOLL   ;2nd entry is Zsiz
+	.LONG	sweel1,000020002H,DUMCOLL   ;2nd entry is Zsiz
 	.WORD	DMAWNZ,EFF0OID
 	.LONG	0
 ;ExWCInit:
 ;	.LONG	0,0,0,0
 ;	.WORD	0,0
-;	.LONG	chair2,>000C000C,DUMCOLL   ;2nd entry is Zsiz
+;	.LONG	chair2,0000C000CH,DUMCOLL   ;2nd entry is Zsiz
 ;	.WORD	DMAWNZ,EFF0OID
 ;	.LONG	0
 **************************************************************************
@@ -2554,27 +2554,27 @@ BigBlast:
 ;	movi	FlyCHAIR,A9
 ;	movi	ExWCInit,A10	;Init Tbl
 ;	move	A4,A11		;initial Ypos:Xpos
-;	CREATE	>0ED,TRAJEC	;Start flying piece proc (bashes A1,A7)
+;	CREATE	00EDH,TRAJEC	;Start flying piece proc (bashes A1,A7)
 ;	jrz	SkWFrags
 ;	move	A0,A1
 ;	move	A3,*A1(PDATA),L	    	;FLAGS:ZPOS
-;	movi	>20000,A0
+;	movi	020000H,A0
 ;	calla	RANDU
-;	addi	>20000,A0
+;	addi	020000H,A0
 ;	movb	@RAND,A14
 ;	jrn	PosXV3
 ;	neg	A0
 ;PosXV3:
-;	move	A0,*A1(PDATA+>20),L	;XVEL
-;	calla	GETYZVEL	;A8=PTR TO OBJ->B2=Z VEL(32),B3=Y VEL(32)						 *
+;	move	A0,*A1(PDATA+020H),L	;XVEL
+;	calla	GETYZVEL	;A8=PTR TO OBJ-0B2H=Z VEL(32),B3=Y VEL(32)						 *
 ;	move	B2,A0
-;	move	A0,*A1(PDATA+>40),L	;YVEL
+;	move	A0,*A1(PDATA+040H),L	;YVEL
 ;	move	B3,A0
-;	move	A0,*A1(PDATA+>60),L	;ZVEL
+;	move	A0,*A1(PDATA+060H),L	;ZVEL
 ;	movi	RollCHAIR,A0
-;	move	A0,*A1(PDATA+>80),L	;Grnd ANIM
+;	move	A0,*A1(PDATA+080H),L	;Grnd ANIM
 ;	movi	DBOUNCE,A0
-;	move	A0,*A1(PDATA+>A0),L	;Grnd Process
+;	move	A0,*A1(PDATA+0A0H),L	;Grnd Process
 
 	
 	;* Blow off 2 Big Wheels
@@ -2583,27 +2583,27 @@ BlowBW:
 	movi	FlyWEEL,A9
 	movi	ExBWInit,A10	;Init Tbl
 	move	A4,A11		;initial Ypos:Xpos
-	CREATE	>0ED,TRAJEC	;Start flying piece proc (bashes A1,A7)
+	CREATE	00EDH,TRAJEC	;Start flying piece proc (bashes A1,A7)
 	jrz	SkWFrags
 	move	A0,A1
 	move	A3,*A1(PDATA),L	    	;FLAGS:ZPOS
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	RANDU
-	addi	>20000,A0
+	addi	020000H,A0
 	movb	@RAND,A14
 	jrn	PosXV1
 	neg	A0
 PosXV1:
-	move	A0,*A1(PDATA+>20),L	;XVEL
-	calla	GETYZVEL	;A8=PTR TO OBJ->B2=Z VEL(32),B3=Y VEL(32)						 *
+	move	A0,*A1(PDATA+020H),L	;XVEL
+	calla	GETYZVEL	;A8=PTR TO OBJ-0B2H=Z VEL(32),B3=Y VEL(32)						 *
 	move	B2,A0
-	move	A0,*A1(PDATA+>40),L	;YVEL
+	move	A0,*A1(PDATA+040H),L	;YVEL
 	move	B3,A0
-	move	A0,*A1(PDATA+>60),L	;ZVEL
+	move	A0,*A1(PDATA+060H),L	;ZVEL
 	movi	WEEL,A0
-	move	A0,*A1(PDATA+>80),L	;Grnd ANIM
+	move	A0,*A1(PDATA+080H),L	;Grnd ANIM
 	movi	DTBOUNCE,A0
-	move	A0,*A1(PDATA+>A0),L	;Grnd Process
+	move	A0,*A1(PDATA+0A0H),L	;Grnd Process
 	dsj	B0,BlowBW
 
 
@@ -2613,27 +2613,27 @@ BlowSW:
 	movi	FlySWEEL,A9
 	movi	ExSWInit,A10	;Init Tbl
 	move	A4,A11		;initial Ypos:Xpos
-	CREATE	>0ED,TRAJEC	;Start flying piece proc (bashes A1,A7)
+	CREATE	00EDH,TRAJEC	;Start flying piece proc (bashes A1,A7)
 	jrz	SkWFrags
 	move	A0,A1
 	move	A3,*A1(PDATA),L	    	;FLAGS:ZPOS
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	RANDU
-	addi	>20000,A0
+	addi	020000H,A0
 	movb	@RAND,A14
 	jrn	PosXV2
 	neg	A0
 PosXV2:
-	move	A0,*A1(PDATA+>20),L	;XVEL
-	calla	GETYZVEL	;A8=PTR TO OBJ->B2=Z VEL(32),B3=Y VEL(32)						 *
+	move	A0,*A1(PDATA+020H),L	;XVEL
+	calla	GETYZVEL	;A8=PTR TO OBJ-0B2H=Z VEL(32),B3=Y VEL(32)						 *
 	move	B2,A0
-	move	A0,*A1(PDATA+>40),L	;YVEL
+	move	A0,*A1(PDATA+040H),L	;YVEL
 	move	B3,A0
-	move	A0,*A1(PDATA+>60),L	;ZVEL
+	move	A0,*A1(PDATA+060H),L	;ZVEL
 	movi	SWEEL,A0
-	move	A0,*A1(PDATA+>80),L	;Grnd ANIM
+	move	A0,*A1(PDATA+080H),L	;Grnd ANIM
 	movi	DTBOUNCE,A0
-	move	A0,*A1(PDATA+>A0),L	;Grnd Process
+	move	A0,*A1(PDATA+0A0H),L	;Grnd Process
 	dsj	B0,BlowSW
 
 
@@ -2697,9 +2697,9 @@ GotDoor1:
 	move	A0,*A13(WANTOBJ),L
 	calla	HuntObj0
 GotFlyD:
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	RANDU
-	addi	>48000,A0
+	addi	048000H,A0
 	move	A0,A1
 	neg	A0
 	move	A0,A4	;Yvel
@@ -2820,7 +2820,7 @@ Crawl:
 	calla	DELSHAD
 	movi	-1,A0
 	move	A0,*A8(OZPOS),W
-	movi	>1000,A0
+	movi	01000H,A0
 	move	A0,*A8(OYVEL),L
 SkRoof0:
 	movi	CrawlXV,A0
@@ -2924,9 +2924,9 @@ BullCol:
 	MOVE	A0,A8
 	move	*A6(OXVEL),A3,L
 	sra	1,A3
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	RANDU
-	subi	>10000,A0
+	subi	010000H,A0
 	move	A0,A4
 	movk	2,A5
 	jruc	HurtMe
@@ -3202,7 +3202,7 @@ MBIGCOLL:
 
 SFLAMES:
 ;* flames corresponding to dirs 0-Up through 7-UpLeft
-;* multiply dir by >60 to get address
+;* multiply dir by 060H to get address
 	.long	sflame90
 	.word	FLIPBITS|1,M_FLIPV
 	.long	sflame45
@@ -3652,7 +3652,7 @@ BIGFLAME:
 ;				(An X coor of NOWHEEL indicates no wheel)
 ; Script is terminated by a LONGNULL
 
-NOWHEEL	.set	>80
+NOWHEEL	.set	080H
 
 ;MBGUN_T:
 ;	.long	MBGUN1

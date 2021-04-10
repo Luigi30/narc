@@ -22,7 +22,7 @@ SCRNST	.SET	[80,0]	 	;TOP LEFT OF SCREEN
 SCRNEND .SET	[400,512]	;BOTTOM RIGHT OF SCREEN
 SCRNMID	.SET	[255,256]	;MIDPOINT OF SCREEN
 
-SHADID	.EQU	>0FFF		;SHADOWS ARE HIGH PRI
+SHADID	.EQU	00FFFH		;SHADOWS ARE HIGH PRI
 *
 *	OBJECT BLOCK LAYOUT
 *
@@ -64,7 +64,7 @@ OEBLIP	.SET	280H	;[Y,X] LOCATION OF PREVIOUS SCANNER BLIP, 0 = NONE
 OBSIZ	.SET   	2A0H   	; Object Block Size
 NOBJ	.SET   	384   	; OBJECTS TO DISPLAY
 *
-BQCELL	.SET	>A0 	;SIZE OF DMA QUEUE ELEMENT
+BQCELL	.SET	0A0H 	;SIZE OF DMA QUEUE ELEMENT
 ***********************
 *  Values for OFLAGS  *
 ***********************
@@ -72,15 +72,15 @@ M_WRZERO 	.set      1	;Write Zero Data
 M_WRNONZ 	.set  	  2    	;Write Non-Zero Data
 M_CONZER 	.set  	  4    	;Replace Zero Data with constant
 M_CONNON 	.set  	  8    	;Replace Non-Zero Data with constant
-M_CONST		.set   	 >C    	;any constant data replacement
-M_FLIPH		.set   	>10   	;Flip Horizontally 
-M_FLIPV		.set   	>20   	;Flip Vertically 
-M_NODIS		.set   >100   	;Ignore this entry
-M_PZPLUS	.EQU   >200	;TAKE Z VALUE FROM RAM LOC. PREVZ AND ADD 1		
-M_PIXSCAN 	.EQU   >400	;IF=1 O.K. TO PIXEL SCAN WITH THIS OBJECT
-M_NOCOLL 	.EQU   >800	;IF=1 OBJECT NOT COLLIDABLE
-M_PREVZ		.SET  >1000	;TAKE Z VALUE FROM RAM LOC. PREVZ
-M_NOMOV		.set  >2000  	;Do not add velocities
+M_CONST		.set   	 0CH    	;any constant data replacement
+M_FLIPH		.set   	010H   	;Flip Horizontally 
+M_FLIPV		.set   	020H   	;Flip Vertically 
+M_NODIS		.set   0100H   	;Ignore this entry
+M_PZPLUS	.EQU   0200H	;TAKE Z VALUE FROM RAM LOC. PREVZ AND ADD 1		
+M_PIXSCAN 	.EQU   0400H	;IF=1 O.K. TO PIXEL SCAN WITH THIS OBJECT
+M_NOCOLL 	.EQU   0800H	;IF=1 OBJECT NOT COLLIDABLE
+M_PREVZ		.SET  01000H	;TAKE Z VALUE FROM RAM LOC. PREVZ
+M_NOMOV		.set  02000H  	;Do not add velocities
 *
 *BIT POSITIONS FOR OFLAGS
 B_WRZERO	.set   	0

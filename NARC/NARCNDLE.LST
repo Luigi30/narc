@@ -1,0 +1,1340 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCNDLE.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST        
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      10                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      11                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      12                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      13                    *       LOCAL STUFF
+      14                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      15                            .INCLUDE        "NARCTEQU.ASM"
+      16                            .include        "narchypo.glo"
+      17                            .INCLUDE        "imgtbl.glo"
+      18 00000000                   .EVEN
+      19 00000000                   .TEXT
+      20                    
+      21 00000000           ShftInit:
+      22 00000000 00000000          .LONG   0,0,0,0
+      23 00000080     0000          .WORD   0,0
+      24 000000a0 00000000!         .LONG   HYPOB0,PBULZ,ShftColl
+      25 00000100     8402          .WORD   DMAWNZ|M_PIXSCAN,0
+      26 00000120 00000000          .LONG   0
+      27 00000140           TipInit:
+      28 00000140 00000000          .LONG   0,0,0,0
+      29 000001c0     0000          .WORD   0,0
+      30 000001e0 00000000!         .LONG   HYPOT0,PBULZ,TipColl
+      31 00000240     8402          .WORD   DMAWNZ|M_PIXSCAN,0
+      32 00000260 00000000          .LONG   0
+      33                    
+      34              0180  TIPTBL  .set    ETEMP1
+      35              01a0  SHAFTANI .set   ETEMP2
+      36              01c0  TIPANI  .set    ETEMP3
+      37              01e0  ANICTR  .set    ETEMP4          ;byte
+      38              01e8  SLPTIKS .set    ETEMP4+8        ;byte
+      39              0200  PDBLOCK .set    ETEMP5
+      40              0220  TIMELEFT .set   ETEMP6
+      41                    
+      42              00e0  OLDXP   .set    ESWTCH
+      43              00f0  OLDZP   .set    ESWTCH+16
+      44              0120  OLDYP   .set    EYXVEL
+      45                    
+      46                    **************************************************************************
+      47                    * NHYPO - Normal HYPODERMIC ENTRY POINT
+      48                    * A8  = OBLOCK PTR OF ENEMY               
+      49                    * A10 = X,Y Pos to start hypo at
+      50 00000280           NHYPO:
+      51 00000280     09e5          movi    FLYNHYPO,A5
+         00000290 000011d0' 
+      52 000002b0     c016          jruc    AllocHypo
+      53                    **************************************************************************
+      54                    
+      55                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    2
+
+      56                    * SHYPO - SPINNING HYPODERMIC ENTRY POINT
+      57                    * A8  - OBLOCK PTR OF ENEMY               
+      58                    * A10 - X,Y Pos to start hypo anim pt at
+      59 000002c0           SHYPO:
+      60 000002c0     5729          clr     A9
+      61 000002d0           SHYPOM:
+      62 000002d0     1029          inc     A9
+      63 000002e0     0b49          cmpi    3,A9
+         000002f0     fffc  
+      64 00000300     c50e          jrge    SkMirv
+      65 00000310     09c0          movi    160,A0
+         00000320     00a0  
+      66 00000330     0d5f          calla   RANDPER
+         00000340 00000000! 
+      67 00000360     c908          jrnc    SkMirv
+      68 00000370                   CREATE  0EBH,SHYPOM
+      69 000003f0           SkMirv:
+      70 000003f0     09e5          movi    FLYSHYPO,A5
+         00000400 00001710' 
+      71                    ;       jruc    AllocHypo
+      72                    **************************************************************************
+      73                    
+      74                    **************************************************************************
+      75 00000420           AllocHypo:
+      76                    * A5 - Routine to Continue Hypos Flight
+      77                    * allocates the object blocks for the hypo shaft and tip
+      78                    * does basic initialization of these objects
+      79 00000420     4d06          move    A8,A6           ;A6 - Obj ptr of Thrower
+      80 00000430     4d44          move    A10,A4          ;A4 - start coors
+      81                    
+      82 00000440     0d5f          calla   GETOBJ
+         00000450 00000000! 
+      83 00000470     ca2a          jrz     NoShft
+      84 00000480     09ee          movi    ShftInit,A14
+         00000490 00000000' 
+      85 000004b0     0d5f          calla   STFOBJ
+         000004c0 00000000! 
+      86 000004e0     b3a0          move    A13,*A0(OPLINK),L
+         000004f0     01f0  
+      87 00000500     4c08          move    A0,A8
+      88                    
+      89 00000510     0d5f          calla   GETOBJ
+         00000520 00000000! 
+      90 00000540     ca19          jrz     NoTip
+      91 00000550     09ee          movi    TipInit,A14
+         00000560 00000140' 
+      92 00000580     0d5f          calla   STFOBJ
+         00000590 00000000! 
+      93 000005b0     b3a0          move    A13,*A0(OPLINK),L
+         000005c0     01f0  
+      94 000005d0     4c0a          move    A0,A10
+      95                    
+      96                            ;* allocate palette
+      97 000005e0     09e0          MOVI    JRwalk,A0
+         000005f0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    3
+
+      98 00000610     0d5f          CALLA   GETFPAL                 ;GET A COLOR MAP ASSIGNMENT
+         00000620 00000000! 
+      99 00000640     ca05          jrz     NoPal
+     100 00000650     b008          MOVE    A0,*A8(OPAL),W
+         00000660     0160  
+     101 00000670     b00a          MOVE    A0,*A10(OPAL),W
+         00000680     0160  
+     102 00000690     c00b          jruc    InitHypo
+     103                    
+     104 000006a0           NoPal:
+     105                            ;* must free the tip obj
+     106 000006a0     4d40          move    A10,A0
+     107 000006b0     0d5f          calla   FREEOBJ
+         000006c0 00000000! 
+     108 000006e0           NoTip:
+     109                            ;* must free the shaft obj
+     110 000006e0     4d00          move    A8,A0
+     111 000006f0     0d5f          calla   FREEOBJ
+         00000700 00000000! 
+     112 00000720           NoShft:
+     113 00000720                   DIE
+     114                    
+     115 00000750           InitHypo:               ;* Yay, we got all the stuff..
+     116 00000750     09c0          movi    BEOID|HYPOD,A0  ;set ID of Tip
+         00000760     0be5  
+     117 00000770     b00a          move    A0,*A10(OID),W
+         00000780     01a0  
+     118 00000790     09c0          movi    HYPOD,A0        ;set ID of Shaft
+         000007a0     0005  
+     119 000007b0     b008          move    A0,*A8(OID),W
+         000007c0     01a0  
+     120                    
+     121                            ;* Init Proc Vars
+     122                            ;*** Load Data Block of Targeted Player Pop was after
+     123 000007d0     b6c0          move    *A6(OPLINK),A0,L
+         000007e0     01f0  
+     124 000007f0     b600          move    *A0(WANTOBJ),A0,L       ;A0-ptr to players proc
+         00000800     0220  
+     125 00000810     09e1          movi    P1DATA,A1
+         00000820 00000000! 
+     126 00000840     b622          move    *A1(POBJ),A2,L
+         00000850     00a0  
+     127 00000860     ca02          jrz     SkP1D
+     128 00000870     4840          cmp     A2,A0
+     129 00000880     ca10          jreq    GotP
+     130 00000890           SkP1D:
+     131 00000890     09e1          movi    P2DATA,A1
+         000008a0 00000000! 
+     132 000008c0     b622          move    *A1(POBJ),A2,L
+         000008d0     00a0  
+     133 000008e0     ca02          jrz     SkP2D
+     134 000008f0     4840          cmp     A2,A0
+     135 00000900     ca08          jreq    GotP
+     136 00000910           SkP2D:
+     137 00000910     0d5f          CALLA   SELCTPLY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    4
+
+         00000920 00000000! 
+     138 00000940     4d60          move    A11,A0
+     139 00000950     0d5f          CALLA   GETPLYR
+         00000960 00000000! 
+     140 00000980     4c01          move    A0,A1
+     141 00000990           GotP:   ;A1 ptr to players Data Block
+     142 00000990     b22d          move    A1,*A13(PDBLOCK),L
+         000009a0     0200  
+     143                            ;******* INITIALIZE ANIMATION VARS
+     144 000009b0     5600          clr     A0
+     145 000009c0     b20d          move    A0,*A13(ANICTR),L
+         000009d0     01e0  
+     146 000009e0     b4c0          move    *A6(OFLAGS),A0,W
+         000009f0     0100  
+     147 00000a00     1f60          btst    B_FLIPH,A0
+     148 00000a10     cb10          jrnz    FlpStrt
+     149                            ;* not Flipped
+     150 00000a20     09e0          movi    HYPOCCW,A0
+         00000a30 000042b0' 
+     151 00000a50     b20d          move    A0,*A13(SHAFTANI),L
+         00000a60     01a0  
+     152 00000a70     09e0          movi    HTIPCCW,A0
+         00000a80 000045d0' 
+     153 00000aa0     b20d          move    A0,*A13(TIPANI),L
+         00000ab0     01c0  
+     154 00000ac0     09e0          movi    TIPOFFCCW,A0
+         00000ad0 00003c90' 
+     155 00000af0     b20d          move    A0,*A13(TIPTBL),L
+         00000b00     0180  
+     156 00000b10     c00f          jruc    AniSet
+     157 00000b20           FlpStrt:
+     158 00000b20     09e0          movi    HYPOCW,A0
+         00000b30 000048f0' 
+     159 00000b50     b20d          move    A0,*A13(SHAFTANI),L
+         00000b60     01a0  
+     160 00000b70     09e0          movi    HTIPCW,A0
+         00000b80 00004c10' 
+     161 00000ba0     b20d          move    A0,*A13(TIPANI),L
+         00000bb0     01c0  
+     162 00000bc0     09e0          movi    TIPOFFCW,A0
+         00000bd0 00003d50' 
+     163 00000bf0     b20d          move    A0,*A13(TIPTBL),L
+         00000c00     0180  
+     164 00000c10           AniSet:
+     165                    
+     166                            ;Set Shaft Position - A4 is start coors
+     167 00000c10     4c83          move    A4,A3
+     168 00000c20     0503          sext    A3,W    ;A3 - x start
+     169 00000c30     b4c0          move    *A6(OFLAGS),A0,W
+         00000c40     0100  
+     170 00000c50     1f60          btst    B_FLIPH,A0
+     171 00000c60     ca01          jrz     SkFlpH
+     172 00000c70     03a3          neg     A3
+     173 00000c80           SkFlpH:
+     174 00000c80     b500          move    *A8(OXPOS),A0,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    5
+
+         00000c90     0090  
+     175 00000ca0     4060          add     A3,A0
+     176 00000cb0     b4c3          move    *A6(OXPOS),A3,W
+         00000cc0     0090  
+     177 00000cd0     4060          add     A3,A0
+     178 00000ce0     b4c3          move    *A6(OSIZEX),A3,W
+         00000cf0     0140  
+     179 00000d00     2fe3          srl     1,A3
+     180 00000d10     4060          add     A3,A0
+     181 00000d20     b008          move    A0,*A8(OXPOS),W
+         00000d30     0090  
+     182 00000d40     2a04          sra     16,A4   ;A4 - y start
+     183 00000d50     b500          move    *A8(OYPOS),A0,W
+         00000d60     00b0  
+     184 00000d70     4080          add     A4,A0
+     185 00000d80     b4c4          move    *A6(OYPOS),A4,W
+         00000d90     00b0  
+     186 00000da0     4080          add     A4,A0
+     187 00000db0     b4c4          move    *A6(OSIZEY),A4,W
+         00000dc0     0150  
+     188 00000dd0     2fe4          srl     1,A4
+     189 00000de0     4080          add     A4,A0
+     190 00000df0     b008          move    A0,*A8(OYPOS),W
+         00000e00     00b0  
+     191 00000e10     b6c0          move    *A6(OZVAL),A0,L
+         00000e20     00c0  
+     192 00000e30     1020          inc     A0
+     193 00000e40     b208          move    A0,*A8(OZVAL),L
+         00000e50     00c0  
+     194                    
+     195                    
+     196                            ;* Put Objects on Obj List
+     197 00000e60     4d00          move    A8,A0
+     198 00000e70     0d5f          calla   INSOBJ
+         00000e80 00000000! 
+     199 00000ea0     4d40          move    A10,A0
+     200 00000eb0     0d5f          calla   INSOBJ
+         00000ec0 00000000! 
+     201                    
+     202                            ;Insert Objs on enemy bullet list
+     203 00000ee0     09e1          movi    ENEMY_BULLETS,A1
+         00000ef0 00000000! 
+     204 00000f10     4d00          move    A8,A0
+     205 00000f20     0d5f          calla   ADDSUPP                 ;ADD TO SUPPLEMENTAL List
+         00000f30 00000000! 
+     206 00000f50     4d40          move    A10,A0
+     207 00000f60     0d5f          calla   ADDSUPP                 ;ADD TO SUPPLEMENTAL List
+         00000f70 00000000! 
+     208                    
+     209 00000f90     0d5f          calla   SHADST
+         00000fa0 00000000! 
+     210                    ;       SWAP    A8,A10
+     211                    ;       calla   SHADST
+     212                    ;       SWAP    A8,A10
+     213 00000fc0     0165          jump    A5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    6
+
+     214                    **************************************************************************
+     215                    
+     216                    **************************************************************************
+     217 00000fd0           DelHypo:
+     218 00000fd0     09e1          MOVI    ENEMY_BULLETS,A1
+         00000fe0 00000000! 
+     219 00001000     4d00          MOVE    A8,A0           ;THE Shaft
+     220 00001010     0d5f          CALLA   DELPAL
+         00001020 00000000! 
+     221 00001040     0d5f          CALLA   DELSUPP
+         00001050 00000000! 
+     222 00001070     0d5f          CALLA   DELSOBJ
+         00001080 00000000! 
+     223 000010a0     4d40          MOVE    A10,A0          ;THE Tip
+     224 000010b0     0d5f          CALLA   DELSUPP
+         000010c0 00000000! 
+     225 000010e0     0d5f          CALLA   DELSOBJ
+         000010f0 00000000! 
+     226 00001110     0960          rets
+     227 00001120           DelTip:
+     228 00001120     09e1          MOVI    ENEMY_BULLETS,A1
+         00001130 00000000! 
+     229 00001150     4d40          MOVE    A10,A0          ;THE Tip
+     230 00001160     0d5f          CALLA   DELSUPP
+         00001170 00000000! 
+     231 00001190     0d5f          CALLA   DELSOBJ
+         000011a0 00000000! 
+     232 000011c0     0960          rets
+     233                    **************************************************************************
+     234                    
+     235                    **************************************************************************
+     236                    *CONTINUATION POINT FOR A NORMAL HYPODERMIC NEEDLE
+     237 000011d0           FLYNHYPO:
+     238                    ;A6 - obj ptr of thrower
+     239                    ;       movi    SHYPOSND,A0
+     240                    ;       calla   ONESND
+     241                    
+     242                            ;Set Velocities
+     243 000011d0     09c3          movi    HYPOVEL+1,A3
+         000011e0     0005  
+     244 000011f0     b4c0          move    *A6(OFLAGS),A0,W
+         00001200     0100  
+     245 00001210     1f60          btst    B_FLIPH,A0
+     246 00001220     ca01          jrz     SkNegXV
+     247 00001230     03a3          neg     A3
+     248 00001240           SkNegXV:
+     249 00001240     2603          sll     16,A3
+     250 00001250     b268          move    A3,*A8(OXVEL),L         ;A3 - X VEL
+         00001260     0040  
+     251                    
+     252 00001270     0d3f          callr   DoFrame
+         00001280     0146  
+     253                                            
+     254                            ;set ZV = ZDIST / TIME, TIME = XDIST/XVEL
+     255                            ;ZV = ZDIST * (XVEL / XDIST)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    7
+
+     256 00001290     b7a0          move    *A13(PDBLOCK),A0,L
+         000012a0     0200  
+     257 000012b0     b601          move    *A0(POBJ),A1,L
+         000012c0     00a0  
+     258 000012d0     4d07          move    A8,A7
+     259 000012e0     4c28          move    A1,A8
+     260 000012f0     0d5f          calla   GETANIX
+         00001300 00000000! 
+     261 00001320     4c02          move    A0,A2
+     262 00001330     4ce8          move    A7,A8
+     263 00001340     b544          move    *A10(OXPOS),A4,W
+         00001350     0090  
+     264 00001360     4482          sub     A4,A2
+     265 00001370     5843          divs    A2,A3
+     266 00001380     b422          move    *A1(OZPOS),A2,W
+         00001390     00d0  
+     267 000013a0     b504          move    *A8(OZPOS),A4,W
+         000013b0     00d0  
+     268 000013c0     4482          sub     A4,A2
+     269 000013d0     5c43          mpys    A2,A3
+     270 000013e0     4c61          move    A3,A1
+     271 000013f0     b700          move    *A8(OXVEL),A0,L
+         00001400     0040  
+     272 00001410     0380          abs     A0
+     273 00001420     0d5f          calla   ABSMAX ;* returns A1 Clipped at val A0 in pos or neg
+         00001430 00000000! 
+     274 00001450     b228          move    A1,*A8(OZVEL),L
+         00001460     00e0  
+     275 00001470     b228          move    A1,*A8(OYVEL),L
+         00001480     0060  
+     276 00001490     b22a          move    A1,*A10(OZVEL),L
+         000014a0     00e0  
+     277 000014b0     b22a          move    A1,*A10(OYVEL),L
+         000014c0     0060  
+     278 000014d0     0d5f          calla   UpdShadV
+         000014e0 00000000! 
+     279 00001500     4d07          move    A8,A7
+     280 00001510     4d48          move    A10,A8
+     281 00001520     0d5f          calla   UpdShadV
+         00001530 00000000! 
+     282 00001550     4ce8          move    A7,A8
+     283                    
+     284 00001560     09c0          movi    150,A0
+         00001570     0096  
+     285 00001580     0d5f          calla   BullSlp
+         00001590 00000000! 
+     286 000015b0     0d5f          calla   PRCSLP
+         000015c0 00000000! 
+     287                    
+     288 000015e0     4d6b          move    A11,A11
+     289 000015f0     ca0c          jrz     SkWallHit
+     290 00001600     09e1          MOVI    ENEMY_BULLETS,A1
+         00001610 00000000! 
+     291 00001630     4d00          MOVE    A8,A0
+     292 00001640     0d5f          CALLA   DELSUPP         ;DELETE FROM THE SUPPLEMENTAL LIST
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    8
+
+         00001650 00000000! 
+     293 00001670     0d3f          callr   DelTip
+         00001680     ffa9  
+     294 00001690     c080          jauc    DINGANI
+         000016a0 00000000! 
+     295 000016c0           SkWallHit:
+     296 000016c0     0d3f          callr   DelHypo
+         000016d0     ff8f  
+     297 000016e0                   DIE
+     298                    *************************************************************************
+     299                    
+     300                    **************************************************************************
+     301                    *CONTINUATION POINT FOR A SPINNING HYPODERMIC NEEDLE
+     302                    *A5 = X VELOCITY, CORRECT DIRECTION
+     303                    *A8 = OBLOCK
+     304                    *A9 = ANIMATION TABLE
+     305                    *B1 = OID
+     306 00001710           FLYSHYPO:
+     307 00001710     09e0          movi    SHYPOSND,A0
+         00001720 00000000! 
+     308 00001740     0d5f          calla   ONESND
+         00001750 00000000! 
+     309                    
+     310 00001770     09c0          movi    200,A0
+         00001780     00c8  
+     311 00001790     b00d          move    A0,*A13(TIMELEFT),W
+         000017a0     0220  
+     312                    
+     313                            ;Set Velocities
+     314 000017b0     09c3          movi    HYPOVEL,A3
+         000017c0     0004  
+     315 000017d0     b4c0          move    *A6(OFLAGS),A0,W
+         000017e0     0100  
+     316 000017f0     1f60          btst    B_FLIPH,A0
+     317 00001800     ca01          jrz     SkNegXV2
+     318 00001810     03a3          neg     A3
+     319 00001820           SkNegXV2:
+     320 00001820     2603          sll     16,A3
+     321 00001830     09e0          movi    010000H,A0
+         00001840 00010000  
+     322 00001860     0d5f          calla   RANDU
+         00001870 00000000! 
+     323 00001890     0d00          subi    08000H,A0
+         000018a0 ffff7fff  
+     324 000018c0     4003          add     A0,A3
+     325 000018d0     b268          move    A3,*A8(OXVEL),L         ;A3 - X VEL
+         000018e0     0040  
+     326                    
+     327 000018f0     0d3f          callr   DoFrame
+         00001900     00de  
+     328                    
+     329                            ;set ZV = ZDIST / TIME, TIME = XDIST/XVEL
+     330                            ;ZV = ZDIST * (XVEL / XDIST)
+     331 00001910     b7a0          move    *A13(PDBLOCK),A0,L
+         00001920     0200  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE    9
+
+     332 00001930     b601          move    *A0(POBJ),A1,L
+         00001940     00a0  
+     333 00001950     4d07          move    A8,A7
+     334 00001960     4c28          move    A1,A8
+     335 00001970     0d5f          calla   GETANIX
+         00001980 00000000! 
+     336 000019a0     4c02          move    A0,A2
+     337 000019b0     4ce8          move    A7,A8
+     338 000019c0     b544          move    *A10(OXPOS),A4,W
+         000019d0     0090  
+     339 000019e0     4482          sub     A4,A2
+     340 000019f0     5843          divs    A2,A3
+     341 00001a00     b422          move    *A1(OZPOS),A2,W
+         00001a10     00d0  
+     342 00001a20     b504          move    *A8(OZPOS),A4,W
+         00001a30     00d0  
+     343 00001a40     4482          sub     A4,A2
+     344 00001a50     5c43          mpys    A2,A3
+     345 00001a60     4c61          move    A3,A1
+     346 00001a70     b700          move    *A8(OXVEL),A0,L
+         00001a80     0040  
+     347 00001a90     0380          abs     A0
+     348 00001aa0     0d5f          calla   ABSMAX ;* returns A1 Clipped at val A0 in pos or neg
+         00001ab0 00000000! 
+     349 00001ad0     b228          move    A1,*A8(OZVEL),L
+         00001ae0     00e0  
+     350 00001af0     b228          move    A1,*A8(OYVEL),L
+         00001b00     0060  
+     351                    
+     352 00001b10     18e0          movk    7,A0
+     353 00001b20     0d5f          CALLA   RANDU
+         00001b30 00000000! 
+     354 00001b50     ac0d          movb    A0,*A13(SLPTIKS)        ;sleep time between frames
+         00001b60     01e8  
+     355 00001b70     576b          clr     A11     ;ctr for when to adjust velocity
+     356 00001b80           ShypoLp:
+     357 00001b80     afa0          movb    *A13(SLPTIKS),A0
+         00001b90     01e8  
+     358 00001ba0     b5a1          move    *A13(TIMELEFT),A1,W
+         00001bb0     0220  
+     359 00001bc0     4401          sub     A0,A1
+     360 00001bd0     ce00          jrn     SPINDONE
+         00001be0     00ab  
+     361 00001bf0     b02d          move    A1,*A13(TIMELEFT),W
+         00001c00     0220  
+     362 00001c10     0d5f          CALLA   PRCSLP  
+         00001c20 00000000! 
+     363 00001c40     b500          move    *A8(OZPOS),A0,W
+         00001c50     00d0  
+     364 00001c60     05a1          move    @PLZMIN,A1,W
+         00001c70 00000000! 
+     365 00001c90     4820          cmp     A1,A0
+     366 00001ca0     c50a          jrge SkBnc
+     367                            ;* make sure Z velocity is positive
+     368 00001cb0     b500          move    *A8(OZVEL+16),A0,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   10
+
+         00001cc0     00f0  
+     369 00001cd0     0380          abs     A0
+     370 00001ce0     b008          move    A0,*A8(OZVEL+16),W
+         00001cf0     00f0  
+     371 00001d00     b500          move    *A8(OYVEL+16),A0,W
+         00001d10     0070  
+     372 00001d20     0380          abs     A0
+     373 00001d30     b008          move    A0,*A8(OYVEL+16),W
+         00001d40     0070  
+     374 00001d50           SkBnc:
+     375                    
+     376 00001d50     0b4b          cmpi    2,A11
+         00001d60     fffd  
+     377 00001d70     c702          jrgt    VEL_ADJ
+     378 00001d80     102b          inc     A11
+     379 00001d90     c075          jruc    DO_FRAME
+     380 00001da0           VEL_ADJ:
+     381 00001da0     576b          clr     A11
+     382                    
+     383                            ;* did player die?
+     384 00001db0     b7a0          move    *A13(PDBLOCK),A0,L
+         00001dc0     0200  
+     385 00001dd0     b600          move    *A0(PFLAGS),A0,L
+         00001de0     0080  
+     386 00001df0     1da0          btst    BDEAD,A0
+     387 00001e00     cb00          jrnz    SPINDONE
+         00001e10     0088  
+     388                    
+     389                            ;* XVEL remains constant,
+     390                            ;* time of approaching intersection with player given by
+     391                            ;*       TIME = ABS(Xp-PlXp) / ABS(Xv-PlXv)
+     392                            ;* desired Z velocity given by
+     393                            ;*      Zv = ((PlZp+PlZv*TIME)-Zp)/TIME
+     394                            ;* desired Y velocity given by
+     395                            ;*      Yv = (Yp-(PlYpMid+PlYv*TIME))/TIME
+     396 00001e20     b7a0          move    *A13(PDBLOCK),A0,L
+         00001e30     0200  
+     397 00001e40     b600          move    *A0(POBJ),A0,L
+         00001e50     00a0  
+     398 00001e60     cb0c          jrnz    GotPlObj
+     399 00001e70     0d5f          CALLA   SELCTPLY
+         00001e80 00000000! 
+     400 00001ea0     4d60          move    A11,A0
+     401 00001eb0     576b          clr     A11
+     402 00001ec0     0d5f          CALLA   GETPLYR
+         00001ed0 00000000! 
+     403 00001ef0     b20d          move    A0,*A13(PDBLOCK),L
+         00001f00     0200  
+     404 00001f10     b600          move    *A0(POBJ),A0,L
+         00001f20     00a0  
+     405 00001f30           GotPlObj:
+     406 00001f30     4c07          move    A0,A7           ;A7 = ptr to player obj
+     407                    
+     408 00001f40     0d5f          calla   GETANIX
+         00001f50 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   11
+
+     409 00001f70     4c01          move    A0,A1           ;A1 = Xp (hypo)
+     410 00001f80     4d06          move    A8,A6
+     411 00001f90     4ce8          move    A7,A8
+     412 00001fa0     0d5f          calla   GETANIX
+         00001fb0 00000000! 
+     413 00001fd0     4cc8          move    A6,A8
+     414 00001fe0     4401          sub     A0,A1
+     415 00001ff0     0381          abs     A1              ;A1 = ABS (Xp-PlXp)
+     416 00002000     b702          move    *A8(OXVEL),A2,L
+         00002010     0040  
+     417 00002020     b6e3          move    *A7(OXVEL),A3,L
+         00002030     0040  
+     418 00002040     4462          sub     A3,A2
+     419 00002050     0382          abs     A2              ;A2 = ABS (Xv-PlXv)
+     420 00002060     2601          sll     16,A1
+     421 00002070     5a41          divu    A2,A1                           
+     422 00002080     4c23          move    A1,A3           ;A3 = TIME
+     423                    
+     424                            ;get desired Z velocity
+     425 00002090     b4e1          move    *A7(OZVEL+16),A1,W
+         000020a0     00f0  
+     426 000020b0     5c61          mpys    A3,A1
+     427 000020c0     b4e2          move    *A7(OZPOS),A2,W
+         000020d0     00d0  
+     428 000020e0     4041          add     A2,A1
+     429 000020f0     b502          move    *A8(OZPOS),A2,W
+         00002100     00d0  
+     430 00002110     4441          sub     A2,A1
+     431 00002120     2601          sll     16,A1
+     432 00002130     5861          divs    A3,A1           ;A1 = desired Z velocity
+     433                            ;adjust Z velocity
+     434 00002140     b702          move    *A8(OZVEL),A2,L
+         00002150     00e0  
+     435 00002160     4441          sub     A2,A1           ;A1 - desired Z vel delta
+     436 00002170     09e0          movi    010000H,A0
+         00002180 00010000  
+     437 000021a0     0d5f          calla   ABSMAX          ;clip A1 by A0
+         000021b0 00000000! 
+     438 000021d0     4022          add     A1,A2
+     439 000021e0     b248          move    A2,*A8(OZVEL),L
+         000021f0     00e0  
+     440 00002200     b702          move    *A8(OYVEL),A2,L
+         00002210     0060  
+     441 00002220     4022          add     A1,A2
+     442 00002230     b248          move    A2,*A8(OYVEL),L
+         00002240     0060  
+     443                    
+     444                            ;get desired Y velocity
+     445 00002250     b4e5          move    *A7(OYVEL+16),A5,W
+         00002260     0070  
+     446 00002270     b4e2          move    *A7(OZVEL+16),A2,W
+         00002280     00f0  
+     447 00002290     4445          sub     A2,A5
+     448 000022a0     5c65          mpys    A3,A5
+     449 000022b0     b4e2          move    *A7(OYPOS),A2,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   12
+
+         000022c0     00b0  
+     450 000022d0     b4e1          move    *A7(OSIZEY),A1,W
+         000022e0     0150  
+     451 000022f0     14a1          subk    5,A1
+     452 00002300     1bc0          movk    30,A0
+     453 00002310     0d5f          calla   MIN     ;min of A0,A1-0A0H
+         00002320 00000000! 
+     454 00002340     4002          add     A0,A2
+     455 00002350     4045          add     A2,A5
+     456 00002360     b502          move    *A8(OYPOS),A2,W
+         00002370     00b0  
+     457 00002380     b501          move    *A8(OSIZEY),A1,W
+         00002390     0150  
+     458 000023a0     4022          add     A1,A2
+     459 000023b0     4445          sub     A2,A5
+     460 000023c0     2605          sll     16,A5
+     461 000023d0     5865          divs    A3,A5           ;A5 = desired Y velocity
+     462                            ;adjust Y velocity
+     463 000023e0     4ca1          move    A5,A1
+     464 000023f0     b702          move    *A8(OYVEL),A2,L
+         00002400     0060  
+     465 00002410     b703          move    *A8(OZVEL),A3,L
+         00002420     00e0  
+     466 00002430     4462          sub     A3,A2
+     467 00002440     4441          sub     A2,A1           ;A1 - desired Y vel delta
+     468 00002450     09e0          movi    010000H,A0
+         00002460 00010000  
+     469 00002480     0d5f          calla   ABSMAX          ;clip A1 by A0
+         00002490 00000000! 
+     470 000024b0     4022          add     A1,A2
+     471 000024c0     4062          add     A3,A2
+     472 000024d0     b248          move    A2,*A8(OYVEL),L
+         000024e0     0060  
+     473                    
+     474 000024f0           DO_FRAME:
+     475 000024f0     0d5f          calla   DFRMGRND
+         00002500 00000000! 
+     476 00002520     0b41          cmpi    10,A1
+         00002530     fff5  
+     477 00002540     c708          jrgt    HghtOk
+     478 00002550     b700          move    *A8(OYVEL),A0,L
+         00002560     0060  
+     479 00002570     b701          move    *A8(OZVEL),A1,L
+         00002580     00e0  
+     480 00002590     4801          cmp     A0,A1
+     481 000025a0     c502          jrge    HghtOk
+     482 000025b0     b228          move    A1,*A8(OYVEL),L
+         000025c0     0060  
+     483 000025d0           HghtOk:
+     484                    
+     485 000025d0     0d3f          callr   DoFrame
+         000025e0     0010  
+     486 000025f0     afa0          movb    *A13(ANICTR),A0
+         00002600     01e0  
+     487 00002610     1020          inc     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   13
+
+     488 00002620     0b40          cmpi    12,A0
+         00002630     fff3  
+     489 00002640     c401          jrlt    AniCtOk
+     490 00002650     5600          clr     A0
+     491 00002660           AniCtOk:
+     492 00002660     ac0d          movb    A0,*A13(ANICTR)
+         00002670     01e0  
+     493 00002680     c000          jruc    ShypoLp
+         00002690     ff4e  
+     494                    
+     495 000026a0           SPINDONE:
+     496 000026a0     0d3f          callr   DelHypo
+         000026b0     fe91  
+     497 000026c0                   DIE
+     498                    ***************************************************************************
+     499                    
+     500                    ***************************************************************************
+     501 000026f0           DoFrame:
+     502 000026f0     0d3f          callr   GetFrame
+         00002700     000b  
+     503 00002710     1881          movk    4,A1
+     504 00002720                   JSRP    FRANIM
+     505 00002790     0d3f          callr   UpdTip          ;Set Hypo Tips Anim, Position and Vel
+         000027a0     000c  
+     506 000027b0     0960          rets
+     507                    ***************************************************************************
+     508                    
+     509                    ***************************************************************************
+     510 000027c0           GetFrame:
+     511 000027c0     098f          mmtm    SP,A0
+         000027d0     8000  
+     512 000027e0     b7a9          move    *A13(SHAFTANI),A9,L
+         000027f0     01a0  
+     513 00002800     afa0          movb    *A13(ANICTR),A0
+         00002810     01e0  
+     514 00002820     24c0          sll     6,A0    ;2 longword offset
+     515 00002830     4009          add     A0,A9
+     516 00002840     09af          mmfm    SP,A0
+         00002850     0001  
+     517 00002860     0960          rets
+     518                    ***************************************************************************
+     519                    
+     520                    ***************************************************************************
+     521 00002870           UpdTip:
+     522 00002870     098f          mmtm    SP,A0,A1
+         00002880     c000  
+     523 00002890     bb0a          move    *A8(OXVEL),*A10(OXVEL),L
+         000028a0     0040  
+         000028b0     0040  
+     524 000028c0     bb0a          move    *A8(OYVEL),*A10(OYVEL),L
+         000028d0     0060  
+         000028e0     0060  
+     525 000028f0     bb0a          move    *A8(OZVEL),*A10(OZVEL),L
+         00002900     00e0  
+         00002910     00e0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   14
+
+     526 00002920     b700          move    *A8(OZVAL),A0,L
+         00002930     00c0  
+     527 00002940     1420          dec     A0
+     528 00002950     b20a          move    A0,*A10(OZVAL),L
+         00002960     00c0  
+     529                    
+     530 00002970     afa1          movb    *A13(ANICTR),A1
+         00002980     01e0  
+     531 00002990     b7a9          move    *A13(TIPANI),A9,L
+         000029a0     01c0  
+     532 000029b0     24c1          sll     6,A1    ;2 longword offset
+     533 000029c0     4029          add     A1,A9
+     534 000029d0     1881          movk    4,A1
+     535 000029e0                   SWAP    A8,A10
+     536 00002a10                   jsrp    FRANIM
+     537 00002a80                   SWAP    A8,A10
+     538                    
+     539 00002ab0     afa1          movb    *A13(ANICTR),A1
+         00002ac0     01e0  
+     540 00002ad0     2481          sll     4,A1    ;2 byte offset
+     541 00002ae0     b7a9          move    *A13(TIPTBL),A9,L
+         00002af0     0180  
+     542 00002b00     4029          add     A1,A9
+     543 00002b10     8f20          movb    *A9,A0
+     544 00002b20     1109          addk    8,A9
+     545 00002b30     b501          move    *A8(OXPOS),A1,W
+         00002b40     0090  
+     546 00002b50     4001          add     A0,A1
+     547 00002b60     b02a          move    A1,*A10(OXPOS),W
+         00002b70     0090  
+     548 00002b80     8f20          movb    *A9,A0
+     549 00002b90     b501          move    *A8(OYPOS),A1,W
+         00002ba0     00b0  
+     550 00002bb0     4001          add     A0,A1
+     551 00002bc0     b02a          move    A1,*A10(OYPOS),W
+         00002bd0     00b0  
+     552                            
+     553 00002be0     09af          mmfm    SP,A0,A1
+         00002bf0     0003  
+     554 00002c00     0960          rets
+     555                    ***************************************************************************
+     556                    
+     557                    ***************************************************************************
+     558 00002c10           TipColl:
+     559 00002c10     1000          .WORD   P1OID
+     560 00002c20 00002df0'         .LONG   HCOLL1
+     561 00002c40     2000          .WORD   P2OID
+     562 00002c50 00002df0'         .LONG   HCOLL1
+     563 00002c70     0000          .WORD   0
+     564 00002c80 00000000!         .LONG   DUMRTSG
+     565 00002ca0           ShftColl:
+     566 00002ca0     0000          .WORD   0
+     567 00002cb0 00003a30'         .LONG   HYPOPPER
+     568                    
+     569 00002cd0     0b10          .WORD   B1OID|BULLETID
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   15
+
+     570 00002ce0 00003a30'         .LONG   HYPOPPER
+     571 00002d00     0b14          .WORD   B1OID|ROCKETID
+     572 00002d10 00003a30'         .LONG   HYPOPPER
+     573 00002d30     0b12          .WORD   B1OID|EXPLODID
+     574 00002d40 00003a30'         .LONG   HYPOPPER
+     575 00002d60     0b20          .WORD   B2OID|BULLETID
+     576 00002d70 00003a30'         .LONG   HYPOPPER
+     577 00002d90     0b24          .WORD   B2OID|ROCKETID
+     578 00002da0 00003a30'         .LONG   HYPOPPER
+     579 00002dc0     0b22          .WORD   B2OID|EXPLODID
+     580 00002dd0 00003a30'         .LONG   HYPOPPER
+     581                    ***************************************************************************
+     582                    
+     583                    ***************************************************************************
+     584                    *HYPODERMIC NEEDLE Tip STICKING SOMEONE
+     585                    *A0 - obj ptr of hypo Tip
+     586                    *A8 - ptr to obj stuck
+     587 00002df0           HCOLL1:
+     588 00002df0     4d0b          move    A8,A11
+     589                    
+     590                            ;* Remove objs from bullet list
+     591 00002e00     b600          move    *A0(OPLINK),A0,L
+         00002e10     01f0  
+     592 00002e20     4c06          move    A0,A6
+     593 00002e30     0d5f          calla   GETA8
+         00002e40 00000000! 
+     594 00002e60     0d5f          calla   GETA10
+         00002e70 00000000! 
+     595 00002e90     09e1          movi    ENEMY_BULLETS,A1
+         00002ea0 00000000! 
+     596 00002ec0     4d40          move    A10,A0
+     597 00002ed0     0d5f          calla   DELSUPP
+         00002ee0 00000000! 
+     598 00002f00     4d00          move    A8,A0
+     599 00002f10     0d5f          calla   DELSUPP
+         00002f20 00000000! 
+     600                    
+     601 00002f40     4cc0          move    A6,A0
+     602 00002f50     09c1          movi    000E5H,A1
+         00002f60     00e5  
+     603 00002f70     09e7          movi    INJECT,A7
+         00002f80 00003000' 
+     604 00002fa0     0d5f          calla   XFERPROC
+         00002fb0 00000000! 
+     605 00002fd0     09c0          movi    1,A0            ;stop collision scan
+         00002fe0     0001  
+     606 00002ff0     0960          RETS
+     607                    ***************************************************************************
+     608                    
+     609                    ***************************************************************************
+     610                    *INJECT THE HYPO
+     611 00003000           INJECT:
+     612                    ;A11 ptr to stuck Pig
+     613 00003000     4d60          move    A11,A0
+     614 00003010     0d5f          calla   GetPData
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   16
+
+         00003020 00000000! 
+     615 00003040     b20d          move    A0,*A13(PDBLOCK),L
+         00003050     0200  
+     616 00003060     b601          move    *A0(POBJ),A1,L
+         00003070     00a0  
+     617 00003080     b82d          move    *A1(OXPOS),*A13(OLDXP),W
+         00003090     0090  
+         000030a0     00e0  
+     618 000030b0     b82d          move    *A1(OYPOS),*A13(OLDYP),W
+         000030c0     00b0  
+         000030d0     0120  
+     619 000030e0     b82d          move    *A1(OZPOS),*A13(OLDZP),W
+         000030f0     00d0  
+         00003100     00f0  
+     620                    
+     621 00003110     0d5f          calla   ClrVel
+         00003120 00000000! 
+     622 00003140     4d07          move    A8,A7
+     623 00003150     4d48          move    A10,A8
+     624 00003160     0d5f          calla   ClrVel
+         00003170 00000000! 
+     625 00003190     4ce8          move    A7,A8
+     626                    
+     627                            ;* pivot hypo around tip
+     628 000031a0     b540          move    *A10(OYPOS),A0,W
+         000031b0     00b0  
+     629 000031c0     b541          move    *A10(OSIZEY),A1,W
+         000031d0     0150  
+     630 000031e0     2fe1          srl     1,A1
+     631 000031f0     4020          add     A1,A0
+     632 00003200     b008          move    A0,*A8(OYPOS),W
+         00003210     00b0  
+     633                    
+     634 00003220     09e0          movi    HYPOSTCK,A0
+         00003230 00003e10' 
+     635 00003250     b20d          move    A0,*A13(SHAFTANI),L
+         00003260     01a0  
+     636 00003270     09e0          movi    TIPSTCK,A0
+         00003280 00003ff0' 
+     637 000032a0     b20d          move    A0,*A13(TIPANI),L
+         000032b0     01c0  
+     638 000032c0     b500          move    *A8(OFLAGS),A0,W        
+         000032d0     0100  
+     639 000032e0     1f60          btst    B_FLIPH,A0
+     640 000032f0     cb06          jrnz    InjFlp
+     641 00003300     09e0          movi    STCKOFFNFLP,A0
+         00003310 000041d0' 
+     642 00003330     b20d          move    A0,*A13(TIPTBL),L
+         00003340     0180  
+     643 00003350     c005          jruc    GotTT
+     644 00003360           InjFlp:
+     645 00003360     09e0          movi    STCKOFFFLP,A0
+         00003370 00004240' 
+     646 00003390     b20d          move    A0,*A13(TIPTBL),L
+         000033a0     0180  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   17
+
+     647 000033b0           GotTT:
+     648 000033b0     5600          clr     A0
+     649 000033c0     ac0d          movb    A0,*A13(SLPTIKS)
+         000033d0     01e8  
+     650 000033e0     ac0d          movb    A0,*A13(ANICTR)
+         000033f0     01e0  
+     651 00003400           StckLp:
+     652 00003400     afa0          movb    *A13(SLPTIKS),A0
+         00003410     01e8  
+     653 00003420     cb08          jrnz    SkInjAni
+     654 00003430     0d3f          callr   DoFrame
+         00003440     ff2a  
+     655 00003450     afa0          movb    *A13(ANICTR),A0
+         00003460     01e0  
+     656 00003470     1020          inc     A0
+     657 00003480     ac0d          movb    A0,*A13(ANICTR)
+         00003490     01e0  
+     658 000034a0     18c0          movk    6,A0
+     659 000034b0           SkInjAni:
+     660 000034b0     1420          dec     A0
+     661 000034c0     ac0d          movb    A0,*A13(SLPTIKS)
+         000034d0     01e8  
+     662                    
+     663                            ;* update shaft position
+     664 000034e0     b7a0          move    *A13(PDBLOCK),A0,L
+         000034f0     0200  
+     665 00003500     b601          move    *A0(POBJ),A1,L
+         00003510     00a0  
+     666 00003520     ca39          jrz     SkInjUpd
+     667                    
+     668 00003530     b420          move    *A1(OZPOS),A0,W
+         00003540     00d0  
+     669 00003550     b5a2          move    *A13(OLDZP),A2,W
+         00003560     00f0  
+     670 00003570     b00d          move    A0,*A13(OLDZP),W
+         00003580     00f0  
+     671 00003590     4440          sub     A2,A0
+     672 000035a0     b502          move    *A8(OZPOS),A2,W
+         000035b0     00d0  
+     673 000035c0     4002          add     A0,A2
+     674 000035d0     b048          move    A2,*A8(OZPOS),W
+         000035e0     00d0  
+     675 000035f0     b542          move    *A10(OZPOS),A2,W
+         00003600     00d0  
+     676 00003610     4002          add     A0,A2
+     677 00003620     b04a          move    A2,*A10(OZPOS),W
+         00003630     00d0  
+     678                    
+     679 00003640     b420          move    *A1(OXPOS),A0,W
+         00003650     0090  
+     680 00003660     b5a2          move    *A13(OLDXP),A2,W
+         00003670     00e0  
+     681 00003680     b00d          move    A0,*A13(OLDXP),W
+         00003690     00e0  
+     682 000036a0     4440          sub     A2,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   18
+
+     683 000036b0     0b40          cmpi    10,A0   
+         000036c0     fff5  
+     684 000036d0     c727          jrgt    StckX
+     685 000036e0     b502          move    *A8(OXPOS),A2,W
+         000036f0     0090  
+     686 00003700     4002          add     A0,A2
+     687 00003710     b048          move    A2,*A8(OXPOS),W
+         00003720     0090  
+     688 00003730     b542          move    *A10(OXPOS),A2,W
+         00003740     0090  
+     689 00003750     4002          add     A0,A2
+     690 00003760     b04a          move    A2,*A10(OXPOS),W
+         00003770     0090  
+     691                    
+     692 00003780     b420          move    *A1(OYPOS),A0,W
+         00003790     00b0  
+     693 000037a0     b5a2          move    *A13(OLDYP),A2,W
+         000037b0     0120  
+     694 000037c0     b00d          move    A0,*A13(OLDYP),W
+         000037d0     0120  
+     695 000037e0     4440          sub     A2,A0
+     696 000037f0     0b40          cmpi    10,A0   
+         00003800     fff5  
+     697 00003810     c713          jrgt    StckX
+     698 00003820     b502          move    *A8(OYPOS),A2,W
+         00003830     00b0  
+     699 00003840     4002          add     A0,A2
+     700 00003850     b048          move    A2,*A8(OYPOS),W
+         00003860     00b0  
+     701 00003870     b542          move    *A10(OYPOS),A2,W
+         00003880     00b0  
+     702 00003890     4002          add     A0,A2
+     703 000038a0     b04a          move    A2,*A10(OYPOS),W
+         000038b0     00b0  
+     704 000038c0           SkInjUpd:
+     705                    
+     706 000038c0                   SLEEP   1
+     707                    
+     708 00003900     afa0          movb    *A13(ANICTR),A0
+         00003910     01e0  
+     709 00003920     0b40          cmpi    7,A0
+         00003930     fff8  
+     710 00003940     c4ab          jrlt    StckLp
+     711                    
+     712                    
+     713 00003950           StckX:
+     714                            ;* del the Hypo
+     715 00003950     4d00          move    A8,A0
+     716 00003960     0d5f          calla   DELPAL
+         00003970 00000000! 
+     717 00003990     0d5f          calla   DELSOBJ
+         000039a0 00000000! 
+     718 000039c0     4d40          move    A10,A0 
+     719 000039d0     0d5f          calla   DELSOBJ
+         000039e0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   19
+
+     720 00003a00                   DIE
+     721                    ***************************************************************************
+     722                    
+     723                    ***************************************************************************
+     724                    *HYPODERMIC NEEDLE BUSTING AGAINST SOMETHING
+     725                    *A0=OBLOCK PTR OF HYPO
+     726                    *A0 - obj ptr of hypo Tip
+     727                    *A8 - ptr to obj stuck
+     728 00003a30           HYPOPPER:
+     729 00003a30     b501          move    *A8(OID),A1,W
+         00003a40     01a0  
+     730 00003a50     2681          sll     20,A1   ;
+     731 00003a60     2c81          srl     28,A1   ;andi   00F00H,A1
+     732 00003a70     0b41          cmpi    0EH,A1
+         00003a80     fff1  
+     733 00003a90     ca1e          jrz     EnemyCol
+     734                    
+     735                            ;* Remove objs from bullet list
+     736 00003aa0     b600          move    *A0(OPLINK),A0,L
+         00003ab0     01f0  
+     737 00003ac0     0d5f          calla   GETA8
+         00003ad0 00000000! 
+     738 00003af0     0d5f          calla   GETA10
+         00003b00 00000000! 
+     739 00003b20     0d5f          calla   KILL                    ;KILL THE CONTROLLING PROCESS
+         00003b30 00000000! 
+     740 00003b50     0d3f          callr   DelTip
+         00003b60     fd5b  
+     741 00003b70     09e1          movi    ENEMY_BULLETS,A1
+         00003b80 00000000! 
+     742 00003ba0     4d00          MOVE    A8,A0
+     743 00003bb0     0d5f          CALLA   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         00003bc0 00000000! 
+     744 00003be0                   CREATE  INDPID,DINGANI          ;MAKE THE DING PROC
+     745                    
+     746 00003c60     09c0          movi    1,A0    ;stop collision scan
+         00003c70     0001  
+     747 00003c80           EnemyCol:
+     748 00003c80     0960          RETS
+     749                    ***************************************************************************
+     750                    
+     751                    ***************************************************************************
+     752 00003c90           TIPOFFCCW:      ;used if thrower was not flipped
+     753                    ;* dist from Hypo TL to Tip TL
+     754 00003c90       1d          .byte   29,3
+     755 00003ca0       1a          .byte   26,-5
+     756 00003cb0       10          .byte   16,-11
+     757 00003cc0       03          .byte   3,-11
+     758 00003cd0       fb          .byte   -5,-11
+     759 00003ce0       f7          .byte   -9,-5
+     760 00003cf0       f5          .byte   -11,3
+     761 00003d00       f7          .byte   -9,19
+     762 00003d10       fb          .byte   -5,29
+     763 00003d20       03          .byte   3,32
+     764 00003d30       10          .byte   16,29
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   20
+
+     765 00003d40       1a          .byte   26,19
+     766 00003d50           TIPOFFCW:       ;thrower was flipped
+     767                    ;* dist from Hypo TL to Tip TL
+     768 00003d50       f5          .byte   -11,3
+     769 00003d60       f7          .byte   -9,-5
+     770 00003d70       fb          .byte   -5,-11
+     771 00003d80       03          .byte   3,-11
+     772 00003d90       10          .byte   16,-11
+     773 00003da0       1a          .byte   26,-5
+     774 00003db0       1d          .byte   29,3
+     775 00003dc0       1a          .byte   26,19
+     776 00003dd0       10          .byte   16,29
+     777 00003de0       03          .byte   3,32
+     778 00003df0       fb          .byte   -5,29
+     779 00003e00       f7          .byte   -9,19
+     780                    ***************************************************************************
+     781                    
+     782                    
+     783                    ;* INJECTION
+     784 00003e10           HYPOSTCK:
+     785 00003e10 00000000!         .long   HYPOB0
+     786 00003e30     0001          .word   1,0
+     787 00003e50 00000000!         .long   HYPOB02
+     788 00003e70     0001          .word   1,0
+     789 00003e90 00000000!         .long   HYPOB03
+     790 00003eb0     0001          .word   1,0
+     791 00003ed0 00000000!         .long   HYPOB03
+     792 00003ef0     0001          .word   1,0
+     793 00003f10 00000000!         .long   HYPOB03
+     794 00003f30     0001          .word   1,0
+     795 00003f50 00000000!         .long   HYPOB03
+     796 00003f70     0001          .word   1,0
+     797 00003f90 00000000!         .long   HYPOB03
+     798 00003fb0     0001          .word   1,0
+     799 00003fd0                   LONGNULL
+     800 00003ff0           TIPSTCK:
+     801 00003ff0 00000000!         .long   HYPOT0
+     802 00004010     0001          .word   1,0
+     803 00004030 00000000!         .long   HYPOT0
+     804 00004050     0001          .word   1,0
+     805 00004070 00000000!         .long   HYPOT0
+     806 00004090     0001          .word   1,0
+     807 000040b0 00000000!         .long   HYPOT0
+     808 000040d0     0001          .word   1,0
+     809 000040f0 00000000!         .long   HYPOT0
+     810 00004110     0001          .word   1,0
+     811 00004130 00000000!         .long   HYPOT0
+     812 00004150     0001          .word   1,0
+     813 00004170 00000000!         .long   HYPOT0
+     814 00004190     0001          .word   1,0
+     815 000041b0                   LONGNULL
+     816 000041d0           STCKOFFNFLP:
+     817 000041d0       1d          .byte   29,3
+     818 000041e0       18          .byte   24,3
+     819 000041f0       14          .byte   20,3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   21
+
+     820 00004200       14          .byte   20,3
+     821 00004210       14          .byte   20,3
+     822 00004220       14          .byte   20,3
+     823 00004230       14          .byte   20,3
+     824 00004240           STCKOFFFLP:
+     825 00004240       f5          .byte   -11,3
+     826 00004250       f5          .byte   -11,3
+     827 00004260       f5          .byte   -11,3
+     828 00004270       f5          .byte   -11,3
+     829 00004280       f5          .byte   -11,3
+     830 00004290       f5          .byte   -11,3
+     831 000042a0       f5          .byte   -11,3
+     832                    
+     833                    
+     834                            ;* any frame without FLIPH set will inject plyr
+     835 000042b0           HYPOCCW:
+     836 000042b0 00000000!         .long   HYPOB0
+     837 000042d0     4001          .word   FLIPBITS|1,M_FLIPV
+     838 000042f0 00000000!         .long   HYPOB30
+     839 00004310     4001          .word   FLIPBITS|1,M_FLIPV
+     840 00004330 00000000!         .long   HYPOB60
+     841 00004350     4001          .word   FLIPBITS|1,M_FLIPV
+     842 00004370 00000000!         .long   HYPOB90
+     843 00004390     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     844 000043b0 00000000!         .long   HYPOB60
+     845 000043d0     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     846 000043f0 00000000!         .long   HYPOB30
+     847 00004410     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     848 00004430 00000000!         .long   HYPOB0
+     849 00004450     4001          .word   FLIPBITS|1,M_FLIPH
+     850 00004470 00000000!         .long   HYPOB30
+     851 00004490     4001          .word   FLIPBITS|1,M_FLIPH
+     852 000044b0 00000000!         .long   HYPOB60
+     853 000044d0     4001          .word   FLIPBITS|1,M_FLIPH
+     854 000044f0 00000000!         .long   HYPOB90
+     855 00004510     4001          .word   FLIPBITS|1,0
+     856 00004530 00000000!         .long   HYPOB60
+     857 00004550     4001          .word   FLIPBITS|1,0
+     858 00004570 00000000!         .long   HYPOB30
+     859 00004590     4001          .word   FLIPBITS|1,0
+     860 000045b0                   LONGNULL
+     861 000045d0           HTIPCCW:
+     862 000045d0 00000000!         .long   HYPOT0
+     863 000045f0     4001          .word   FLIPBITS|1,M_FLIPV
+     864 00004610 00000000!         .long   HYPOT30
+     865 00004630     4001          .word   FLIPBITS|1,M_FLIPV
+     866 00004650 00000000!         .long   HYPOT60
+     867 00004670     4001          .word   FLIPBITS|1,M_FLIPV
+     868 00004690 00000000!         .long   HYPOT90
+     869 000046b0     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     870 000046d0 00000000!         .long   HYPOT60
+     871 000046f0     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     872 00004710 00000000!         .long   HYPOT30
+     873 00004730     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     874 00004750 00000000!         .long   HYPOT0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   22
+
+     875 00004770     4001          .word   FLIPBITS|1,M_FLIPH
+     876 00004790 00000000!         .long   HYPOT30
+     877 000047b0     4001          .word   FLIPBITS|1,M_FLIPH
+     878 000047d0 00000000!         .long   HYPOT60
+     879 000047f0     4001          .word   FLIPBITS|1,M_FLIPH
+     880 00004810 00000000!         .long   HYPOT90
+     881 00004830     4001          .word   FLIPBITS|1,0
+     882 00004850 00000000!         .long   HYPOT60
+     883 00004870     4001          .word   FLIPBITS|1,0
+     884 00004890 00000000!         .long   HYPOT30
+     885 000048b0     4001          .word   FLIPBITS|1,0
+     886 000048d0                   LONGNULL
+     887                    
+     888                    
+     889                            ;* any frame with FLIPH set will inject plyr
+     890 000048f0           HYPOCW:
+     891 000048f0 00000000!         .long   HYPOB0
+     892 00004910     4001          .word   FLIPBITS|1,M_FLIPH
+     893 00004930 00000000!         .long   HYPOB30
+     894 00004950     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     895 00004970 00000000!         .long   HYPOB60
+     896 00004990     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     897 000049b0 00000000!         .long   HYPOB90
+     898 000049d0     4001          .word   FLIPBITS|1,M_FLIPV
+     899 000049f0 00000000!         .long   HYPOB60
+     900 00004a10     4001          .word   FLIPBITS|1,M_FLIPV
+     901 00004a30 00000000!         .long   HYPOB30
+     902 00004a50     4001          .word   FLIPBITS|1,M_FLIPV
+     903 00004a70 00000000!         .long   HYPOB0
+     904 00004a90     4001          .word   FLIPBITS|1,M_FLIPV
+     905 00004ab0 00000000!         .long   HYPOB30
+     906 00004ad0     4001          .word   FLIPBITS|1,0
+     907 00004af0 00000000!         .long   HYPOB60
+     908 00004b10     4001          .word   FLIPBITS|1,0
+     909 00004b30 00000000!         .long   HYPOB90
+     910 00004b50     4001          .word   FLIPBITS|1,M_FLIPH
+     911 00004b70 00000000!         .long   HYPOB60
+     912 00004b90     4001          .word   FLIPBITS|1,M_FLIPH
+     913 00004bb0 00000000!         .long   HYPOB30
+     914 00004bd0     4001          .word   FLIPBITS|1,M_FLIPH
+     915 00004bf0                   LONGNULL
+     916 00004c10           HTIPCW:
+     917 00004c10 00000000!         .long   HYPOT0
+     918 00004c30     4001          .word   FLIPBITS|1,M_FLIPH
+     919 00004c50 00000000!         .long   HYPOT30
+     920 00004c70     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     921 00004c90 00000000!         .long   HYPOT60
+     922 00004cb0     4001          .word   FLIPBITS|1,M_FLIPH|M_FLIPV
+     923 00004cd0 00000000!         .long   HYPOT90
+     924 00004cf0     4001          .word   FLIPBITS|1,M_FLIPV
+     925 00004d10 00000000!         .long   HYPOT60
+     926 00004d30     4001          .word   FLIPBITS|1,M_FLIPV
+     927 00004d50 00000000!         .long   HYPOT30
+     928 00004d70     4001          .word   FLIPBITS|1,M_FLIPV
+     929 00004d90 00000000!         .long   HYPOT0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:53 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>                        PAGE   23
+
+     930 00004db0     4001          .word   FLIPBITS|1,M_FLIPV
+     931 00004dd0 00000000!         .long   HYPOT30
+     932 00004df0     4001          .word   FLIPBITS|1,0
+     933 00004e10 00000000!         .long   HYPOT60
+     934 00004e30     4001          .word   FLIPBITS|1,0
+     935 00004e50 00000000!         .long   HYPOT90
+     936 00004e70     4001          .word   FLIPBITS|1,M_FLIPH
+     937 00004e90 00000000!         .long   HYPOT60
+     938 00004eb0     4001          .word   FLIPBITS|1,M_FLIPH
+     939 00004ed0 00000000!         .long   HYPOT30
+     940 00004ef0     4001          .word   FLIPBITS|1,M_FLIPH
+     941 00004f10                   LONGNULL
+     942                    
+
+ No Errors,  No Warnings

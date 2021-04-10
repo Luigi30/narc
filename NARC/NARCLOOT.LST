@@ -1,0 +1,2770 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCLOOT.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .OPTION B,D,L
+      12                            .MNOLIST
+      13                    
+      14                    *       GET THE SYSTEM STUFF
+      15                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      16                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      17                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      18                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      19                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      20                    *       LOCAL STUFF
+      21                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      22                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      23                    
+      24                    *
+      25                    *GLOBALS IN THIS FILE
+      26                            .GLOBAL         WEEDCOLL,BUCKCOLD,DRUGCOLD
+      27                    *
+      28                    *EXTERNALS
+      29                            .GLOBAL CANEXCOL,PICKMESS,CLRMESS
+      30                    
+      31 00000000                   .TEXT
+      32              001e  MAXLOOT .EQU    30      ;MAX AMOUNT OF LOOT ALLOWED ON SCREEN
+      33                    **************************************************************************
+      34                    *                                                                        *
+      35                    * SPECIAL NOTE: LOOT OBJECTS AND THE BUST STAMP SHOULD BE PART OF        *
+      36                    *             THE FIXED COLOR MAP, THEREFORE THEIR PALETTES ARE          *
+      37                    *             NEVER FREE'D. REMEBER THAT!                                *
+      38                    *                                                                        *
+      39                    **************************************************************************
+      40                    **************************************************************************
+      41                    *                                                                        *
+      42                    * DROPCARD - PROCESS TO DROP A SAFE CARD                                 *
+      43                    * A8 = OBLK PTR OF ENEMY THAT DROPPED THIS                               *
+      44                    * A9 = CARD IDENTIFIER                                                   *
+      45                    *                                                                        *
+      46                    **************************************************************************
+      47 00000000           DROPCARD
+      48 00000000                   CREATE  CRCPID,PICKMESS ;CREATE THE PICKUP MESSAGE PROCESS
+      49 00000080     09e5          MOVI    CARDCOLL,A5
+         00000090 00009940' 
+      50 000000b0     09eb          MOVI    CARDOID,A11
+         000000c0 00008020  
+      51 000000e0     552b          OR      A9,A11
+      52 000000f0     24a9          SLL     5,A9
+      53 00000100     4d27          MOVE    A9,A7
+      54 00000110     0b27          ADDI    CARDBTAB,A7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    2
+
+         00000120 00000280' 
+      55 00000140     86e7          MOVE    *A7,A7,L        ;GET THE BLIP STUFF
+      56 00000150     0b29          ADDI    CRDANTAB,A9
+         00000160 000001e0' 
+      57 00000180     8729          MOVE    *A9,A9,L        ;AND THE ANIMATION SCRIPT
+      58 00000190     574a          CLR     A10
+      59 000001a0     09e6          MOVI    DMAWNZ,A6       ;SEND YOUR OWN FLAGS
+         000001b0 00008002  
+      60 000001d0     c069          JRUC    DROPLTNC
+      61                    
+      62                    *CARD ANIMATION SCRIPT TABLE
+      63 000001e0           CRDANTAB
+      64 000001e0 00009060'         .LONG   CARDSAN,CARDRAN,CARDBAN,CARDGAN,CARDGRAN
+      65                    *CARD BLIP TABLE
+      66 00000280           CARDBTAB
+      67 00000280 00009d90'         .LONG   SILVBLIP,REDBLIP,BLUEBLIP,GOLDBLIP,GRNBLIP
+      68                    **************************************************************************
+      69                    *                                                                        *
+      70                    * DROPBUCK - PROCESS TO DROP SOME BUCKS                                  *
+      71                    * A8 = OBLK PTR OF ENEMY THAT DROPPED THIS                               *
+      72                    *                                                                        *
+      73                    **************************************************************************
+      74 00000320           DROPBUCK
+      75 00000320     09e5          MOVI    MONYCOLL,A5
+         00000330 00009280' 
+      76 00000350     09e7          MOVI    BUCKBLIP,A7
+         00000360 00000000! 
+      77 00000380     0d5f          CALLA   RANDOM
+         00000390 00000000! 
+      78 000003b0     ce04          JRN     DROPBUK1
+      79 000003c0     09e9          MOVI    MONEY1,A9       
+         000003d0 00009b50' 
+      80 000003f0     c003          JRUC    DROPBUK2
+      81 00000400           DROPBUK1
+      82 00000400     09e9          MOVI    MONEY2,A9
+         00000410 00009ba0' 
+      83 00000430           DROPBUK2
+      84 00000430     574a          CLR     A10
+      85 00000440     09eb          MOVI    BUCKOID,A11
+         00000450 00008010  
+      86 00000470     56c6          CLR     A6
+      87 00000480     c02d          JRUC    DROPLOOT
+      88                    
+      89                    **************************************************************************
+      90                    *                                                                        *
+      91                    * DROPCLIP - PROCESS TO DROP A BULLET CLIP                               *
+      92                    * A8 = OBLK PTR OF ENEMY THAT DROPPED THIS                               *
+      93                    *                                                                        *
+      94                    **************************************************************************
+      95 00000490           DROPCLIP
+      96 00000490     09e5          MOVI    CLIPCOLL,A5
+         000004a0 00009790' 
+      97 000004c0     09e7          MOVI    CLIPBLIP,A7
+         000004d0 00000000! 
+      98 000004f0     09e9          MOVI    CLIPF,A9        
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    3
+
+         00000500 00009c40' 
+      99 00000520     574a          CLR     A10
+     100 00000530     09eb          MOVI    CLIPOID,A11
+         00000540 00008013  
+     101 00000560     56c6          CLR     A6
+     102 00000570     c01e          JRUC    DROPLOOT
+     103                    **************************************************************************
+     104                    *                                                                        *
+     105                    * DROPROCK - PROCESS TO DROP A ROCKET BOMB                               *
+     106                    * A8 = OBLK PTR OF ENEMY THAT DROPPED THIS                               *
+     107                    *                                                                        *
+     108                    **************************************************************************
+     109 00000580           DROPROCK
+     110 00000580     09e5          MOVI    ROCKCOLL,A5
+         00000590 000095e0' 
+     111 000005b0     09e7          MOVI    ROCKBLIP,A7
+         000005c0 00000000! 
+     112 000005e0     09e9          MOVI    ROCKF,A9        
+         000005f0 00009bf0' 
+     113 00000610     574a          CLR     A10
+     114 00000620     09eb          MOVI    ROCKOID,A11
+         00000630 00008012  
+     115 00000650     56c6          CLR     A6
+     116 00000660     c00f          JRUC    DROPLOOT
+     117                    **************************************************************************
+     118                    *                                                                        *
+     119                    * DROPDRUG - PROCESS TO DROP A BAG OF DOPE                               *
+     120                    * A8 = OBLK PTR OF ENEMY THAT DROPPED THIS                               *
+     121                    *                                                                        *
+     122                    **************************************************************************
+     123 00000670           DROPDRUG
+     124 00000670     09e5          MOVI    DOPECOLL,A5
+         00000680 00009430' 
+     125 000006a0     09e7          MOVI    DRUGBLIP,A7
+         000006b0 00000000! 
+     126 000006d0     09e9          MOVI    DOPE,A9 
+         000006e0 00009c90' 
+     127 00000700     09ea          MOVI    DOPEHIT,A10
+         00000710 00009ce0' 
+     128 00000730     09cb          MOVI    DRUGOID,A11
+         00000740     0011  
+     129 00000750     56c6          CLR     A6
+     130                    **************************************************************************
+     131                    *                                                                        *
+     132                    * DROPLOOT - DROPPING PROCESS FOR SOME LOOT                              *
+     133                    * A5 = COLLISION ROUTINE                                                 *
+     134                    * A6 = OBJECT FLAGS OF LOOT IMAGE, 0 = JUST TAKE THE DROPPERS            *
+     135                    * A7 = PTR TO SCANNER BLIP                                               *
+     136                    * A8 = PTR TO OBJECT THAT DROPPED THIS                                   *
+     137                    * A9 = PTR TO ANIMATION SCRIPT                                           *
+     138                    * A10 = PTR TO GROUND HIT ANIMATION SCRIPT                               *
+     139                    * A11 = I.D. OF OBJECT                                                   *
+     140                    *                                                                        *
+     141                    **************************************************************************
+     142 00000760           DROPLOOT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    4
+
+     143 00000760     09e1          MOVI    BOOTY,A1
+         00000770 00000000! 
+     144 00000790     0d5f          CALLA   CNTSUPP
+         000007a0 00000000! 
+     145 000007c0     0b40          CMPI    MAXLOOT,A0
+         000007d0     ffe1  
+     146 000007e0     c900          JRHS    LOOTDIE                 ;BR = NO MORE LOOT ALLOWED
+         000007f0     0094  
+     147                    
+     148 00000800     05a0          MOVE    @OVERLOAD,A0
+         00000810 00000000! 
+     149 00000830     0b40          CMPI    4,A0
+         00000840     fffb  
+     150 00000850     ca00          JREQ    LOOTDIE                 ;BR = SYSTEM IS BOGGED
+         00000860     008d  
+     151                    *DROP LOOT REGARDLESS OF BOOTY COUNT AND OVERLOAD
+     152 00000870           DROPLTNC
+     153 00000870     0d5f          CALLA   GETOBJ                  ;GET AN OBJECT
+         00000880 00000000! 
+     154 000008a0     ca00          JREQ    LOOTDIE                 ;NO CAN DO
+         000008b0     0088  
+     155                    
+     156 000008c0     0d5f          CALLA   COPYOBJ                 ;COPY THE CONTENTS FROM THE ENEMY
+         000008d0 00000000! 
+     157                    
+     158 000008f0     b160          MOVE    A11,*A0(OID),W          ;CHANGE ID
+         00000900     01a0  
+     159 00000910     4d61          MOVE    A11,A1
+     160 00000920     2f81          SRL     4,A1
+     161 00000930     2481          SLL     4,A1
+     162 00000940     0b61          CMPI    CARDOID,A1              ;IS THIS A SAFE CARD?
+         00000950 ffff7fdf  
+     163 00000970     cb04          JRNE    NRMLDROP                ;NO, JUST DO A NOMINAL Z SIZE
+     164                    
+     165 00000980     09e1          MOVI    CARDZSIZ,A1
+         00000990 0014000f  
+     166 000009b0     c003          JRUC    DROPZSIZ                ;SET A SPECIAL Z SIZE FOR THE CARD
+     167 000009c0           NRMLDROP
+     168 000009c0     09e1          MOVI    LOOTZSIZ,A1
+         000009d0 000a000a  
+     169 000009f0           DROPZSIZ
+     170 000009f0     b228          MOVE    A1,*A8(OZSIZ),L         ;STUFF A SIZE
+         00000a00     01b0  
+     171                    
+     172 00000a10     b2a0          MOVE    A5,*A0(OCVECT),L        ;THE COLLISION VECTOR
+         00000a20     01d0  
+     173 00000a30     b2e0          MOVE    A7,*A0(OBLIPIMG),L
+         00000a40     0260  
+     174 00000a50     4cc6          MOVE    A6,A6
+     175 00000a60     ca02          JRZ     DROPNFLG
+     176 00000a70     b0c0          MOVE    A6,*A0(OFLAGS),W        ;STUFF YOUR OWN FLAGS
+         00000a80     0100  
+     177 00000a90           DROPNFLG
+     178 00000a90     0d5f          CALLA   GETCPNT
+         00000aa0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    5
+
+     179 00000ac0     b020          MOVE    A1,*A0(OXPOS),W         ;SET CENTER X POSITION
+         00000ad0     0090  
+     180 00000ae0     2e01          SRL     16,A1
+     181 00000af0     b020          MOVE    A1,*A0(OYPOS),W         ;AND CENTER Y POSITION
+         00000b00     00b0  
+     182                    
+     183 00000b10     4c08          MOVE    A0,A8
+     184 00000b20     0d5f          CALLA   PSTOP
+         00000b30 00000000! 
+     185 00000b50     8721          MOVE    *A9,A1,L
+     186 00000b60     b620          MOVE    *A1(ICMAP),A0,L
+         00000b70     0060  
+     187 00000b80     0d5f          CALLA   FINDPAL
+         00000b90 00000000! 
+     188 00000bb0     b008          MOVE    A0,*A8(OPAL),W
+         00000bc0     0160  
+     189 00000bd0     0d5f          CALLA   RANDOM
+         00000be0 00000000! 
+     190 00000c00     0500          SEXT    A0
+     191 00000c10     b208          MOVE    A0,*A8(OXVEL),L         ;A FRACTION OF A VELOCITY
+         00000c20     0040  
+     192 00000c30     0b80          ANDI    30H,A0  
+         00000c40 ffffffcf  
+     193 00000c60     5604          XOR     A0,A4                   ;FLAGGY BAGGY SHAGGY DAGGY
+     194 00000c70     b504          MOVE    *A8(OFLAGS),A4,W
+         00000c80     0100  
+     195 00000c90     0ba4          ORI     M_PIXSCAN,A4            ;MAKE THIS OBJECT PIXABLE
+         00000ca0 00000400  
+     196 00000cc0     0d5f          CALLA   ANI                     ;STUFF NEW FRAME
+         00000cd0 00000000! 
+     197                    
+     198 00000cf0     1841          MOVK    2,A1
+     199 00000d00     b028          MOVE    A1,*A8(OYVEL+16),W      ;STUFF A DOWNWARD VELOCITY
+         00000d10     0070  
+     200 00000d20     b3a8          MOVE    A13,*A8(OPLINK),L       ;LINK ME UP BABY
+         00000d30     01f0  
+     201 00000d40     4d00          MOVE    A8,A0
+     202 00000d50     0d5f          CALLA   INSOBJ
+         00000d60 00000000! 
+     203 00000d80     09e1          MOVI    BOOTY,A1
+         00000d90 00000000! 
+     204 00000db0     0d5f          CALLA   ADDSUPP                 ;PLAYER CAN PICK IT UP NOW      
+         00000dc0 00000000! 
+     205                    
+     206 00000de0     b34d          MOVE    A10,*A13(PDATA+80H),L   ;NO SECOND ANIMATION LIST
+         00000df0     00e0  
+     207 00000e00     09e1          MOVI    LOOTPROC,A1
+         00000e10 00000e80' 
+     208 00000e30     b22d          MOVE    A1,*A13(PDATA+0A0H),L   ;PROCESS TO CREATE UPON HIT
+         00000e40     0100  
+     209 00000e50     c080          JAUC    TRAJEC1                 ;ACCELERATE DUE TO GRAVITY
+         00000e60 00000000! 
+     210                    
+     211                    **************************************************************************
+     212                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    6
+
+     213                    * LOOTPROC - WATCH FOR MONEY OR DRUGS TO GET OFF OF THE SCREEN,          *
+     214                    *          THEN DELETE IT.                                               *
+     215                    * A8 = PTR TO LOOT                                                       *
+     216                    *                                                                        *
+     217                    **************************************************************************
+     218 00000e80           LOOTPROC
+     219 00000e80     4d00          MOVE    A8,A0
+     220 00000e90     0d5f          CALLA   DELSHAD
+         00000ea0 00000000! 
+     221 00000ec0     0d5f          CALLA   PSTOP
+         00000ed0 00000000! 
+     222 00000ef0     0d5f          CALLA   CKOUTOFX                ;SEE IF THIS THING IS OUT OF X BOUNDS
+         00000f00 00000000! 
+     223 00000f20     b501          MOVE    *A8(OID),A1,W
+         00000f30     01a0  
+     224                    
+     225 00000f40     0521          ZEXT    A1
+     226 00000f50     0b61          CMPI    CARDOID|BLUE,A1         ;IS THIS A BLUE SAFE CARD
+         00000f60 ffff7fdd  
+     227 00000f80     cb0b          JRNE    LOOTPNBC                ;NO, THIS IS NOT A BLUE CARD
+     228                    
+     229 00000f90     b503          MOVE    *A8(OSIZEY),A3,W        ;HACK FOR BLUE CARD
+         00000fa0     0150  
+     230 00000fb0     2be3          SRA     1,A3
+     231 00000fc0     05a4          MOVE    @PLZMID,A4,W
+         00000fd0 00000000! 
+     232 00000ff0     0b04          ADDI    ZORIGIN,A4
+         00001000     00c8  
+     233 00001010     4464          SUB     A3,A4                   ;CENTERLINE OF ROOM FOR ACCESSABILITY
+     234 00001020     b088          MOVE    A4,*A8(OYPOS),W
+         00001030     00b0  
+     235                    
+     236 00001040           LOOTPNBC
+     237 00001040     0501          SEXT    A1
+     238 00001050     4c21          MOVE    A1,A1
+     239 00001060     ce04          JRN     LOOTLAY                 ;THIS STUFF LIES DOWN
+     240 00001070     0d5f          CALLA   SETZPOS                 ;OTHERWISE STAND IT UP
+         00001080 00000000! 
+     241 000010a0     c003          JRUC    LOOTCLR
+     242 000010b0           LOOTLAY 
+     243 000010b0     0d5f          CALLA   SETTZPOS                ;SET Z POSITION BASED ON TOP Y
+         000010c0 00000000! 
+     244 000010e0           LOOTCLR
+     245 000010e0     0d5f          CALLA   CKZADJST
+         000010f0 00000000! 
+     246 00001110     5600          CLR     A0
+     247 00001120     b208          MOVE    A0,*A8(OPLINK),L        ;CLEAR THE LINK, I'M GONE BUDDY
+         00001130     01f0  
+     248 00001140           LOOTDIE
+     249 00001140                   DIE
+     250                    
+     251                    **************************************************************************
+     252                    *                                                                        *
+     253                    * TRNKBUCK - PROCESS TO PUT SOME BUCKS IN A TRUNK                        *
+     254                    * A3 = [Y,X] OFFSET TO TRUNK                                             *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    7
+
+     255                    * A10 = OBLK PTR OF CAR                                                  *
+     256                    *                                                                        *
+     257                    **************************************************************************
+     258 00001170           TRNKBUCK
+     259 00001170     098f          MMTM    SP,A0,A1,A4,A5,A8,A10,A11
+         00001180     ccb0  
+     260 00001190     09e5          MOVI    MONYCOLL,A5
+         000011a0 00009280' 
+     261 000011c0     09e7          MOVI    BUCKBLIP,A7
+         000011d0 00000000! 
+     262 000011f0     09e1          MOVI    GETCASH1,A1     
+         00001200 00000000! 
+     263 00001220     09eb          MOVI    BUCKOID,A11
+         00001230 00008010  
+     264 00001250     56c6          CLR     A6
+     265 00001260     c02e          JRUC    TRNKLOOT
+     266                    **************************************************************************
+     267                    *                                                                        *
+     268                    * TRNKCLIP - PUT A BULLET CLIP IN A VEHICLE TRUNK                        *
+     269                    * A3 = [Y,X] OFFSET TO TRUNK                                             *
+     270                    * A10 = OBLK PTR OF VEHICLE                                              *
+     271                    *                                                                        *
+     272                    **************************************************************************
+     273 00001270           TRNKCLIP
+     274 00001270     098f          MMTM    SP,A0,A1,A4,A5,A8,A10,A11
+         00001280     ccb0  
+     275 00001290     09e5          MOVI    CLIPCOLL,A5
+         000012a0 00009790' 
+     276 000012c0     09e7          MOVI    CLIPBLIP,A7
+         000012d0 00000000! 
+     277 000012f0     09e1          MOVI    GETCLIP,A1      
+         00001300 00000000! 
+     278 00001320     09eb          MOVI    CLIPOID,A11
+         00001330 00008013  
+     279 00001350     56c6          CLR     A6
+     280 00001360     c01e          JRUC    TRNKLOOT
+     281                    **************************************************************************
+     282                    *                                                                        *
+     283                    * TRNKROCK - PROCESS TO TRUNK A ROCKET BOMB                              *
+     284                    * A3 = [Y,X] OFFSET TO TRUNK                                             *
+     285                    * A10 = OBLK PTR OF VEHICLE                                              *
+     286                    *                                                                        *
+     287                    **************************************************************************
+     288 00001370           TRNKROCK
+     289 00001370     098f          MMTM    SP,A0,A1,A4,A5,A8,A10,A11
+         00001380     ccb0  
+     290 00001390     09e5          MOVI    ROCKCOLL,A5
+         000013a0 000095e0' 
+     291 000013c0     09e7          MOVI    ROCKBLIP,A7
+         000013d0 00000000! 
+     292 000013f0     09e1          MOVI    ROCKBIG,A1      
+         00001400 00000000! 
+     293 00001420     09eb          MOVI    ROCKOID,A11
+         00001430 00008012  
+     294 00001450     56c6          CLR     A6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    8
+
+     295 00001460     c00e          JRUC    TRNKLOOT
+     296                    **************************************************************************
+     297                    *                                                                        *
+     298                    * TRNKDRUG - PROCESS TO TRUNK A BAG OF DOPE                              *
+     299                    * A3 = [Y,X] OFFSET TO TRUNK                                             *
+     300                    * A10 = OBLK PTR OF VEHICLE                                              *
+     301                    *                                                                        *
+     302                    **************************************************************************
+     303 00001470           TRNKDRUG
+     304 00001470     098f          MMTM    SP,A0,A1,A4,A5,A8,A10,A11
+         00001480     ccb0  
+     305 00001490     09e5          MOVI    DOPECOLL,A5
+         000014a0 00009430' 
+     306 000014c0     09e7          MOVI    DRUGBLIP,A7
+         000014d0 00000000! 
+     307 000014f0     09e1          MOVI    GETDOPE,A1      
+         00001500 00000000! 
+     308 00001520     09cb          MOVI    DRUGOID,A11
+         00001530     0011  
+     309 00001540     56c6          CLR     A6
+     310                    **************************************************************************
+     311                    *                                                                        *
+     312                    * TRNKLOOT - TRNKPING PROCESS FOR SOME LOOT                              *
+     313                    * A1 = FRAME TO STUFF                                                    *
+     314                    * A3 = [Y,X] OFFSET TO TRUNK                                             *
+     315                    * A5 = COLLISION ROUTINE                                                 *
+     316                    * A6 = OBJECT FLAGS OF LOOT IMAGE, 0 = JUST TAKE THE DROPPERS            *
+     317                    * A7 = PTR TO BLIP IMAGE                                                 *
+     318                    * A10 = PTR TO OBJECT THAT TRNKPED THIS                                  *
+     319                    * A11 = I.D. OF OBJECT                                                   *
+     320                    *                                                                        *
+     321                    **************************************************************************
+     322 00001550           TRNKLOOT
+     323 00001550                   PUSH    A1
+     324 00001560     09e1          MOVI    BOOTY,A1
+         00001570 00000000! 
+     325 00001590     0d5f          CALLA   CNTSUPP
+         000015a0 00000000! 
+     326 000015c0                   PULL    A1
+     327 000015e0     0b40          CMPI    MAXLOOT,A0
+         000015f0     ffe1  
+     328 00001600     c96c          JRHS    TRNKDIE                 ;BR = NO MORE LOOT ALLOWED
+     329                    
+     330 00001610     05a0          MOVE    @OVERLOAD,A0
+         00001620 00000000! 
+     331 00001640     0b40          CMPI    4,A0
+         00001650     fffb  
+     332 00001660     ca66          JREQ    TRNKDIE                 ;BR = SYSTEM IS BOGGED
+     333 00001670           TRNKLTNC
+     334 00001670     4d48          MOVE    A10,A8
+     335 00001680     0d5f          CALLA   GETOBJ                  ;GET AN OBJECT
+         00001690 00000000! 
+     336 000016b0     ca61          JREQ    TRNKDIE                 ;NO CAN DO
+     337 000016c0     0d5f          CALLA   COPYOBJ                 ;COPY THE CONTENTS FROM THE VEHICLE
+         000016d0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE    9
+
+     338 000016f0     b160          MOVE    A11,*A0(OID),W          ;CHANGE ID
+         00001700     01a0  
+     339 00001710     b2a0          MOVE    A5,*A0(OCVECT),L        ;THE COLLISION VECTOR
+         00001720     01d0  
+     340 00001730     b2e0          MOVE    A7,*A0(OBLIPIMG),L
+         00001740     0260  
+     341 00001750     4cc6          MOVE    A6,A6
+     342 00001760     ca02          JRZ     TRNKNFLG
+     343 00001770     b0c0          MOVE    A6,*A0(OFLAGS),W        ;STUFF YOUR OWN FLAGS
+         00001780     0100  
+     344 00001790           TRNKNFLG
+     345 00001790     56a5          CLR     A5
+     346 000017a0     b2a0          MOVE    A5,*A0(OPLINK),L
+         000017b0     01f0  
+     347 000017c0     b504          MOVE    *A8(OFLAGS),A4,W
+         000017d0     0100  
+     348 000017e0     4d0a          MOVE    A8,A10                  ;STORE FOR SAFE KEEPING
+     349 000017f0     4c08          MOVE    A0,A8
+     350 00001800     0d5f          CALLA   PSTOP
+         00001810 00000000! 
+     351 00001830     b620          MOVE    *A1(ICMAP),A0,L
+         00001840     0060  
+     352 00001850     0d5f          CALLA   FINDPAL
+         00001860 00000000! 
+     353 00001880     b008          MOVE    A0,*A8(OPAL),W
+         00001890     0160  
+     354 000018a0     0d5f          CALLA   RANDOM
+         000018b0 00000000! 
+     355 000018d0     0500          SEXT    A0
+     356 000018e0     0b80          ANDI    10H,A0  
+         000018f0 ffffffef  
+     357 00001910     5604          XOR     A0,A4                   ;FLAGGY BAGGY SHAGGY DAGGY
+     358 00001920     0b84          ANDNI   M_PIXSCAN,A4            ;MAKE THIS OBJECT PIXABLE
+         00001930 00000400  
+     359 00001950     0d5f          CALLA   ANI                     ;STUFF NEW FRAME
+         00001960 00000000! 
+     360 00001980     5610          CLR     B0
+     361 00001990     1991          MOVK    12,B1   
+     362 000019a0     0d5f          CALLA   RANGRAND
+         000019b0 00000000! 
+     363 000019d0     4c05          MOVE    A0,A5                   ;GET RANDOM X TRAVEL
+     364 000019e0     4d00          MOVE    A8,A0
+     365 000019f0     4d48          MOVE    A10,A8                  ;RESTORE PTRS
+     366 00001a00     b504          MOVE    *A8(OFLAGS),A4,W
+         00001a10     0100  
+     367 00001a20     4caa          MOVE    A5,A10
+     368 00001a30     27ca          SLL     30,A10
+     369 00001a40     2e4a          SRL     14,A10
+     370 00001a50     ef45          MOVY    A10,A5  
+     371 00001a60     e0a3          ADDXY   A5,A3                   ;GIVE A LITTLE RANDOMNESS
+     372 00001a70     b505          MOVE    *A8(OYPOS),A5,W         ;ADJUST BOOTY Y POSITION
+         00001a80     00b0  
+     373 00001a90     ec6a          MOVX    A3,A10
+     374 00001aa0     2e03          SRL     16,A3
+     375 00001ab0     e065          ADDXY   A3,A5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   10
+
+     376 00001ac0     b0a0          MOVE    A5,*A0(OYPOS),W
+         00001ad0     00b0  
+     377 00001ae0     b505          MOVE    *A8(OXPOS),A5,W         ;ADJUST BOOTY X POSITION,COMP FOR XFLIP
+         00001af0     0090  
+     378 00001b00     1f64          BTST    B_FLIPH,A4
+     379 00001b10     ca05          JREQ    TLOOT1
+     380 00001b20     b501          MOVE    *A8(OSIZEX),A1,W        
+         00001b30     0140  
+     381 00001b40     e025          ADDXY   A1,A5                   ;MUST ADD OFFSET FROM THE LEFT
+     382 00001b50     11ea          ADDK    15,A10
+     383 00001b60     03aa          NEG     A10
+     384 00001b70           TLOOT1
+     385 00001b70     e145          ADDXY   A10,A5
+     386 00001b80     b0a0          MOVE    A5,*A0(OXPOS),W
+         00001b90     0090  
+     387 00001ba0     b705          MOVE    *A8(OZVAL),A5,L
+         00001bb0     00c0  
+     388 00001bc0     1025          ADDK    1,A5
+     389 00001bd0     b2a0          MOVE    A5,*A0(OZVAL),L
+         00001be0     00c0  
+     390 00001bf0     09e1          MOVI    [8,8],A1
+         00001c00 00080008  
+     391 00001c20     b220          MOVE    A1,*A0(OZSIZ),L         ;STUFF A SIZE
+         00001c30     01b0  
+     392 00001c40     0d5f          CALLA   INSOBJ
+         00001c50 00000000! 
+     393 00001c70     09e1          MOVI    BOOTY,A1
+         00001c80 00000000! 
+     394 00001ca0     0d5f          CALLA   ADDSUPP                 ;PLAYER CAN PICK IT UP NOW      
+         00001cb0 00000000! 
+     395 00001cd0           TRNKDIE
+     396 00001cd0     09af          MMFM    SP,A0,A1,A4,A5,A8,A10,A11
+         00001ce0     0d33  
+     397 00001cf0     0960          RETS    
+     398                    
+     399                    **************************************************************************
+     400                    *                                                                        *
+     401                    * ISPPICK - CHECK TO SEE IF A PLAYER OBJECT IS PICKING UP LOOT           *
+     402                    * A8 = POINTER TO OBJECT IN QUESTION                                     *
+     403                    * RETURNS:                                                               *
+     404                    * CARRY CLR = NOT PICKING UP                                             *
+     405                    * CARRY SET = PICKING UP                                                 *
+     406                    *                                                                        *
+     407                    **************************************************************************
+     408 00001d00           ISPPICK
+     409 00001d00     098f          MMTM    SP,A1,A2
+         00001d10     6000  
+     410 00001d20     0d5f          CALLA   GPLAYERD
+         00001d30 00000000! 
+     411 00001d50     ca08          JRZ     ISPICK3                 ;BR = IT'S NOT EVEN A PLAYER
+     412 00001d60     b646          MOVE    *A2(PFLAGS),A6,L
+         00001d70     0080  
+     413 00001d80     1d46          BTST    BPICKUP,A6              ;PLAYER GETTIN' SOME?   
+     414 00001d90     ca04          JREQ    ISPICK3                 ;BR = NO
+     415 00001da0     0de0          SETC
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   11
+
+     416 00001db0     09af          MMFM    SP,A1,A2
+         00001dc0     0006  
+     417 00001dd0     0960          RETS
+     418 00001de0           ISPICK3
+     419 00001de0     0320          CLRC
+     420 00001df0     09af          MMFM    SP,A1,A2
+         00001e00     0006  
+     421 00001e10     0960          RETS
+     422                    
+     423                    **************************************************************************
+     424                    *                                                                        *
+     425                    * GOLDCOL0 - GOLD COLLISION AS OBJECT ZERO                               *
+     426                    * A0 = PTR TO LOOT OBJECT                                                *
+     427                    * A8 = PTR TO OBJECT THAT HIT THAT LOOT                                  *
+     428                    *                                                                        *
+     429                    **************************************************************************
+     430 00001e20           GOLDCOL0
+     431 00001e20     0d3f          CALLR   ISPPICK
+         00001e30     ffec  
+     432 00001e40     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00001e50 00000000! 
+     433 00001e70     4c0a          MOVE    A0,A10
+     434 00001e80                   CREATE  INDPIDW,GOLDPICK
+     435 00001f00     5600          CLR     A0
+     436 00001f10     1020          INC     A0                      ;END COLLISIONS
+     437 00001f20     0960          RETS
+     438                    
+     439                    **************************************************************************
+     440                    *                                                                        *
+     441                    * MONCOL0 - MONEY COLLISION AS OBJECT ZERO                               *
+     442                    * A0 = PTR TO LOOT OBJECT                                                *
+     443                    * A8 = PTR TO OBJECT THAT HIT THAT LOOT                                  *
+     444                    *                                                                        *
+     445                    **************************************************************************
+     446 00001f30           MONCOL0
+     447 00001f30     0d3f          CALLR   ISPPICK
+         00001f40     ffdb  
+     448 00001f50     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00001f60 00000000! 
+     449 00001f80     4c0a          MOVE    A0,A10
+     450 00001f90                   CREATE  INDPIDW,BUCKPICK
+     451 00002010     5600          CLR     A0
+     452 00002020     1020          INC     A0                      ;END COLLISIONS
+     453 00002030     0960          RETS
+     454                    
+     455                    **************************************************************************
+     456                    *                                                                        *
+     457                    * MONPCAR - MONEY COLLISION WITH A PLAYER VEHICLE. EACH PLAYER IN THE CA *
+     458                    *         GETS A PIECE OF STASH.                                         *
+     459                    * A0 = PTR TO LOOT                                                       *
+     460                    * A8 = PTR TO VEHICLE MAIN OBJECT THAT HIT THE MONEY                     *
+     461                    *                                                                        *
+     462                    **************************************************************************
+     463 00002040           MONPCAR
+     464 00002040     09e7          MOVI    BUCKPICK,A7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   12
+
+         00002050 00003450' 
+     465 00002070     c02c          JRUC    LOOTPCAR
+     466 00002080           MONPART
+     467 00002080     09e7          MOVI    BUCKPICK,A7
+         00002090 00003450' 
+     468 000020b0     c020          JRUC    LOOTPART
+     469                    **************************************************************************
+     470                    *                                                                        *
+     471                    * DRUGPCAR - DRUG COLLISION WITH A PLAYER VEHICLE. EACH PLAYER IN THE CAR*
+     472                    *         GETS A PIECE OF STASH.                                         *
+     473                    * A0 = PTR TO LOOT                                                       *
+     474                    * A8 = PTR TO VEHICLE MAIN OBJECT THAT HIT THE DRUGS                     *
+     475                    *                                                                        *
+     476                    **************************************************************************
+     477 000020c0           DRUGPCAR
+     478 000020c0     09e7          MOVI    DRUGPICK,A7
+         000020d0 000037d0' 
+     479 000020f0     c024          JRUC    LOOTPCAR
+     480 00002100           DRUGPART
+     481 00002100     09e7          MOVI    DRUGPICK,A7
+         00002110 000037d0' 
+     482 00002130     c018          JRUC    LOOTPART
+     483                    **************************************************************************
+     484                    *                                                                        *
+     485                    * CLIPPCAR - CLIP COLLISION WITH A PLAYER VEHICLE. EACH PLAYER IN THE CAR*
+     486                    *         GETS A PIECE OF STASH.                                         *
+     487                    * A0 = PTR TO LOOT                                                       *
+     488                    * A8 = PTR TO VEHICLE MAIN OBJECT THAT HIT THE CLIP                      *
+     489                    *                                                                        *
+     490                    **************************************************************************
+     491 00002140           CLIPPCAR
+     492 00002140     09e7          MOVI    CLIPPICK,A7
+         00002150 00003ce0' 
+     493 00002170     c01c          JRUC    LOOTPCAR
+     494 00002180           CLIPPART
+     495 00002180     09e7          MOVI    CLIPPICK,A7
+         00002190 00003ce0' 
+     496 000021b0     c010          JRUC    LOOTPART
+     497                    **************************************************************************
+     498                    *                                                                        *
+     499                    * ROCKPCAR - ROCKET COLLISION WITH A PLAYER VEHICLE. EACH PLAYER IN THE  *
+     500                    *         GETS A PIECE OF STASH.                                         *
+     501                    * A0 = PTR TO LOOT                                                       *
+     502                    * A8 = PTR TO VEHICLE MAIN OBJECT THAT HIT THE ROCKET                    *
+     503                    *                                                                        *
+     504                    **************************************************************************
+     505 000021c0           ROCKPCAR
+     506 000021c0     09e7          MOVI    ROCKPICK,A7
+         000021d0 00003b50' 
+     507 000021f0     c014          JRUC    LOOTPCAR
+     508 00002200           ROCKPART
+     509 00002200     09e7          MOVI    ROCKPICK,A7
+         00002210 00003b50' 
+     510 00002230     c008          JRUC    LOOTPART
+     511                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   13
+
+     512                    *                                                                        *
+     513                    * CARDPCAR - CARD COLLISION WITH A PLAYER VEHICLE. EACH PLAYER IN THE CAR*
+     514                    *         GETS A PIECE OF STASH.                                         *
+     515                    * A0 = PTR TO LOOT                                                       *
+     516                    * A8 = PTR TO VEHICLE MAIN OBJECT THAT HIT THE CARD                      *
+     517                    *                                                                        *
+     518                    **************************************************************************
+     519 00002240           CARDPCAR
+     520 00002240     09e7          MOVI    CARDPICK,A7
+         00002250 00003e60' 
+     521 00002270     c00c          JRUC    LOOTPCAR
+     522 00002280           CARDPART
+     523 00002280     09e7          MOVI    CARDPICK,A7
+         00002290 00003e60' 
+     524 000022b0     0300          JRUC    LOOTPART
+     525                    **************************************************************************
+     526                    *                                                                        *
+     527                    * LOOTPCAR - LOOT CHECK AGAINST CAR.                                     *
+     528                    * A0 = PTR TO LOOT                                                       *
+     529                    * A7 = PICKUP PROCESS TO CREATE                                          *
+     530                    * A8 = PTR TO VEHICLE MAIN                                               *
+     531                    * EXPECTS TO RETURN TO COLLISION SCANNER                                 *
+     532                    *                                                                        *
+     533                    **************************************************************************
+     534                    *
+     535                    *ENTRY POINT FOR A VEHICLE PART OTHER THAN MAIN.
+     536                    *A8 = PTR TO VEHICLE PART
+     537 000022c0           LOOTPART
+     538 000022c0     4c0a          MOVE    A0,A10
+     539 000022d0     4d0b          MOVE    A8,A11
+     540 000022e0     4d00          MOVE    A8,A0
+     541 000022f0     0d5f          CALLA   FINDMVP
+         00002300 00000000! 
+     542 00002320     ca44          JRZ     LOOTPCX                 ;NO MASTER VEHICLE PROCESS WAS FOUND
+     543 00002330     c005          JRUC    LOOTPCG
+     544 00002340           LOOTPCAR
+     545 00002340     4c0a          MOVE    A0,A10                  ;MOVE HERE FOR PROCESS CREATION XFER
+     546 00002350     4d0b          MOVE    A8,A11                  ;IN CASE OF MISS
+     547 00002360     b700          MOVE    *A8(OPLINK),A0,L        
+         00002370     01f0  
+     548 00002380     ca3e          JRZ     LOOTPCX                 ;BR = RENEGADE OBJECT, BEWARE!
+     549 00002390           LOOTPCG
+     550 00002390     0d5f          CALLA   GETA8
+         000023a0 00000000! 
+     551 000023c0     ca35          JRZ     LOOTND                  ;NO DRIVER AVAILABLE
+     552 000023d0     b60b          MOVE    *A0(PASSPTR),A11,L
+         000023e0     0260  
+     553 000023f0     cb03          JRNZ    LOOTPDAP                ;JUST PICK-UP FOR THE DRIVER
+     554 00002400     0d3f          CALLR   LOOT1P
+         00002410     006c  
+     555 00002420     c034          JRUC    LOOTPCX
+     556 00002430           LOOTPDAP
+     557 00002430     0d3f          CALLR   LOOT1P                  ;FIRE OFF DRIVER PICK
+         00002440     0069  
+     558 00002450     c904          JRNC    LOOTCPL                 ;FIRED O.K., NEW OBJ FOR PASSENGER
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   14
+
+     559                    *HERE TO CREATE PASSENGER LOOT PROC, IF DRIVER LOOT PROC NOT CREATED.
+     560 00002460     4d68          MOVE    A11,A8                  ;GET PASSENGER PTR HERE
+     561 00002470     0d3f          CALLR   LOOT1P
+         00002480     0065  
+     562 00002490     c02d          JRUC    LOOTPCX
+     563                    *HERE TO CREATE PASSENGER LOOT PROC, IF DRIVER LOOT PROC CREATED.
+     564 000024a0           LOOTCPL
+     565 000024a0     4d68          MOVE    A11,A8                  ;PASSENGER PTR PLEASE.
+     566 000024b0     0d5f          CALLA   ISPPICK
+         000024c0 00001d00' 
+     567 000024e0     c828          JRC     LOOTPCX                 ;BR = PASSENGER IS PICKING UP
+     568                    
+     569 000024f0     0d5f          CALLA   GETOBJ                  ;GET A NEW OBJECT FOR THE OTHER GUY
+         00002500 00000000! 
+     570 00002520                   SWAP    A10,A8                  ;LOOT FOR SOURCE COPY
+     571 00002550     0d5f          CALLA   COPYOBJ
+         00002560 00000000! 
+     572 00002580                   SWAP    A10,A8
+     573                    
+     574 000025b0     09ee          MOVI    DUMCOLL,A14
+         000025c0 00000000! 
+     575 000025e0     b3c0          MOVE    A14,*A0(OCVECT),L
+         000025f0     01d0  
+     576 00002600     57ce          CLR     A14     
+     577 00002610     b3c0          MOVE    A14,*A0(OSHAD),L
+         00002620     0240  
+     578 00002630     b3c0          MOVE    A14,*A0(OPLINK),L
+         00002640     01f0  
+     579                    
+     580 00002650     0d5f          CALLA   INSOBJ                  ;SHOW IT TO THE DUDE MAN
+         00002660 00000000! 
+     581 00002680     09e1          MOVI    BOOTY,A1
+         00002690 00000000! 
+     582 000026b0     0d5f          CALLA   ADDSUPP                 ;LINK UP FOR BOOTYFLY
+         000026c0 00000000! 
+     583 000026e0     4c0a          MOVE    A0,A10                  ;SAVE HERE
+     584                    
+     585 000026f0     0d3f          CALLR   LOOT1P                  ;FIRE PASSENGER PROCESS
+         00002700     003d  
+     586 00002710     c005          JRUC    LOOTPCX
+     587                    *NO DRIVER, CHECK PASSENGER 
+     588 00002720           LOOTND
+     589 00002720     b608          MOVE    *A0(PASSPTR),A8,L
+         00002730     0260  
+     590 00002740     ca05          JRZ     LOOTPCON                ;NO PASSENGER
+     591 00002750     0d3f          CALLR   LOOT1P
+         00002760     0037  
+     592                    *EXIT POINT TO END COLLISION SCAN
+     593 00002770           LOOTPCX
+     594 00002770     57ce          CLR     A14
+     595 00002780     102e          INC     A14                     ;END COLLISIONS
+     596 00002790     0960          RETS
+     597                    *EXIT POINT COLLISION WITH CAR BUT NOT THE PLAYER
+     598                    *A10 = PTR TO LOOT
+     599                    *A11 = PTR TO VEHICLE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   15
+
+     600 000027a0           LOOTPCON
+     601 000027a0     b56e          MOVE    *A11(OZPOS),A14,W
+         000027b0     00d0  
+     602 000027c0     b563          MOVE    *A11(OZMINUS),A3,W
+         000027d0     01b0  
+     603 000027e0     4dc7          MOVE    A14,A7
+     604 000027f0     4467          SUB     A3,A7
+     605 00002800     05a5          MOVE    @PLZMIN,A5,W
+         00002810 00000000! 
+     606 00002830     44a7          SUB     A5,A7
+     607                    
+     608 00002840     b565          MOVE    *A11(OZPLUS),A5,W
+         00002850     01c0  
+     609 00002860     4ca4          MOVE    A5,A4
+     610 00002870     41c5          ADD     A14,A5
+     611 00002880     05a6          MOVE    @PLZMAX,A6,W
+         00002890 00000000! 
+     612 000028b0     44a6          SUB     A5,A6
+     613                    
+     614 000028c0     48e6          CMP     A7,A6
+     615 000028d0     c710          JRGT    LOOTFOR
+     616                    
+     617 000028e0     446e          SUB     A3,A14
+     618 000028f0     b543          MOVE    *A10(OZMINUS),A3,W
+         00002900     01b0  
+     619 00002910     446e          SUB     A3,A14
+     620                            
+     621 00002920     b542          MOVE    *A10(OZPOS),A2,W
+         00002930     00d0  
+     622 00002940     45c2          SUB     A14,A2
+     623 00002950     0382          ABS     A2
+     624 00002960     b543          MOVE    *A10(OYPOS),A3,W
+         00002970     00b0  
+     625 00002980     4443          SUB     A2,A3
+     626 00002990     b06a          MOVE    A3,*A10(OYPOS),W
+         000029a0     00b0  
+     627 000029b0     b1ca          MOVE    A14,*A10(OZPOS),W
+         000029c0     00d0  
+     628 000029d0     c00e          JRUC    LOOTREP
+     629                    
+     630 000029e0           LOOTFOR
+     631 000029e0     b542          MOVE    *A10(OZPLUS),A2,W
+         000029f0     01c0  
+     632 00002a00     4045          ADD     A2,A5
+     633 00002a10     b542          MOVE    *A10(OZPOS),A2,W
+         00002a20     00d0  
+     634 00002a30     44a2          SUB     A5,A2
+     635 00002a40     0382          ABS     A2
+     636 00002a50     b543          MOVE    *A10(OYPOS),A3,W
+         00002a60     00b0  
+     637 00002a70     4043          ADD     A2,A3
+     638 00002a80     b06a          MOVE    A3,*A10(OYPOS),W
+         00002a90     00b0  
+     639 00002aa0     b0aa          MOVE    A5,*A10(OZPOS),W
+         00002ab0     00d0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   16
+
+     640                    
+     641 00002ac0           LOOTREP
+     642 00002ac0     57ce          CLR     A14
+     643 00002ad0     0960          RETS
+     644                    *
+     645                    *1 PLAYER ONLY PICK-UP SUB
+     646                    *A7 = PROCESS ADDRESS TO CREATE
+     647                    *A8 = PTR OBJECT PICKING UP THE LOOT, SHOULD BE A PLAYER
+     648                    *A10 = PTR TO LOOT OBJECT
+     649                    *RETURNS:
+     650                    *       C SET = DIDN'T CREATE
+     651                    *       C CLR = CREATED THE PICKUP PROC
+     652                    *A0 = CREATED PROCESS ADDRESS
+     653                    *A1 = CREATED PROCESS I.D.
+     654                    *TRASHES A14
+     655 00002ae0           LOOT1P
+     656 00002ae0     0d3f          CALLR   ISPPICK 
+         00002af0     ff20  
+     657 00002b00     c807          JRC     LOOT1PXC                ;PLAYER ALREADY PICKING UP
+     658 00002b10     09c1          MOVI    INDPIDW,A1
+         00002b20     4006  
+     659 00002b30     0d5f          CALLA   GETPRC
+         00002b40 00000000! 
+     660 00002b60     cb02          JRNZ    LOOT1PX
+     661 00002b70     0de0          SETC                            ;PROCESS FAILURE,
+     662 00002b80           LOOT1PXC
+     663 00002b80     0960          RETS
+     664 00002b90           LOOT1PX
+     665 00002b90     0320          CLRC
+     666 00002ba0     0960          RETS
+     667                    
+     668                    **************************************************************************
+     669                    *                                                                        *
+     670                    * DOPECOL0 - DOPE COLLISION                                              *
+     671                    * A0 = PTR TO DOPE OBJECT                                                *
+     672                    * A8 = PTR TO OBJECT THAT HIT THAT DOPE                                  *
+     673                    *                                                                        *
+     674                    **************************************************************************
+     675 00002bb0           DOPECOL0
+     676 00002bb0     0d3f          CALLR   ISPPICK
+         00002bc0     ff13  
+     677 00002bd0     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00002be0 00000000! 
+     678 00002c00     4c0a          MOVE    A0,A10
+     679 00002c10                   CREATE  INDPIDW,DRUGPICK
+     680 00002c90     5600          CLR     A0
+     681 00002ca0     1020          INC     A0                      ;END COLLISIONS
+     682 00002cb0     0960          RETS
+     683                    
+     684                    **************************************************************************
+     685                    *                                                                        *
+     686                    * ROCKCOL0 - ROCK COLLISION                                              *
+     687                    * A0 = PTR TO ROCK OBJECT                                                *
+     688                    * A8 = PTR TO OBJECT THAT HIT THAT ROCK                                  *
+     689                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   17
+
+     690                    **************************************************************************
+     691 00002cc0           ROCKCOL0
+     692 00002cc0     0d3f          CALLR   ISPPICK
+         00002cd0     ff02  
+     693 00002ce0     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00002cf0 00000000! 
+     694 00002d10     4c0a          MOVE    A0,A10
+     695 00002d20                   CREATE  INDPIDW,ROCKPICK
+     696 00002da0     5600          CLR     A0
+     697 00002db0     1020          INC     A0                      ;END COLLISIONS
+     698 00002dc0     0960          RETS
+     699                    
+     700                    **************************************************************************
+     701                    *                                                                        *
+     702                    * CLIPCOL0 - CLIP COLLISION                                              *
+     703                    * A0 = PTR TO CLIP OBJECT                                                *
+     704                    * A8 = PTR TO OBJECT THAT HIT THAT CLIP                                  *
+     705                    *                                                                        *
+     706                    **************************************************************************
+     707 00002dd0           CLIPCOL0
+     708 00002dd0     0d3f          CALLR   ISPPICK
+         00002de0     fef1  
+     709 00002df0     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00002e00 00000000! 
+     710 00002e20     4c0a          MOVE    A0,A10
+     711 00002e30                   CREATE  INDPIDW,CLIPPICK
+     712 00002eb0     5600          CLR     A0
+     713 00002ec0     1020          INC     A0                      ;END COLLISIONS
+     714 00002ed0     0960          RETS
+     715                    
+     716                    **************************************************************************
+     717                    *                                                                        *
+     718                    * CARDCOL0 - CARD COLLISION                                              *
+     719                    * A0 = PTR TO CARD OBJECT                                                *
+     720                    * A8 = PTR TO OBJECT THAT HIT THAT CLIP                                  *
+     721                    *                                                                        *
+     722                    **************************************************************************
+     723 00002ee0           CARDCOL0
+     724 00002ee0     0d3f          CALLR   ISPPICK
+         00002ef0     fee0  
+     725 00002f00     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00002f10 00000000! 
+     726 00002f30     4c0a          MOVE    A0,A10
+     727 00002f40                   CREATE  INDPIDW,CARDPICK
+     728 00002fc0     5600          CLR     A0
+     729 00002fd0     1020          INC     A0                      ;END COLLISIONS
+     730 00002fe0     0960          RETS
+     731                    
+     732                    **************************************************************************
+     733                    *                                                                        *
+     734                    * WEEDCOL0 - WEED PLANT COLLISION                                                *
+     735                    * A0 = PTR TO WEED OBJECT                                                *
+     736                    * A8 = PTR TO OBJECT THAT HIT THAT CLIP                                  *
+     737                    *                                                                        *
+     738                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   18
+
+     739 00002ff0           WEEDCOL0
+     740 00002ff0     0d3f          CALLR   ISPPICK
+         00003000     fecf  
+     741 00003010     c880          JAC     DUMRTSG                 ;BR = IT'S A PLAYER PICKING SHIT UP
+         00003020 00000000! 
+     742 00003040     4c0a          MOVE    A0,A10
+     743 00003050                   CREATE  INDPIDW,WEEDPICK
+     744 000030d0     5600          CLR     A0
+     745 000030e0     1020          INC     A0                      ;END COLLISIONS
+     746 000030f0     0960          RETS
+     747                    
+     748                    **************************************************************************
+     749                    *                                                                        *
+     750                    * GOLDPICK - PLAYER GOLD PICKUP PROCESS, IT MAKES THE PLAYER PICKUP      *
+     751                    *          HIS BOOTY 1,2,3,... AT A TIME.                                *
+     752                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     753                    * A10 = PTR TO THE GOLD OBJECT                                           *
+     754                    *                                                                        *
+     755                    **************************************************************************
+     756 00003100           GOLDPICK
+     757 00003100     09e9          MOVI    PBUCKOF,A9
+         00003110 002effd1  
+     758 00003130                   SWAP    A10,A8
+     759 00003160     0d5f          CALLA   DFRMGRND
+         00003170 00000000! 
+     760 00003190                   SWAP    A10,A8
+     761 000031c0     0b41          CMPI    25,A1
+         000031d0     ffe6  
+     762 000031e0     c405          JRLT    GLDPICK1
+     763 000031f0     b540          MOVE    *A10(OYVEL+16),A0,W
+         00003200     0070  
+     764 00003210     cf02          JRNN    GLDPICK1
+     765 00003220     1820          MOVK    1,A0
+     766 00003230     c001          JRUC    GLDPICK2
+     767 00003240           GLDPICK1
+     768 00003240     5600          CLR     A0
+     769 00003250           GLDPICK2
+     770 00003250     b00d          MOVE    A0,*A13(PDATA),W
+         00003260     0060  
+     771 00003270     09e0          MOVI    CASHSND,A0
+         00003280 00000000! 
+     772 000032a0                   JSRP    BOOTYFLY
+     773 00003310     c810          JRC     GOLDPDI                 ;BR = DIDN'T WORK
+     774 00003320     09c1          MOVI    850H,A1
+         00003330     0850  
+     775 00003340     0d5f          CALLA   SCORE
+         00003350 00000000! 
+     776 00003370     b5a0          MOVE    *A13(PDATA),A0,W
+         00003380     0060  
+     777 00003390     ca03          JREQ    GLDPICK3
+     778 000033a0     0d5f          CALLA   SCORE                   ;2X FOR THIS GUY
+         000033b0 00000000! 
+     779 000033d0           GLDPICK3
+     780 000033d0     b44e          MOVE    *A2(PGOLD),A14,W
+         000033e0     0340  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   19
+
+     781 000033f0     102e          INC     A14                     ;CLICK ANOTHER ONE FOR THIS GUY
+     782 00003400     b1c2          MOVE    A14,*A2(PGOLD),W
+         00003410     0340  
+     783 00003420           GOLDPDI
+     784 00003420                  DIE
+     785                    
+     786                    **************************************************************************
+     787                    *                                                                        *
+     788                    * BUCKPICK - PLAYER BUCK PICKUP PROCESS, IT MAKES THE PLAYER PICKUP      *
+     789                    *          HIS BOOTY 1 AT A TIME.                                        *
+     790                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     791                    * A10 = PTR TO THE BUCK OBJECT                                           *
+     792                    *                                                                        *
+     793                    **************************************************************************
+     794 00003450           BUCKPICK
+     795 00003450     09e9          MOVI    PBUCKOF,A9
+         00003460 002effd1  
+     796 00003480                   SWAP    A10,A8
+     797 000034b0     0d5f          CALLA   DFRMGRND
+         000034c0 00000000! 
+     798 000034e0                   SWAP    A10,A8
+     799 00003510     0b41          CMPI    25,A1
+         00003520     ffe6  
+     800 00003530     c405          JRLT    BPICK1
+     801 00003540     b540          MOVE    *A10(OYVEL+16),A0,W
+         00003550     0070  
+     802 00003560     cf02          JRNN    BPICK1
+     803 00003570     1820          MOVK    1,A0
+     804 00003580     c001          JRUC    BPICK2
+     805 00003590           BPICK1
+     806 00003590     5600          CLR     A0
+     807 000035a0           BPICK2
+     808 000035a0     b00d          MOVE    A0,*A13(PDATA),W
+         000035b0     0060  
+     809 000035c0     09e0          MOVI    CASHSND,A0
+         000035d0 00000000! 
+     810 000035f0                   JSRP    BOOTYFLY
+     811 00003660     c813          JRC     BUCKPDI                 ;BR = DIDN'T WORK
+     812 00003670     09c1          MOVI    250H,A1
+         00003680     0250  
+     813 00003690     0d5f          CALLA   SCORE
+         000036a0 00000000! 
+     814 000036c0     b5a0          MOVE    *A13(PDATA),A0,W
+         000036d0     0060  
+     815 000036e0     ca03          JREQ    BPICK3
+     816 000036f0     0d5f          CALLA   SCORE                   ;2X FOR THIS GUY
+         00003700 00000000! 
+     817 00003720           BPICK3
+     818 00003720     b44e          MOVE    *A2(PMONEY),A14,W
+         00003730     0220  
+     819 00003740     102e          INC     A14                     ;CLICK ANOTHER ONE FOR THIS GUY
+     820 00003750     b1c2          MOVE    A14,*A2(PMONEY),W
+         00003760     0220  
+     821 00003770     0d5f          CALLA   OUTBUCKS                ;AND TALLY IT
+         00003780 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   20
+
+     822 000037a0           BUCKPDI
+     823 000037a0                  DIE
+     824                    
+     825                    **************************************************************************
+     826                    *                                                                        *
+     827                    * DRUGPICK - PLAYER DRUG PICKUP PROCESS, IT MAKES THE PLAYER PICKUP      *
+     828                    *          HIS BOOTY 1 AT A TIME.                                        *
+     829                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     830                    * A10 = PTR TO THE DRUG OBJECT                                           *
+     831                    *                                                                        *
+     832                    **************************************************************************
+     833 000037d0           DRUGPICK
+     834 000037d0     09e9          MOVI    PDRUGOF,A9
+         000037e0 001fffd5  
+     835 00003800                   SWAP    A10,A8
+     836 00003830     0d5f          CALLA   DFRMGRND
+         00003840 00000000! 
+     837 00003860                   SWAP    A10,A8
+     838 00003890     0b41          CMPI    25,A1
+         000038a0     ffe6  
+     839 000038b0     c405          JRLT    DPICK1
+     840 000038c0     b540          MOVE    *A10(OYVEL+16),A0,W
+         000038d0     0070  
+     841 000038e0     cf02          JRNN    DPICK1
+     842 000038f0     1820          MOVK    1,A0
+     843 00003900     c001          JRUC    DPICK2
+     844 00003910           DPICK1
+     845 00003910     5600          CLR     A0
+     846 00003920           DPICK2
+     847 00003920     b00d          MOVE    A0,*A13(PDATA),W
+         00003930     0060  
+     848 00003940     09e0          MOVI    DRUGSND,A0
+         00003950 00000000! 
+     849 00003970                   JSRP    BOOTYFLY
+     850 000039e0     c813          JRC     DRUGPDI                 ;BR = DIDN'T WORK
+     851 000039f0     09c1          MOVI    500H,A1
+         00003a00     0500  
+     852 00003a10     0d5f          CALLA   SCORE
+         00003a20 00000000! 
+     853 00003a40     b5a0          MOVE    *A13(PDATA),A0,W
+         00003a50     0060  
+     854 00003a60     ca03          JREQ    DPICK3
+     855 00003a70     0d5f          CALLA   SCORE                   ;2X
+         00003a80 00000000! 
+     856 00003aa0           DPICK3
+     857 00003aa0     b44e          MOVE    *A2(PDRUGS),A14,W
+         00003ab0     0210  
+     858 00003ac0     102e          INC     A14                     ;CLICK ANOTHER ONE FOR THIS GUY
+     859 00003ad0     b1c2          MOVE    A14,*A2(PDRUGS),W
+         00003ae0     0210  
+     860 00003af0     0d5f          CALLA   OUTDRUGS                ;AND TALLY IT
+         00003b00 00000000! 
+     861 00003b20           DRUGPDI
+     862 00003b20                  DIE
+     863                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   21
+
+     864                    **************************************************************************
+     865                    *                                                                        *
+     866                    * ROCKPICK - PLAYER ROCKET PICKUP PROCESS, IT MAKES THE PLAYER PICKUP    *
+     867                    *          HIS BOOTY 1 AT A TIME.                                        *
+     868                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     869                    * A10 = PTR TO THE ROCKET OBJECT                                         *
+     870                    *                                                                        *
+     871                    **************************************************************************
+     872 00003b50           ROCKPICK
+     873 00003b50     09e9          MOVI    PROCKOF,A9
+         00003b60 0011ffd3  
+     874 00003b80     09e0          MOVI    ROCKSND,A0
+         00003b90 00000000! 
+     875 00003bb0                   JSRP    BOOTYFLY
+     876 00003c20     c808          JRC     ROCKPDI                 ;BR = DIDN'T WORK
+     877 00003c30     b44e          MOVE    *A2(PROCKETS),A14,W
+         00003c40     01e0  
+     878 00003c50     102e          INC     A14                     ;CLICK ANOTHER ONE FOR THIS GUY
+     879 00003c60     b1c2          MOVE    A14,*A2(PROCKETS),W
+         00003c70     01e0  
+     880 00003c80     0d5f          CALLA   OUTROCKS                ;AND TALLY IT
+         00003c90 00000000! 
+     881 00003cb0           ROCKPDI
+     882 00003cb0                  DIE
+     883                    
+     884                    **************************************************************************
+     885                    *                                                                        *
+     886                    * CLIPPICK - PLAYER CLIP PICKUP PROCESS, IT MAKES THE PLAYER PICKUP      *
+     887                    *          HIS BOOTY 1 AT A TIME.                                        *
+     888                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     889                    * A10 = PTR TO THE CLIP OBJECT                                           *
+     890                    *                                                                        *
+     891                    **************************************************************************
+     892 00003ce0           CLIPPICK
+     893 00003ce0     09c9          MOVI    PBULLOF,A9
+         00003cf0     ffd8  
+     894 00003d00     09e0          MOVI    CLIPSND,A0
+         00003d10 00000000! 
+     895 00003d30                   JSRP    BOOTYFLY
+     896 00003da0     c808          JRC     CLIPPDI                 ;BR = DIDN'T WORK
+     897 00003db0     b44e          MOVE    *A2(PBULLETS),A14,W
+         00003dc0     0250  
+     898 00003dd0     132e          ADDK    25,A14                  ;<---- MAKE THIS OPER. ADJUSTABLE
+     899 00003de0     b1c2          MOVE    A14,*A2(PBULLETS),W
+         00003df0     0250  
+     900 00003e00     0d5f          CALLA   OUTBULLS                ;AND TALLY IT
+         00003e10 00000000! 
+     901 00003e30           CLIPPDI
+     902 00003e30                  DIE
+     903                    
+     904                    **************************************************************************
+     905                    *                                                                        *
+     906                    * CARDPICK - PLAYER "SAFE" CARD PICKUP PROCESS.                          *
+     907                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     908                    * A10 = PTR TO THE CARD OBJECT                                           *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   22
+
+     909                    *                                                                        *
+     910                    **************************************************************************
+     911 00003e60           CARDPICK
+     912 00003e60     b540          MOVE    *A10(OID),A0,W
+         00003e70     01a0  
+     913 00003e80                   PUSHP   A0      
+     914 00003e90     09e9          MOVI    PCARDOF,A9
+         00003ea0 0035fff8  
+     915 00003ec0     05a0          MOVE    @NPLYRS,A0,W
+         00003ed0 00000000! 
+     916 00003ef0     1420          DEC     A0
+     917 00003f00     cb04          JRNZ    CARDPCK2
+     918 00003f10     09e0          MOVI    CARDSND1,A0
+         00003f20 00000000! 
+     919 00003f40     c003          JRUC    CARDPCK3
+     920 00003f50           CARDPCK2
+     921 00003f50     09e0          MOVI    CARDSND2,A0
+         00003f60 00000000! 
+     922 00003f80           CARDPCK3
+     923 00003f80                   JSRP    BOOTYFLY
+     924 00003ff0                   PULLP   A3
+     925 00004010     c812          JRC     CARDPDI                 ;BR = DIDN'T WORK
+     926 00004020     05a0          MOVE    @GOALCARD,A0,W
+         00004030 00000000! 
+     927 00004050     4803          CMP     A0,A3
+     928 00004060     cb03          JRNE    CARDPCK4                ;BR = NOT THE GOAL CARD
+     929 00004070     0d5f          CALLA   CLRGOAL                 ;CLEAR THE GOAL DOOR                    
+         00004080 00000000! 
+     930 000040a0           CARDPCK4
+     931 000040a0     0d5f          CALLA   CLRMESS
+         000040b0 00000000! 
+     932 000040d0     2783          SLL     28,A3
+     933 000040e0     2d23          SRL     23,A3
+     934 000040f0     0b23          ADDI    CARDATAB,A3
+         00004100 00004170' 
+     935 00004120     8663          MOVE    *A3,A3,L
+     936 00004130     0923          CALL    A3
+     937 00004140           CARDPDI
+     938 00004140                  DIE
+     939                    *
+     940                    *ADD CARD ROUTINE TABLE
+     941 00004170           CARDATAB
+     942 00004170 00000000!         .LONG   ADDCARDS,ADDCARDR,ADDCARDB,ADDCARDG,ADDCRDGR
+     943                    
+     944                    **************************************************************************
+     945                    *                                                                        *
+     946                    * WEEDPICK - PLAYER WEED PLANT PICKUP PROCESS, A COUPLE AT A TIME.       *
+     947                    * A8 = PTR TO OBJECT PICKING UP THE LOOT                                 *
+     948                    * A10 = PTR TO THE WEED PLANT OBJECT                                     *
+     949                    *                                                                        *
+     950                    **************************************************************************
+     951 00004210           WEEDPICK
+     952 00004210     4d40          MOVE    A10,A0
+     953 00004220     0d5f          CALLA   ISBB
+         00004230 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   23
+
+     954 00004250     c903          JRNC    WEEDOFFBB
+     955 00004260     0d5f          CALLA   DELBB
+         00004270 00000000! 
+     956 00004290           WEEDOFFBB
+     957 00004290     09e1          MOVI    BACKSLST,A1
+         000042a0 00000000! 
+     958 000042c0     0d5f          CALLA   ISSUPP
+         000042d0 00000000! 
+     959 000042f0     ca03          JREQ    WEEDOFSUP
+     960 00004300     0d5f          CALLA   DELSUPP
+         00004310 00000000! 
+     961 00004330           WEEDOFSUP
+     962 00004330     09e9          MOVI    PDRUGOF,A9
+         00004340 001fffd5  
+     963 00004360     09e0          MOVI    DRUGSND,A0
+         00004370 00000000! 
+     964 00004390                   JSRP    BOOTYBACK
+     965 00004400     c80d          JRC     WEEDPDI                 ;BR = DIDN'T WORK
+     966 00004410     09c1          MOVI    1000H,A1
+         00004420     1000  
+     967 00004430     0d5f          CALLA   SCORE
+         00004440 00000000! 
+     968 00004460     b44e          MOVE    *A2(PWEED),A14,W
+         00004470     03d0  
+     969 00004480     102e          ADDK    1,A14                   ;CLICK ANOTHER ONE FOR THIS GUY
+     970 00004490     b1c2          MOVE    A14,*A2(PWEED),W
+         000044a0     03d0  
+     971 000044b0                   DIE
+     972 000044e0           WEEDPDI
+     973 000044e0     4d40          MOVE    A10,A0
+     974 000044f0     1821          MOVK    1,A1
+     975 00004500     0d5f          CALLA   ADDBB
+         00004510 00000000! 
+     976 00004530     4d40          MOVE    A10,A0
+     977 00004540     09e1          MOVI    BACKSLST,A1
+         00004550 00000000! 
+     978 00004570     0d5f          CALLA   ADDSUPP
+         00004580 00000000! 
+     979 000045a0                   DIE
+     980                    
+     981                    **************************************************************************
+     982                    *                                                                        *
+     983                    * BUSTAMP - CREATE THE BUST STAMP, WITH THE STAMP SOUND, AND THEN        *
+     984                    *         MAKE IT FLY UP TO THE CORRECT PLAYER, TALLY, AND SCORE.        *
+     985                    * A8 = PTR TO ENEMY BEING BUSTED                                         *
+     986                    * A10 = PTR TO PLAYER DATA BLOCK                                         *
+     987                    *                                                                        *
+     988                    **************************************************************************
+     989 000045d0           BUSTAMP
+     990 000045d0     4d00          MOVE    A8,A0
+     991 000045e0     0d5f          CALLA   DELSHAD         ;DELETE THE ENEMY'S SHADOW
+         000045f0 00000000! 
+     992 00004610     09e1          MOVI    ENEMIES,A1
+         00004620 00000000! 
+     993 00004640     0d5f          CALLA   DELSUPP         ;TAKE IT OFF OF THIS LIST TOO
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   24
+
+         00004650 00000000! 
+     994 00004670     4d0b          MOVE    A8,A11          ;COPY HERE FOR LATER
+     995 00004680     0d5f          CALLA   GETOBJ
+         00004690 00000000! 
+     996 000046b0     ca7f          JREQ    BUSTTAL         ;BR = NO OBJECT AVAILABLE, JUST TALLY
+     997 000046c0     09ce          MOVI    JUNKOID,A14
+         000046d0     0660  
+     998 000046e0     b1c0          MOVE    A14,*A0(OID),W  ;SET THE I.D.
+         000046f0     01a0  
+     999 00004700     b70e          MOVE    *A8(OZVAL),A14,L
+         00004710     00c0  
+    1000 00004720     102e          INC     A14
+    1001 00004730     b3c0          MOVE    A14,*A0(OZVAL),L
+         00004740     00c0  
+    1002 00004750     0d5f          CALLA   GETCPNT
+         00004760 00000000! 
+    1003 00004780     4c25          MOVE    A1,A5
+    1004 00004790     5729          CLR     A9
+    1005 000047a0     eea9          MOVY    A5,A9
+    1006 000047b0     2605          SLL     16,A5
+    1007 000047c0     09e1          MOVI    BUSTED,A1
+         000047d0 00000000! 
+    1008 000047f0     8622          MOVE    *A1,A2,L
+    1009 00004800     09e4          MOVI    DMAWNZ,A4
+         00004810 00008002  
+    1010 00004830     0d5f          CALLA   GANIOF
+         00004840 00000000! 
+    1011 00004860     44c5          SUB     A6,A5
+    1012 00004870     44e9          SUB     A7,A9
+    1013 00004880     2dc2          SRL     18,A2
+    1014 00004890     2602          SLL     16,A2   
+    1015 000048a0     4449          SUB     A2,A9           ;MAKE THE STAMP A QUARTER OF THE WAY DOWN
+    1016 000048b0     b2a0          MOVE    A5,*A0(OXVAL),L
+         000048c0     0080  
+    1017 000048d0     b320          MOVE    A9,*A0(OYVAL),L
+         000048e0     00a0  
+    1018 000048f0     0d5f          CALLA   GSAGOF
+         00004900 00000000! 
+    1019 00004920     b220          MOVE    A1,*A0(OIMG),L
+         00004930     0180  
+    1020 00004940     09e1          MOVI    0F9F90000H,A1   ;OCONST:OPAL
+         00004950 f9f90000  
+    1021 00004970     4c0e          MOVE    A0,A14
+    1022 00004980     0b0e          ADDI    OPAL+20H,A14
+         00004990     0180  
+    1023 000049a0     098e          MMTM    A14,A1,A2,A3,A4
+         000049b0     7800  
+    1024 000049c0     4c08          MOVE    A0,A8           ;KEEP ICON POINTER HERE
+    1025 000049d0           BUSSNDCK
+    1026 000049d0     09c0          MOVI    CHANCVSD,A0
+         000049e0     0000  
+    1027 000049f0     1801          MOVK    SPEAKPRI,A1     
+    1028 00004a00     0d5f          CALLA   CKSNDPRI
+         00004a10 00000000! 
+    1029 00004a30     c907          JRNC    BUSSNDOK
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   25
+
+    1030 00004a40                   SLOOP   3,BUSSNDCK
+    1031 00004ab0           BUSSNDOK
+    1032 00004ab0     0d5f          CALLA   PSTOP
+         00004ac0 00000000! 
+    1033 00004ae0     4d00          MOVE    A8,A0
+    1034 00004af0     0d5f          CALLA   INSOBJ          ;INSERT THIS GUY
+         00004b00 00000000! 
+    1035 00004b20                   SOUND1  BUSTSND
+    1036 00004b80                   SLEEP   18H
+    1037 00004bc0     4d00          MOVE    A8,A0   
+    1038 00004bd0     0d5f          CALLA   GSCRNREL
+         00004be0 00000000! 
+    1039 00004c00     2e01          SRL     16,A1
+    1040 00004c10     ec22          MOVX    A1,A2
+    1041 00004c20     1b84          MOVK    28,A4
+    1042 00004c30     b743          MOVE    *A10(PSCRAD),A3,L
+         00004c40     0180  
+    1043 00004c50     0b23          ADDI    PBUSTOF,A3              ;SEND BUST TO THE COUNTER
+         00004c60 0037ffd1  
+    1044 00004c80     0d5f          CALLA   SLINEVEL                ;GET THE VELOCITIES
+         00004c90 00000000! 
+    1045 00004cb0           BUSTAMP1
+    1046 00004cb0     b228          MOVE    A1,*A8(OXVEL),L
+         00004cc0     0040  
+    1047 00004cd0     b248          MOVE    A2,*A8(OYVEL),L         ;STUFF THE VELOCITIES
+         00004ce0     0060  
+    1048 00004cf0     b22b          MOVE    A1,*A11(OXVEL),L
+         00004d00     0040  
+    1049 00004d10     b24b          MOVE    A2,*A11(OYVEL),L
+         00004d20     0060  
+    1050 00004d30     098c          MMTM    A12,A1,A2
+         00004d40     6000  
+    1051 00004d50     4d00          MOVE    A8,A0
+    1052 00004d60     0d5f          CALLA   SCRNRELV                ;MAKE THE VELOCITIES SCREEN RELATIVE
+         00004d70 00000000! 
+    1053 00004d90     4d60          MOVE    A11,A0
+    1054 00004da0     0d5f          CALLA   SCRNRELV
+         00004db0 00000000! 
+    1055 00004dd0                   SLEEP   1
+    1056 00004e10     09ac          MMFM    A12,A1,A2
+         00004e20     0006  
+    1057 00004e30     0d5f          CALLA   SCRTST                  ;CHECK FOR OFF SCREEN
+         00004e40 00000000! 
+    1058 00004e60     cae4          JREQ    BUSTAMP1
+    1059                    
+    1060 00004e70     4d00          MOVE    A8,A0
+    1061 00004e80     0d5f          CALLA   DELOBJ
+         00004e90 00000000! 
+    1062 00004eb0           BUSTTAL
+    1063 00004eb0     4d60          MOVE    A11,A0
+    1064 00004ec0     0d5f          CALLA   DELPAL
+         00004ed0 00000000! 
+    1065 00004ef0     0d5f          CALLA   DELOBJ
+         00004f00 00000000! 
+    1066 00004f20     4d40          MOVE    A10,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   26
+
+    1067 00004f30     0d5f          CALLA   CKMAXBST
+         00004f40 00000000! 
+    1068 00004f60     c909          JRNC    NOBUSTAL                ;NO MORE BUSTING ALLOWED, SAYS EUGENE.
+    1069 00004f70     4d42          MOVE    A10,A2
+    1070 00004f80     09c1          MOVI    01000H,A1
+         00004f90     1000  
+    1071 00004fa0     0d5f          CALLA   SCORE
+         00004fb0 00000000! 
+    1072 00004fd0     0d5f          CALLA   ADDBUST
+         00004fe0 00000000! 
+    1073 00005000           NOBUSTAL
+    1074 00005000                   DIE
+    1075                    
+    1076                    **************************************************************************
+    1077                    *                                                                        *
+    1078                    * BOOTYFLY - MAKE THE BOOTY FLY TO THE TO THE PLAYER'S SCORE AREA.       *
+    1079                    * A0 = SOUND TO MAKE(0 = NO SOUND)                                       *
+    1080                    * A8 = PTR TO PLAYER OBJECT PICKING UP BOOTY                             *
+    1081                    * A9 = OFFSET FROM SCORE ADDRESS TO SEND THIS THING                      *
+    1082                    * A10 = PTR TO BOOTY OBJECT                                              *
+    1083                    * RETURNS                                                                *
+    1084                    * A2 = PTR TO DATA BLOCK OF AFFECTED PLAYER                              *
+    1085                    * CARRY CLEAR ALL IS O.K.                                                *
+    1086                    * CARRY SET ACTION DID NOT TAKE PLACE, DON'T TALLY                       *
+    1087                    * NOTE: CALL WITH JSRP                                                   *
+    1088                    *                                                                        *
+    1089                    **************************************************************************
+    1090 00005030           BOOTYFLY
+    1091 00005030     0d5f          CALLA   GPLAYERD
+         00005040 00000000! 
+    1092 00005060     ca00          JRZ     BOOTYPDI
+         00005070     0096  
+    1093 00005080     b646          MOVE    *A2(PFLAGS),A6,L
+         00005090     0080  
+    1094 000050a0     1d46          BTST    BPICKUP,A6      
+    1095 000050b0     cb00          JRNE    BOOTYPDI                ;BR = ALREADY PICKING UP SOME LOOT
+         000050c0     0091  
+    1096                    
+    1097 000050d0     4c00          MOVE    A0,A0
+    1098 000050e0     ca03          JRZ     BOOTYP2A                ;BR = DON'T MAKE A SOUND
+    1099 000050f0     0d5f          CALLA   ONESND
+         00005100 00000000! 
+    1100 00005120           BOOTYP2A
+    1101 00005120     4d40          MOVE    A10,A0
+    1102 00005130     09e1          MOVI    BOOTY,A1
+         00005140 00000000! 
+    1103 00005160     0d5f          CALLA   DELSUPP                 ;TAKE THIS BUTTHEAD OFF THE LIST
+         00005170 00000000! 
+    1104 00005190     0d5f          CALLA   DELSHAD                 ;GET RID OF THIS ALSO
+         000051a0 00000000! 
+    1105 000051c0     c00e          JRUC    BOOTYFLYG
+    1106                    
+    1107                    *
+    1108                    *BOOTY FLY ENTRY POINT FOR BOOTY NOT ON A SUPPLEMENTAL LIST YOU SEE
+    1109 000051d0           BOOTYBACK
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   27
+
+    1110 000051d0     0d5f          CALLA   GPLAYERD
+         000051e0 00000000! 
+    1111 00005200     ca7d          JRZ     BOOTYPDI
+    1112 00005210     b646          MOVE    *A2(PFLAGS),A6,L
+         00005220     0080  
+    1113 00005230     1d46          BTST    BPICKUP,A6      
+    1114 00005240     cb79          JRNE    BOOTYPDI                ;BR = ALREADY PICKING UP SOME LOOT
+    1115                    
+    1116 00005250     4c00          MOVE    A0,A0
+    1117 00005260     ca04          JRZ     BOOTYFLYG               ;BR = DON'T MAKE A SOUND
+    1118 00005270     0d5f          CALLA   ONESND
+         00005280 00000000! 
+    1119 000052a0     0300          JRUC    BOOTYFLYG
+    1120                    *
+    1121                    *GENERIC BOOTY FLY ENTRYPOINT
+    1122 000052b0           BOOTYFLYG
+    1123 000052b0     b740          MOVE    *A10(OPLINK),A0,L
+         000052c0     01f0  
+    1124 000052d0     ca03          JREQ    BOOTYP3
+    1125 000052e0     0d5f          CALLA   KILL
+         000052f0 00000000! 
+    1126 00005310           BOOTYP3
+    1127 00005310     b3aa          MOVE    A13,*A10(OPLINK),L
+         00005320     01f0  
+    1128 00005330     4d48          MOVE    A10,A8
+    1129 00005340     0d5f          CALLA   PSTOP
+         00005350 00000000! 
+    1130 00005370     b643          MOVE    *A2(PSCRAD),A3,L        ;SET UP FOR EFFECT
+         00005380     0180  
+    1131 00005390     4123          ADD     A9,A3                   ;SEND BOOTYS TO THE COUNTER
+    1132                    
+    1133 000053a0     2e06          SRL     16,A6
+    1134 000053b0     0ba6          ORI     MPICKUP,A6              ;HOLD THE PLAYER A BIT
+         000053c0 00000020  
+    1135 000053e0     b0c2          MOVE    A6,*A2(PEXEFLAG),W
+         000053f0     0090  
+    1136 00005400     4c4b          MOVE    A2,A11                  ;SAVE HERE
+    1137                    
+    1138 00005410     4d40          MOVE    A10,A0  
+    1139 00005420     0d5f          CALLA   GSCRNREL
+         00005430 00000000! 
+    1140 00005450     2e01          SRL     16,A1
+    1141 00005460     ec22          MOVX    A1,A2
+    1142 00005470     1bc4          MOVK    30,A4                   ;1/2 SECOND AIR TIME
+    1143 00005480     0d5f          CALLA   SLINEVEL                ;GET THE VELOCITIES
+         00005490 00000000! 
+    1144 000054b0     4d48          MOVE    A10,A8
+    1145 000054c0                   PUSHP   A11
+    1146 000054d0     b566          MOVE    *A11(PIRQFLAG),A6,W
+         000054e0     0080  
+    1147 000054f0     0b86          ANDI    MDRIVER|MPASSEN,A6
+         00005500 ffffe7ff  
+    1148 00005520     ca02          JREQ    BOOTYLPF
+    1149 00005530     182b          MOVK    1,A11
+    1150 00005540     c001          JRUC    BOOTYP4                 ;1 TICK 'TIL FLAG CLR FOR CAR DUDES
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   28
+
+    1151 00005550           BOOTYLPF
+    1152 00005550     19eb          MOVK    15,A11                  ;1/4 SEC 'TIL FLAG CLEAR FOR WALKING
+    1153 00005560           BOOTYP4
+    1154 00005560     b22a          MOVE    A1,*A10(OXVEL),L
+         00005570     0040  
+    1155 00005580     b24a          MOVE    A2,*A10(OYVEL),L        ;STUFF THE VELOCITIES
+         00005590     0060  
+    1156 000055a0     098c          MMTM    A12,A1,A2
+         000055b0     6000  
+    1157 000055c0     4d40          MOVE    A10,A0
+    1158 000055d0     0d5f          CALLA   SCRNRELV                ;MAKE THE VELOCITIES SCREEN RELATIVE
+         000055e0 00000000! 
+    1159 00005600                   SLEEP   1
+    1160 00005640     09ac          MMFM    A12,A1,A2
+         00005650     0006  
+    1161 00005660     0d5f          CALLA   SCRTST                  ;CHECK FOR OFF SCREEN
+         00005670 00000000! 
+    1162 00005690     ca03          JREQ    BOOTYP4A
+    1163 000056a0                   PULLP   A11
+    1164 000056c0     c01e          JRUC    BOOTYP6
+    1165 000056d0           BOOTYP4A
+    1166 000056d0     3f0b          DSJS    A11,BOOTYP4
+    1167 000056e0                   PULLP   A11
+    1168 00005700     b566          MOVE    *A11(PEXEFLAG),A6,W
+         00005710     0090  
+    1169 00005720     0b86          ANDNI   MPICKUP,A6              ;CLEAR THIS SHIT AFTER 1/4 SEC.
+         00005730 00000020  
+    1170 00005750     b0cb          MOVE    A6,*A11(PEXEFLAG),W
+         00005760     0090  
+    1171 00005770           BOOTYP5
+    1172 00005770     b22a          MOVE    A1,*A10(OXVEL),L
+         00005780     0040  
+    1173 00005790     b24a          MOVE    A2,*A10(OYVEL),L        ;STUFF THE VELOCITIES
+         000057a0     0060  
+    1174 000057b0     098c          MMTM    A12,A1,A2
+         000057c0     6000  
+    1175 000057d0     4d40          MOVE    A10,A0
+    1176 000057e0     0d5f          CALLA   SCRNRELV                ;MAKE THE VELOCITIES SCREEN RELATIVE
+         000057f0 00000000! 
+    1177 00005810                   SLEEP   1
+    1178 00005850     09ac          MMFM    A12,A1,A2
+         00005860     0006  
+    1179 00005870     0d5f          CALLA   SCRTST                  ;CHECK FOR OFF SCREEN
+         00005880 00000000! 
+    1180 000058a0     caec          JREQ    BOOTYP5
+    1181 000058b0           BOOTYP6
+    1182 000058b0     5600          CLR     A0
+    1183 000058c0     b20a          MOVE    A0,*A10(OPLINK),L
+         000058d0     01f0  
+    1184 000058e0     4d40          MOVE    A10,A0
+    1185 000058f0     0d5f          CALLA   DELSOBJ                 ;DELETE THAT BAD DOG
+         00005900 00000000! 
+    1186 00005920     4d62          MOVE    A11,A2
+    1187 00005930     b446          MOVE    *A2(PEXEFLAG),A6,W
+         00005940     0090  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   29
+
+    1188 00005950     0b86          ANDNI   MPICKUP,A6
+         00005960 00000020  
+    1189 00005980     b0c2          MOVE    A6,*A2(PEXEFLAG),W
+         00005990     0090  
+    1190 000059a0     0320          CLRC
+    1191 000059b0                   RETP
+    1192 000059e0           BOOTYPDI
+    1193 000059e0     0de0          SETC
+    1194 000059f0                   RETP
+    1195                    
+    1196                    **************************************************************************
+    1197                    *                                                                        *
+    1198                    * LOOTXCOL - COLLISION OF A LOOT OBJECT AND AN EXPLOSION                 *
+    1199                    * A0 = PTR TO LOOT OBJECT                                                *
+    1200                    * A8 = PTR TO THE 'TING THAT SMASHED IT MAAHN                            *
+    1201                    *                                                                        *
+    1202                    **************************************************************************
+    1203 00005a20           LOOTXCOL
+    1204 00005a20     4d0a          MOVE    A8,A10
+    1205 00005a30     4c08          MOVE    A0,A8
+    1206 00005a40     b700          MOVE    *A8(OPLINK),A0,L
+         00005a50     01f0  
+    1207 00005a60     ca03          JRZ     LOOTXCNP
+    1208 00005a70     0d5f          CALLA   KILL
+         00005a80 00000000! 
+    1209 00005aa0           LOOTXCNP
+    1210 00005aa0     b700          MOVE    *A8(OIMG),A0,L
+         00005ab0     0180  
+    1211 00005ac0     0b60          CMPI    GETDOPE,A0      
+         00005ad0 ffffffff! 
+    1212 00005af0     ca08          JREQ    LOOTXC1
+    1213 00005b00     0b60          CMPI    DOPE2,A0
+         00005b10 ffffffff! 
+    1214 00005b30     ca04          JREQ    LOOTXC1
+    1215 00005b40     0b60          CMPI    DOPE3,A0
+         00005b50 ffffffff! 
+    1216 00005b70     cb08          JRNE    LOOTXC2
+    1217 00005b80           LOOTXC1
+    1218 00005b80     09e1          MOVI    DOPE1,A1
+         00005b90 00000000! 
+    1219 00005bb0     b504          MOVE    *A8(OFLAGS),A4,W
+         00005bc0     0100  
+    1220 00005bd0     0d5f          CALLA   ANI
+         00005be0 00000000! 
+    1221 00005c00           LOOTXC2
+    1222 00005c00                   CREATE  0EDH,LOOTAWAY
+    1223 00005c80     b208          MOVE    A0,*A8(OPLINK),L
+         00005c90     01f0  
+    1224 00005ca0     5600          CLR     A0      
+    1225 00005cb0     1020          INC     A0                      ;STOP THIS SCAN
+    1226 00005cc0     0320          CLRC
+    1227 00005cd0     0960          RETS
+    1228                    
+    1229                    **************************************************************************
+    1230                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   30
+
+    1231                    * LOOTAWAY - MAKE A LOOT OBJECT GET HURLED FROM AN EXPLOSION             *
+    1232                    * A8 = PTR TO LOOT OBJECT                                                *
+    1233                    * A10 = PTR TO THE 'TING THAT SMASHED IT MAAHN                           *
+    1234                    *                                                                        *
+    1235                    **************************************************************************
+    1236 00005ce0           LOOTAWAY
+    1237                    
+    1238 00005ce0     b500          MOVE    *A8(OFLAGS),A0,W
+         00005cf0     0100  
+    1239 00005d00     0b80          ANDNI   M_PIXSCAN,A0            ;MAKE THIS OBJECT PIXABLE
+         00005d10 00000400  
+    1240 00005d30     b008          MOVE    A0,*A8(OFLAGS),W
+         00005d40     0100  
+    1241 00005d50     b740          MOVE    *A10(ODMAXY),A0,L       ;GET DMA XY POSITION OF KILLER
+         00005d60     0210  
+    1242 00005d70     b741          MOVE    *A10(OSIZE),A1,L        ;GET DMA XY SIZE OF KILLER
+         00005d80     0140  
+    1243 00005d90     0d5f          CALLA   GETCENT
+         00005da0 00000000! 
+    1244 00005dc0     4c22          MOVE    A1,A2                   ;KEEP CENTER OF KILLER
+    1245 00005dd0     0d5f          CALLA   GETCPNT                 ;GET ENEMY'S CENTER
+         00005de0 00000000! 
+    1246                    
+    1247 00005e00     0501          SEXT    A1                      ;JUST DEAL WITH X CENTER
+    1248 00005e10     4441          SUB     A2,A1                   ;A1 = ENEMY XCENT - KILLER XCENT
+    1249 00005e20     4c22          MOVE    A1,A2
+    1250 00005e30     2b62          SRA     5,A2                    ;DIVIDE
+    1251 00005e40     b048          MOVE    A2,*A8(OXVEL+16),W      ;MAKE DCENTERS A VELOCITY
+         00005e50     0050  
+    1252 00005e60     0d5f          CALLA   GETYZVEL                ;GET A RANDOM Y & Z VELOCITY
+         00005e70 00000000! 
+    1253 00005e90     b700          MOVE    *A8(OSHAD),A0,L
+         00005ea0     0240  
+    1254 00005eb0     cb04          JRNZ    LOOTSHAD
+    1255 00005ec0     0d5f          CALLA   SHADST                  ;START A SHADOW
+         00005ed0 00000000! 
+    1256 00005ef0     ca05          JRZ     LOOTNOSH
+    1257 00005f00           LOOTSHAD        
+    1258 00005f00     4e00          MOVE    A0,B0
+    1259 00005f10     b250          MOVE    B2,*B0(OZVEL),L
+         00005f20     00e0  
+    1260 00005f30     b250          MOVE    B2,*B0(OYVEL),L         ;SOME SHADOW VEL
+         00005f40     0060  
+    1261 00005f50           LOOTNOSH        
+    1262 00005f50     4f00          MOVE    A8,B0
+    1263 00005f60     b250          MOVE    B2,*B0(OZVEL),L
+         00005f70     00e0  
+    1264 00005f80     b611          MOVE    *B0(OYVEL),B1,L         ;GET THE CURRENT Y VELOCITY
+         00005f90     0060  
+    1265 00005fa0     c603          JRLE    LOOTRST
+    1266 00005fb0     4033          ADD     B1,B3                   ;FREAK THE LOOT OUT
+    1267 00005fc0     cf01          JRNN    LOOTRST
+    1268 00005fd0     5673          CLR     B3
+    1269 00005fe0           LOOTRST
+    1270 00005fe0     b270          MOVE    B3,*B0(OYVEL),L         ;STUFF THE ILL GOTTEN BOOTY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   31
+
+         00005ff0     0060  
+    1271                    
+    1272 00006000           LOOTPDS
+    1273 00006000                   SLEEP   1
+    1274 00006040     0d5f          CALLA   CKZADJST
+         00006050 00000000! 
+    1275 00006070     b703          MOVE    *A8(OYVEL),A3,L         ;GET THE CURRENT Y VELOCITY
+         00006080     0060  
+    1276 00006090     c604          JRLE    LOOTPD1B                        ;BR = NOT GOING DOWN, DON'T CHECK GROUND HIT
+    1277 000060a0     0d5f          CALLA   DFRMGRND                ;DID HE HIT THE GROUND?
+         000060b0 00000000! 
+    1278 000060d0     c607          JRLE    LOOTHIT                 ;BR = YES
+    1279                    
+    1280 000060e0           LOOTPD1B
+    1281 000060e0     b700          MOVE    *A8(OYVEL),A0,L         ;DECREASE Y VELOCITY
+         000060f0     0060  
+    1282 00006100     0b00          ADDI    GRAVITY,A0
+         00006110     2400  
+    1283 00006120     b208          MOVE    A0,*A8(OYVEL),L
+         00006130     0060  
+    1284 00006140     c0eb          JRUC    LOOTPDS
+    1285 00006150           LOOTHIT
+    1286 00006150     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         00006160 00000000! 
+    1287 00006180     b700          MOVE    *A8(OIMG),A0,L
+         00006190     0180  
+    1288 000061a0     0b60          CMPI    DOPE1,A0
+         000061b0 ffffffff! 
+    1289 000061d0     cb0b          JRNE    LOOTHIT1
+    1290 000061e0     09e9          MOVI    DOPEHIT,A9
+         000061f0 00009ce0' 
+    1291 00006210     1821          MOVK    1,A1
+    1292 00006220                   JSRP    FRANIM
+    1293 00006290           LOOTHIT1
+    1294 00006290     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+    1295 000062a0     b501          MOVE    *A8(OID),A1,W
+         000062b0     01a0  
+    1296 000062c0     ce04          JRN     LOOTFLAT                ;THIS STUFF LIES DOWN
+    1297 000062d0     0d5f          CALLA   SETZPOS                 ;OTHERWISE STAND IT UP
+         000062e0 00000000! 
+    1298 00006300     c003          JRUC    LOOTAEND
+    1299 00006310           LOOTFLAT        
+    1300 00006310     0d5f          CALLA   SETTZPOS                ;SET Z POSITION BASED ON TOP Y
+         00006320 00000000! 
+    1301 00006340           LOOTAEND
+    1302 00006340     0d5f          CALLA   DELSHAD                 ;RESET SHADOW
+         00006350 00000000! 
+    1303 00006370     4d00          MOVE    A8,A0
+    1304 00006380     5600          CLR     A0
+    1305 00006390     b208          MOVE    A0,*A8(OPLINK),L        ;DE-LINK PORFAVOR
+         000063a0     01f0  
+    1306 000063b0                   DIE
+    1307                    
+    1308                    **************************************************************************
+    1309                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   32
+
+    1310                    * KHIT - PUT OUT AN ICON, FLASHING THAT IS, OBJECT IS DELETED.           *
+    1311                    * A8=OBLOCK POINTER.                                                     *
+    1312                    * A9 = PTR TO IMAGE HEADER OF OBJECT TO STICK IN.                        *
+    1313                    * I.D. = $DF                                                             *
+    1314                    **************************************************************************
+    1315                    *ENTRY FOR 1K
+    1316 000063e0           K1HIT
+    1317 000063e0     09e9          MOVI    K1IMG,A9
+         000063f0 00000000! 
+    1318 00006410     c003          JRUC    KHIT
+    1319                    *ENTRY FOR 5K
+    1320 00006420           K5HIT
+    1321 00006420     09e9          MOVI    K5IMG,A9
+         00006430 00000000! 
+    1322 00006450           KHIT
+    1323 00006450     0d5f          CALLA   GETCPNT                 ;GET THE CENTER OF THIS THING
+         00006460 00000000! 
+    1324 00006480     b028          MOVE    A1,*A8(OXPOS),W
+         00006490     0090  
+    1325 000064a0     2e01          SRL     16,A1
+    1326 000064b0     b028          MOVE    A1,*A8(OYPOS),W
+         000064c0     00b0  
+    1327                    
+    1328 000064d0     09e0          MOVI    0F4F4H,A0
+         000064e0 0000f4f4  
+    1329 00006500     b008          MOVE    A0,*A8(OCONST),W        ;STUFF A CONSTANT COLOR
+         00006510     0170  
+    1330                    
+    1331 00006520     4d21          MOVE    A9,A1
+    1332 00006530     b504          MOVE    *A8(OFLAGS),A4,W
+         00006540     0100  
+    1333 00006550     0b84          ANDNI   (M_FLIPV|M_FLIPH|M_WRNONZ),A4
+         00006560 00000032  
+    1334 00006580     0ba4          ORI     M_CONNON,A4     
+         00006590 00000008  
+    1335 000065b0     0d5f          CALLA   ANI
+         000065c0 00000000! 
+    1336                    
+    1337 000065e0     09e0          MOVI    [-2,0],A0
+         000065f0 fffe0000  
+    1338 00006610     05a1          MOVE    @RAND,A1,W              ;GET THE LOW 16 BITS OF RAND
+         00006620 00000000! 
+    1339 00006640     ec20          MOVX    A1,A0                   ;MAKE SOME DIFFERENT VELS.
+    1340 00006650     b208          MOVE    A0,*A8(OYVEL),L         ;GIVE US A YVEL
+         00006660     0060  
+    1341 00006670                   SLEEP   120
+    1342 000066c0     4d00          MOVE    A8,A0
+    1343 000066d0     0d5f          CALLA   DELSOBJ                 ;GET RID OF THIS THING
+         000066e0 00000000! 
+    1344 00006700                   DIE
+    1345                    
+    1346                    *
+    1347                    *CARD I.D. TO OFFSET TABLE
+    1348 00006730           CARDIDTB
+    1349 00006730     0300          .WORD   PSCARD,PRCARD,PBCARD,PGCARD,PGRCARD
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   33
+
+    1350                    **************************************************************************
+    1351                    *                                                                        *
+    1352                    * BOZOCARD - CHECK TO SEE IF BOZO HAS THE CARD HE NEEDS, IF NOT          *
+    1353                    *               STICK ONE OUT THERE USING CARDCOLD.                      *
+    1354                    * SAME PARAMS AS CARDCOLD                                                *
+    1355                    *                                                                        *
+    1356                    **************************************************************************
+    1357 00006780           BOZOCARD
+    1358 00006780     098f          MMTM    SP,A1,A2
+         00006790     6000  
+    1359 000067a0     4dc1          MOVE    A14,A1
+    1360 000067b0     2781          SLL     28,A1
+    1361 000067c0     2d01          SRL     24,A1
+    1362 000067d0     0b21          ADDI    CARDIDTB,A1
+         000067e0 00006730' 
+    1363 00006800     8421          MOVE    *A1,A1,W
+    1364 00006810     09e2          MOVI    P1DATA,A2
+         00006820 00000000! 
+    1365 00006840     4022          ADD     A1,A2   
+    1366 00006850     8e42          MOVB    *A2,A2
+    1367 00006860     cb09          JRNZ    GBOZOX                  ;PLAYER ONE HAS ONE
+    1368 00006870     09e2          MOVI    P2DATA,A2
+         00006880 00000000! 
+    1369 000068a0     4022          ADD     A1,A2   
+    1370 000068b0     8e42          MOVB    *A2,A2
+    1371 000068c0     cb03          JRNZ    GBOZOX                  ;PLAYER TWO HAS ONE
+    1372 000068d0     09af          MMFM    SP,A1,A2        
+         000068e0     0006  
+    1373 000068f0     c003          JRUC    CARDCOLD
+    1374 00006900           GBOZOX
+    1375 00006900     09af          MMFM    SP,A1,A2
+         00006910     0006  
+    1376 00006920     0960          RETS
+    1377                    **************************************************************************
+    1378                    *                                                                        *
+    1379                    * CARDCOLD - "SAFE" CARD COLD START                                      *
+    1380                    * A5 = [Y,X] UPPER LEFT                                                  *
+    1381                    * A6 = [0,Z]                                                             *
+    1382                    * A14 = [0:#START;#RAND,OID]                                             *
+    1383                    * TYPES:        0 = SILVER SAFE CARD                                     *
+    1384                    *               1 = RED SAFE CARD                                        *
+    1385                    *               2 = BLUE SAFE CARD                                       *
+    1386                    *               3 = GOLD SAFE CARD                                       *
+    1387                    *               4 = GREEN SAFE CARD                                      *
+    1388                    *                                                                        *
+    1389                    **************************************************************************
+    1390 00006930           CARDCOLD
+    1391 00006930     098f          MMTM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00006940     c732  
+    1392 00006950     099f          MMTM    SP,B0,B1
+         00006960     c000  
+    1393 00006970     4ccb          MOVE    A6,A11  
+    1394 00006980     4caa          MOVE    A5,A10                          
+    1395 00006990     54a6          OR      A5,A6
+    1396 000069a0     cb02          JRNZ    CARDPOSG                ;WE GOT US A POSITION
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   34
+
+    1397 000069b0     1825          MOVK    1,A5                    ;FLAG RANDOM POSITION(S)
+    1398 000069c0     c001          JRUC    CARDDOIT
+    1399 000069d0           CARDPOSG
+    1400 000069d0     56a5          CLR     A5                      ;FLAG CONSTANT POSITION(S)
+    1401 000069e0           CARDDOIT
+    1402 000069e0     4dc6          MOVE    A14,A6
+    1403 000069f0     2506          SLL     8,A6
+    1404 00006a00     2c86          SRL     28,A6                   ;GRAB # TO START
+    1405 00006a10     4dc0          MOVE    A14,A0
+    1406 00006a20     2580          SLL     12,A0
+    1407 00006a30     2c80          SRL     28,A0                   ;GRAB RANDOM # TO START
+    1408 00006a40     ca04          JRZ     CARDNORN                ;BR = NO RANDOM # TO START
+    1409 00006a50     0d5f          CALLA   RANDU
+         00006a60 00000000! 
+    1410 00006a80     4006          ADD     A0,A6
+    1411 00006a90           CARDNORN
+    1412 00006a90     4dc7          MOVE    A14,A7                  ;STORE THE TOTAL I.D. HERE
+    1413 00006aa0     278e          SLL     28,A14
+    1414 00006ab0     2d2e          SRL     23,A14
+    1415 00006ac0     0b2e          ADDI    CARDITAB,A14
+         00006ad0 00006f60' 
+    1416 00006af0     87ce          MOVE    *A14,A14,L
+    1417 00006b00           CARDLP
+    1418 00006b00     4ca5          MOVE    A5,A5
+    1419 00006b10     ca19          JRZ     CARDCR                  ;BR = JUST CREATE WITH GIVEN POS.
+    1420 00006b20     576b          CLR     A11                     ;OTHERWISE RANDOM [Y,X]
+    1421 00006b30     05b0          MOVE    @PLYMIN,B0,W
+         00006b40 00000000! 
+    1422 00006b60     05b1          MOVE    @PLYMAX,B1,W
+         00006b70 00000000! 
+    1423 00006b90     1411          SUBK    32,B1
+    1424 00006ba0     0d5f          CALLA   RANGRAND
+         00006bb0 00000000! 
+    1425 00006bd0     2600          SLL     16,A0
+    1426 00006be0     ee0a          MOVY    A0,A10
+    1427 00006bf0     09d0          MOVI    512,B0
+         00006c00     0200  
+    1428 00006c10     4c11          MOVE    B0,B1
+    1429 00006c20     2431          SLL     1,B1
+    1430 00006c30     0d5f          CALLA   RANGRAND
+         00006c40 00000000! 
+    1431 00006c60     ec0a          MOVX    A0,A10
+    1432 00006c70     07a0          MOVE    @WORLDTL,A0,L
+         00006c80 00000000! 
+    1433 00006ca0     e00a          ADDXY   A0,A10                  ;OFFSET TO THE CURRENT WORLD
+    1434 00006cb0           CARDCR
+    1435 00006cb0     4fc0          MOVE    A14,B0
+    1436 00006cc0     0d5f          CALLA   GPALOBJ                 ;GET US AN OBJECT
+         00006cd0 00000000! 
+    1437 00006cf0     ca1e          JRZ     CARDCRD                 ;NO LUCK CHEESE BALL
+    1438 00006d00     0d5f          CALLA   STFOBJ                  ;STUFF IT UP DUDE
+         00006d10 00000000! 
+    1439 00006d30     b0e0          MOVE    A7,*A0(OID),W           ;STUFF THE GIVEN I.D.
+         00006d40     01a0  
+    1440 00006d50     57ce          CLR     A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   35
+
+    1441 00006d60     ed4e          MOVX    A10,A14
+    1442 00006d70     b1c0          MOVE    A14,*A0(OXPOS),W
+         00006d80     0090  
+    1443 00006d90     ef4e          MOVY    A10,A14
+    1444 00006da0     2e0e          SRL     16,A14
+    1445 00006db0     b1c0          MOVE    A14,*A0(OYPOS),W
+         00006dc0     00b0  
+    1446 00006dd0     4d6b          MOVE    A11,A11
+    1447 00006de0     ca03          JRZ     CARDSETZ
+    1448 00006df0     b160          MOVE    A11,*A0(OZPOS),W
+         00006e00     00d0  
+    1449 00006e10     c003          JRUC    CARDGO
+    1450 00006e20           CARDSETZ
+    1451 00006e20     0d5f          CALLA   SETTZPOS                ;LAY THOSE MAMA'S DOWN
+         00006e30 00000000! 
+    1452 00006e50           CARDGO
+    1453 00006e50     09e1          MOVI    BOOTY,A1
+         00006e60 00000000! 
+    1454 00006e80     0d5f          CALLA   INSOBJ
+         00006e90 00000000! 
+    1455 00006eb0     0d5f          CALLA   ADDSUPP                 ;O.K. HERE IT IS
+         00006ec0 00000000! 
+    1456 00006ee0           CARDCRD
+    1457 00006ee0     4e1e          MOVE    B0,A14
+    1458 00006ef0     0d86          DSJ     A6,CARDLP       
+         00006f00     ffbf  
+    1459 00006f10     09bf          MMFM    SP,B0,B1
+         00006f20     0003  
+    1460 00006f30     09af          MMFM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00006f40     4ce3  
+    1461 00006f50     0960          RETS
+    1462                    *CARD INIT TAB PTR TABLE
+    1463 00006f60           CARDITAB
+    1464 00006f60 00007000'         .LONG   SILVINIT,REDINIT,BLUEINIT,GOLDINIT,GRNINIT
+    1465                    
+    1466                    
+    1467                    *"SAFE" CARD INIT BLOCKS
+    1468 00007000           SILVINIT
+    1469 00007000 00000000          .LONG   0,0,0,0                                  
+    1470 00007080     0000          .WORD   0,0                                                      
+    1471 000070a0 00000000!         .LONG   SILVcard,CARDZ,CARDCOLL                                  
+    1472 00007100     8002          .WORD   DMAWNZ,CARDOID|SILVER
+    1473 00007120 00009d90'         .LONG   SILVBLIP
+    1474                    
+    1475 00007140           REDINIT
+    1476 00007140 00000000          .LONG   0,0,0,0                                  
+    1477 000071c0     0000          .WORD   0,0                                                      
+    1478 000071e0 00000000!         .LONG   REDcard,CARDZ,CARDCOLL                                   
+    1479 00007240     8002          .WORD   DMAWNZ,CARDOID|RED
+    1480 00007260 00009f50'         .LONG   REDBLIP
+    1481                    
+    1482 00007280           BLUEINIT
+    1483 00007280 00000000          .LONG   0,0,0,0                                  
+    1484 00007300     0000          .WORD   0,0                                                      
+    1485 00007320 00000000!         .LONG   BLUEcard,CARDZ,CARDCOLL                                  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   36
+
+    1486 00007380     8002          .WORD   DMAWNZ,CARDOID|BLUE
+    1487 000073a0 0000a110'         .LONG   BLUEBLIP
+    1488                    
+    1489 000073c0           GOLDINIT
+    1490 000073c0 00000000          .LONG   0,0,0,0                                  
+    1491 00007440     0000          .WORD   0,0                                                      
+    1492 00007460 00000000!         .LONG   GOLDcard,CARDZ,CARDCOLL                                  
+    1493 000074c0     8002          .WORD   DMAWNZ,CARDOID|GOLD
+    1494 000074e0 0000a2d0'         .LONG   GOLDBLIP
+    1495                    
+    1496 00007500           GRNINIT
+    1497 00007500 00000000          .LONG   0,0,0,0                                  
+    1498 00007580     0000          .WORD   0,0                                                      
+    1499 000075a0 00000000!         .LONG   GREENcard,CARDZ,CARDCOLL                                         
+    1500 00007600     8002          .WORD   DMAWNZ,CARDOID|GREEN
+    1501 00007620 0000a490'         .LONG   GRNBLIP
+    1502                    
+    1503                    **************************************************************************
+    1504                    *                                                                        *
+    1505                    * BUCKCOLD - BUCK COLD START                                             *
+    1506                    * A5 = [Y,X] UPPER LEFT                                                  *
+    1507                    * A6 = [0,Z]                                                             *
+    1508                    * A14 = [0:#START;#RAND,OID]                                             *
+    1509                    *       TYPES:                                                           *
+    1510                    *               0 = HORIZONTAL                                           *
+    1511                    *               1 = VERTICAL                                             *
+    1512                    *                                                                        *
+    1513                    **************************************************************************
+    1514 00007640           BUCKCOLD
+    1515 00007640     098f          MMTM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00007650     c732  
+    1516 00007660     099f          MMTM    SP,B0,B1
+         00007670     c000  
+    1517 00007680     4ccb          MOVE    A6,A11  
+    1518 00007690     4caa          MOVE    A5,A10                          
+    1519 000076a0     54a6          OR      A5,A6
+    1520 000076b0     cb02          JRNZ    BUCKPOSG                ;WE GOT US A POSITION
+    1521 000076c0     1825          MOVK    1,A5                    ;FLAG RANDOM POSITION(S)
+    1522 000076d0     c001          JRUC    BUCKDOIT
+    1523 000076e0           BUCKPOSG
+    1524 000076e0     56a5          CLR     A5                      ;FLAG CONSTANT POSITION(S)
+    1525 000076f0           BUCKDOIT
+    1526 000076f0     4dc6          MOVE    A14,A6
+    1527 00007700     2506          SLL     8,A6
+    1528 00007710     2c86          SRL     28,A6                   ;GRAB # TO START
+    1529 00007720     4dc0          MOVE    A14,A0
+    1530 00007730     2580          SLL     12,A0
+    1531 00007740     2c80          SRL     28,A0                   ;GRAB RANDOM # TO START
+    1532 00007750     ca04          JRZ     BUCKNORN                ;BR = NO RANDOM # TO START
+    1533 00007760     0d5f          CALLA   RANDU
+         00007770 00000000! 
+    1534 00007790     4006          ADD     A0,A6
+    1535 000077a0           BUCKNORN
+    1536 000077a0     4dc7          MOVE    A14,A7                  ;STORE THE TOTAL I.D. HERE
+    1537 000077b0     278e          SLL     28,A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   37
+
+    1538 000077c0     2d2e          SRL     23,A14
+    1539 000077d0     0b2e          ADDI    BUCKITAB,A14
+         000077e0 00007cf0' 
+    1540 00007800     87ce          MOVE    *A14,A14,L
+    1541 00007810           BUCKLP
+    1542 00007810     05a1          MOVE    @BCCOUNT,A1,W
+         00007820 00000000! 
+    1543 00007840     1421          DEC     A1
+    1544 00007850     ce44          JRN     BUCKCXX                 ;NO MORE DOLLARS ALLOWED
+    1545 00007860     0581          MOVE    A1,@BCCOUNT,W
+         00007870 00000000! 
+    1546 00007890     4ca5          MOVE    A5,A5
+    1547 000078a0     ca19          JRZ     BUCKCR                  ;BR = JUST CREATE WITH GIVEN POS.
+    1548 000078b0     576b          CLR     A11                     ;OTHERWISE RANDOM [Y,X]
+    1549 000078c0     05b0          MOVE    @PLYMIN,B0,W
+         000078d0 00000000! 
+    1550 000078f0     05b1          MOVE    @PLYMAX,B1,W
+         00007900 00000000! 
+    1551 00007920     1411          SUBK    32,B1
+    1552 00007930     0d5f          CALLA   RANGRAND
+         00007940 00000000! 
+    1553 00007960     2600          SLL     16,A0
+    1554 00007970     ee0a          MOVY    A0,A10
+    1555 00007980     09d0          MOVI    512,B0
+         00007990     0200  
+    1556 000079a0     4c11          MOVE    B0,B1
+    1557 000079b0     2431          SLL     1,B1
+    1558 000079c0     0d5f          CALLA   RANGRAND
+         000079d0 00000000! 
+    1559 000079f0     ec0a          MOVX    A0,A10
+    1560 00007a00     07a0          MOVE    @WORLDTL,A0,L
+         00007a10 00000000! 
+    1561 00007a30     e00a          ADDXY   A0,A10                  ;OFFSET TO THE CURRENT WORLD
+    1562 00007a40           BUCKCR
+    1563 00007a40     4fc0          MOVE    A14,B0
+    1564 00007a50     0d5f          CALLA   GPALOBJ                 ;GET US AN OBJECT
+         00007a60 00000000! 
+    1565 00007a80     ca1e          JRZ     BUCKCRD                 ;NO LUCK CHEESE BALL
+    1566 00007a90     0d5f          CALLA   STFOBJ                  ;STUFF IT UP DUDE
+         00007aa0 00000000! 
+    1567 00007ac0     b0e0          MOVE    A7,*A0(OID),W           ;STUFF THE GIVEN I.D.
+         00007ad0     01a0  
+    1568 00007ae0     57ce          CLR     A14
+    1569 00007af0     ed4e          MOVX    A10,A14
+    1570 00007b00     b1c0          MOVE    A14,*A0(OXPOS),W
+         00007b10     0090  
+    1571 00007b20     ef4e          MOVY    A10,A14
+    1572 00007b30     2e0e          SRL     16,A14
+    1573 00007b40     b1c0          MOVE    A14,*A0(OYPOS),W
+         00007b50     00b0  
+    1574 00007b60     4d6b          MOVE    A11,A11
+    1575 00007b70     ca03          JRZ     BUCKSETZ
+    1576 00007b80     b160          MOVE    A11,*A0(OZPOS),W
+         00007b90     00d0  
+    1577 00007ba0     c003          JRUC    BUCKGO
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   38
+
+    1578 00007bb0           BUCKSETZ
+    1579 00007bb0     0d5f          CALLA   SETTZPOS
+         00007bc0 00000000! 
+    1580 00007be0           BUCKGO
+    1581 00007be0     09e1          MOVI    BOOTY,A1
+         00007bf0 00000000! 
+    1582 00007c10     0d5f          CALLA   INSOBJ
+         00007c20 00000000! 
+    1583 00007c40     0d5f          CALLA   ADDSUPP                 ;O.K. HERE IT IS
+         00007c50 00000000! 
+    1584 00007c70           BUCKCRD
+    1585 00007c70     4e1e          MOVE    B0,A14
+    1586 00007c80     0d86          DSJ     A6,BUCKLP       
+         00007c90     ffb7  
+    1587 00007ca0           BUCKCXX
+    1588 00007ca0     09bf          MMFM    SP,B0,B1
+         00007cb0     0003  
+    1589 00007cc0     09af          MMFM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00007cd0     4ce3  
+    1590 00007ce0     0960          RETS
+    1591                    
+    1592                    *MONEY INIT TAB PTR TABLE
+    1593 00007cf0           BUCKITAB
+    1594 00007cf0 00007d30'         .LONG   BCKHINIT,BCKVINIT
+    1595                    
+    1596 00007d30           BCKHINIT
+    1597 00007d30 00000000          .LONG   0,0,0,0                                  
+    1598 00007db0     0000          .WORD   0,0                                                      
+    1599 00007dd0 00000000!         .LONG   GETCASH1,GOLDHZ,MONYCOLL                                         
+    1600 00007e30     8002          .WORD   DMAWNZ,BUCKOID
+    1601 00007e50 00000000          .LONG   0
+    1602                    
+    1603 00007e70           BCKVINIT
+    1604 00007e70 00000000          .LONG   0,0,0,0                                  
+    1605 00007ef0     0000          .WORD   0,0                                                      
+    1606 00007f10 00000000!         .LONG   GETCASH2,GOLDVZ,MONYCOLL                                         
+    1607 00007f70     8002          .WORD   DMAWNZ,BUCKOID
+    1608 00007f90 00000000          .LONG   0
+    1609                    
+    1610                    **************************************************************************
+    1611                    *                                                                        *
+    1612                    * DRUGCOLD - DRUG COLD START                                             *
+    1613                    * A5 = [Y,X] UPPER LEFT                                                  *
+    1614                    * A6 = [0,Z]                                                             *
+    1615                    * A14 = [0:#START;#RAND,OID]                                             *
+    1616                    *       TYPES:                                                           *
+    1617                    *               0 = HORIZONTAL                                           *
+    1618                    *               1 = VERTICAL                                             *
+    1619                    *                                                                        *
+    1620                    **************************************************************************
+    1621 00007fb0           DRUGCOLD
+    1622 00007fb0     098f          MMTM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00007fc0     c732  
+    1623 00007fd0     099f          MMTM    SP,B0,B1
+         00007fe0     c000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   39
+
+    1624 00007ff0     4ccb          MOVE    A6,A11  
+    1625 00008000     4caa          MOVE    A5,A10                          
+    1626 00008010     54a6          OR      A5,A6
+    1627 00008020     cb02          JRNZ    DRUGPOSG                ;WE GOT US A POSITION
+    1628 00008030     1825          MOVK    1,A5                    ;FLAG RANDOM POSITION(S)
+    1629 00008040     c001          JRUC    DRUGDOIT
+    1630 00008050           DRUGPOSG
+    1631 00008050     56a5          CLR     A5                      ;FLAG CONSTANT POSITION(S)
+    1632 00008060           DRUGDOIT
+    1633 00008060     4dc6          MOVE    A14,A6
+    1634 00008070     2506          SLL     8,A6
+    1635 00008080     2c86          SRL     28,A6                   ;GRAB # TO START
+    1636 00008090     4dc0          MOVE    A14,A0
+    1637 000080a0     2580          SLL     12,A0
+    1638 000080b0     2c80          SRL     28,A0                   ;GRAB RANDOM # TO START
+    1639 000080c0     ca04          JRZ     DRUGNORN                ;BR = NO RANDOM # TO START
+    1640 000080d0     0d5f          CALLA   RANDU
+         000080e0 00000000! 
+    1641 00008100     4006          ADD     A0,A6
+    1642 00008110           DRUGNORN
+    1643 00008110     4dc7          MOVE    A14,A7                  ;STORE THE TOTAL I.D. HERE
+    1644 00008120     09ee          MOVI    DRUGINIT,A14
+         00008130 00008630' 
+    1645 00008150           DRUGLP
+    1646 00008150     05a1          MOVE    @DCCOUNT,A1,W
+         00008160 00000000! 
+    1647 00008180     1421          DEC     A1
+    1648 00008190     ce44          JRN     DRUGCXX                 ;NO MORE DOLLARS ALLOWED
+    1649 000081a0     0581          MOVE    A1,@DCCOUNT,W
+         000081b0 00000000! 
+    1650 000081d0     4ca5          MOVE    A5,A5
+    1651 000081e0     ca19          JRZ     DRUGCR                  ;BR = JUST CREATE WITH GIVEN POS.
+    1652 000081f0     576b          CLR     A11                     ;OTHERWISE RANDOM [Y,X]
+    1653 00008200     05b0          MOVE    @PLYMIN,B0,W
+         00008210 00000000! 
+    1654 00008230     05b1          MOVE    @PLYMAX,B1,W
+         00008240 00000000! 
+    1655 00008260     1411          SUBK    32,B1
+    1656 00008270     0d5f          CALLA   RANGRAND
+         00008280 00000000! 
+    1657 000082a0     2600          SLL     16,A0
+    1658 000082b0     ee0a          MOVY    A0,A10
+    1659 000082c0     09d0          MOVI    512,B0
+         000082d0     0200  
+    1660 000082e0     4c11          MOVE    B0,B1
+    1661 000082f0     2431          SLL     1,B1
+    1662 00008300     0d5f          CALLA   RANGRAND
+         00008310 00000000! 
+    1663 00008330     ec0a          MOVX    A0,A10
+    1664 00008340     07a0          MOVE    @WORLDTL,A0,L
+         00008350 00000000! 
+    1665 00008370     e00a          ADDXY   A0,A10                  ;OFFSET TO THE CURRENT WORLD
+    1666 00008380           DRUGCR
+    1667 00008380     4fc0          MOVE    A14,B0
+    1668 00008390     0d5f          CALLA   GPALOBJ                 ;GET US AN OBJECT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   40
+
+         000083a0 00000000! 
+    1669 000083c0     ca1e          JRZ     DRUGCRD                 ;NO LUCK CHEESE BALL
+    1670 000083d0     0d5f          CALLA   STFOBJ                  ;STUFF IT UP DUDE
+         000083e0 00000000! 
+    1671 00008400     b0e0          MOVE    A7,*A0(OID),W           ;STUFF THE GIVEN I.D.
+         00008410     01a0  
+    1672 00008420     57ce          CLR     A14
+    1673 00008430     ed4e          MOVX    A10,A14
+    1674 00008440     b1c0          MOVE    A14,*A0(OXPOS),W
+         00008450     0090  
+    1675 00008460     ef4e          MOVY    A10,A14
+    1676 00008470     2e0e          SRL     16,A14
+    1677 00008480     b1c0          MOVE    A14,*A0(OYPOS),W
+         00008490     00b0  
+    1678 000084a0     4d6b          MOVE    A11,A11
+    1679 000084b0     ca03          JRZ     DRUGSETZ
+    1680 000084c0     b160          MOVE    A11,*A0(OZPOS),W
+         000084d0     00d0  
+    1681 000084e0     c003          JRUC    DRUGGO
+    1682 000084f0           DRUGSETZ
+    1683 000084f0     0d5f          CALLA   SETZPOS
+         00008500 00000000! 
+    1684 00008520           DRUGGO
+    1685 00008520     09e1          MOVI    BOOTY,A1
+         00008530 00000000! 
+    1686 00008550     0d5f          CALLA   INSOBJ
+         00008560 00000000! 
+    1687 00008580     0d5f          CALLA   ADDSUPP                 ;O.K. HERE IT IS
+         00008590 00000000! 
+    1688 000085b0           DRUGCRD
+    1689 000085b0     4e1e          MOVE    B0,A14
+    1690 000085c0     0d86          DSJ     A6,DRUGLP       
+         000085d0     ffb7  
+    1691 000085e0           DRUGCXX
+    1692 000085e0     09bf          MMFM    SP,B0,B1
+         000085f0     0003  
+    1693 00008600     09af          MMFM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00008610     4ce3  
+    1694 00008620     0960          RETS
+    1695                    
+    1696 00008630           DRUGINIT
+    1697 00008630 00000000          .LONG   0,0,0,0                                  
+    1698 000086b0     0000          .WORD   0,0                                                      
+    1699 000086d0 00000000!         .LONG   GETDOPE,GOLDHZ,DOPECOLL                                  
+    1700 00008730     8002          .WORD   DMAWNZ,DRUGOID
+    1701 00008750 00000000          .LONG   0
+    1702                    
+    1703                    **************************************************************************
+    1704                    *                                                                        *
+    1705                    * GOLDCOLD - GOLD CARD COLD START                                        *
+    1706                    * A5 = [Y,X] UPPER LEFT                                                  *
+    1707                    * A6 = [0,Z]                                                             *
+    1708                    * A14 = [0:#START;#RAND,OID]                                             *
+    1709                    *       TYPES:                                                           *
+    1710                    *               0 = HORIZONTAL                                           *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   41
+
+    1711                    *               1 = VERTICAL                                             *
+    1712                    *                                                                        *
+    1713                    **************************************************************************
+    1714 00008770           GOLDCOLD
+    1715 00008770     098f          MMTM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00008780     c732  
+    1716 00008790     099f          MMTM    SP,B0,B1
+         000087a0     c000  
+    1717 000087b0     4ccb          MOVE    A6,A11  
+    1718 000087c0     4caa          MOVE    A5,A10                          
+    1719 000087d0     54a6          OR      A5,A6
+    1720 000087e0     cb02          JRNZ    GOLDPOSG                ;WE GOT US A POSITION
+    1721 000087f0     1825          MOVK    1,A5                    ;FLAG RANDOM POSITION(S)
+    1722 00008800     c001          JRUC    GOLDDOIT
+    1723 00008810           GOLDPOSG
+    1724 00008810     56a5          CLR     A5                      ;FLAG CONSTANT POSITION(S)
+    1725 00008820           GOLDDOIT
+    1726 00008820     4dc6          MOVE    A14,A6
+    1727 00008830     2506          SLL     8,A6
+    1728 00008840     2c86          SRL     28,A6                   ;GRAB # TO START
+    1729 00008850     4dc0          MOVE    A14,A0
+    1730 00008860     2580          SLL     12,A0
+    1731 00008870     2c80          SRL     28,A0                   ;GRAB RANDOM # TO START
+    1732 00008880     ca04          JRZ     GOLDNORN                ;BR = NO RANDOM # TO START
+    1733 00008890     0d5f          CALLA   RANDU
+         000088a0 00000000! 
+    1734 000088c0     4006          ADD     A0,A6
+    1735 000088d0           GOLDNORN
+    1736 000088d0     4dc7          MOVE    A14,A7                  ;STORE THE TOTAL I.D. HERE
+    1737 000088e0     278e          SLL     28,A14
+    1738 000088f0     2d2e          SRL     23,A14
+    1739 00008900     0b2e          ADDI    GOLDITAB,A14
+         00008910 00008da0' 
+    1740 00008930     87ce          MOVE    *A14,A14,L
+    1741 00008940           GOLDLP
+    1742 00008940     4ca5          MOVE    A5,A5
+    1743 00008950     ca19          JRZ     GOLDCR                  ;BR = JUST CREATE WITH GIVEN POS.
+    1744 00008960     576b          CLR     A11                     ;OTHERWISE RANDOM [Y,X]
+    1745 00008970     05b0          MOVE    @PLYMIN,B0,W
+         00008980 00000000! 
+    1746 000089a0     05b1          MOVE    @PLYMAX,B1,W
+         000089b0 00000000! 
+    1747 000089d0     1411          SUBK    32,B1
+    1748 000089e0     0d5f          CALLA   RANGRAND
+         000089f0 00000000! 
+    1749 00008a10     2600          SLL     16,A0
+    1750 00008a20     ee0a          MOVY    A0,A10
+    1751 00008a30     09d0          MOVI    512,B0
+         00008a40     0200  
+    1752 00008a50     4c11          MOVE    B0,B1
+    1753 00008a60     2431          SLL     1,B1
+    1754 00008a70     0d5f          CALLA   RANGRAND
+         00008a80 00000000! 
+    1755 00008aa0     ec0a          MOVX    A0,A10
+    1756 00008ab0     07a0          MOVE    @WORLDTL,A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   42
+
+         00008ac0 00000000! 
+    1757 00008ae0     e00a          ADDXY   A0,A10                  ;OFFSET TO THE CURRENT WORLD
+    1758 00008af0           GOLDCR
+    1759 00008af0     4fc0          MOVE    A14,B0
+    1760 00008b00     0d5f          CALLA   GPALOBJ                 ;GET US AN OBJECT
+         00008b10 00000000! 
+    1761 00008b30     ca1e          JRZ     GOLDCRD                 ;NO LUCK CHEESE BALL
+    1762 00008b40     0d5f          CALLA   STFOBJ                  ;STUFF IT UP DUDE
+         00008b50 00000000! 
+    1763 00008b70     b0e0          MOVE    A7,*A0(OID),W           ;STUFF THE GIVEN I.D.
+         00008b80     01a0  
+    1764 00008b90     57ce          CLR     A14
+    1765 00008ba0     ed4e          MOVX    A10,A14
+    1766 00008bb0     b1c0          MOVE    A14,*A0(OXPOS),W
+         00008bc0     0090  
+    1767 00008bd0     ef4e          MOVY    A10,A14
+    1768 00008be0     2e0e          SRL     16,A14
+    1769 00008bf0     b1c0          MOVE    A14,*A0(OYPOS),W
+         00008c00     00b0  
+    1770 00008c10     4d6b          MOVE    A11,A11
+    1771 00008c20     ca03          JRZ     GOLDSETZ
+    1772 00008c30     b160          MOVE    A11,*A0(OZPOS),W
+         00008c40     00d0  
+    1773 00008c50     c003          JRUC    GOLDGO
+    1774 00008c60           GOLDSETZ
+    1775 00008c60     0d5f          CALLA   SETZPOS
+         00008c70 00000000! 
+    1776 00008c90           GOLDGO
+    1777 00008c90     09e1          MOVI    BOOTY,A1
+         00008ca0 00000000! 
+    1778 00008cc0     0d5f          CALLA   INSOBJ
+         00008cd0 00000000! 
+    1779 00008cf0     0d5f          CALLA   ADDSUPP                 ;O.K. HERE IT IS
+         00008d00 00000000! 
+    1780 00008d20           GOLDCRD
+    1781 00008d20     4e1e          MOVE    B0,A14
+    1782 00008d30     0d86          DSJ     A6,GOLDLP       
+         00008d40     ffbf  
+    1783 00008d50     09bf          MMFM    SP,B0,B1
+         00008d60     0003  
+    1784 00008d70     09af          MMFM    SP,A0,A1,A5,A6,A7,A10,A11,A14
+         00008d80     4ce3  
+    1785 00008d90     0960          RETS
+    1786                    
+    1787                    *GOLD BAR INIT TAB PTR TABLE
+    1788 00008da0           GOLDITAB
+    1789 00008da0 00008de0'         .LONG   GLDHINIT,GLDVINIT
+    1790                    
+    1791 00008de0           GLDHINIT
+    1792 00008de0 00000000          .LONG   0,0,0,0                                  
+    1793 00008e60     0000          .WORD   0,0                                                      
+    1794 00008e80 00000000!         .LONG   goldbr1,GOLDHZ,GOLDCOLL                                  
+    1795 00008ee0     8002          .WORD   DMAWNZ,GOLDOID
+    1796 00008f00 00000000          .LONG   0
+    1797                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   43
+
+    1798 00008f20           GLDVINIT
+    1799 00008f20 00000000          .LONG   0,0,0,0                                  
+    1800 00008fa0     0000          .WORD   0,0                                                      
+    1801 00008fc0 00000000!         .LONG   goldbr2,GOLDVZ,GOLDCOLL                                  
+    1802 00009020     8002          .WORD   DMAWNZ,GOLDOID
+    1803 00009040 00000000          .LONG   0
+    1804                    
+    1805                    *
+    1806                    *"SAFE" CARD ANIMATION SCRIPTS
+    1807                    *
+    1808 00009060           CARDSAN
+    1809 00009060 00000000!         .LONG   SILVcard
+    1810 00009080     0001          .WORD   1
+    1811 00009090 00000000          .LONG   0
+    1812 000090b0           CARDRAN
+    1813 000090b0 00000000!         .LONG   REDcard
+    1814 000090d0     0001          .WORD   1
+    1815 000090e0 00000000          .LONG   0
+    1816 00009100           CARDBAN
+    1817 00009100 00000000!         .LONG   BLUEcard
+    1818 00009120     0001          .WORD   1
+    1819 00009130 00000000          .LONG   0
+    1820 00009150           CARDGAN
+    1821 00009150 00000000!         .LONG   GOLDcard
+    1822 00009170     0001          .WORD   1
+    1823 00009180 00000000          .LONG   0
+    1824 000091a0           CARDGRAN
+    1825 000091a0 00000000!         .LONG   GREENcard
+    1826 000091c0     0001          .WORD   1
+    1827 000091d0 00000000          .LONG   0
+    1828                    
+    1829                    *
+    1830                    *COLLISION LISTS
+    1831 000091f0           GOLDCOLL
+    1832 000091f0     1000          .WORD   P1OID
+    1833 00009200 00001e20'         .LONG   GOLDCOL0
+    1834 00009220     2000          .WORD   P2OID
+    1835 00009230 00001e20'         .LONG   GOLDCOL0
+    1836 00009250     0000          .WORD   0
+    1837 00009260 00000000!         .LONG   DUMRTSG
+    1838 00009280           MONYCOLL
+    1839 00009280     0b12          .WORD   B1OID|EXPLODID
+    1840 00009290 00005a20'         .LONG   LOOTXCOL
+    1841 000092b0     0b22          .WORD   B2OID|EXPLODID
+    1842 000092c0 00005a20'         .LONG   LOOTXCOL
+    1843 000092e0     0be2          .WORD   BEOID|EXPLODID
+    1844 000092f0 00005a20'         .LONG   LOOTXCOL
+    1845 00009310     0c30          .WORD   TRAN1OID|CBODYID
+    1846 00009320 00002040'         .LONG   MONPCAR
+    1847 00009340     0c40          .WORD   TRAN2OID|CBODYID
+    1848 00009350 00002040'         .LONG   MONPCAR
+    1849 00009370     0c42          .WORD   TRAN2OID|WSHLDID
+    1850 00009380 00002080'         .LONG   MONPART
+    1851 000093a0     1000          .WORD   P1OID
+    1852 000093b0 00001f30'         .LONG   MONCOL0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   44
+
+    1853 000093d0     2000          .WORD   P2OID
+    1854 000093e0 00001f30'         .LONG   MONCOL0
+    1855 00009400     0000          .WORD   0
+    1856 00009410 00000000!         .LONG   DUMRTSG
+    1857 00009430           DOPECOLL
+    1858 00009430     0b12          .WORD   B1OID|EXPLODID
+    1859 00009440 00005a20'         .LONG   LOOTXCOL
+    1860 00009460     0b22          .WORD   B2OID|EXPLODID
+    1861 00009470 00005a20'         .LONG   LOOTXCOL
+    1862 00009490     0be2          .WORD   BEOID|EXPLODID
+    1863 000094a0 00005a20'         .LONG   LOOTXCOL
+    1864 000094c0     1000          .WORD   P1OID
+    1865 000094d0 00002bb0'         .LONG   DOPECOL0
+    1866 000094f0     2000          .WORD   P2OID
+    1867 00009500 00002bb0'         .LONG   DOPECOL0
+    1868 00009520     0c30          .WORD   TRAN1OID|CBODYID
+    1869 00009530 000020c0'         .LONG   DRUGPCAR
+    1870 00009550     0c40          .WORD   TRAN2OID|CBODYID
+    1871 00009560 000020c0'         .LONG   DRUGPCAR
+    1872 00009580     0c42          .WORD   TRAN2OID|WSHLDID
+    1873 00009590 00002100'         .LONG   DRUGPART
+    1874 000095b0     0000          .WORD   0
+    1875 000095c0 00000000!         .LONG   DUMRTSG
+    1876 000095e0           ROCKCOLL
+    1877 000095e0     0b12          .WORD   B1OID|EXPLODID
+    1878 000095f0 00005a20'         .LONG   LOOTXCOL
+    1879 00009610     0b22          .WORD   B2OID|EXPLODID
+    1880 00009620 00005a20'         .LONG   LOOTXCOL
+    1881 00009640     0be2          .WORD   BEOID|EXPLODID
+    1882 00009650 00005a20'         .LONG   LOOTXCOL
+    1883 00009670     1000          .WORD   P1OID
+    1884 00009680 00002cc0'         .LONG   ROCKCOL0
+    1885 000096a0     2000          .WORD   P2OID
+    1886 000096b0 00002cc0'         .LONG   ROCKCOL0
+    1887 000096d0     0c30          .WORD   TRAN1OID|CBODYID
+    1888 000096e0 000021c0'         .LONG   ROCKPCAR
+    1889 00009700     0c40          .WORD   TRAN2OID|CBODYID
+    1890 00009710 000021c0'         .LONG   ROCKPCAR
+    1891 00009730     0c42          .WORD   TRAN2OID|WSHLDID
+    1892 00009740 00002200'         .LONG   ROCKPART
+    1893 00009760     0000          .WORD   0
+    1894 00009770 00000000!         .LONG   DUMRTSG
+    1895                    *
+    1896                    *AMMO CLIP COLLISION LIST
+    1897 00009790           CLIPCOLL
+    1898 00009790     0b12          .WORD   B1OID|EXPLODID
+    1899 000097a0 00005a20'         .LONG   LOOTXCOL
+    1900 000097c0     0b22          .WORD   B2OID|EXPLODID
+    1901 000097d0 00005a20'         .LONG   LOOTXCOL
+    1902 000097f0     0be2          .WORD   BEOID|EXPLODID
+    1903 00009800 00005a20'         .LONG   LOOTXCOL
+    1904 00009820     1000          .WORD   P1OID
+    1905 00009830 00002dd0'         .LONG   CLIPCOL0
+    1906 00009850     2000          .WORD   P2OID
+    1907 00009860 00002dd0'         .LONG   CLIPCOL0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   45
+
+    1908 00009880     0c30          .WORD   TRAN1OID|CBODYID
+    1909 00009890 00002140'         .LONG   CLIPPCAR
+    1910 000098b0     0c40          .WORD   TRAN2OID|CBODYID
+    1911 000098c0 00002140'         .LONG   CLIPPCAR
+    1912 000098e0     0c42          .WORD   TRAN2OID|WSHLDID
+    1913 000098f0 00002180'         .LONG   CLIPPART
+    1914 00009910     0000          .WORD   0
+    1915 00009920 00000000!         .LONG   DUMRTSG
+    1916                    *
+    1917                    *"SAFE" CARD COLLISION LIST
+    1918 00009940           CARDCOLL
+    1919 00009940     1000          .WORD   P1OID
+    1920 00009950 00002ee0'         .LONG   CARDCOL0
+    1921 00009970     2000          .WORD   P2OID
+    1922 00009980 00002ee0'         .LONG   CARDCOL0
+    1923 000099a0     0c30          .WORD   TRAN1OID|CBODYID
+    1924 000099b0 00002240'         .LONG   CARDPCAR
+    1925 000099d0     0c40          .WORD   TRAN2OID|CBODYID
+    1926 000099e0 00002240'         .LONG   CARDPCAR
+    1927 00009a00     0000          .WORD   0
+    1928 00009a10 00000000!         .LONG   DUMRTSG
+    1929                    *
+    1930                    *WEED PLANT COLLISION LIST
+    1931 00009a30           WEEDCOLL
+    1932 00009a30     1000          .WORD   P1OID
+    1933 00009a40 00002ff0'         .LONG   WEEDCOL0
+    1934 00009a60     2000          .WORD   P2OID
+    1935 00009a70 00002ff0'         .LONG   WEEDCOL0
+    1936 00009a90     0b12          .WORD   B1OID|EXPLODID
+    1937 00009aa0 00000000!         .LONG   CANEXCOL
+    1938 00009ac0     0b22          .WORD   B2OID|EXPLODID
+    1939 00009ad0 00000000!         .LONG   CANEXCOL
+    1940 00009af0     0be2          .WORD   BEOID|EXPLODID
+    1941 00009b00 00000000!         .LONG   CANEXCOL
+    1942 00009b20     0000          .WORD   0
+    1943 00009b30 00000000!         .LONG   DUMRTSG
+    1944                    *LOOTSKI
+    1945 00009b50 00000000! MONEY1  .LONG   GETCASH1
+    1946 00009b70     0003          .WORD   3
+    1947 00009b80                   LONGNULL
+    1948 00009ba0           MONEY2
+    1949 00009ba0 00000000!         .LONG   GETCASH2
+    1950 00009bc0     0003          .WORD   3
+    1951 00009bd0                   LONGNULL
+    1952                    
+    1953 00009bf0 00000000! ROCKF   .LONG   ROCKBIG
+    1954 00009c10     0003          .WORD   3
+    1955 00009c20                   LONGNULL
+    1956                    
+    1957 00009c40 00000000! CLIPF   .LONG   GETCLIP
+    1958 00009c60     0003          .WORD   3
+    1959 00009c70                   LONGNULL
+    1960                    
+    1961 00009c90 00000000! DOPE    .LONG   DOPE1
+    1962 00009cb0     0001          .WORD   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   46
+
+    1963 00009cc0                   LONGNULL
+    1964 00009ce0           DOPEHIT
+    1965 00009ce0 00000000!         .LONG   DOPE2
+    1966 00009d00     0008          .WORD   8
+    1967 00009d10 00000000!         .LONG   DOPE3
+    1968 00009d30     0008          .WORD   8
+    1969 00009d40 00000000!         .LONG   GETDOPE
+    1970 00009d60     0008          .WORD   8
+    1971 00009d70                   LONGNULL
+    1972                    *
+    1973                    *CARD SCANNER BLIPS
+    1974 00009d90           SILVBLIP
+    1975 00009d90 00009dd0'         .LONG   SILVBLP1,SILVBLP1
+    1976 00009dd0           SILVBLP1
+    1977 00009dd0     000b     .word    0BH,04H
+    1978 00009df0       00     .byte    000H,0B9H,050H,050H,050H,050H,050H,050H,050H,050H,050H
+    1979 00009e48       00     .byte    000H,050H,050H,050H,050H,050H,050H,050H,050H,050H,0B9H
+    1980 00009ea0       b9     .byte    0B9H,050H,050H,050H,050H,050H,050H,050H,050H,050H,000H
+    1981 00009ef8       50     .byte    050H,050H,050H,050H,050H,050H,050H,050H,050H,0B9H,000H
+    1982 00009f50                   .EVEN
+    1983 00009f50           REDBLIP
+    1984 00009f50 00009f90'         .LONG   REDBLP1,REDBLP1
+    1985 00009f90           REDBLP1
+    1986 00009f90     000b     .word    0BH,04H
+    1987 00009fb0       00     .byte    000H,0CEH,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H
+    1988 0000a008       00     .byte    000H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0CEH
+    1989 0000a060       ce     .byte    0CEH,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,000H
+    1990 0000a0b8       d5     .byte    0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0D5H,0CEH,000H
+    1991 0000a110                   .EVEN
+    1992 0000a110           BLUEBLIP
+    1993 0000a110 0000a150'         .LONG   BLUEBLP1,BLUEBLP1
+    1994 0000a150           BLUEBLP1
+    1995 0000a150     000b     .word    0BH,04H
+    1996 0000a170       00     .byte    000H,08CH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH
+    1997 0000a1c8       00     .byte    000H,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,08CH
+    1998 0000a220       8c     .byte    08CH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,000H
+    1999 0000a278       df     .byte    0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,0DFH,08CH,000H
+    2000 0000a2d0                   .EVEN
+    2001 0000a2d0           GOLDBLIP
+    2002 0000a2d0 0000a310'         .LONG   GOLDBLP1,GOLDBLP1
+    2003 0000a310           GOLDBLP1
+    2004 0000a310     000b     .word    0BH,04H
+    2005 0000a330       00     .byte    000H,0B1H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H
+    2006 0000a388       00     .byte    000H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0B1H
+    2007 0000a3e0       b1     .byte    0B1H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,000H
+    2008 0000a438       d9     .byte    0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0D9H,0B1H,000H
+    2009 0000a490                   .EVEN
+    2010 0000a490           GRNBLIP
+    2011 0000a490 0000a4d0'         .LONG   GRNBLP1,GRNBLP1
+    2012 0000a4d0           GRNBLP1
+    2013 0000a4d0     000b     .word    0BH,04H
+    2014 0000a4f0       00     .byte    000H,01AH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH
+    2015 0000a548       00     .byte    000H,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,01AH
+    2016 0000a5a0       1a     .byte    01AH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,000H
+    2017 0000a5f8       db     .byte    0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,0DBH,01AH,000H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:18:56 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- MONEY,DRUGS,GUNS & ROCKETS >>>                   PAGE   47
+
+    2018 0000a650                   .EVEN
+    2019                    
+    2020                            .END
+
+ No Errors,  No Warnings

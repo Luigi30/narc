@@ -1,0 +1,536 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCMISC.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L,T
+       5                            .MNOLIST
+       6                            .INCLUDE        \VIDEO\GSP.INC
+       7                            .INCLUDE        \VIDEO\SYS.INC
+       8                            .INCLUDE        \VIDEO\MACROS.HDR
+       9                            .INCLUDE        \VIDEO\MPROCEQU.ASM
+      10                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      11                            .INCLUDE        \VIDEO\DISPEQU.ASM
+      12                    
+      13 00000000                   .EVEN
+      14 00000000                   .TEXT
+      15                    **************************************************************************
+      16                    *                                                                        *
+      17                    * TABLE DRIVEN COLOR RAM PROCESSES                                       *
+      18                    *                                                                        *
+      19                    **************************************************************************
+      20                    *       1800F00(240)    -       RGB
+      21                    *       1800F10(241)    -       DECAY   
+      22                    *       1800F20(242)    -       BPR
+      23                    *       1800F30(243)    -       RGOLD
+      24                    *       1800F40(244)    -       LASER
+      25                    *       1800F50(245)    -       LASER FLASH
+      26                    *       1800F60(246)    -       BWHITE
+      27                    *       1800F70(247)    -       RWHITE  
+      28                    *       1800F80(248)    -       REDGLOW
+      29                    
+      30 00000000     0d3f  RGB     CALLR   TABDRIVE
+         00000010     0177  
+      31 00000020 00000070'         .LONG   RGBTAB,COLRTEMP+100H
+      32 00000060     0008          .WORD   8
+      33 00000070     0380  RGBTAB  .WORD   0380H,7000H,001CH,0FFFFH
+      34                    *
+      35 000000b0     0d3f  DECAY   CALLR   TABDRIVE
+         000000c0     016c  
+      36 000000d0 00000120'         .LONG   DCATAB,COLRTEMP+110H
+      37 00000110     0002          .WORD   2
+      38 00000120     001c  DCATAB  .WORD   001CH,001CH,011CH,021CH,031CH,039CH,239CH,2390H,2388H
+      39 000001b0     2380          .WORD   2380H,4300H,5280H,7180H,6180H,7080H,7000H,6000H,5000H
+      40 00000240     4000          .WORD   4000H,3000H,2000H,1000H,0FFFFH
+      41                    *
+      42 00000290     0d3f  BPR     CALLR   TABDRIVE
+         000002a0     014e  
+      43 000002b0 00000300'         .LONG   BPRTAB,COLRTEMP+120H
+      44 000002f0     0001          .WORD   1
+      45 00000300     001c  BPRTAB  .WORD   001CH,101CH,201CH,301CH,401CH,501CH,601CH,701CH,7010H
+      46 00000390     7010          .WORD   7010H,7008H,7008H,7000H,7000H,7008H,7008H,7010H,7010H
+      47 00000420     701c          .WORD   701CH,701CH,601CH,501CH,401CH,301CH,201CH,101CH,0FFFFH
+      48                    *
+      49 000004b0     0d3f  RGOLD   CALLR   TABDRIVE
+         000004c0     012c  
+      50 000004d0 00000520'         .LONG   RGTAB,COLRTEMP+130H
+      51 00000510     0006          .WORD   6
+      52 00000520     7000  RGTAB   .WORD   7000H,7000H,7280H,0FFFFH
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    2
+
+      53                    *
+      54 00000560     0d3f  LASER   CALLR   TABDRIVE
+         00000570     0121  
+      55 00000580 000005d0'         .LONG   COLTAB,COLRTEMP+140H
+      56 000005c0     0002          .WORD   2
+      57 000005d0     0380  COLTAB  .WORD   0380H,1380H,2380H,3380H,4380H,5380H,6380H,7380H,7300H
+      58 00000660     7280          .WORD   7280H,7200H,7180H,7080H,7008H,7008H,7010H,7010H,701CH
+      59 000006f0     701c          .WORD   701CH,601CH,501CH,409CH,309CH,209CH,219CH,029CH,039CH
+      60 00000780     139c          .WORD   139CH,239CH,339CH,539CH,739CH,7390H,7380H,6380H,4380H
+      61 00000810     ffff          .WORD   0FFFFH
+      62                    
+      63                    *
+      64                    *LASER FLASH
+      65                    *
+      66 00000820     09c0  LFLASH  MOVI    07FFFH,A0
+         00000830     7fff  
+      67 00000840     0580          MOVE    A0,@COLRTEMP+150H,W
+         00000850 00000150! 
+      68 00000870                   SLEEP   2
+      69 000008b0           LFLASH1
+      70 000008b0     05a0          MOVE    @RAND,A0,W
+         000008c0 00000000! 
+      71 000008e0     0b80          ANDI    0000001FH,A0
+         000008f0 ffffffe0  
+      72 00000910     09e1          MOVI    COLTAB,A1
+         00000920 000005d0' 
+      73 00000940     2480          SLL     4,A0
+      74 00000950     4001          ADD     A0,A1
+      75 00000960     8421          MOVE    *A1,A1,W
+      76 00000970     0581          MOVE    A1,@COLRTEMP+150H,W
+         00000980 00000150! 
+      77 000009a0                   SLEEP   6
+      78 000009e0     c0e3          JRUC    LFLASH
+      79                    
+      80                    *
+      81                    *CYCLE SPECTRUM
+      82                    *
+      83 000009f0           CYCSPECT
+      84 000009f0     09e8          MOVI    COLTAB,A8
+         00000a00 000005d0' 
+      85 00000a20           CYCSPEC1
+      86 00000a20     9500          MOVE    *A8+,A0,W       ;GET A COLOR
+      87 00000a30     cefb          JRN     CYCSPECT        ;OUT OF COLORS
+      88 00000a40     09e1          MOVI    COLRTEMP,A1
+         00000a50 00000000! 
+      89 00000a70     4c22          MOVE    A1,A2
+      90 00000a80     1202          ADDK    16,A2           ;A2 = NEXT COLOR 
+      91 00000a90     19e3          MOVK    15,A3
+      92 00000aa0           CYCSUCK
+      93 00000aa0     9841          MOVE    *A2+,*A1+,W     ;CYCLE DOWN ONE
+      94 00000ab0     3c43          DSJS    A3,CYCSUCK
+      95 00000ac0     8001          MOVE    A0,*A1          ;SHIFT IN WALLY NEW GUY
+      96 00000ad0                   SLOOP   2,CYCSPEC1
+      97                            
+      98 00000b40     0d3f  BWHITE  CALLR   TABDRIVE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    3
+
+         00000b50     00c3  
+      99 00000b60 00000bb0'         .LONG   BWTAB,COLRTEMP+160H
+     100 00000ba0     0006          .WORD   6
+     101 00000bb0     001f  BWTAB   .WORD   1FH,1FH,7FFFH,0FFFFH
+     102                    
+     103 00000bf0           RWHITE
+     104 00000bf0     0d3f          CALLR   TABDRIVE
+         00000c00     00b8  
+     105 00000c10 00000c60'         .LONG   RWTAB,COLRTEMP+170H
+     106 00000c50     0006          .WORD   6
+     107                    **CBTAB
+     108 00000c60     7c00  RWTAB   .WORD   7C00H,7C00H,7FFFH,0FFFFH
+     109                    ****    .WORD   (17*32)+19,(17*32)+31,(20*32)+24,(15*1024)+(20*32)+24
+     110                    ****    .WORD   (10*32)+31,31,0FFFFH
+     111                    
+     112 00000ca0           REDGLOW
+     113 00000ca0     0d3f          CALLR   TABDRIVE
+         00000cb0     00ad  
+     114 00000cc0 00000d10'         .LONG   RGLOWTAB,COLRTEMP+180H
+     115 00000d00     0002          .WORD   2
+     116 00000d10           RGLOWTAB
+     117 00000d10     1c00          .WORD   (7*32*32),(8*32*32),(9*32*32),(10*32*32)
+     118 00000d50     2c00          .WORD   (11*32*32),(12*32*32),(13*32*32),(14*32*32),(15*32*32)
+     119 00000da0     4000          .WORD   (16*32*32),(17*32*32),(18*32*32),(19*32*32),(20*32*32)
+     120 00000df0     5400          .WORD   (21*32*32),(22*32*32),(23*32*32),(24*32*32),(25*32*32)
+     121 00000e40     6800          .WORD   (26*32*32),(27*32*32),(28*32*32),(29*32*32),(30*32*32)
+     122 00000e90     7c00          .WORD   (31*32*32),(31*32*32),(31*32*32),(31*32*32),(31*32*32)
+     123 00000ee0     7400          .WORD   (29*32*32),(27*32*32),(25*32*32),(23*32*32)
+     124 00000f20     5400          .WORD   (21*32*32),(19*32*32),(17*32*32),(15*32*32),(13*32*32)
+     125 00000f70     2c00          .WORD   (11*32*32),(9*32*32)
+     126 00000f90     ffff          .WORD   0FFFFH
+     127                    
+     128                    *CYCLE THE SEVEN SEGMENT DISPLAY AT A ONE SECOND INTERVAL
+     129 00000fa0           SEG7CYCL
+     130 00000fa0     09e8          MOVI    NUMTAB,A8
+         00000fb0 00001150' 
+     131 00000fd0           SEG7C1
+     132 00000fd0     9500          MOVE    *A8+,A0,W
+     133 00000fe0     cafb          JREQ    SEG7CYCL
+     134 00000ff0     01e0          PUSHST
+     135 00001000     0360          DINT
+     136 00001010     05a1          MOVE    @SYSCOPY,A1,W
+         00001020 00000000! 
+     137 00001040     2701          SLL     24,A1
+     138 00001050     2d01          SRL     24,A1
+     139 00001060     5401          OR      A0,A1
+     140 00001070     0581          MOVE    A1,@SYSCOPY,W   
+         00001080 00000000! 
+     141 000010a0     0581          MOVE    A1,@SYSCTRL,W
+         000010b0 01f00000  
+     142 000010d0     01c0          POPST
+     143 000010e0                   SLOOP   7H,SEG7C1
+     144                    
+     145 00001150     0300  NUMTAB  .WORD   SEG70,SEG71,SEG72,SEG73,SEG74,SEG75,SEG76,SEG77,SEG78,SEG79
+     146 000011f0     ff00          .WORD   0FF00H,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    4
+
+     147                    **************************************************************************
+     148                    *                                                                        *
+     149                    * COLRSTRT - START THE COLOR RAM PROCESSES                               *
+     150                    *                                                                        *
+     151                    **************************************************************************
+     152 00001210           COLRSTRT
+     153 00001210     09c0          MOVI    COLRPID,A0
+         00001220     20cc  
+     154 00001230     5621          CLR     A1
+     155 00001240     03e1          NOT     A1
+     156 00001250     0d5f          CALLA   KILALL
+         00001260 00000000! 
+     157 00001280                   CREATE  COLRPID,LASER
+     158 00001300                   CREATE  COLRPID,RGOLD
+     159 00001380                   CREATE  COLRPID,LFLASH
+     160 00001400                   CREATE  COLRPID,RGB
+     161 00001480                   CREATE  COLRPID,BPR
+     162 00001500                   CREATE  COLRPID,DECAY
+     163                    ****    CREATE  COLRPID,SEG7CYCL
+     164 00001580                   CREATE  COLRPID,BWHITE
+     165 00001600                   CREATE  COLRPID,RWHITE
+     166 00001680                   CREATE  COLRPID,REDGLOW
+     167 00001700                   CREATE  COLRPID,CYCSPECT
+     168 00001780     0960          RETS
+     169                    
+     170                    **************************************************************************
+     171                    *                                                                        *
+     172                    * THE TABLE DRIVEN PROCESS                                               *
+     173                    *                                                                        *
+     174                    **************************************************************************
+     175 00001790           TABDRIVE
+     176 00001790     97e0          MOVE    *SP+,A0,L
+     177 000017a0     960b          MOVE    *A0+,A11,L      ;A11 = TABLE START
+     178 000017b0     9609          MOVE    *A0+,A9,L       ;A9 = LOCATION TO STUFF COLOR
+     179 000017c0     840a          MOVE    *A0,A10,W       ;A10 = SLEEP TIME
+     180 000017d0           TABDRV1
+     181 000017d0     4d68          MOVE    A11,A8          ;RESET TO START OF TABLE
+     182 000017e0           TABDRV2
+     183 000017e0     9500          MOVE    *A8+,A0,W       ;GET A COLOR
+     184 000017f0     cefd          JRN     TABDRV1         ;BR = END OF TABLE
+     185 00001800     8009          MOVE    A0,*A9,W
+     186 00001810     4d40          MOVE    A10,A0
+     187 00001820     09e7          MOVI    TABDRV2,A7
+         00001830 000017e0' 
+     188 00001850     c080          JAUC    PRCLSP          ;LOOP SLEEP
+         00001860 00000000! 
+     189                    
+     190                    **************************************************************************
+     191                    *                                                                        *
+     192                    * LINE - DRAW A STRAIGHT LINE 1 PIXEL THICK BETWEEN TWO POINTS           *
+     193                    * A0 = COLOR MAP SELECT                                                  *
+     194                    * A1 = DRAW COLOR                                                        *
+     195                    * A2 = [Y1,X1]                                                           *
+     196                    * A3 = [Y2,X2]                                                           *
+     197                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    5
+
+     198                    **************************************************************************
+     199 00001880           LINE:
+     200 00001880     01e0          PUSHST
+     201 00001890     0360          DINT
+     202 000018a0     099f          MMTM    SP,B0,B1,B2,B3,B4,B7,B8,B10,B11,B12,B13,B14
+         000018b0     f9be  
+     203 000018c0     4e29          MOVE    A1,B9
+     204 000018d0     4e42          MOVE    A2,B2
+     205 000018e0     4e6a          MOVE    A3,B10
+     206 000018f0           LINEDMAW
+     207 000018f0     05b0          MOVE    @DMACTRL,B0,W
+         00001900 01a80000  
+     208 00001920     0510          SEXT    B0                      ;CHECK DMA STATUS
+     209 00001930     cefb          JRN     LINEDMAW                ;BR = DMA IS BUSY, SO WAIT
+     210                    
+     211 00001940     0580          MOVE    A0,@CMAPSEL,W           ;SELECT CORRECT COLOR MAP
+         00001950 01a80080  
+     212                    
+     213 00001970     09d4          MOVI    OFFSETVAL,B4            ;Set up OFFSET register
+         00001980     0000  
+     214 00001990     09d8          MOVI    0,B8                    ;Set background color
+         000019a0     0000  
+     215 000019b0     09d0          MOVI    SCRN_PTCH,B0            ;Get Screen Pitch
+         000019c0     1000  
+     216 000019d0     4c11          MOVE    B0,B1
+     217 000019e0     4c13          MOVE    B0,B3
+     218 000019f0     6a10          LMO     B0,B0                   ;Convert in temporary register
+     219 00001a00     0590          MOVE    B0,@CONVSP,W            ;Move to CONVSP io register
+         00001a10 c0000130  
+     220 00001a30     0590          MOVE    B0,@CONVDP,W            ;Move to CONVDP io register
+         00001a40 c0000140  
+     221                    
+     222                    * Determine which octant line is in, and set up accordingly.
+     223 00001a60     56f7          CLR     B7
+     224 00001a70     e25a          SUBXY   B2,B10                  ; B10 = (y1-y0,x1-x0) = (b,a)
+     225 00001a80                   JRYEQ   horiz                   ; jump if y1 = y2
+     226 00001a90                   JRXEQ   vert                    ; jump if x1 = x2
+     227 00001aa0                   JRYGE   bpos                    ; jump if y1 < y2
+     228 00001ab0                   JRXGE   bneg_apos               ; jump if x1 < x2
+     229                    
+     230 00001ac0           bneg_aneg:
+     231 00001ac0     e357          SUBXY   B10,B7                  ; B7 = (|b|,|a|)
+     232 00001ad0     09db          MOVI    -1,B11                  ; B11 = (-1,-1)
+         00001ae0     ffff  
+     233 00001af0     c011          JRUC    cmp_b_a
+     234 00001b00           bneg_apos:
+     235 00001b00     e357          SUBXY   B10,B7
+     236 00001b10     ed57          MOVX    B10,B7                  ; B7 = (|b|,|a|)
+     237 00001b20     09fb          MOVI    0FFFF0001H,B11          ; B11 = (-1,1)
+         00001b30 ffff0001  
+     238 00001b50     c00b          JRUC    cmp_b_a
+     239 00001b60           bpos:   
+     240 00001b60                   JRXGE   bpos_apos
+     241 00001b70           bpos_aneg:
+     242 00001b70     e357          SUBXY   B10,B7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    6
+
+     243 00001b80     ef57          MOVY    B10,B7                  ; B7 = (|b|,|a|)
+     244 00001b90     09fb          MOVI    00001FFFFH,B11          ; B11 = (1,-1)
+         00001ba0 0001ffff  
+     245 00001bc0     c004          JRUC    cmp_b_a
+     246 00001bd0           bpos_apos:  
+     247 00001bd0     4d57          MOVE    B10,B7                  ; B7 = (|b|,|a|)
+     248 00001be0     09fb          MOVI    000010001H,B11          ; B11 = (1,1)
+         00001bf0 00010001  
+     249 00001c10           cmp_b_a:  
+     250 00001c10     579c          CLR     B12
+     251 00001c20     09dd          MOVI    -1,B13                  ; B13 = FFFFFFFF (set pattern to all 1's)
+         00001c30     ffff  
+     252 00001c40     4cf0          MOVE    B7,B0
+     253 00001c50     2e10          SRL     16,B0                   ; B0 = b
+     254 00001c60     575a          CLR     B10
+     255 00001c70     ecfa          MOVX    B7,B10                  ; B10 = a
+     256 00001c80     481a          CMP     B0,B10
+     257 00001c90     c70b          JRGT    a_ge_b
+     258 00001ca0           a_lt_b:   
+     259 00001ca0     4c1a          MOVE    B0,B10
+     260 00001cb0     ecf0          MOVX    B7,B0
+     261 00001cc0     3217          RL      16,B7                   ; a and b swapped
+     262 00001cd0     ef7c          MOVY    B11,B12
+     263 00001ce0     2430          SLL     1,B0
+     264 00001cf0     4550          SUB     B10,B0                  ; B0 = 2b - a
+     265 00001d00     103a          ADDK    1,B10
+     266                    * If drawing in +Y direction, use LINE 0.  Otherwise, use LINE 1.
+     267 00001d10     4d7b          MOVE    B11,B11                 ; if drawing in +Y direction, use LINE 0
+     268 00001d20     ce07          JRN     line1                   ; otherwise use LINE 1
+     269 00001d30           line0:
+     270 00001d30     df1a          LINE    0
+     271 00001d40     c016          JRUC    done
+     272                    
+     273 00001d50           a_ge_b:
+     274 00001d50     ed7c          MOVX    B11,B12
+     275 00001d60     2430          SLL     1,B0
+     276 00001d70     4550          SUB     B10,B0                  ; B0 = 2b - a
+     277 00001d80     4d7b          MOVE    B11,B11                 ; if drawing in -Y direction, use LINE 1
+     278 00001d90     cff9          JRNN    line0                   ; otherwise use LINE 0
+     279 00001da0           line1:
+     280 00001da0     df9a          LINE    1
+     281 00001db0     c00f          JRUC    done
+     282                    
+     283                    * Handle special case of horizontal line.
+     284 00001dc0           horiz:
+     285 00001dc0                   JRXEQ   pixel
+     286 00001dd0                   JRXGE   do_fill
+     287 00001de0     e152          ADDXY   B10,B2                  ; change start to (y1,x1)
+     288 00001df0     e357          SUBXY   B10,B7                  ; make dx positive
+     289 00001e00     4cfa          MOVE    B7,B10
+     290                    * Handle special case of vertical line.
+     291 00001e10           vert:
+     292 00001e10                   JRYGE   do_fill
+     293 00001e20     e152          ADDXY   B10,B2                  ; change start to (y1,x1)
+     294 00001e30     03ba          NEG     B10                     ; make dy positive
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    7
+
+     295                    * Draw horizontal or vertical line.
+     296 00001e40           do_fill:
+     297 00001e40     4d57          MOVE    B10,B7
+     298 00001e50     0b37          ADDI    010001H,B7              ; no check for dx or dy overflow
+         00001e60 00010001  
+     299 00001e80     0fe0          FILL    XY
+     300 00001e90     c001          JRUC    done
+     301                    * Draw dot if start and end points are the same.
+     302 00001ea0           pixel:
+     303 00001ea0     f792          DRAV    B12,B2
+     304                    * Restore registers and return.
+     305 00001eb0           done:
+     306 00001eb0     09bf          MMFM    SP,B0,B1,B2,B3,B4,B7,B8,B10,B11,B12,B13,B14
+         00001ec0     7d9f  
+     307 00001ed0     4dbd          MOVE    B13,B13
+     308 00001ee0     ca01          JRZ     DONESTAT
+     309 00001ef0     0901          TRAP    1                       ;RE-START THIS PUPPY
+     310 00001f00           DONESTAT
+     311 00001f00     01c0          POPST
+     312 00001f10     0960          RETS                            ; Return to calling routine
+     313                    
+     314                    ;=============================================================================
+     315                    ;
+     316                    ;CIRCLE routine
+     317                    ;
+     318                    ;       A0 = radius
+     319                    ;       A1 = center  (Y:X)
+     320                    ;       A6 = color
+     321                    ;       A7 = routine
+     322                    ;
+     323 00001f20           CIRCLE:
+     324 00001f20     01e0          PUSHST
+     325 00001f30     0360          DINT
+     326 00001f40     098f          MMTM    SP,A0,A1,A2,A3,A5,A6,A8  ;save registers
+         00001f50     f680  
+     327 00001f60     099f          MMTM    SP,B3,B7,B9,B10,B11,B12,B13,B14
+         00001f70     117e  
+     328                    
+     329 00001f80     0550          SETF    16,0,0
+     330 00001f90     09d3          MOVI    SCRN_PTCH,B3            ; Restore screen pitch and convdp
+         00001fa0     1000  
+     331 00001fb0     09da          MOVI    013H,B10                        ; THIS IS FASTER
+         00001fc0     0013  
+     332 00001fd0     059a          MOVE    B10,@CONVDP
+         00001fe0 c0000140  
+     333 00002000     4ec9          MOVE    A6,B9
+     334 00002010     09f7          MOVI    Y,B7                    ; Y width always 1
+         00002020 00010000  
+     335 00002040     09da          MOVI    W,B10
+         00002050     0000  
+     336 00002060     059a          MOVE    B10,@CONTROL
+         00002070 c00000b0  
+     337                    
+     338                    ;       x = A2
+     339                    ;       y = A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    8
+
+     340                    ;       d = A4
+     341                    ;       y:x = A5
+     342                    
+     343 00002090     5642          clr     A2                      ; x = 0
+     344 000020a0     4c03          move    a0,a3                   ; y = r
+     345 000020b0     4c04          move    a0,a4
+     346 000020c0     2424          sll     1,a4
+     347 000020d0     1464          subk    3,a4
+     348 000020e0     03a4          neg     a4                      ; d = 3 - 2*r
+     349 000020f0           cloop:
+     350 000020f0     4862          cmp     a3,a2                   ; if x > y, we are done
+     351 00002100     c70e          jrgt    cdone
+     352 00002110     0927          call    a7                      ; plot routine
+     353 00002120     4c45          move    a2,a5                   ; x -> a5
+     354 00002130     1c04          btst    31,a4
+     355 00002140     ca03          jrz     dpos                    ; branch if d is positive
+     356                    ;                       d negative
+     357 00002150     2445          sll     2,a5                    ; 4*x -> a5
+     358 00002160     10c5          addk    6,a5                    ; 4*x+6 -> a5
+     359 00002170     c004          jruc    cont
+     360                    ;                       d positive
+     361 00002180           dpos:           
+     362 00002180     4465          sub     a3,a5                   ; x-y -> a5
+     363 00002190     2445          sll     2,a5                    ; 4*(x-y) -> a5
+     364 000021a0     1145          addk    10,a5                   ; 4*(x-y)+10 -> a5
+     365 000021b0     1423          subk    1,a3                    ; y = y - 1
+     366                    
+     367 000021c0           cont:
+     368 000021c0     40a4          add     a5,a4                   ; d = d + a5
+     369 000021d0     1022          addk    1,a2                    ; x = x + 1
+     370 000021e0     c0f0          jruc    cloop
+     371                    
+     372 000021f0           cdone:
+     373 000021f0     09bf          MMFM    SP,B3,B7,B9,B10,B11,B12,B13,B14
+         00002200     7e88  
+     374 00002210     09af          MMFM    SP,A0,A1,A2,A3,A5,A6,A8
+         00002220     016f  
+     375 00002230     01c0          POPST
+     376 00002240     0960          rets
+     377                    
+     378 00002250           plot8:
+     379 00002250     4c65          move    a3,a5
+     380 00002260     03a5          neg     a5                      ; -y into a5      +y in a3
+     381 00002270     2605          sll     16,a5
+     382 00002280     2603          sll     16,a3
+     383 00002290     ec45          movx    a2,a5                   ; a3 = (y:x)
+     384 000022a0     ec43          movx    a2,a3                   ; a5 = (-y:x)
+     385                    
+     386 000022b0     1848          movk    2,a8
+     387 000022c0           put4:
+     388 000022c0     4c20          move    a1,a0                   ; center (Y:X) in a0
+     389 000022d0     e060          addxy   a3,a0                   ; (cx+x),(cy+y)
+     390 000022e0     f0c0          pixt    a6,*a0.XY
+     391 000022f0     4c20          move    a1,a0                   ; center (Y:X) in a0
+     392 00002300     e0a0          addxy   a5,a0                   ; (cx+x),(cy-y)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:22 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC MISCELLANEOUS GARBAGE >>>                                  PAGE    9
+
+     393 00002310     f0c0          pixt    a6,*a0.XY
+     394 00002320     4c20          move    a1,a0                   ; center (Y:X) in a0
+     395 00002330     e260          subxy   a3,a0                   ; (cx-x),(cy-y)
+     396 00002340     f0c0          pixt    a6,*a0.XY
+     397 00002350     4c20          move    a1,a0                   ; center (Y:X) in a0
+     398 00002360     e2a0          subxy   a5,a0                   ; (cx-x),(cy+y)
+     399 00002370     f0c0          pixt    a6,*a0.XY
+     400 00002380     3203          rl      16,a3
+     401 00002390     3205          rl      16,a5                   ; transpose x and y     
+     402 000023a0     3de8          dsj     a8,put4
+     403 000023b0     2a03          sra     16,a3                   ; restore y
+     404 000023c0     0960          rets
+     405                    
+     406 000023d0           fill4:
+     407 000023d0     4e4a          move    a2,b10                  ; x
+     408 000023e0     243a          sll     1,b10                   ; 2x
+     409 000023f0     ed57          movx    b10,B7                  ; delta x = 2x
+     410 00002400     4c65          move    a3,a5
+     411 00002410     03a5          neg     a5                      ; -y into a5      +y in a3
+     412 00002420     2605          sll     16,a5
+     413 00002430     2603          sll     16,a3
+     414 00002440     ec45          movx    a2,a5                   ; a3 = (y:x)
+     415 00002450     ec43          movx    a2,a3                   ; a5 = (-y:x)
+     416 00002460     1848          movk    2,a8
+     417 00002470           put2:   
+     418 00002470     4c20          move    a1,a0
+     419 00002480     e2a0          subxy   a5,a0
+     420 00002490     4e02          move    a0,B2
+     421 000024a0     0fe0          fill    XY
+     422                    
+     423 000024b0     4c20          move    a1,a0
+     424 000024c0     e260          subxy   a3,a0
+     425 000024d0     4e02          move    a0,B2
+     426 000024e0     0fe0          fill    XY
+     427                    
+     428 000024f0     3203          rl      16,a3                   ; a3 = (x:y)
+     429 00002500     3205          rl      16,a5                   ; transpose x and y     
+     430 00002510     56c6          clr     a6
+     431 00002520     e2a6          subxy   a5,a6
+     432 00002530     4cc5          move    a6,a5                   ; a5 = (-x:y)
+     433 00002540     4e6a          move    a3,b10                  ; y
+     434 00002550     243a          sll     1,b10                   ; 2y
+     435 00002560     ed57          movx    b10,B7                  ; delta x = 2y
+     436 00002570     3e28          dsj     a8,put2
+     437 00002580     2a03          sra     16,a3                   ; restore y
+     438                            
+     439 00002590     0960          rets
+     440                    
+     441                            .END
+
+ No Errors,  No Warnings

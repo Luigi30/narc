@@ -1,4 +1,4 @@
- 	.FILE	'NARCRAMB.ASM'
+ 	.FILE	"NARCRAMB.ASM"
 	.TITLE	" <<< N  A  R  C  -- RAMBO >>>"
 
 **************************************************************************
@@ -75,7 +75,7 @@ RAMBFUNCS:
 	.long	BOOF
 	.long	GoDestV
 	.long	GetXVel
-	.long	>B000	;MaxXZAngle
+	.long	0B000H	;MaxXZAngle
 	.long	30	;FlipTiks
 ********************************************************************
 
@@ -90,7 +90,7 @@ BOOF:	jruc	$
 *	.WORD	OZPOS,OZVEL
 *	.LONG	OIMG,OZSIZ,OCVECT
 *	.WORD	OFLAGS,OID
-RAMBZSIZ	.set	>000C000C
+RAMBZSIZ	.set	0000C000CH
 LegsInit:
 	.LONG	0,0,0,0
 	.WORD	0,0
@@ -119,7 +119,7 @@ RAMBCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -172,7 +172,7 @@ CkPalX:
 RAMBO:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 	INCW	@SLPRAMBS
@@ -366,7 +366,7 @@ AnimRst:
 
 **************************************************************************
 DO_JUMP:
-	movi	->90000,A0
+	movi	-090000H,A0
 	move	A0,*A8(OYVEL),L
 
 	move	*A13(COLLOBJ),A0,L
@@ -394,7 +394,7 @@ RAMBFLY0:
 	jrgt	RAMBFLY1a
 	move	*A8(OYVEL),A0,L
 	jrp	RAMBFLY1a
-	addi	>C000,A0
+	addi	0C000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	RAMBFLY0
 RAMBFLY1a:
@@ -410,7 +410,7 @@ RAMBFLY1:
 	jrgt	RAMBFLY2a
 	move	*A8(OYVEL),A0,L
 	jrp	RAMBFLY2a
-	addi	>A000,A0
+	addi	0A000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	RAMBFLY1
 RAMBFLY2a:
@@ -422,7 +422,7 @@ RAMBFLY2:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>A000,A0
+	addi	0A000H,A0
 	move	A0,*A8(OYVEL),L
 	jrn	RAMBFLY2
 	calla	DFRMGRND
@@ -438,7 +438,7 @@ RAMBFLY4:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	DFRMGRND
 ;	subk	5,A1
@@ -702,7 +702,7 @@ SkDestDc:
 MoveSlp:
 	movb	*A13(FLIPTIKS),A1
 	jrz	SkFlipDc
-	andi	>FF,A1	;No o' this sign extended byte shit
+	andi	0FFH,A1	;No o' this sign extended byte shit
 	sub	A5,A1
 	jrp	SkClrFlp
 	clr	A1
@@ -789,18 +789,18 @@ GotZdivX:
 	move	A2,A2
 	jrn	RgtUDir
 ;**facing right and down
-	cmpi	>1665,A3	;ANG < 5 deg		
+	cmpi	01665H,A3	;ANG < 5 deg		
 	jrlt	Dir2
-	cmpi	>4498,A3	;ANG < 15 deg		
+	cmpi	04498H,A3	;ANG < 15 deg		
 	jrlt	Dir3
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	Dir4
 	jruc	Dir5
 RgtUDir:
 ;**facing right and up
-	cmpi	>1665,A3	;ANG < 5 deg		
+	cmpi	01665H,A3	;ANG < 5 deg		
 	jrlt	Dir2
-	cmpi	>4498,A3	;ANG < 15 deg		
+	cmpi	04498H,A3	;ANG < 15 deg		
 	jrlt	Dir1
 	jruc	Dir0
 
@@ -809,19 +809,19 @@ LftDir:
 	move	A2,A2
 	jrn	LftUDir
 ;**facing left and down
-	cmpi	>1665,A3	;ANG < 5 deg		
+	cmpi	01665H,A3	;ANG < 5 deg		
 	jrlt	Dir8
-	cmpi	>4498,A3	;ANG < 15 deg		
+	cmpi	04498H,A3	;ANG < 15 deg		
 	jrlt	Dir7
-	cmpi	>224FE,A3	;ANG < 65 deg		
+	cmpi	0224FEH,A3	;ANG < 65 deg		
 	jrlt	Dir6
 	jruc	Dir5
 
 LftUDir:
 ;**facing left and up
-	cmpi	>1665,A3	;ANG < 5 deg		
+	cmpi	01665H,A3	;ANG < 5 deg		
 	jrlt	Dir8
-	cmpi	>4498,A3	;ANG < 15 deg		
+	cmpi	04498H,A3	;ANG < 15 deg		
 	jrlt	Dir9
 	jruc	Dir10
 
@@ -877,30 +877,30 @@ SDIRTBL:
 	.long	SDir0,SDir1,SDir2,SDir3,SDir4,SDir5
 	.long	SDir6,SDir7,SDir8,SDir9,SDir10
 SDir5:
-	cmpi	>5ABD9,A3	;ANG > 80 deg
+	cmpi	05ABD9H,A3	;ANG > 80 deg
 	jrlt	SkShot
 	jruc	DoShot
 SDir2:
 SDir8:
-	cmpi	>1665,A3	;ANG < 4 deg
+	cmpi	01665H,A3	;ANG < 4 deg
 	jrgt	SkShot
 	jruc	DoShot
 SDir1:
 SDir3:
 SDir7:
 SDir9:
-	cmpi	>2AD7,A3	;6 deg < ANG < 14
+	cmpi	02AD7H,A3	;6 deg < ANG < 14
 	jrlt	SkShot
-	cmpi	>4235,A3
+	cmpi	04235H,A3
 	jrgt	SkShot
 	jruc	DoShot
 SDir0:
 SDir4:
 SDir6:
 SDir10:
-	cmpi	>2AD7,A3	;16 deg < ANG < 24
+	cmpi	02AD7H,A3	;16 deg < ANG < 24
 	jrlt	SkShot
-	cmpi	>4235,A3
+	cmpi	04235H,A3
 	jrgt	SkShot
 ;	jruc	DoShot
 
@@ -924,7 +924,7 @@ DoBodX:
 	rets
 
 ZEROX:
-	movi	>7FFFFFFF,A3
+	movi	07FFFFFFFH,A3
 	jruc	GotZdivX
 **************************************************************************
 
@@ -1087,9 +1087,9 @@ Charge:
 	SWAP	A8,A10
 	calla	FACEOBJ
 	SWAP	A8,A10
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	RANDU
-	subi	>10000,A0
+	subi	010000H,A0
 	move	A0,*A8(OZVEL),L
 	move	A0,*A8(OYVEL),L
 	rets
@@ -1110,10 +1110,10 @@ GetXVel:
 	jrge	NoXvel
 	cmpi	RUN,A9
 	jrge	IsRun
-	movi	WALKVEL+>1000,A0
+	movi	WALKVEL+01000H,A0
 	jruc	GotXvel
 IsRun:
-	movi	RUNVEL+>1000,A0
+	movi	RUNVEL+01000H,A0
 	jruc	GotXvel
 NoXvel:
 	clr	A0
@@ -1329,11 +1329,11 @@ CARCOL0
 	move	*A6(OXVEL),A0,L
 	move	*A8(OXVEL),A1,L
 	sub	A1,A0
-	cmpi	>70000,A0
+	cmpi	070000H,A0
 	jrlt	NotHurt
-	movi	>60000,A0
+	movi	060000H,A0
 	calla	RANDU
-	subi	>30000,A0
+	subi	030000H,A0
 	move	*A6(OXVEL),A1,L
 	sra	1,A1
 	move	A1,A2
@@ -1408,7 +1408,7 @@ SkWendie:
 *************************************************************************
 
 LFALSND
-	.WORD	>F000|EXPLOPRI+1,>18,>8007,>8016,0  ;MISSLE LARGE EXPLOSION
+	.WORD	0F000H|EXPLOPRI+1,018H,08007H,08016H,0  ;MISSLE LARGE EXPLOSION
 
 **************************************************************************
 BLOWUP:
@@ -1416,13 +1416,13 @@ BLOWUP:
 	calla	ONESND
 
 ;PROCESS TO BLOW RAMBO UP INTO AIR
-	movi	->A0000,A0
+	movi	-0A0000H,A0
 	move	A0,*A8(OYVEL),L
 
-	movi	>40000,A0
+	movi	040000H,A0
 	calla	SRAND
 	move	A0,*A8(OXVEL),L
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	SRAND
 	move	A0,*A8(OZVEL),L
 
@@ -1439,7 +1439,7 @@ RAMBBLW0:
 	jrgt	RAMBBLW1a
 	move	*A8(OYVEL),A0,L
 	jrp	RAMBBLW1a
-	addi	>5000,A0
+	addi	05000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	RAMBBLW0
 RAMBBLW1a:
@@ -1454,7 +1454,7 @@ RAMBBLW1:
 	jrgt	RAMBBLW2a
 	move	*A8(OYVEL),A0,L
 	jrp	RAMBBLW2a
-	addi	>5000,A0
+	addi	05000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	RAMBBLW1
 RAMBBLW2a:
@@ -1466,7 +1466,7 @@ RAMBBLW2:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>5000,A0
+	addi	05000H,A0
 	move	A0,*A8(OYVEL),L
 	jrn	RAMBBLW2
 	calla	DFRMGRND
@@ -1481,7 +1481,7 @@ RAMBBLW4:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>5000,A0
+	addi	05000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	DFRMGRND
 ;	subk	5,A1
@@ -1492,7 +1492,7 @@ RAMBBLW4:
 	move	A8,A0
 	calla	SETZPOS
 
-	movi	->48000,A0
+	movi	-048000H,A0
 	move	A0,*A8(OYVEL),L
 	clr	A0
 	movb	A0,*A13(ANIMTIKS)
@@ -1509,7 +1509,7 @@ SkBncAni:
 	calla	PRCSLP
 
 	move	*A8(OYVEL),A0,L
-	addi	>6000,A0
+	addi	06000H,A0
 	move	A0,*A8(OYVEL),L
 	jrn	BnceLp
 
@@ -1635,7 +1635,7 @@ BullOff:
 FLAMINIT:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	SFLAME,>0,DUMCOLL	;ZSIZ
+	.LONG	SFLAME,00H,DUMCOLL	;ZSIZ
 	.WORD	DMAWNZ,EFF0OID	;OBJ ID
 	.LONG	0
 **************************************************************************
@@ -1758,14 +1758,14 @@ BullXV0:
 	sll	4,A0
 	addi	BXVDTbl,A0
 	move	*A0,A0,W
-	movi	>E00,A3		;>E00 << 7  =  >70000
+	movi	0E00H,A3		;0E00H << 7  =  070000H
 	mpys	A0,A3
 	move	A3,A0
 	mmfm	SP,A3
 	rets
 BXVDTbl:
-	;>7f = 1 in .8 fmt, >78 = .94 = cos(20) in .8 fmt
-	.word	>78,>7E,>7F,>7E,>78,0,->78,->7E,->7F,->7E,->78
+	;07fH = 1 in .8 fmt, 078H = .94 = cos(20) in .8 fmt
+	.word	078H,07EH,07FH,07EH,078H,0,-078H,-07EH,-07FH,-07EH,-078H
 **************************************************************************
 
 **************************************************************************
@@ -1775,14 +1775,14 @@ BullZV0:
 	sll	4,A0
 	addi	BZVDTbl,A0
 	move	*A0,A0,W
-	movi	>E00,A3
+	movi	0E00H,A3
 	mpys	A0,A3
 	move	A3,A0
 	mmfm	SP,A3
 	rets
 BZVDTbl:
-	;>21 = .26 = sin(12) in .8 fmt
-	.word	->2C,->16,0,>16,>2C,>7F,>2C,>16,0,->16,->2C
+	;021H = .26 = sin(12) in .8 fmt
+	.word	-02CH,-016H,0,016H,02CH,07FH,02CH,016H,0,-016H,-02CH
 	rets
 **************************************************************************
 
@@ -1797,7 +1797,7 @@ BZVDTbl:
 BullInit:
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	RAMBBULL,>00020002,BullCol
+	.LONG	RAMBBULL,000020002H,BullCol
 	.WORD	DMAWNZ,BEOID
 	.LONG	0
 **************************************************************************
@@ -1817,9 +1817,9 @@ BigBull:
 	move	*A13(ETEMP1),*A8(OXVEL),L
 	move	*A13(ETEMP2),A1,L
 	move	A1,*A8(OYVEL),L
-	movi	>4000,A0
+	movi	04000H,A0
 	calla	RANDU
-	subi	>2000,A0
+	subi	02000H,A0
 	add	A0,A1
 	move	A1,*A8(OZVEL),L
 	move	*A13(ETEMP3),*A8(OXPOS),W
@@ -2076,8 +2076,8 @@ FTORSOS:
 
 
 WALKDIST	.set	9+13+16+11+6+7+17+8	
-WALKVEL	.set	>18000
-RUNVEL	.set	>38000
+WALKVEL	.set	018000H
+RUNVEL	.set	038000H
 MOVETBL:
 WALK:	  ;* sleep is 95% of delta
 ;	.long	legs1
@@ -2340,30 +2340,30 @@ RAMBPALS:
 
 grnram:	;PAL #0
 	.word	240	;pal size
-	.word >460,>460,>480,>480,>480,>480,>4A0,>4A1,>4A0,>4A1
-	.word >4A0,>4A0,>4C1,>4C1,>4C0,>4C1,>4E2,>4C0,>4E1,>4E2
-	.word >502,>CC0,>14A0,>14C0,>CE0,>14E0,>CE1,>CE1,>CE2,>14E1
-	.word >D02,>1500,>1501,>1502,>1522,>1501,>1502,>1521,>1522,>D03
-	.word >D03,>1503,>1523,>1503,>1523,>1543,>1544,>1565,>1CE0,>1D01
-	.word >1D01,>1D21,>1D21,>4061,>2500,>2521,>1D02,>1D22,>1D23,>1D24
-	.word >1D02,>1D22,>1D23,>2502,>2522,>2D22,>1D41,>1D42,>1D43,>1D43
-	.word >1D44,>1D44,>2542,>2542,>2D42,>2543,>2544,>2543,>2D44,>1D63
-	.word >1D64,>2563,>2564,>2563,>2564,>2584,>2D62,>2D63,>2D63,>2D64
-	.word >2D83,>2D84,>2DA4,>1D65,>1D65,>2565,>2566,>2585,>2D85,>2D85
-	.word >2D86,>25A7,>2DA6,>2DA7,>2DA6,>2DC6,>4CA2,>3542,>3562,>3583
-	.word >3583,>35A3,>3584,>3584,>3585,>35A4,>35A4,>35A6,>35A6,>60A2
-	.word >60E3,>5CE5,>5944,>6524,>5D46,>7483,>7103,>7D04,>74E6,>7CE6
-	.word >7527,>7D27,>35C5,>3DC4,>35C6,>3DE6,>35C7,>35E8,>3DE7,>3E07
-	.word >45C5,>3DE6,>45E6,>3DE7,>45E7,>4606,>4607,>4628,>4648,>4DE5
-	.word >55E5,>4DE7,>5607,>4E27,>4E48,>5627,>5668,>65E4,>6605,>5E26
-	.word >6646,>5E08,>6647,>5E68,>6668,>360A,>3E2A,>4629,>464A,>4E0A
-	.word >4E4A,>466A,>468C,>4E6A,>4E8A,>4E8B,>4EAB,>4E8C,>5DE9,>5E2A
-	.word >5E4A,>5669,>6669,>5E6B,>666B,>56AA,>5E8A,>6689,>668A,>66AA
-	.word >56AB,>56AB,>56AD,>66AB,>66AD,>4ECE,>56CC,>56CC,>5ECC,>5F0F
-	.word >5EEB,>5EEE,>5F0F,>66CB,>66CC,>66EE,>7ECD,>7ECF,>7ED1,>7EF1
-	.word >7F31,>6EF3,>7B13,>7ED3,>7F34,>7F54,>7FB5,>7F78,>7FBC,>7FF9
-	.word >7FFB,>7FFE,>7FFF,>2DE9,>5441,>6021,>6842,>7421,>7942,>7086
-	.word >6906,>7145,>6948,>7E68,>7F2E,>7F91,>7FD2,>4821,>5C64,>68C5
+	.word 0460H,0460H,0480H,0480H,0480H,0480H,04A0H,04A1H,04A0H,04A1H
+	.word 04A0H,04A0H,04C1H,04C1H,04C0H,04C1H,04E2H,04C0H,04E1H,04E2H
+	.word 0502H,0CC0H,014A0H,014C0H,0CE0H,014E0H,0CE1H,0CE1H,0CE2H,014E1H
+	.word 0D02H,01500H,01501H,01502H,01522H,01501H,01502H,01521H,01522H,0D03H
+	.word 0D03H,01503H,01523H,01503H,01523H,01543H,01544H,01565H,01CE0H,01D01H
+	.word 01D01H,01D21H,01D21H,04061H,02500H,02521H,01D02H,01D22H,01D23H,01D24H
+	.word 01D02H,01D22H,01D23H,02502H,02522H,02D22H,01D41H,01D42H,01D43H,01D43H
+	.word 01D44H,01D44H,02542H,02542H,02D42H,02543H,02544H,02543H,02D44H,01D63H
+	.word 01D64H,02563H,02564H,02563H,02564H,02584H,02D62H,02D63H,02D63H,02D64H
+	.word 02D83H,02D84H,02DA4H,01D65H,01D65H,02565H,02566H,02585H,02D85H,02D85H
+	.word 02D86H,025A7H,02DA6H,02DA7H,02DA6H,02DC6H,04CA2H,03542H,03562H,03583H
+	.word 03583H,035A3H,03584H,03584H,03585H,035A4H,035A4H,035A6H,035A6H,060A2H
+	.word 060E3H,05CE5H,05944H,06524H,05D46H,07483H,07103H,07D04H,074E6H,07CE6H
+	.word 07527H,07D27H,035C5H,03DC4H,035C6H,03DE6H,035C7H,035E8H,03DE7H,03E07H
+	.word 045C5H,03DE6H,045E6H,03DE7H,045E7H,04606H,04607H,04628H,04648H,04DE5H
+	.word 055E5H,04DE7H,05607H,04E27H,04E48H,05627H,05668H,065E4H,06605H,05E26H
+	.word 06646H,05E08H,06647H,05E68H,06668H,0360AH,03E2AH,04629H,0464AH,04E0AH
+	.word 04E4AH,0466AH,0468CH,04E6AH,04E8AH,04E8BH,04EABH,04E8CH,05DE9H,05E2AH
+	.word 05E4AH,05669H,06669H,05E6BH,0666BH,056AAH,05E8AH,06689H,0668AH,066AAH
+	.word 056ABH,056ABH,056ADH,066ABH,066ADH,04ECEH,056CCH,056CCH,05ECCH,05F0FH
+	.word 05EEBH,05EEEH,05F0FH,066CBH,066CCH,066EEH,07ECDH,07ECFH,07ED1H,07EF1H
+	.word 07F31H,06EF3H,07B13H,07ED3H,07F34H,07F54H,07FB5H,07F78H,07FBCH,07FF9H
+	.word 07FFBH,07FFEH,07FFFH,02DE9H,05441H,06021H,06842H,07421H,07942H,07086H
+	.word 06906H,07145H,06948H,07E68H,07F2EH,07F91H,07FD2H,04821H,05C64H,068C5H
 
 
 CRMRUN:	  ;* sleep is 45% of delta

@@ -1,4 +1,4 @@
-	.FILE	'NARC.ASM'
+	.FILE		"NARC.ASM"
 	.TITLE	" <<< N  A  R  C  -- 1.0  EPJ & GNP 8/1/87 >>>"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -39,11 +39,11 @@
 **************************************************************************
 
 *	GET THE SYSTEM STUFF
-	.INCLUDE	"\video\MPROCEQU.ASM"	;MPROC equates
-	.INCLUDE	"\video\DISPEQU.ASM"	;Display processor equates
-	.INCLUDE	"\video\GSP.INC"	;GSP assembler equates
-	.INCLUDE	"\video\SYS.INC"	;Zunit system equates
-	.INCLUDE	"\video\MACROS.HDR"	;Macros, Yeah!
+	.INCLUDE	"video\MPROCEQU.ASM"	;MPROC equates
+	.INCLUDE	"video\DISPEQU.ASM"	;Display processor equates
+	.INCLUDE	"video\GSP.INC"	;GSP assembler equates
+	.INCLUDE	"video\SYS.INC"	;Zunit system equates
+	.INCLUDE	"video\MACROS.HDR"	;Macros, Yeah!
 *	LOCAL STUFF
 	.INCLUDE	"NARCEQU.ASM"		;NARC Equates
 	.INCLUDE	"NARCAUDN.ASM"		;NARC Audit Equates
@@ -311,7 +311,7 @@ CLRPINIT
 *CLEAR SCRATCHPAD RAM
 	CLR	A0
 	MOVI	SCRATCH,A1,L
-	MOVI	>8000,A2,L	  	;CLEAR TWO AT A TIME
+	MOVI	8000H,A2,L	  	;CLEAR TWO AT A TIME
 SCTLP	MOVE	A0,*A1+,L
 	DSJS	A2,SCTLP
 	CALLA	PINIT	
@@ -624,7 +624,7 @@ GAME4STR
 GAMSTX
 	JAUC	SUCIDE
 *PLAYER INITIAL BUYIN START SOUND
-PLYINSND .WORD	>F400|>D0,>23,>80D0,0    	;HIGH PRIORITY "LET'S GO!"
+PLYINSND .WORD	0F400H|0D0H,023H,080D0H,0    	;HIGH PRIORITY "LET'S GO!"
 
 **************************************************************************
 *                                                                        *
@@ -1151,8 +1151,8 @@ CLRPLAY
 	CALLA	DMAQWAIT			;WAIT ON DMA
 	CLR	A1
 	MOVE	A1,@CMAPSEL,W			;SELECT COLOR MAP 0
-	MOVI	SCREEN+(SKYTOPOF*>1000),A1,L
-	MOVI	(SCRNE-(SCREEN+(SKYTOPOF*>1000)))/32,A2,L
+	MOVI	SCREEN+(SKYTOPOF*01000H),A1,L
+	MOVI	(SCRNE-(SCREEN+(SKYTOPOF*01000H)))/32,A2,L
 CLRPLP	MOVE	A0,*A1+,L
 	DSJS	A2,CLRPLP
 	MOVE	A3,@DISPLAYON,W
@@ -1274,7 +1274,7 @@ CLRGCARD
 
 *THE HIGH SCORE TO DATE TUNE
 HSTDTUNE
-	.WORD	>F3FD,>01,>4020,>4060,>8004,0
+	.WORD	0F3FDH,01H,4020H,4060H,8004H,0
 
 **************************************************************************
 *                                                                        *
@@ -1931,7 +1931,7 @@ CNTHOOKS
 
 *
 *SOUND FOR HOOKER BONUS COUNT
-HOOKSND .WORD	>F000|SPEAKPRI,45,>80BB,0	;oooOOOOooOH!
+HOOKSND .WORD	0F000H|SPEAKPRI,45,80BBH,0	;oooOOOOooOH!
 
 **************************************************************************
 *                                                                        *
@@ -3537,10 +3537,10 @@ SWTAB:
 
 * VIDEO CONTROL REGISTERS INITIAL VALUES
 INITDATA:
-    .word   01Ch		;>C0000000 -- hesync
-    .word   03Dh		;>C0000010 -- heblnk
-    .word   013Dh		;>C0000020 -- hsblnk
-    .word   0150h		;>C0000030 -- htotal
+    .word   01Ch		;0C0000000H -- hesync
+    .word   03Dh		;0C0000010H -- heblnk
+    .word   013Dh		;0C0000020H -- hsblnk
+    .word   0150h		;0C0000030H -- htotal
 
    .IF INTRLACE
     .WORD   0003H			; VESYNC
@@ -3556,25 +3556,25 @@ INITDATA:
     .WORD   0F010H			; DPYCTL
    .ENDIF
 
-    .word   0FFFCh		;>C0000090 -- dpystrt
-    .word   HSINT		;>C00000A0 -- dpyint * INITIALLY HALF SCREEN
-    .word   INI_CTRL		;>C00000B0 -- control
-    .word   00h			;>C00000C0 -- hstdata
-    .word   00h			;>C00000D0 -- hstadrl
-    .word   00h			;>C00000E0 -- hstadrh
-    .word   00h			;>C00000F0 -- hstctll
-    .word   00h			;>C0000100 -- hstctlh
-    .word   00h			;>C0000110 -- intenbl
-    .word   00h			;>C0000120 -- intpend
-    .word   00h			;>C0000130 -- convsp
-    .word   00h			;>C0000140 -- convdp
-    .word   PXSIZE		;>C0000150 -- psize
-    .word   00h			;>C0000160 -- pmask
-    .word   00h			;>C0000170 -- RESERVED
-    .word   00h			;>C0000180 -- RESERVED
-    .word   00h			;>C0000190 -- RESERVED
-    .word   00h			;>C00001A0 -- RESERVED
-    .word   00h			;>C00001B0 -- DPYTAP
+    .word   0FFFCh		;0C0000090H -- dpystrt
+    .word   HSINT		;0C00000A0H -- dpyint * INITIALLY HALF SCREEN
+    .word   INI_CTRL		;0C00000B0H -- control
+    .word   00h			;0C00000C0H -- hstdata
+    .word   00h			;0C00000D0H -- hstadrl
+    .word   00h			;0C00000E0H -- hstadrh
+    .word   00h			;0C00000F0H -- hstctll
+    .word   00h			;0C0000100H -- hstctlh
+    .word   00h			;0C0000110H -- intenbl
+    .word   00h			;0C0000120H -- intpend
+    .word   00h			;0C0000130H -- convsp
+    .word   00h			;0C0000140H -- convdp
+    .word   PXSIZE		;0C0000150H -- psize
+    .word   00h			;0C0000160H -- pmask
+    .word   00h			;0C0000170H -- RESERVED
+    .word   00h			;0C0000180H -- RESERVED
+    .word   00h			;0C0000190H -- RESERVED
+    .word   00h			;0C00001A0H -- RESERVED
+    .word   00h			;0C00001B0H -- DPYTAP
 IDATAEND:
 
 	.STRING	"NNAARRCC  CCOOPPYYRRIIGGHHTT  ((CC))  11998888  "

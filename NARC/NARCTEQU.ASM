@@ -49,10 +49,10 @@ GOOSETIK .set	ETEMP1+8	;hook
 FLIRTING .set	ETEMP1+16	;hook word
 
 ;* offsets into function tables
-GODEST		.set	>20
-GETXVEL		.set	>40
-MAXXZANGLE	.set	>60
-FLIPCT		.set	>80
+GODEST		.set	20H
+GETXVEL		.set	40H
+MAXXZANGLE	.set	60H
+FLIPCT		.set	80H
 
 TIKCTRS		.set	ETEMP2
 ANIMTIKS	.set	ETEMP2	 	;everyone

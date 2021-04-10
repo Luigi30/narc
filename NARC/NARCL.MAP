@@ -1,7 +1,7 @@
 *****************************************************
-GSP COFF Linker      , Version 3.00   
+TMS340 COFF Linker           Version 6.10
 *****************************************************
-Fri May 12 14:50:53 1989
+Sat Apr 10 02:20:25 2021
 
 OUTPUT FILE NAME:   <NARCL.REL>
 ENTRY POINT SYMBOL: 0
@@ -9,13 +9,13 @@ ENTRY POINT SYMBOL: 0
 
 MEMORY CONFIGURATION
 
-           name      origin     length     attributes
-         --------   --------   ---------   ----------
-         SCRATCH    01000000   000100000      RWIX
-         ROM        ffc00000   00033f000      RWIX
-         ROM2       fff4f000   000001000      RWIX
-         ROM3       fff50000   000010000      RWIX
-         TRAP31     fffffc00   000000400      RWIX
+           name      origin     length     attributes     fill
+         --------   --------   ---------   ----------   --------
+         SCRATCH    01000000   000100000      RWIX      
+         ROM        ffc00000   00033f000      RWIX      
+         ROM2       fff4f000   000001000      RWIX      
+         ROM3       fff50000   000010000      RWIX      
+         TRAP31     fffffc00   000000400      RWIX      
 
 
 SECTION ALLOCATION MAP
@@ -23,6 +23,12 @@ SECTION ALLOCATION MAP
  output                                  attributes/
 section   page    origin      length       input sections
 --------  ----  ----------  ----------   ----------------
+VECTORS    0    fffffc00    00000000     UNINITIALIZED
+
+POWERON    0    fff4f000    00000000     UNINITIALIZED
+
+DISPTEXT   0    fff50000    00000000     UNINITIALIZED
+
 FIXED      0    01000000    00000000     UNINITIALIZED
 
 OFIXED     0    01000000    00000000     UNINITIALIZED
@@ -40,205 +46,199 @@ NFIXED     0    01000000    00000000     UNINITIALIZED
 
 SYSWORK    0    01000180    00000000     UNINITIALIZED
 
-.text      0    ffc00000    00042210     
-                  ffc00000    00005cd0     NARCENT.OBJ (.text)
-                  ffc05cd0    00015800     NARCSPRY.OBJ (.text)
-                  ffc1b4d0    00004d90     NARCHSTD.OBJ (.text)
-                  ffc20260    00009ef0     NARCHELP.OBJ (.text)
-                  ffc2a150    000096b0     NARCTEST.OBJ (.text)
-                  ffc33800    0000a350     NARCMENU.OBJ (.text)
-                  ffc3db50    000046c0     NARCADJ.OBJ (.text)
+.text      0    ffc00000    00041f00     
+                  ffc00000    00005c90     NARCENT.OBJ (.text)
+                  ffc05c90    000157d0     NARCSPRY.OBJ (.text)
+                  ffc1b460    00004d30     NARCHSTD.OBJ (.text)
+                  ffc20190    00009e90     NARCHELP.OBJ (.text)
+                  ffc2a020    000095c0     NARCTEST.OBJ (.text)
+                  ffc335e0    0000a2a0     NARCMENU.OBJ (.text)
+                  ffc3d880    00004680     NARCADJ.OBJ (.text)
 
-.TEXT      0    ffc42210    00000000     UNINITIALIZED
+.TEXT      0    ffc41f00    00000000     UNINITIALIZED
 
-.data      0    ffc42210    00021fd0     
-                  ffc42210    00000200     NARCENT.OBJ (.data)
-                  ffc42410    00015dc0     NARCMENU.OBJ (.data)
-                  ffc581d0    0000c010     NARCADJ.OBJ (.data)
+.data      0    ffc41f00    00021fd0     
+                  ffc41f00    00000200     NARCENT.OBJ (.data)
+                  ffc42100    00015dc0     NARCMENU.OBJ (.data)
+                  ffc57ec0    0000c010     NARCADJ.OBJ (.data)
 
-.DATA      0    ffc641e0    00000000     UNINITIALIZED
+.DATA      0    ffc63ed0    00000000     UNINITIALIZED
 
-img_tbl    0    ffc641e0    00000000     UNINITIALIZED
+img_tbl    0    ffc63ed0    00000000     UNINITIALIZED
 
-SYSCODE    0    ffc641e0    00000000     UNINITIALIZED
+SYSCODE    0    ffc63ed0    00000000     UNINITIALIZED
 
-SYSDATA    0    ffc641e0    00000000     UNINITIALIZED
-
-POWERON    0    fff4f000    00000000     UNINITIALIZED
-
-DISPTEXT   0    fff50000    00000000     UNINITIALIZED
-
-VECTORS    0    fffffc00    00000000     UNINITIALIZED
+SYSDATA    0    ffc63ed0    00000000     UNINITIALIZED
 
 
 GLOBAL SYMBOLS
 
 address  name                             address  name
 -------- ----                             -------- ----
-ffc1d6c0 A2_CHECK                         00000003 ROM_LEV
+ffc1d5f0 A2_CHECK                         00000003 ROM_LEV
 UNDEFED  ACTIVE                           00000004 RTR_LEV
-ffc28450 ADD_DUMP                         00000009 G1SEL
-ffc26000 ADJ_PAGE                         0000000d F1SEL
-ffc1b4d0 ALL_TAB                          00000033 CS_ENTS
+ffc28330 ADD_DUMP                         00000009 G1SEL
+ffc25f00 ADJ_PAGE                         0000000d F1SEL
+ffc1b460 ALL_TAB                          00000033 CS_ENTS
 UNDEFED  ANI                              00000040 INDIAG
-ffc3a080 ANY_BUT                          01000000 SPRAYS
-ffc310c0 AREUSURE                         01000020 BAD_AUD
+ffc39db0 ANY_BUT                          01000000 SPRAYS
+ffc30ea0 AREUSURE                         01000020 BAD_AUD
 UNDEFED  ATSTRT                           01000060 C_FLAGS
-ffc25760 AUD1                             010000d0 MAIN_RET
-ffc25650 AUD                              010000e0 GMENULEV
+ffc25550 AUD                              010000d0 MAIN_RET
+ffc25660 AUD1                             010000e0 GMENULEV
 01000020 BAD_AUD                          010000f0 SND_MADE
-ffc0a330 BCDBIN                           01000100 NO_CLEAR
-ffc0a190 BINBCD                           01000110 LAST_BUT
+ffc0a2d0 BCDBIN                           01000100 NO_CLEAR
+ffc0a130 BINBCD                           01000110 LAST_BUT
 UNDEFED  BLNKAREA                         01000140 SCODE
-ffc308b0 BLNKHELP                         01000150 DCODE
-ffc37ed0 BUILD_ST                         ffc009c0 P1_INITS
+ffc30690 BLNKHELP                         01000150 DCODE
+ffc37c50 BUILD_ST                         ffc009c0 P1_INITS
 UNDEFED  BURN_IN                          ffc00b20 P2_INITS
-ffc2c820 B_MENU                           ffc00c80 OP_INITS
-ffc342e0 CASHBUT                          ffc00de0 E_INITS
-ffc271a0 CAT_A0                           ffc03070 KIL_SPRY
-ffc21160 CCOIN                            ffc067e0 HSTDTAB
-ffc2b9a0 CHK_CMOS                         ffc07ff0 RES_SCRL
-ffc33a10 CKPROMPT                         ffc090b0 P_SCRIPT
-ffc2c770 CK_DOOR                          ffc093e0 SPR_GPAL
-ffc22540 CK_MAX                           ffc094c0 SPR_FPAL
-ffc257e0 CLR_AUD                          ffc0a190 BINBCD
-ffc25360 CLR_AUDR                         ffc0a330 BCDBIN
-UNDEFED  CLR_SCRN                         ffc0ab80 X_PL_SA3
-ffc252d0 CLR_SUBS                         ffc0b550 SPR_CHAR
-ffc25890 CMOS_VAL                         ffc1b0d8 SC_CRAM
-ffc24b40 COIN_PAG                         ffc1b100 P1_SPRAY
-UNDEFED  COLRSTRT                         ffc1b298 P2_SPRAY
-UNDEFED  COL_BARS                         ffc1b428 E_BRUSH
-ffc2b530 COL_INST                         ffc1b4d0 ALL_TAB
-UNDEFED  CPU_CHK                          ffc1b550 TOD_TAB
-UNDEFED  CRDTPAGE                         ffc1b5d0 P_FORK
-ffc22c80 CRD_SCRN                         ffc1b670 DEC_HSR
-ffc227f0 CRED_P                           ffc1b800 INIT_HSR
-UNDEFED  CROSS_H                          ffc1b9e0 GET_HSC
-ffc20b10 CR_CONTP                         ffc1bf40 E_GAME
-ffc20990 CR_STRTP                         ffc1d3b0 ISHSTD
-ffc42410 CSELCT                           ffc1d6c0 A2_CHECK
-00000033 CS_ENTS                          ffc1ddf0 GET_HSCR
-ffc338c0 CS_POINT                         ffc1e200 PT_ENTRY
-UNDEFED  CURPAL                           ffc1e290 ROM_PTRS
-ffc2b360 CYAN_BOX                         ffc1e360 SET_PAGE
-01000060 C_FLAGS                          ffc1e4e0 INIT_TAB
-01000150 DCODE                            ffc1e680 INIT_TB
-ffc1b670 DEC_HSR                          ffc1e9a0 VAL_TAB
-ffc260a0 DEF_PAGE                         ffc1f220 RC_BYTE
-UNDEFED  DELOBJ                           ffc1f270 WC_BYTE
-UNDEFED  DELPAL                           ffc1f290 RC_BYTEI
-ffc2a5f0 DIAG                             ffc1f2f0 RC_WORD
-ffc2a820 DIAG_EX                          ffc1f470 RC_LONG
-ffc2b740 DIGSRT                           ffc1f590 RC_LONGI
-ffc28960 DISPDUMP                         ffc1f5f0 WC_BYTEI
-UNDEFED  DISPLAYON                        ffc1f640 WC_WORD
-UNDEFED  DMAQWAIT                         ffc1f700 WC_WORDI
-ffc30290 DOBORDER                         ffc1f750 WC_LONG
-ffc40d80 DO_ADJH                          ffc1f810 WC_LONGI
-UNDEFED  DUMCOLL                          ffc20260 L_TIMER
-ffc283b0 DUMP_FS                          ffc20990 CR_STRTP
-UNDEFED  EXISTP                           ffc20b10 CR_CONTP
-ffc1b428 E_BRUSH                          ffc20c90 P_START
-ffc1bf40 E_GAME                           ffc20da0 P_CONT
-ffc00de0 E_INITS                          ffc20ff0 NO_CREDS
-0000000d F1SEL                            ffc210e0 LCOIN
-ffc26160 FAC_SET                          ffc21160 CCOIN
-ffc360e0 FAC_STUF                         ffc211e0 RCOIN
-UNDEFED  FILLAREA                         ffc21260 XCOIN
-ffc258f0 FORM_ADC                         ffc22540 CK_MAX
-ffc2efd0 FORM_SWS                         ffc225e0 UNIT_CLR
-UNDEFED  FREEOBJ                          ffc227f0 CRED_P
-UNDEFED  FREEPAL                          ffc22c80 CRD_SCRN
-ffc25ac0 F_ADC_S                          ffc24620 SLAM_SW
-ffc2ffa0 F_TITLE                          ffc24b40 COIN_PAG
-00000009 G1SEL                            ffc250c0 GET_AUD
-UNDEFED  GAMSTATE                         ffc252d0 CLR_SUBS
-ffc2a900 GEN_MENU                         ffc25360 CLR_AUDR
-UNDEFED  GETFPAL                          ffc25650 AUD
-UNDEFED  GETOBJ                           ffc25760 AUD1
-UNDEFED  GETPRC                           ffc257e0 CLR_AUD
-ffc2e9c0 GETSTICK                         ffc25890 CMOS_VAL
-ffc25ba0 GET_ADJ                          ffc258f0 FORM_ADC
-ffc2c6c0 GET_ADV                          ffc25ac0 F_ADC_S
-ffc250c0 GET_AUD                          ffc25ba0 GET_ADJ
-ffc33800 GET_CSPT                         ffc25c70 PUT_ADJ
-ffc26bd0 GET_CSTR                         ffc26000 ADJ_PAGE
-ffc2bd60 GET_FAC                          ffc260a0 DEF_PAGE
-ffc1ddf0 GET_HSCR                         ffc26160 FAC_SET
-ffc1b9e0 GET_HSC                          ffc26860 LD_CTAB
-010000e0 GMENULEV                         ffc26a60 L_MESS
-ffc3db50 GO_ADJ                           ffc26b80 LM_SETUP
-ffc34280 GO_DIAG                          ffc26bc0 LM_FINIS
-UNDEFED  GPALOBJ                          ffc26bd0 GET_CSTR
-ffc300d0 G_BORDER                         ffc271a0 CAT_A0
-UNDEFED  G_CRED                           ffc27840 ROM_NAME
-UNDEFED  HEXTOASC                         ffc283b0 DUMP_FS
-ffc3af90 HID_P                            ffc28450 ADD_DUMP
-ffc067e0 HSTDTAB                          ffc28960 DISPDUMP
-ffc29500 HTOHXASC                         ffc28bf0 WAIT_MUT
-ffc30a00 H_SLAVE                          ffc29500 HTOHXASC
-00000040 INDIAG                           ffc297a0 STRCAT
-ffc1b800 INIT_HSR                         ffc2a150 RT_RET
-ffc1e4e0 INIT_TAB                         ffc2a2e0 ROM_RET
-ffc1e680 INIT_TB                          ffc2a470 WAIT_BUT
-UNDEFED  INSOBJ                           ffc2a5f0 DIAG
-UNDEFED  IRQSKYE                          ffc2a820 DIAG_EX
-ffc1d3b0 ISHSTD                           ffc2a900 GEN_MENU
-UNDEFED  KILALL                           ffc2af60 MENU_TOP
-ffc03070 KIL_SPRY                         ffc2afa0 TOP_BOX
-01000110 LAST_BUT                         ffc2b360 CYAN_BOX
-ffc210e0 LCOIN                            ffc2b530 COL_INST
-ffc26860 LD_CTAB                          ffc2b740 DIGSRT
-ffc26bc0 LM_FINIS                         ffc2b9a0 CHK_CMOS
-ffc26b80 LM_SETUP                         ffc2bd60 GET_FAC
-ffc26a60 L_MESS                           ffc2c3e0 WT_ADV
-ffc20260 L_TIMER                          ffc2c610 WW_ADV
-010000d0 MAIN_RET                         ffc2c6c0 GET_ADV
-ffc2af60 MENU_TOP                         ffc2c770 CK_DOOR
-ffc4fce0 MEN_MAIN                         ffc2c820 B_MENU
-ffc51480 MEN_YN                           ffc2e900 ST_STICK
-ffc53cc0 MESS_FAC                         ffc2e9c0 GETSTICK
-ffc52640 MESS_MM                          ffc2efd0 FORM_SWS
-UNDEFED  MYOINIT                          ffc2ffa0 F_TITLE
-UNDEFED  NARCS                            ffc300d0 G_BORDER
-01000100 NO_CLEAR                         ffc30290 DOBORDER
-ffc20ff0 NO_CREDS                         ffc30690 STD_BORD
-UNDEFED  NPLYRS                           ffc308b0 BLNKHELP
-UNDEFED  ONESND                           ffc30a00 H_SLAVE
-ffc00c80 OP_INITS                         ffc310c0 AREUSURE
-UNDEFED  P1DATA                           ffc31620 SUR_MESS
-ffc009c0 P1_INITS                         ffc31740 SURE_BOX
-ffc1b100 P1_SPRAY                         ffc33800 GET_CSPT
-UNDEFED  P2DATA                           ffc338c0 CS_POINT
-ffc00b20 P2_INITS                         ffc33a10 CKPROMPT
-ffc1b298 P2_SPRAY                         ffc34280 GO_DIAG
-UNDEFED  PRCSLP                           ffc342e0 CASHBUT
-ffc1e200 PT_ENTRY                         ffc360e0 FAC_STUF
-ffc25c70 PUT_ADJ                          ffc37ed0 BUILD_ST
-ffc20da0 P_CONT                           ffc3a080 ANY_BUT
-ffc1b5d0 P_FORK                           ffc3af90 HID_P
-ffc090b0 P_SCRIPT                         ffc3cbb0 STR_OBJ
-ffc20c90 P_START                          ffc3d980 STR_FREE
-UNDEFED  QSNDRST                          ffc3db50 GO_ADJ
-UNDEFED  RANDOM                           ffc40d80 DO_ADJH
-ffc211e0 RCOIN                            ffc42410 CSELCT
-ffc1f220 RC_BYTE                          ffc49a80 TWO_TS
-ffc1f290 RC_BYTEI                         ffc49d10 TWO_TP
-ffc1f470 RC_LONG                          ffc4fce0 MEN_MAIN
-ffc1f590 RC_LONGI                         ffc51480 MEN_YN
-ffc1f2f0 RC_WORD                          ffc52640 MESS_MM
-UNDEFED  RD15FONT                         ffc53cc0 MESS_FAC
+ffc2c680 B_MENU                           ffc00c80 OP_INITS
+ffc340c0 CASHBUT                          ffc00de0 E_INITS
+ffc270a0 CAT_A0                           ffc03030 KIL_SPRY
+ffc21090 CCOIN                            ffc067a0 HSTDTAB
+ffc2b850 CHK_CMOS                         ffc07fa0 RES_SCRL
+ffc337f0 CKPROMPT                         ffc09050 P_SCRIPT
+ffc2c5d0 CK_DOOR                          ffc09380 SPR_GPAL
+ffc22460 CK_MAX                           ffc09460 SPR_FPAL
+ffc25260 CLR_AUDR                         ffc0a130 BINBCD
+ffc256e0 CLR_AUD                          ffc0a2d0 BCDBIN
+UNDEFED  CLR_SCRN                         ffc0ab20 X_PL_SA3
+ffc251d0 CLR_SUBS                         ffc0b4e0 SPR_CHAR
+ffc25790 CMOS_VAL                         ffc1b068 SC_CRAM
+ffc24a40 COIN_PAG                         ffc1b090 P1_SPRAY
+UNDEFED  COLRSTRT                         ffc1b228 P2_SPRAY
+UNDEFED  COL_BARS                         ffc1b3b8 E_BRUSH
+ffc2b3e0 COL_INST                         ffc1b460 ALL_TAB
+UNDEFED  CPU_CHK                          ffc1b4e0 TOD_TAB
+UNDEFED  CRDTPAGE                         ffc1b560 P_FORK
+ffc22ba0 CRD_SCRN                         ffc1b600 DEC_HSR
+ffc22710 CRED_P                           ffc1b790 INIT_HSR
+UNDEFED  CROSS_H                          ffc1b970 GET_HSC
+ffc20a40 CR_CONTP                         ffc1bed0 E_GAME
+ffc208c0 CR_STRTP                         ffc1d2e0 ISHSTD
+ffc42100 CSELCT                           ffc1d5f0 A2_CHECK
+00000033 CS_ENTS                          ffc1dd20 GET_HSCR
+ffc336a0 CS_POINT                         ffc1e130 PT_ENTRY
+UNDEFED  CURPAL                           ffc1e1c0 ROM_PTRS
+ffc2b210 CYAN_BOX                         ffc1e290 SET_PAGE
+01000060 C_FLAGS                          ffc1e410 INIT_TAB
+01000150 DCODE                            ffc1e5b0 INIT_TB
+ffc1b600 DEC_HSR                          ffc1e8d0 VAL_TAB
+ffc25fa0 DEF_PAGE                         ffc1f150 RC_BYTE
+UNDEFED  DELOBJ                           ffc1f1a0 WC_BYTE
+UNDEFED  DELPAL                           ffc1f1c0 RC_BYTEI
+ffc2a4b0 DIAG                             ffc1f220 RC_WORD
+ffc2a6e0 DIAG_EX                          ffc1f3a0 RC_LONG
+ffc2b5f0 DIGSRT                           ffc1f4c0 RC_LONGI
+ffc28840 DISPDUMP                         ffc1f520 WC_BYTEI
+UNDEFED  DISPLAYON                        ffc1f570 WC_WORD
+UNDEFED  DMAQWAIT                         ffc1f630 WC_WORDI
+ffc30070 DOBORDER                         ffc1f680 WC_LONG
+ffc40a70 DO_ADJH                          ffc1f740 WC_LONGI
+UNDEFED  DUMCOLL                          ffc20190 L_TIMER
+ffc28290 DUMP_FS                          ffc208c0 CR_STRTP
+UNDEFED  EXISTP                           ffc20a40 CR_CONTP
+ffc1b3b8 E_BRUSH                          ffc20bc0 P_START
+ffc1bed0 E_GAME                           ffc20cd0 P_CONT
+ffc00de0 E_INITS                          ffc20f20 NO_CREDS
+0000000d F1SEL                            ffc21010 LCOIN
+ffc26060 FAC_SET                          ffc21090 CCOIN
+ffc35ec0 FAC_STUF                         ffc21110 RCOIN
+UNDEFED  FILLAREA                         ffc21190 XCOIN
+ffc257f0 FORM_ADC                         ffc22460 CK_MAX
+ffc2edb0 FORM_SWS                         ffc22500 UNIT_CLR
+UNDEFED  FREEOBJ                          ffc22710 CRED_P
+UNDEFED  FREEPAL                          ffc22ba0 CRD_SCRN
+ffc259c0 F_ADC_S                          ffc24520 SLAM_SW
+ffc2fd80 F_TITLE                          ffc24a40 COIN_PAG
+00000009 G1SEL                            ffc24fc0 GET_AUD
+UNDEFED  GAMSTATE                         ffc251d0 CLR_SUBS
+ffc2a7b0 GEN_MENU                         ffc25260 CLR_AUDR
+UNDEFED  GETFPAL                          ffc25550 AUD
+UNDEFED  GETOBJ                           ffc25660 AUD1
+UNDEFED  GETPRC                           ffc256e0 CLR_AUD
+ffc2e7b0 GETSTICK                         ffc25790 CMOS_VAL
+ffc25aa0 GET_ADJ                          ffc257f0 FORM_ADC
+ffc2c520 GET_ADV                          ffc259c0 F_ADC_S
+ffc24fc0 GET_AUD                          ffc25aa0 GET_ADJ
+ffc335e0 GET_CSPT                         ffc25b70 PUT_ADJ
+ffc26ad0 GET_CSTR                         ffc25f00 ADJ_PAGE
+ffc2bc00 GET_FAC                          ffc25fa0 DEF_PAGE
+ffc1dd20 GET_HSCR                         ffc26060 FAC_SET
+ffc1b970 GET_HSC                          ffc26760 LD_CTAB
+010000e0 GMENULEV                         ffc26960 L_MESS
+ffc3d880 GO_ADJ                           ffc26a80 LM_SETUP
+ffc34060 GO_DIAG                          ffc26ac0 LM_FINIS
+UNDEFED  GPALOBJ                          ffc26ad0 GET_CSTR
+ffc2feb0 G_BORDER                         ffc270a0 CAT_A0
+UNDEFED  G_CRED                           ffc27720 ROM_NAME
+UNDEFED  HEXTOASC                         ffc28290 DUMP_FS
+ffc3acc0 HID_P                            ffc28330 ADD_DUMP
+ffc067a0 HSTDTAB                          ffc28840 DISPDUMP
+ffc293d0 HTOHXASC                         ffc28ad0 WAIT_MUT
+ffc307e0 H_SLAVE                          ffc293d0 HTOHXASC
+00000040 INDIAG                           ffc29670 STRCAT
+ffc1b790 INIT_HSR                         ffc2a020 RT_RET
+ffc1e410 INIT_TAB                         ffc2a1b0 ROM_RET
+ffc1e5b0 INIT_TB                          ffc2a340 WAIT_BUT
+UNDEFED  INSOBJ                           ffc2a4b0 DIAG
+UNDEFED  IRQSKYE                          ffc2a6e0 DIAG_EX
+ffc1d2e0 ISHSTD                           ffc2a7b0 GEN_MENU
+UNDEFED  KILALL                           ffc2ae10 MENU_TOP
+ffc03030 KIL_SPRY                         ffc2ae50 TOP_BOX
+01000110 LAST_BUT                         ffc2b210 CYAN_BOX
+ffc21010 LCOIN                            ffc2b3e0 COL_INST
+ffc26760 LD_CTAB                          ffc2b5f0 DIGSRT
+ffc26ac0 LM_FINIS                         ffc2b850 CHK_CMOS
+ffc26a80 LM_SETUP                         ffc2bc00 GET_FAC
+ffc26960 L_MESS                           ffc2c260 WT_ADV
+ffc20190 L_TIMER                          ffc2c480 WW_ADV
+010000d0 MAIN_RET                         ffc2c520 GET_ADV
+ffc2ae10 MENU_TOP                         ffc2c5d0 CK_DOOR
+ffc4f9d0 MEN_MAIN                         ffc2c680 B_MENU
+ffc51170 MEN_YN                           ffc2e6f0 ST_STICK
+ffc539b0 MESS_FAC                         ffc2e7b0 GETSTICK
+ffc52330 MESS_MM                          ffc2edb0 FORM_SWS
+UNDEFED  MYOINIT                          ffc2fd80 F_TITLE
+UNDEFED  NARCS                            ffc2feb0 G_BORDER
+01000100 NO_CLEAR                         ffc30070 DOBORDER
+ffc20f20 NO_CREDS                         ffc30470 STD_BORD
+UNDEFED  NPLYRS                           ffc30690 BLNKHELP
+UNDEFED  ONESND                           ffc307e0 H_SLAVE
+ffc00c80 OP_INITS                         ffc30ea0 AREUSURE
+UNDEFED  P1DATA                           ffc31400 SUR_MESS
+ffc009c0 P1_INITS                         ffc31520 SURE_BOX
+ffc1b090 P1_SPRAY                         ffc335e0 GET_CSPT
+UNDEFED  P2DATA                           ffc336a0 CS_POINT
+ffc00b20 P2_INITS                         ffc337f0 CKPROMPT
+ffc1b228 P2_SPRAY                         ffc34060 GO_DIAG
+UNDEFED  PRCSLP                           ffc340c0 CASHBUT
+ffc1e130 PT_ENTRY                         ffc35ec0 FAC_STUF
+ffc25b70 PUT_ADJ                          ffc37c50 BUILD_ST
+ffc20cd0 P_CONT                           ffc39db0 ANY_BUT
+ffc1b560 P_FORK                           ffc3acc0 HID_P
+ffc09050 P_SCRIPT                         ffc3c8e0 STR_OBJ
+ffc20bc0 P_START                          ffc3d6b0 STR_FREE
+UNDEFED  QSNDRST                          ffc3d880 GO_ADJ
+UNDEFED  RANDOM                           ffc40a70 DO_ADJH
+ffc21110 RCOIN                            ffc42100 CSELCT
+ffc1f150 RC_BYTE                          ffc49770 TWO_TS
+ffc1f1c0 RC_BYTEI                         ffc49a00 TWO_TP
+ffc1f3a0 RC_LONG                          ffc4f9d0 MEN_MAIN
+ffc1f4c0 RC_LONGI                         ffc51170 MEN_YN
+ffc1f220 RC_WORD                          ffc52330 MESS_MM
+UNDEFED  RD15FONT                         ffc539b0 MESS_FAC
 UNDEFED  RD20FONT                         UNDEFED  SCRCLR
 UNDEFED  RD7FONT                          UNDEFED  SW_CHK
-ffc07ff0 RES_SCRL                         UNDEFED  STFOBJ
+ffc07fa0 RES_SCRL                         UNDEFED  STFOBJ
 UNDEFED  ROM_CHK                          UNDEFED  COL_BARS
 00000003 ROM_LEV                          UNDEFED  MYOINIT
-ffc27840 ROM_NAME                         UNDEFED  IRQSKYE
-ffc1e290 ROM_PTRS                         UNDEFED  SETUP
-ffc2a2e0 ROM_RET                          UNDEFED  ONESND
+ffc27720 ROM_NAME                         UNDEFED  IRQSKYE
+ffc1e1c0 ROM_PTRS                         UNDEFED  SETUP
+ffc2a1b0 ROM_RET                          UNDEFED  ONESND
 00000004 RTR_LEV                          UNDEFED  FILLAREA
-ffc2a150 RT_RET                           UNDEFED  DUMCOLL
+ffc2a020 RT_RET                           UNDEFED  DUMCOLL
 01000140 SCODE                            UNDEFED  KILALL
 UNDEFED  SCRCLR                           UNDEFED  RD15FONT
 UNDEFED  SCRL_DIR                         UNDEFED  ROM_CHK
@@ -247,56 +247,56 @@ UNDEFED  SCRL_END                         UNDEFED  CURPAL
 UNDEFED  SCRL_FRC                         UNDEFED  STRNGLEN
 UNDEFED  SCRL_GO                          UNDEFED  ANI
 UNDEFED  SCRL_SRT                         UNDEFED  WORLDTLY
-ffc1b0d8 SC_CRAM                          UNDEFED  WARMSET
+ffc1b068 SC_CRAM                          UNDEFED  WARMSET
 UNDEFED  SETUP                            UNDEFED  CPU_CHK
-ffc1e360 SET_PAGE                         UNDEFED  SNDSND
-ffc24620 SLAM_SW                          UNDEFED  CROSS_H
+ffc1e290 SET_PAGE                         UNDEFED  SNDSND
+ffc24520 SLAM_SW                          UNDEFED  CROSS_H
 UNDEFED  SNDSND                           UNDEFED  QSNDRST
 010000f0 SND_MADE                         UNDEFED  BURN_IN
 UNDEFED  SOUNDSUP                         UNDEFED  STRRNRM
 01000000 SPRAYS                           UNDEFED  NARCS
-ffc0b550 SPR_CHAR                         UNDEFED  GPALOBJ
-ffc094c0 SPR_FPAL                         UNDEFED  FREEOBJ
-ffc093e0 SPR_GPAL                         UNDEFED  SCRL_SRT
-ffc30690 STD_BORD                         UNDEFED  FREEPAL
+ffc0b4e0 SPR_CHAR                         UNDEFED  GPALOBJ
+ffc09460 SPR_FPAL                         UNDEFED  FREEOBJ
+ffc09380 SPR_GPAL                         UNDEFED  DISPLAYON
+ffc30470 STD_BORD                         UNDEFED  FREEPAL
 UNDEFED  STFOBJ                           UNDEFED  SYSCOPY
-ffc297a0 STRCAT                           UNDEFED  SUCIDE
+ffc29670 STRCAT                           UNDEFED  SUCIDE
 UNDEFED  STRCNRM                          UNDEFED  DELPAL
 UNDEFED  STRLNRM                          UNDEFED  P2DATA
 UNDEFED  STRNGLEN                         UNDEFED  EXISTP
 UNDEFED  STRNGRAM                         UNDEFED  P1DATA
-UNDEFED  STRRNRM                          UNDEFED  DMAQWAIT
-ffc3d980 STR_FREE                         UNDEFED  SCRL_DIV
-ffc3cbb0 STR_OBJ                          UNDEFED  SCRL_END
-ffc2e900 ST_STICK                         UNDEFED  SCRL_FRC
+UNDEFED  STRRNRM                          UNDEFED  SCRL_SRT
+ffc3d6b0 STR_FREE                         UNDEFED  SCRL_DIV
+ffc3c8e0 STR_OBJ                          UNDEFED  SCRL_END
+ffc2e6f0 ST_STICK                         UNDEFED  SCRL_FRC
 UNDEFED  SUCIDE                           UNDEFED  Y_CORR
-ffc31740 SURE_BOX                         UNDEFED  CLR_SCRN
-ffc31620 SUR_MESS                         UNDEFED  SCRL_DIR
-UNDEFED  SW_CHK                           UNDEFED  DISPLAYON
-UNDEFED  SYSCOPY                          UNDEFED  SCRL_GO
+ffc31520 SURE_BOX                         UNDEFED  CLR_SCRN
+ffc31400 SUR_MESS                         UNDEFED  SCRL_DIR
+UNDEFED  SW_CHK                           UNDEFED  SCRL_GO
+UNDEFED  SYSCOPY                          UNDEFED  DMAQWAIT
 UNDEFED  TIMER                            UNDEFED  TIMER
-ffc1b550 TOD_TAB                          UNDEFED  GETPRC
-ffc2afa0 TOP_BOX                          UNDEFED  RANDOM
-ffc49d10 TWO_TP                           UNDEFED  RD7FONT
-ffc49a80 TWO_TS                           UNDEFED  ACTIVE
-ffc225e0 UNIT_CLR                         UNDEFED  NPLYRS
-ffc1e9a0 VAL_TAB                          UNDEFED  CRDTPAGE
-ffc2a470 WAIT_BUT                         UNDEFED  BLNKAREA
-ffc28bf0 WAIT_MUT                         UNDEFED  HEXTOASC
+ffc1b4e0 TOD_TAB                          UNDEFED  GETPRC
+ffc2ae50 TOP_BOX                          UNDEFED  RANDOM
+ffc49a00 TWO_TP                           UNDEFED  RD7FONT
+ffc49770 TWO_TS                           UNDEFED  ACTIVE
+ffc22500 UNIT_CLR                         UNDEFED  NPLYRS
+ffc1e8d0 VAL_TAB                          UNDEFED  CRDTPAGE
+ffc2a340 WAIT_BUT                         UNDEFED  BLNKAREA
+ffc28ad0 WAIT_MUT                         UNDEFED  HEXTOASC
 UNDEFED  WARMSET                          UNDEFED  PRCSLP
-ffc1f5f0 WC_BYTEI                         UNDEFED  GETFPAL
-ffc1f270 WC_BYTE                          UNDEFED  WIPEOUT
-ffc1f750 WC_LONG                          UNDEFED  STRLNRM
-ffc1f810 WC_LONGI                         UNDEFED  INSOBJ
-ffc1f640 WC_WORD                          UNDEFED  SOUNDSUP
-ffc1f700 WC_WORDI                         UNDEFED  black1
+ffc1f520 WC_BYTEI                         UNDEFED  GETFPAL
+ffc1f1a0 WC_BYTE                          UNDEFED  WIPEOUT
+ffc1f680 WC_LONG                          UNDEFED  STRLNRM
+ffc1f740 WC_LONGI                         UNDEFED  INSOBJ
+ffc1f570 WC_WORD                          UNDEFED  SOUNDSUP
+ffc1f630 WC_WORDI                         UNDEFED  black1
 UNDEFED  WIPEOUT                          UNDEFED  GETOBJ
 UNDEFED  WORLDTLX                         UNDEFED  RD20FONT
 UNDEFED  WORLDTLY                         UNDEFED  hand40
-ffc2c3e0 WT_ADV                           UNDEFED  DELOBJ
-ffc2c610 WW_ADV                           UNDEFED  G_CRED
-ffc21260 XCOIN                            UNDEFED  GAMSTATE
-ffc0ab80 X_PL_SA3                         UNDEFED  STRNGRAM
+ffc2c260 WT_ADV                           UNDEFED  DELOBJ
+ffc2c480 WW_ADV                           UNDEFED  G_CRED
+ffc21190 XCOIN                            UNDEFED  GAMSTATE
+ffc0ab20 X_PL_SA3                         UNDEFED  STRNGRAM
 UNDEFED  Y_CORR                           UNDEFED  STRCNRM
 UNDEFED  black1                           UNDEFED  ATSTRT
 UNDEFED  hand40                           UNDEFED  COLRSTRT

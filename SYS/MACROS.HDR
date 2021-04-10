@@ -7,37 +7,37 @@ SWAP	$MACRO R1,R2
 	XOR    :R1.S:,:R2.S:
 	XOR    :R2.S:,:R1.S:
 	XOR    :R1.S:,:R2.S:
-	$END
+	$ENDM
 
 * Test a register for zero
 TEST	$MACRO R1
 	MOVE	:R1.S:,:R1.S:
-	$END
+	$ENDM
 
 *EQUATES FOR XY COMPARES(MOTOLORA STYLE)
 JRXEQ	$MACRO	P1
 	JRXZ	P1.S
-	$END
+	$ENDM
 JRXNE	$MACRO	P1
 	JRXNZ	P1.S
-	$END
+	$ENDM
 JRXGE	$MACRO	P1
 	JRXNN	P1.S
-	$END
+	$ENDM
 JRXLT	$MACRO	P1
 	JRXN	P1.S
-	$END
+	$ENDM
 JRYEQ	$MACRO	P1
 	JRYZ	P1.S
-	$END
+	$ENDM
 JRYNE	$MACRO	P1
 	JRYNZ	P1.S
-	$END
+	$ENDM
 JRYGE	$MACRO	P1
 	JRYNN	P1.S
-	$END
+	$ENDM
 JRYLT	$MACRO	P1
 	JRYN	P1.S
-	$END
+	$ENDM
                                                                                                                                               
 

@@ -1,0 +1,2228 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCENT.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L,T
+       5                            .MNOLIST
+       6                    **************************************************************************
+       7                    *                                                                        *
+       8                    *          NARC (R)                                                      *
+       9                    *                                                                        *
+      10                    *          Copyright 1988 Williams Electronics Games Inc.                *
+      11                    *          All Rights Reserved                                           *
+      12                    *                                                                        *
+      13                    **************************************************************************
+      14                    *                                                                        *
+      15                    *          Player entry of Initials and Operator Custom Message          *
+      16                    *                                                                        *
+      17                    *          Larry DeMar    October 4, 1988                                *
+      18                    *                                                                        *
+      19                    **************************************************************************
+      20                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      21                            .INCLUDE        "\video\DISPEQU.ASM"
+      22                            .INCLUDE        "\video\GSP.INC"          ;GSP assembler equates
+      23                            .INCLUDE        "\video\SYS.INC"    ;Zunit system equates
+      24                            .INCLUDE        "\video\MACROS.HDR" ;Macros, Yeah!
+      25                            .INCLUDE        "IMGTBL.GLO"              ;GLOBALS
+      26                    *       LOCAL STUFF
+      27                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      28                             .INCLUDE        "NARCLEQU.ASM"      ;LINKY EQUATES
+      29                    
+      30 00000000                    .BSS            SPRAYS,16           ;HOW MANY SPRAYERS ARE RUNNING
+      31                    
+      32 00000000                    .TEXT
+      33                             .INCLUDE        "NARCENT.TBL"       ;CONTAINS OUR UNIQUE IMAGES
+      34                    *
+      35                    *        DEFINED IN THIS MODULE
+      36                    *
+      37                             .GLOBAL         P1_INITS, P2_INITS, E_INITS, OP_INITS
+      38                             .GLOBAL         SPRAYS, KIL_SPRY
+      39                    *
+      40                    *        SPRAY MODULE
+      41                    *
+      42                             .GLOBAL         RES_SCRL, P_SCRIPT, X_PL_SA3, SPR_CHAR
+      43                             .GLOBAL         P1_SPRAY, P2_SPRAY, E_BRUSH, SC_CRAM
+      44                    *
+      45                             .GLOBAL         P_FORK
+      46                    
+      47 00000000           OP_BLOB
+      48 00000000 00000000           .LONG   0,0,0,0                        ;XV, YV, XP, YP
+      49 00000080     0000           .WORD   0,0                            ;Z POS 0....NO Z VEL
+      50 000000a0 00000940'          .LONG   BLANK_OP,1,DUMCOLL            ;IMG, Z SIZE, COLLISION VECT
+      51 00000100     800c           .WORD   DMACAL,BLANK_ID                ;WRITE CONSTANT FOR EVERYONE, OBJECT ID
+      52 00000120 00000000           .LONG   0                              ;NO SCANNER BLIP
+      53                    
+      54 00000140           BLANK_BLOB
+      55 00000140 00000000           .LONG   0,0,0,0                        ;XV, YV, XP, YP
+      56 000001c0     0000           .WORD   0,0                            ;Z POS 0....NO Z VEL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    2
+
+      57 000001e0 000008c0'          .LONG   BLANK_IMG,1,DUMCOLL            ;IMG, Z SIZE, COLLISION VECT
+      58 00000240     800c           .WORD   DMACAL,BLANK_ID                ;WRITE CONSTANT FOR EVERYONE, OBJECT ID
+      59 00000260 00000000           .LONG   0                              ;NO SCANNER BLIP
+      60                    
+      61 00000280           LETTER_TEMPLATE
+      62 00000280 00000000           .LONG   0,0,0,0                        ;XV, YV, XP, YP
+      63 00000300     0000           .WORD   0,10                           ;Z VEL 10....Z POS 0
+      64 00000320 000008c0'          .LONG   BLANK_IMG,1,DUMCOLL            ;IMG, Z SIZE, COLLISION VECT
+      65 00000380     8008           .WORD   DMACNZ,0                       ;WRITE NON-ZERO CONSTANT, OBJECT ID
+      66 000003a0 00000000           .LONG   0                              ;NO SCANNER BLIP
+      67                    
+      68                    *FROB     .LONG   0,0,0,0                        ;WE'LL SET IT UP
+      69                    *         .WORD   0,10                           ;SAME Z AS LETTERS
+      70                    *         .LONG   INIT_BOX,1,DUMCOLL             ;THIS IS LETTER SIZE BOX
+      71                    *         .WORD   DMACNZ,FROB_ID                 ;USE SPECIAL ID FOR BOX
+      72                    *         .LONG   0                              ;NO SCANNER BLIP!
+      73                    
+      74 000003c0 00000000  P1_HAND  .LONG   0,0,0,0
+      75 00000440     0000           .WORD   0,22                           ;HAND IS CLOSER THAN LETTERS
+      76                    
+      77                             .IF     BLUE_P1
+      78                             .LONG   fing,1,DUMCOLL             ;THIS IS LETTER SIZE BOX
+      79                             .ELSE
+      80 00000460 00000180"          .LONG   b_fing,1,DUMCOLL             ;THIS IS LETTER SIZE BOX
+      81                             .ENDIF
+      82                    
+      83 000004c0     8002           .WORD   DMAWNZ,HAND_ID
+      84 000004e0 00000000           .LONG   0
+      85 00000500 00000000  P1_H2    .LONG   0,0,0,0
+      86 00000580     0000           .WORD   0,22
+      87                    
+      88                             .IF     BLUE_P1
+      89                             .LONG   hand,1,DUMCOLL
+      90                             .ELSE
+      91 000005a0 00000100"          .LONG   b_hand,1,DUMCOLL
+      92                             .ENDIF
+      93                    
+      94 00000600     8002           .WORD   DMAWNZ,HAND_ID
+      95 00000620 00000000           .LONG   0
+      96                    
+      97 00000640 00000000  P2_HAND  .LONG   0,0,0,0
+      98 000006c0     0000           .WORD   0,21                           ;HAND IS CLOSER THAN LETTERS
+      99                              .IF     BLUE_P1
+     100                             .LONG   b_fing,1,DUMCOLL             ;THIS IS LETTER SIZE BOX
+     101                             .ELSE
+     102 000006e0 00000080"          .LONG   fing,1,DUMCOLL             ;THIS IS LETTER SIZE BOX
+     103                             .ENDIF
+     104                    
+     105 00000740     8002           .WORD   DMAWNZ,HAND_ID
+     106 00000760 00000000           .LONG   0
+     107 00000780 00000000  P2_H2    .LONG   0,0,0,0
+     108 00000800     0000           .WORD   0,21
+     109                    
+     110                             .IF     BLUE_P1
+     111                             .LONG   b_hand,1,DUMCOLL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    3
+
+     112                             .ELSE
+     113 00000820 00000000"          .LONG   hand,1,DUMCOLL
+     114                             .ENDIF
+     115                    
+     116 00000880     8002           .WORD   DMAWNZ,HAND_ID
+     117 000008a0 00000000           .LONG   0
+     118                    
+     119                    *
+     120                    *        OBJECTS IN OUR LIST ARE SUCH THAT
+     121                    *        ASCII CHARACTERS HAVE THEIR ASCII LETTER AS
+     122                    *        THEIR ID'S
+     123                    *        THE HAND HAND AND FROB HAVE THE FOLLOWING
+     124                    *        OBJECT ID'S
+     125                    *
+     126                    *FROB_ID  EQU     1
+     127              0002  HAND_ID  EQU     2
+     128              0003  BLANK_ID EQU     3
+     129                    
+     130                    
+     131          ffe40000  BLOB_DX  EQU     -1CH*TABLE_UNIT            ;START BLOB THIS FAR LEFT
+     132              013c  BLANK_X  EQU     013CH                      ;SIZE OF "AUTOERASE" BLOB
+     133              0064  BLANK_Y  EQU     100
+     134              01fc  BLANK_OP_X       EQU     1FCH              ;WIDTH OF BLANK FOR OPERATOR
+     135          fff40000  BLOB_OP_DX       EQU     -12*TABLE_UNIT    ;BRING TO ZERO
+     136                    *
+     137                    *        ALPHA CONSTANTS.
+     138                    *        THIS DETERMINES LAYOUT OF THE LETTERS ON THE
+     139                    *        SCREEN.
+     140                    *
+     141          00050000  ALPHA_X  EQU     5*TABLE_UNIT                   ;X OFFSET OF ALPHA BLOCK
+     142          00050000  ALPHA_Y  EQU     5*TABLE_UNIT                   ;Y OFFSET OF ALPHA BLOCK
+     143              0003  ALPHA_ROWS EQU   3                              ;26 LETTERS, SPACE, RUB, END
+     144              000a  ALPHA_COLS EQU   10                              
+     145          00140000  ALPHA_DX EQU     20*TABLE_UNIT                  ;X UNITS BETWEEN LETTERS
+     146          00160000  ALPHA_DY EQU     22*TABLE_UNIT                  ;Y UNITS BETWEEN LETTERS
+     147                    
+     148          007b0000  HAND_X   EQU     7BH*TABLE_UNIT
+     149          00400000  HAND_Y   EQU     40H*TABLE_UNIT
+     150                    
+     151          00b00000  HAND_END_X       EQU     0B0H*TABLE_UNIT
+     152          00420000  HAND_END_Y       EQU     42H*TABLE_UNIT
+     153                    
+     154          008c0000  END_MIN_X        EQU     8CH*TABLE_UNIT
+     155          00340000  END_MIN_Y        EQU     34H*TABLE_UNIT
+     156                    
+     157          01900000  END_MIN_OP_X     EQU     190H*TABLE_UNIT
+     158          01b60000  HAND_END_OP_X    EQU     1B6H*TABLE_UNIT
+     159                    
+     160          00180000  HAND_HOT_DX      EQU     18H*TABLE_UNIT          ;X FROM UPPER LEFT OF HAND TO HOT SPOT
+     161          fffe0000  HAND_HOT_DY      EQU     -2*TABLE_UNIT
+     162                    
+     163          001c0000  CLOSE_FOR_RUB    EQU     ALPHA_DX+(8*TABLE_UNIT)  ;RUB AND SPACE HAVE LARGER REGIONS.
+     164          00140000  CLOSE_X          EQU     ALPHA_DX               ;DISTANCE FROM HAND TO BE TIED TO THAT LETTER
+     165          00160000  CLOSE_Y          EQU     ALPHA_DY
+     166                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    4
+
+     167          000d0000  HAND_X_ADJ       EQU     13*TABLE_UNIT          ;X DIFFERENCE FROM CENTER OF
+     168                    *                                               ;LETTER TO CENTER OF FINGER
+     169                    
+     170          00040000  HAND_MIN_X       EQU     4*TABLE_UNIT
+     171          00100000  HAND_MIN_Y       EQU     16*TABLE_UNIT
+     172          00b80000  HAND_MAX_X       EQU     0B8H*TABLE_UNIT
+     173          00420000  HAND_MAX_Y       EQU     42H*TABLE_UNIT
+     174                    
+     175          01b80000  OP_MAX_X         EQU     1B8H*TABLE_UNIT        ;X TRAVEL FOR OPERATOR!
+     176          00130000  HAND_MIN_OP_Y    EQU     19*TABLE_UNIT
+     177                    
+     178              0000  Z_TO_SPACE       EQU     (20*TABLE_UNIT)-ALPHA_DX  ;X DISTANCE BEFORE PUTTING SPACE OUT
+     179          00190000  SPACE_TO_RUB     EQU     25*TABLE_UNIT          ;X DISTANCE BETWEEN SPACE AND RUB
+     180          001d0000  RUB_TO_END       EQU     29*TABLE_UNIT          ;X DISTANCE BETWEEN RUB AND END
+     181          00020000  SPACE_DY         EQU     2*TABLE_UNIT
+     182                    
+     183              f5f5  FROB_COLOR       EQU     0F5F5H                 ;LASER FLASH FOR FROB
+     184                    
+     185 000008c0           BLANK_IMG
+     186 000008c0     013c           .WORD   BLANK_X,BLANK_Y,0,0            ;WIDTH, HEIGHT, OFFSET,OFFSET
+     187 00000900 02000000           .LONG   IROM,NARCS                     ;SOURCE, PALETTE
+     188                    
+     189 00000940           BLANK_OP
+     190 00000940     01fc           .WORD   BLANK_OP_X,BLANK_Y,0,0            ;WIDTH, HEIGHT, OFFSET,OFFSET
+     191 00000980 02000000           .LONG   IROM,NARCS                     ;SOURCE, PALETTE
+     192                    
+     193 000009c0           P1_INITS
+     194 000009c0 00140000           .LONG   20*TABLE_UNIT                  ;UPPER LEFT X
+     195 000009e0 01340000           .LONG   PLYR_Y                         ;UPPER LEFT Y
+     196 00000a00     0008           .WORD   BYTE_SIZE                      ;1 BYTE BETWEEN INITIALS
+     197 00000a10     0003           .WORD   3                              ;GET TOTAL OF 3
+     198 00000a20     0003           .WORD   3                              ;3 LEFT TO GET
+     199 00000a30     f9f9           .WORD   P1_COLOR                       ;CONSTANT COLOR
+     200 00000a40 00000000!          .LONG   RD15FONT                       ;FONT BASE POINTER
+     201 00000a60     0000           .WORD   0                              ;ZERO SHIFTS TO GET STICK
+     202                    *
+     203                    *        DATA NOT COPIED TO PROCESS AREA
+     204                    *
+     205 00000a70     0abd           .WORD   END_GAME_PID+1                 ;ID FOR THE PROCESS GETTING LETTERS
+     206 00000a80 000003c0'          .LONG   P1_HAND
+     207 00000aa0 00000000!          .LONG   P1_SPRAY                       ;SPRAY PAINT SCRIPT INITIALIZER
+     208 00000ac0 00000000!          .LONG   E_BRUSH                        ;SCRIPT TO CHANGE BRUSH TO ERASE
+     209 00000ae0 000000d0           .LONG   0D0H                           ;WIDTH IN PIXELS
+     210 00000b00 00005b40'          .LONG   MESS_1                         ;PLAYER 1 TITLE STRING
+     211                    
+     212 00000b20           P2_INITS
+     213 00000b20 01140000           .LONG   114H*TABLE_UNIT                 ;UPPER LEFT X
+     214 00000b40 01340000           .LONG   PLYR_Y                          ;UPPER LEFT Y
+     215 00000b60     0008           .WORD   BYTE_SIZE                      ;1 BYTE BETWEEN INITIALS
+     216 00000b70     0003           .WORD   3                              ;GET TOTAL OF 3
+     217 00000b80     0003           .WORD   3                              ;3 LEFT TO GET
+     218 00000b90     fdfd           .WORD   P2_COLOR                       ;CONSTANT COLOR
+     219 00000ba0 00000000!          .LONG   RD15FONT                       ;FONT BASE POINTER
+     220 00000bc0     0008           .WORD   8                              ;8 SHIFTS TO GET STICK
+     221                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    5
+
+     222                    *        DATA NOT COPIED TO PROCESS AREA
+     223                    *
+     224 00000bd0     0abe           .WORD   END_GAME_PID+2                 ;ID FOR THE PROCESS GETTING LETTERS
+     225 00000be0 00000640'          .LONG   P2_HAND
+     226 00000c00 00000000!          .LONG   P2_SPRAY                       ;SPRAY PAINT SCRIPT INITIALIZER
+     227 00000c20 00000000!          .LONG   E_BRUSH                        ;SCRIPT TO CHANGE BRUSH TO ERASE
+     228 00000c40 000000d0           .LONG   0D0H                           ;WIDTH IN PIXELS
+     229 00000c60 00005b90'          .LONG   MESS_2                         ;PLAYER 2 MESSAGE
+     230                    
+     231 00000c80           OP_INITS
+     232 00000c80 00120000           .LONG   18*TABLE_UNIT                  ;UPPER LEFT X
+     233 00000ca0 01330000           .LONG   OP_Y                           ;UPPER LEFT Y
+     234 00000cc0     0008           .WORD   BYTE_SIZE                      ;1 BYTE BETWEEN INITIALS
+     235 00000cd0     0019           .WORD   CMESS_CHARS                    ;GET TOTAL OF 30
+     236 00000ce0     0019           .WORD   CMESS_CHARS                    ;30 LEFT TO GET
+     237 00000cf0     fdfd           .WORD   P2_COLOR                       ;use red
+     238 00000d00 00000000!          .LONG   RD15FONT                       ;FONT BASE POINTER
+     239 00000d20     0000           .WORD   0                              ;ZERO SHIFTS TO GET STICK
+     240                    *
+     241                    *        DATA NOT COPIED TO PROCESS AREA
+     242                    *
+     243 00000d30     0abd           .WORD   END_GAME_PID+1                 ;ID FOR THE PROCESS GETTING LETTERS
+     244 00000d40 000003c0'          .LONG   P1_HAND
+     245 00000d60 00000000!          .LONG   P1_SPRAY                       ;SPRAY PAINT SCRIPT INITIALIZER
+     246 00000d80 00000000!          .LONG   E_BRUSH                        ;SCRIPT TO CHANGE BRUSH TO ERASE
+     247 00000da0 000000d0           .LONG   0D0H                           ;WIDTH IN PIXELS
+     248 00000dc0 00005b40'          .LONG   MESS_1                         ;PLAYER 1 TITLE STRING
+     249                    
+     250                    **************************************************************************
+     251                    *                                                                        *
+     252                    *          Parameters on input are:                                      *
+     253                    *                                                                        *
+     254                    *          Upper left of Region to conduct the entry.                    *
+     255                    *                                                                        *
+     256                    *          Spray paint script pointer for spray of first                 *
+     257                    *          echo (This should setup brush size, color,                    *
+     258                    *          x,y rate etc.)                                                *
+     259                    *                                                                        *
+     260                    *          Pointer to place to store initials (bytes)                    *
+     261                    *                                                                        *
+     262                    *          Distance in memory between successive initials.               *
+     263                    *                                                                        *
+     264                    *          Number of Initials to get.                                    *
+     265                    *                                                                        *
+     266                    *          ON ENTRY, A8 POINTS AT STRUCTURE HOLDING THE ABOVE DATA       *
+     267                    *                    A9 POINTS TO PLACE TO STORE INITIALS                *
+     268                    *                                                                        *
+     269                    **************************************************************************
+     270 00000de0           E_INITS:
+     271 00000de0     b30d           MOVE    A8,*A13(ENT_DATA),L   ;STUFF OUR ROM DATA POINTER
+         00000df0     0220  
+     272 00000e00     5621           CLR     A1                    ;NULLIFY MY LIST OF OBJECTS
+     273 00000e10     0781           MOVE    A1,@WORLDTLX,L        ;MAKE SURE OUR SCREEN IS THEIR SCREEN
+         00000e20 00000000! 
+     274 00000e40     0781           MOVE    A1,@WORLDTLY,L        ;
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    6
+
+         00000e50 00000000! 
+     275                    
+     276 00000e70     b22d           MOVE    A1,*A13(ENT_OLIST),L     ;WE HAVE NO OBJECTS
+         00000e80     0110  
+     277 00000e90     b22d           MOVE    A1,*A13(ENT_FROB_OBJ),L  ;NO FROB LETTER YET
+         00000ea0     0150  
+     278 00000eb0     b22d           MOVE    A1,*A13(ENT_ANI_TIMER),L ;NO DEBOUNCE TILL WE SAY SO.
+         00000ec0     01f0  
+     279 00000ed0     b22d           MOVE    A1,*A13(ENT_Y_OFFSET),L  ;NO HAND ANIMATION TILL WE SAY SO
+         00000ee0     01d0  
+     280 00000ef0     b02d           MOVE    A1,*A13(ENT_PRESSED),W   ;NOTHING PRESSED YET
+         00000f00     0200  
+     281 00000f10     b02d           MOVE    A1,*A13(ENT_TIMEOUT),W   ;NOT TIMED OUT YET!
+         00000f20     0210  
+     282                    
+     283 00000f30     b32d           MOVE    A9,*A13(ENT_INIT_PTR),L  ;STORE INITIAL STORAGE POINTER
+         00000f40     0130  
+     284                    
+     285 00000f50     0d3f           CALLR   STUFF_ENT_PDATA
+         00000f60     0469  
+     286                    
+     287 00000f70     0d3f           CALLR   E_TITLES             ;PUT UP TITLES FOR THIS PLAYER
+         00000f80     0473  
+     288                    
+     289 00000f90     09c0           MOVI    LET_A,A0             ;SAFETY.....ALWAYS HAVE VALID LETTER
+         00000fa0     0041  
+     290 00000fb0     b00d           MOVE    A0,*A13(ENT_FROB_ASCII),W
+         00000fc0     0170  
+     291                    
+     292 00000fd0     0d3f           CALLR   OP_P                 ;OPERATOR?
+         00000fe0     03cd  
+     293 00000ff0     ca08           JRZ     NO_SP_PROC
+     294                    
+     295 00001000     09e7           MOVI    SPRAY_PROC,A7        ;POINT AT OUR SPRAYER (A8 IS IN TACT)
+         00001010 00002150' 
+     296 00001030     0d5f           CALLA   P_FORK               ;START IT UP (W/ OUR ID)
+         00001040 00000000! 
+     297 00001060     b20d           MOVE    A0,*A13(ENT_SPRAY_PROC),L   ;SAVE HIS ID......WE WILL
+         00001070     01a0  
+     298                    *                                            ;NEED TO LET HIM FINISH
+     299                    *                                            ;WHEN WE DIE.
+     300                    *
+     301                    *        WE NEED A LARGER BLOB FOR OPERATOR!
+     302                    *
+     303 00001080           NO_SP_PROC
+     304 00001080     09ee           MOVI    OP_BLOB,A14
+         00001090 00000000' 
+     305 000010b0     09e1           MOVI    BLOB_OP_DX,A1
+         000010c0 fff40000  
+     306 000010e0     0d3f           CALLR   OP_P                 ;IS IT OPERATOR MESSAGE?
+         000010f0     03bc  
+     307 00001100     ca06           JRZ     USE_OP_BLOB          ;YEP...USE LARGER BLOB!
+     308 00001110     09ee           MOVI    BLANK_BLOB,A14       ;DATA FOR BLANK BLOB
+         00001120 00000140' 
+     309 00001140     09e1           MOVI    BLOB_DX,A1           ;BLOB MUST GO TO LEFT TO GET HAND!
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    7
+
+         00001150 ffe40000  
+     310 00001170           USE_OP_BLOB
+     311 00001170     5642           CLR     A2
+     312                    
+     313 00001180     0d3f           CALLR   NEW_OBJ              ;SETUP THE OBJECT
+         00001190     0341  
+     314 000011a0     ca6f           JREQ    ENTRY_FAIL           ;NOBODY HOME...EXIT
+     315                    
+     316 000011b0     09c1           MOVI    0,A1                 ;CONSTANT IS ZERO WE CAN PATCH!
+         000011c0     0000  
+     317 000011d0     b020           MOVE    A1,*A0(OCONST),W     ;CONSTANT COLOR IS ZERO!
+         000011e0     0170  
+     318                    
+     319 000011f0     0d5f           CALLA   INSOBJ               ;NOW PUT IT ON THE REAL LIST
+         00001200 00000000! 
+     320                    *
+     321                    *        OK....WE HAVE THE BLOB
+     322                    *        NOW WE NEED TO SUPERIMPOSE THE ALPHABET ON TOP OF IT
+     323                    *
+     324 00001220     0d3f           CALLR   ADD_ALPHABET         ;GET US THE ALPHABET
+         00001230     0344  
+     325                    *
+     326                    *        Now we have to create a hand
+     327                    *
+     328 00001240     b70e           MOVE    *A8(LET_HAND_PTR),A14,L     ;FETCH POINTER FOR HAND
+         00001250     00c0  
+     329 00001260     09e1           MOVI    HAND_X,A1                   ;OFFSETS
+         00001270 007b0000  
+     330 00001290     4c29           MOVE    A1,A9                       ;OUR RELATIVE HAND X IN A9
+     331 000012a0     09e2           MOVI    HAND_Y,A2
+         000012b0 00400000  
+     332 000012d0     4c4a           MOVE    A2,A10                      ;OUR RELATIVE HAND Y IN A10
+     333                    
+     334 000012e0     0d3f           CALLR   NEW_OBJ                   ;DO THE WORK
+         000012f0     032b  
+     335 00001300     ca59           JREQ    ENTRY_FAIL                ;CAN'T GET THE OBJECT
+     336                    
+     337 00001310     0d5f           CALLA   INSOBJ                    ;NOW PUT IT ON THE REAL LIST
+         00001320 00000000! 
+     338                    
+     339 00001340     4c08           MOVE    A0,A8                     ;A8 HAS HAND PICTURE
+     340                    
+     341 00001350     0d3f           CALLR   NEW_OBJ                   ;GET 2ND PART OF HAND
+         00001360     0324  
+     342 00001370     ca52           JREQ    ENTRY_FAIL
+     343                    
+     344 00001380     b20d           MOVE    A0,*A13(ENT_HAND_OBJ),L   ;PUT IN PROCESS AREA
+         00001390     0180  
+     345 000013a0     0d3f           CALLR   HAND_PART_2               ;FOLLOW MAIN HAND
+         000013b0     01d8  
+     346 000013c0     0d5f           CALLA   INSOBJ                    ;AND ON OBJECT LIST
+         000013d0 00000000! 
+     347                    *
+     348                    *        NOW DO THE FROB
+     349                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    8
+
+     350                    *         MOVI    FROB,A14
+     351                    *         CLR     A1                        ;NO X OR Y...FROB WILL TRACK HAND
+     352                    *         CLR     A2
+     353                    *
+     354                    *         CALLR   NEW_OBJ                   ;DO THE STUFF NECESSARY
+     355                    *         JREQ    ENTRY_FAIL                ;QUIT OF NO GOOD
+     356                    *
+     357                    *         MOVI    FROB_COLOR,A1               ;THIS USES CONSTANT COLOR
+     358                    *         MOVI    0,A1                    ;MAKE FROB INVISIBLE
+     359                    *         MOVE    A1,*A0(OCONST),W        ;PUT IN OBJECT BLOCK
+     360                    *
+     361                    *         MOVE    A0,A11                  ;KEEP FROB OBJECT IN A11
+     362                    *
+     363                    *         CALLA   INSOBJ                    ;NOW PUT IT ON THE REAL LIST
+     364                    *
+     365                    *        NOW WE NEED TO MOVE HAND AROUND, HYPERING FROB
+     366                    *        AND WATCHING FOR BUTTONS AS WE GO ALONG
+     367                    *
+     368 000013f0     0d3f           CALLR   FETCH_BUTTONS             ;SCAN THE BUTTONS INTO PROCESS
+         00001400     02fa  
+     369                    
+     370 00001410           LETTER_LOOP
+     371 00001410     5621           CLR     A1                        ;ASSUME HAND IS "PRESSING"
+     372 00001420     5642           CLR     A2                        ;NO MOVEMENT WHEN THIS IS THE CASE
+     373 00001430     b7a0           MOVE    *A13(ENT_Y_OFFSET),A0,L   ;IS HAND IN THE AIR?
+         00001440     01d0  
+     374 00001450     cb1a           JRNZ    HAND_IN_AIR               ;YEP....DON'T LET EM MOVE
+     375                    *
+     376                    *        AT THIS POSITION WE CAN DETECT THE "HYPER TO END" CONDITION
+     377                    *        WHERE THE HAND HAS SUFFICIENTLY LET GO OF THE LAST LETTER.
+     378                    *        IF THE COUNT TO GET IS ZERO, AND THE X OR Y IS TOO LOW
+     379                    *        WE HYPER HERE!
+     380                    *
+     381 00001460     b5a0           MOVE    *A13(ENT_COUNTDOWN),A0,W  ;NO LETTERS TO GO?
+         00001470     00c0  
+     382 00001480     cb15           JRNZ    NOT_END_YET               ;LETTERS TO GO.
+     383                    
+     384 00001490     0d3f           CALLR   GET_E_MIN_X               ;GET THE MINIMUM X TO NOT HYPER
+         000014a0     0075  
+     385 000014b0     4809           CMP     A0,A9                     ;IF ITS NOT IN TERMI-BOX
+     386 000014c0     c804           JRLO    HYPER_TO_TERMI            ;THEN HYPER THERE
+     387                    
+     388 000014d0     0b6a           CMPI    END_MIN_Y,A10
+         000014e0 ffcbffff  
+     389 00001500     c90d           JRHS    NOT_END_YET               ;ITS IN THERE...LET HIM MOVE
+     390                    
+     391 00001510           HYPER_TO_TERMI
+     392 00001510     09e9           MOVI    HAND_END_X,A9             ;PUT X ON END
+         00001520 00b00000  
+     393 00001540     0d3f           CALLR   OP_P                      ;OPERATOR?
+         00001550     0376  
+     394 00001560     cb03           JRNZ    NORMAL_END
+     395 00001570     09e9           MOVI    HAND_END_OP_X,A9             ;USE THE OPERATOR VERSION.
+         00001580 01b60000  
+     396 000015a0           NORMAL_END
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE    9
+
+     397 000015a0     09ea           MOVI    HAND_END_Y,A10            ;AND Y ON A10
+         000015b0 00420000  
+     398 000015d0     c002           JRUC    HAND_IN_AIR
+     399                    
+     400 000015e0           NOT_END_YET
+     401 000015e0     0d3f           CALLR   GET_DY_DX                 ;GET MOVEMENT FOR HAND (A1,A2)
+         000015f0     02b3  
+     402                    
+     403 00001600           HAND_IN_AIR
+     404 00001600     4121           ADD     A9,A1                     ;ADD OUR X TO THE DX
+     405 00001610     0d3f           CALLR   GET_MIN_X                 ;GET THE MINIMUM X IN A3 BASED ON DATA
+         00001620     0086  
+     406 00001630     0d3f           CALLR   GET_HAND_MAX_X
+         00001640     0051  
+     407 00001650     4c20           MOVE    A1,A0                     ;COPY COORDINATE
+     408 00001660     0d3f           CALLR   LIMIT_RANGE               ;GIVE CORRECTED COORDINATE BACK
+         00001670     02a4  
+     409 00001680     4c01           MOVE    A0,A1                     ;THIS IS COORDINATE TO USE
+     410                    
+     411 00001690     4142           ADD     A10,A2                    ;ADD OUR Y TO THE DY
+     412 000016a0     0d3f           CALLR   GET_MIN_Y                 ;GET MINIMUM Y IN A3
+         000016b0     008a  
+     413 000016c0     09e4           MOVI    HAND_MAX_Y,A4
+         000016d0 00420000  
+     414 000016f0     4c40           MOVE    A2,A0                     ;COPY COORDINATE
+     415 00001700     0d3f           CALLR   LIMIT_RANGE               ;GIVE CORRECTED COORDINATE BACK
+         00001710     029a  
+     416 00001720     4c02           MOVE    A0,A2                     ;THIS IS COORDINATE TO USE
+     417                    
+     418 00001730     4c29           MOVE    A1,A9                     ;BACK TO DURABLE REGISTERS
+     419 00001740     4c4a           MOVE    A2,A10
+     420                             
+     421 00001750     4d00           MOVE    A8,A0                     ;POINT WITH OBJECT BLOCK
+     422 00001760     b7a3           MOVE    *A13(ENT_Y_OFFSET),A3,L   ;GET ANIMATION EXTRA
+         00001770     01d0  
+     423 00001780     4062           ADD     A3,A2                     ;OFFSET WHERE WE DRAW BY THIS
+     424 00001790     0d3f           CALLR   STUFF_OBJECT_OFFSET       ;PUT THE HAND WHERE WE LANDED
+         000017a0     03c4  
+     425 000017b0     0d3f           CALLR   HAND_PART_2               ;FINISH HAND
+         000017c0     0197  
+     426                    
+     427 000017d0     0d3f           CALLR   DO_FROB                   ;MOVE THE FROB, AND HIGHLIGHT
+         000017e0     023f  
+     428                    *                                          ;LETTER FROB IS ON.
+     429                    
+     430 000017f0     0d3f           CALLR   HANDLE_BUTTONS            ;DO ACTIONS WARRANTED BY BUTTONS
+         00001800     01a8  
+     431 00001810     c808           JRC     ENTRY_FINISHED            ;NOT FINISHED!
+     432                    
+     433 00001820                    SLEEP   1
+     434                    
+     435 00001860     b5a0           MOVE    *A13(ENT_TIMEOUT),A0,W    ;HAVE WE TIMED OUT?
+         00001870     0210  
+     436 00001880     cb01           JRNZ    ENTRY_FINISHED            ;YEP.....GET OUT OF HERE!
+     437 00001890     c0b7           JRUC    LETTER_LOOP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   10
+
+     438                    
+     439 000018a0           ENTRY_FINISHED
+     440 000018a0           ENTRY_FAIL
+     441 000018a0     b7a8           MOVE    *A13(ENT_OLIST),A8,L      ;GET 1ST ON LIST
+         000018b0     0110  
+     442 000018c0     ca04           JRZ     NOTHING_THERE             ;NOTHING THERE...THAT'S ODD!
+     443                    *
+     444                    *        THIS FREES UP THE LIST AND RETURNS THE BLOB OBJECT 
+     445                    *        (IF FOUND) IN A8)
+     446                    *
+     447 000018d0     0d3f           CALLR   FREE_A8                   ;FREE THE LIST OF OBJECTS IN A8
+         000018e0     003b  
+     448 000018f0     b30d           MOVE    A8,*A13(ENT_OLIST),L      ;THIS IS NOW A VALID LIST
+         00001900     0110  
+     449                    
+     450 00001910           NOTHING_THERE
+     451 00001910     5600           CLR     A0
+     452 00001920     b00d           MOVE    A0,*A13(ENT_CONST),W      ;MAKE OUR CONSTANT ZERO
+         00001930     00d0  
+     453 00001940     0d3f           CALLR   E_TITLES                  ;THIS WILL ERASE THE TITLES
+         00001950     03d6  
+     454                    
+     455                    *
+     456                    *        NOW WE NEED TO KILL THE SPRAYER PROCESS ONCE ITS FINISHED
+     457                    *        WRITING
+     458                    *
+     459 00001960     b7a8           MOVE    *A13(ENT_SPRAY_PROC),A8,L      ;GET HIS ID
+         00001970     01a0  
+     460 00001980           WAIT_SP_LOOP
+     461 00001980                    SLEEP   8
+     462                    
+     463 000019c0     0d3f           CALLR   OP_P                           ;OPERATOR?
+         000019d0     032e  
+     464 000019e0     ca03           JRZ     NO_SP_WAIT                     ;THEN NO SPRAY TO WAIT FOR
+     465                    
+     466 000019f0     b500           MOVE    *A8(SPIN_BUSY),A0,W
+         00001a00     0060  
+     467 00001a10     cbf6           JRNZ    WAIT_SP_LOOP                   ;WAIT WHILE HE FINISHES
+     468                    
+     469 00001a20           NO_SP_WAIT
+     470 00001a20     b5a0           MOVE    *A13(PROCID),A0,W              ;NOW KILL HIM
+         00001a30     0020  
+     471 00001a40     09e1           MOVI    0FFFFH,A1
+         00001a50 0000ffff  
+     472 00001a70     0d5f           CALLA   KILALL                         ;THIS WILL DO IT!
+         00001a80 00000000! 
+     473                    *
+     474                    *        LASTLY....GET RID OF THE AUTOERASE BLOB
+     475                    *
+     476 00001aa0     b7a0           MOVE    *A13(ENT_OLIST),A0,L      ;GET THE BLOB
+         00001ab0     0110  
+     477 00001ac0     ca06           JRZ     NO_BLOB                   ;IT WASN'T FOUND!
+     478                    
+     479 00001ad0     0d5f           CALLA   DELPAL                    ;TRASH IT!
+         00001ae0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   11
+
+     480 00001b00     0d5f           CALLA   DELOBJ
+         00001b10 00000000! 
+     481                    
+     482 00001b30           NO_BLOB
+     483 00001b30     c080           JAUC    SUCIDE               ;DIE WHEN WE'RE DONE...OUR ID IS MONITORED
+         00001b40 00000000! 
+     484                    
+     485                    
+     486                    **************************************************************************
+     487                    *                                                                        *
+     488                    *          GET_HAND_MAX_X                                                *
+     489                    *                                                                        *
+     490                    *          THIS IS CALLED TO STUFF THE MAXIMUM DISTANCE THE HAND         *
+     491                    *          MAY TRAVEL INTO A4.  IT USES DIFFERENT NUMBERS BASED          *
+     492                    *          ON BEING OPERATOR MESSAGE OR PLAYER.                          *
+     493                    *                                                                        *
+     494                    **************************************************************************
+     495 00001b60           GET_HAND_MAX_X
+     496 00001b60     09e4           MOVI    HAND_MAX_X,A4        ;ASSUME PLAYER.
+         00001b70 00b80000  
+     497 00001b90     0d3f           CALLR   OP_P                 ;OPERATOR?
+         00001ba0     0311  
+     498 00001bb0     cb03           JRNZ    GHMXX                ;NOPE
+     499 00001bc0     09e4           MOVI    OP_MAX_X,A4
+         00001bd0 01b80000  
+     500 00001bf0     0960  GHMXX    RETS
+     501                    
+     502 00001c00           GET_E_MIN_X     
+     503 00001c00     09e0           MOVI    END_MIN_X,A0         ;ASSUME PLAYER.
+         00001c10 008c0000  
+     504 00001c30     0d3f           CALLR   OP_P                 ;OPERATOR?
+         00001c40     0307  
+     505 00001c50     cb03           JRNZ    GMXX                ;NOPE
+     506 00001c60     09e0           MOVI    END_MIN_OP_X,A0
+         00001c70 01900000  
+     507 00001c90     0960  GMXX     RETS
+     508                    
+     509                    
+     510                    **************************************************************************
+     511                    *                                                                        *
+     512                    *          FREE_A8                                                       *
+     513                    *                                                                        *
+     514                    *          THIS IS CALLED TO FREE UP THE OBJECT LIST PASSED IN           *
+     515                    *          A8.  IT RETURNS IN A8 THE BLANKING OBJECT (NOT                *
+     516                    *          FREED UP) IF FOUND.                                           *
+     517                    *                                                                        *
+     518                    **************************************************************************
+     519 00001ca0           FREE_A8
+     520 00001ca0     098f           MMTM    SP,A0,A9,A10
+         00001cb0     8060  
+     521                    
+     522 00001cc0     5729           CLR     A9                        ;PLACE FOR THE BLOB OBJ
+     523                    
+     524 00001cd0     4d08           MOVE    A8,A8                     ;LIST NULL?
+     525 00001ce0     ca12           JREQ    FREE_A8_X                 ;YEP...WE'RE DONE!
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   12
+
+     526                    
+     527 00001cf0           TRASH_LOOP
+     528 00001cf0     b70a           MOVE    *A8(OSLINK),A10,L         ;GET NEXT IN LIST
+         00001d00     0020  
+     529                    
+     530 00001d10     b500           MOVE    *A8(OID),A0               ;CHECK ID
+         00001d20     01a0  
+     531 00001d30     0b40           CMPI    BLANK_ID,A0               ;DON'T TRASH BLANK IMMEDIATELY
+         00001d40     fffc  
+     532 00001d50     cb02           JRNE    TRASH_IT
+     533                    
+     534 00001d60     4d09           MOVE    A8,A9                     ;SAVE THE BLANKER
+     535 00001d70     c007           JRUC    NEXOBJ
+     536                    
+     537 00001d80           TRASH_IT
+     538 00001d80     4d00           MOVE    A8,A0                     ;DELETE THIS ONE
+     539 00001d90     0d5f           CALLA   DELPAL
+         00001da0 00000000! 
+     540 00001dc0     0d5f           CALLA   DELOBJ
+         00001dd0 00000000! 
+     541                    
+     542 00001df0     4d48  NEXOBJ   MOVE    A10,A8                    ;ANY MORE ON LIST?
+     543 00001e00     cbee           JRNZ    TRASH_LOOP                ;YEP...DO ANOTHER
+     544                    
+     545 00001e10           FREE_A8_X
+     546 00001e10     4d28           MOVE    A9,A8                     ;RETURN THE BLOB IF FOUND
+     547 00001e20     ca03           JREQ    FREE_X                    ;NOT THERE...QUIT
+     548                    
+     549 00001e30     5600           CLR     A0                        ;NULL OUT ITS FWD LINK
+     550 00001e40     b208           MOVE    A0,*A8(OSLINK),L          ;THIS DOES IT
+         00001e50     0020  
+     551                    
+     552 00001e60           FREE_X
+     553 00001e60     09af          MMFM    SP,A0,A9,A10
+         00001e70     0601  
+     554 00001e80     0960          RETS
+     555                    
+     556 00001e90           GET_MIN_X
+     557 00001e90     098f           MMTM    SP,A4,A0
+         00001ea0     8800  
+     558 00001eb0     09e3           MOVI    HAND_MIN_X,A3        ;ASSUME NORMAL
+         00001ec0 00040000  
+     559 00001ee0     0d3f           CALLR   GET_E_MIN_X
+         00001ef0     ffd0  
+     560 00001f00     4c04           MOVE    A0,A4                ;OTHER POSSIBILITY IS CURRENT MIN
+     561 00001f10     0d3f           CALLR   CHOOSE_MIN
+         00001f20     0016  
+     562 00001f30     09af          MMFM    SP,A4,A0
+         00001f40     0011  
+     563 00001f50     0960          RETS
+     564                    
+     565 00001f60           GET_MIN_Y
+     566 00001f60     098f           MMTM    SP,A4
+         00001f70     0800  
+     567 00001f80     09e3           MOVI    HAND_MIN_OP_Y,A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   13
+
+         00001f90 00130000  
+     568 00001fb0     0d3f           CALLR   OP_P                 ;OPERATOR?
+         00001fc0     02cf  
+     569 00001fd0     ca03           JRZ     GMYO                 ;YEP
+     570 00001fe0     09e3           MOVI    HAND_MIN_Y,A3        ;ASSUME NORMAL
+         00001ff0 00100000  
+     571 00002010     09e4  GMYO     MOVI    END_MIN_Y,A4         ;THIS IS OTHER POSSIBILITY
+         00002020 00340000  
+     572 00002040     0d3f           CALLR   CHOOSE_MIN
+         00002050     0003  
+     573 00002060     09af          MMFM    SP,A4
+         00002070     0010  
+     574 00002080     0960          RETS
+     575                    
+     576 00002090           CHOOSE_MIN
+     577 00002090     098f           MMTM    SP,A0
+         000020a0     8000  
+     578 000020b0     b5a0           MOVE    *A13(ENT_COUNTDOWN),A0,W  ;ALL LETTERS EXHAUSTED?
+         000020c0     00c0  
+     579 000020d0     cb04           JRNZ    CHOOSE_NORMAL             ;CHOOSE THE NORMAL ONE
+     580 000020e0     b7a0           MOVE    *A13(ENT_Y_OFFSET),A0,L      ;ANIMATION?
+         000020f0     01d0  
+     581 00002100     cb01           JRNZ    CHOOSE_NORMAL              ;DON'T HYPER TILL HE LETS GO
+     582 00002110     4c83           MOVE    A4,A3                     ;CHOOSE ALTERNATE
+     583 00002120           CHOOSE_NORMAL
+     584 00002120     09af          MMFM    SP,A0
+         00002130     0001  
+     585 00002140     0960          RETS
+     586                    
+     587                    **************************************************************************
+     588                    *                                                                        *
+     589                    *          SPRAY_PROC                                                    *
+     590                    *                                                                        *
+     591                    *          THIS IS THE PROCESS THAT RUNS THE SPRAY PAINTER IN            *
+     592                    *          STEP WITH THE ENTER INITIALS "HAND MOVING" PROCESS.           *
+     593                    *                                                                        *
+     594                    *          IT GETS THE "ENTER SCRIPT" IN A8.                             *
+     595                    *                                                                        *
+     596                    *          A9 POINTS TO WHERE INITALS ARE GOING TO BE STUFFED            *
+     597                    *                                                                        *
+     598                    *          THE PROCESS THAT WE ARE WATCHING IS PASSED IN A10.            *
+     599                    *                                                                        *
+     600                    *          WE WILL HAVE OUR OWN STORAGE AREA THAT CONTAINS               *
+     601                    *          OUR OWN COPY OF THE INITIALS ENTERED.                         *
+     602                    *                                                                        *
+     603                    *          WE WILL SPAWN A PROCESS TO DO OUR SPRAYING.  IT WILL          *
+     604                    *          DO A COMPLETE SETUP WITH THE SCRIPTS PROVIDED.                *
+     605                    *          WE WILL GIVE IT AN X OFFSET FOR THE CURRENT DIGIT.            *
+     606                    *                                                                        *
+     607                    *          WE WILL HAVE A WORD THAT INDICATES WE ARE NOT UP TO           *
+     608                    *          DATE.  THE OTHER PROCESS WILL MAKE SURE WE HAVE               *
+     609                    *          GOTTEN UP TO DATE BEFORE KILLING US.                          *
+     610                    *                                                                        *
+     611                    **************************************************************************
+     612              0060  SPIN_BUSY        EQU     PDATA                     ;WORD - NON ZERO MEANS WE'RE BUSY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   14
+
+     613              0070  SPIN_SCRIPT_1    EQU     SPIN_BUSY+WORD_SIZE       ;LONG - SETUP SCRIPT                                 
+     614              0090  SPIN_ERASE_SCR   EQU     SPIN_SCRIPT_1+LONG_SIZE   ;LONG - SCRIPT FOR ERASE BRUSH
+     615              00b0  SPIN_LET_POINT   EQU     SPIN_ERASE_SCR+LONG_SIZE  ;LONG - POINTER TO FETCHED INITS
+     616              00d0  SPIN_LETTERS     EQU     SPIN_LET_POINT+LONG_SIZE  ;WORD - NUMBER OF LETTERS TO FETCH
+     617              00e0  SPIN_DX          EQU     SPIN_LETTERS+WORD_SIZE    ;LONG - DISTANCE BETWEEN LETTERS
+     618              0100  SPIN_DRONE_DONE  EQU     SPIN_DX+LONG_SIZE         ;WORD - FLAG FROM OUR DRONE
+     619              0110  SPIN_DISTANCE    EQU     SPIN_DRONE_DONE+WORD_SIZE ;WORD - DISTANCE BETWEEN HIS LETTERS
+     620              0120  SPIN_OUR_DATA    EQU     SPIN_DISTANCE+WORD_SIZE ;1 BYTE PER.....OUR VERSION
+     621                                                                                           
+     622 00002150           SPRAY_PROC
+     623 00002150     09e7           MOVI    PALETTE_SETUP_PROC,A7             ;FORK TO GUY TO FIX PALETTES
+         00002160 00003070' 
+     624 00002180     0d5f           CALLA   P_FORK
+         00002190 00000000! 
+     625                    
+     626 000021b0     b32d           MOVE    A9,*A13(SPIN_LET_POINT),L         ;SAVE LETTER POINTER
+         000021c0     00b0  
+     627                    
+     628 000021d0     b700           MOVE    *A8(LET_SCRIPT),A0,L              ;FETCH OUR SCRIPT POINTER
+         000021e0     00e0  
+     629 000021f0     b20d           MOVE    A0,*A13(SPIN_SCRIPT_1),L          ;SAVE IT
+         00002200     0070  
+     630                    
+     631 00002210     b700           MOVE    *A8(LET_ERASE),A0,L               ;FETCH SCRIPT FOR ERASE BRUSH
+         00002220     0100  
+     632 00002230     b20d           MOVE    A0,*A13(SPIN_ERASE_SCR),L         ;SAVE IT
+         00002240     0090  
+     633                    
+     634 00002250     b700           MOVE    *A8(LET_WIDTH),A0,L               ;X UNITS PER SPRAY LETTER
+         00002260     0120  
+     635 00002270     b20d           MOVE    A0,*A13(SPIN_DX),L                ;SAVE THIS
+         00002280     00e0  
+     636                    
+     637 00002290     b500           MOVE    *A8(ENT_COUNT-PDATA),A0,W         ;GET NUMBER OF LETTERS 
+         000022a0     0050  
+     638                    *                                        (THIS IS FROM ROM NOT PROCESS STORE)
+     639 000022b0     b00d           MOVE    A0,*A13(SPIN_LETTERS),W           ;SAVE LETTER COUNT.
+         000022c0     00d0  
+     640                    
+     641 000022d0     b500           MOVE    *A8(ENT_INIT_SIZE-PDATA),A0,W     ;STORE LETTER TO LETTER DISTANCE
+         000022e0     0040  
+     642 000022f0     b00d           MOVE    A0,*A13(SPIN_DISTANCE),W
+         00002300     0110  
+     643                    *
+     644                    *        NOW SET OUR DATA TO ALL SPACES
+     645                    *
+     646 00002310     4da1           MOVE    A13,A1                              ;POINT IN OUR PROCESS AREA
+     647 00002320     0b01           ADDI    SPIN_OUR_DATA,A1                    ;POINT AT OUR COPY OF LETTERS
+         00002330     0120  
+     648 00002340     5642           CLR     A2                                  ;NOT YET ENTERED = 0
+     649                    *
+     650 00002350           SP_LOOP_1
+     651 00002350     8c41           MOVB    A2,*A1                              ;PUT ONE OUT
+     652 00002360     0b01           ADDI    BYTE_SIZE,A1
+         00002370     0008  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   15
+
+     653 00002380     3c80           DSJS    A0,SP_LOOP_1                        ;NOW WE HAVE ALL SPACES
+     654                    *
+     655                    *        THIS IS THE TOP OF OUR STEADY LOOP
+     656                    *        FIRST INDICATE WE'RE IN SYNC WITH THE
+     657                    *        OTHER GUY
+     658                    *
+     659 00002390           STEADY_LOOP
+     660 00002390     5600           CLR     A0
+     661 000023a0     b00d           MOVE    A0,*A13(SPIN_BUSY),W                
+         000023b0     0060  
+     662                    
+     663 000023c0                    SLEEP   1                                   ;WAIT A FRAME
+     664                    *
+     665                    *        NOW THAT WE'RE UP.....SCAN THROUGH THE 2 COPIES OF THE
+     666                    *        LETTERS.
+     667                    *
+     668                    *        FIRST LOOK FROM RIGHT TO LEFT FOR ERASURES NECESSARY
+     669                    *
+     670 00002400           CHANGE_LOOP
+     671 00002400     b5a3           MOVE    *A13(SPIN_LETTERS),A3,W             ;NUMBER OF LETTERS TO LOOK AT
+         00002410     00d0  
+     672 00002420     4c60           MOVE    A3,A0                               ;OFFSET OF FIRST IS 1 LESS
+     673 00002430     1420           DEC     A0                                  ;A0 HAS OFFSET
+     674                    
+     675 00002440     09c1           MOVI    BYTE_SIZE,A1                        ;THIS IS DISTANCE IN OUR P-STORE
+         00002450     0008  
+     676 00002460     5e01           MPYU    A0,A1                               ;THIS IS OFFSET OF LAST BYTE
+     677 00002470     4da2           MOVE    A13,A2
+     678 00002480     0b02           ADDI    SPIN_OUR_DATA,A2                    ;POINT A2 AT OUR DATA
+         00002490     0120  
+     679 000024a0     4022           ADD     A1,A2                               ;ADD OFFSET TO GET TO END
+     680                    
+     681 000024b0     b5a6           MOVE    *A13(SPIN_DISTANCE),A6,W            ;memory distance between hit bytes
+         000024c0     0110  
+     682 000024d0     4cc1           MOVE    A6,A1
+     683 000024e0     5e01           MPYU    A0,A1                               ;GET TO LAST
+     684                    
+     685 000024f0     b7a4           MOVE    *A13(SPIN_LET_POINT),A4,L           ;HIS POINTER IN A1
+         00002500     00b0  
+     686 00002510     4081           ADD     A4,A1                               ;POINT AT LAST
+     687                    
+     688 00002520           CHECK_FOR_RUB
+     689 00002520     8e24           MOVB    *A1,A4                              ;PLAYERS
+     690 00002530     8e45           MOVB    *A2,A5                              ;SPRAYED
+     691 00002540     4885           CMP     A4,A5
+     692 00002550     ca02           JRZ     LETS_MATCH                          ;DIFFERENT ONE!
+     693                    *
+     694                    *        IF A5 IS ZERO, THIS REQUIRES SPARYING....LET OTHER LOOP CATCH IT!
+     695                    *
+     696 00002560     4ca5           MOVE    A5,A5
+     697 00002570     cb19           JRNZ    CHANGED_LETTER                      ;WE NEED TO REMOVE OUR PAINT
+     698                    
+     699 00002580           LETS_MATCH
+     700 00002580     44c1           SUB     A6,A1
+     701 00002590     0be2           SUBI    BYTE_SIZE,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   16
+
+         000025a0     fff7  
+     702 000025b0     1420           DEC     A0                                  ;KICK OFFSET
+     703 000025c0     3d63           DSJS    A3,CHECK_FOR_RUB
+     704                    *
+     705                    *        NO RUBOUTS....LOOK FROM RIGHT TO LEFT FOR LETTERS TO SPRAY
+     706                    *
+     707 000025d0     5600           CLR     A0                                  ;THIS IS OFFSET
+     708 000025e0     b7a1           MOVE    *A13(SPIN_LET_POINT),A1,L           ;HIS POINTER IN A1
+         000025f0     00b0  
+     709 00002600     4da2           MOVE    A13,A2
+     710 00002610     0b02           ADDI    SPIN_OUR_DATA,A2                    ;POINT A2 AT OUR DATA
+         00002620     0120  
+     711 00002630     b5a3           MOVE    *A13(SPIN_LETTERS),A3,W             ;NUMBER OF LETTERS TO LOOK AT
+         00002640     00d0  
+     712 00002650     b5a6           MOVE    *A13(SPIN_DISTANCE),A6,W            ;memory distance between hit bytes
+         00002660     0110  
+     713                    
+     714 00002670           CHECK_LETS
+     715 00002670     8e24           MOVB    *A1,A4                              ;PLAYERS
+     716 00002680     8e45           MOVB    *A2,A5                              ;SPRAYED
+     717 00002690     4885           CMP     A4,A5
+     718 000026a0     cb06           JRNZ    CHANGED_LETTER                      ;DIFFERENT ONE!
+     719                    
+     720 000026b0     40c1           ADD     A6,A1
+     721 000026c0     0b02           ADDI    BYTE_SIZE,A2
+         000026d0     0008  
+     722 000026e0     1020           INC     A0                                  ;KICK OFFSET
+     723 000026f0     3d23           DSJS    A3,CHECK_LETS
+     724                    
+     725 00002700     c0c8           JRUC    STEADY_LOOP                         ;ALL MATCH....SLEEP NOW!
+     726                    *
+     727                    *        WE HAVE A DIFFERENCE.  IF THE SPRAY THERE IS NOT A SPACE
+     728                    *        WE MUST ERASE DOWN TO A SPACE.  THE NEXT ITERATION WILL
+     729                    *        CAUSE US TO DRAW OVER THE SPACE.
+     730                    *
+     731                    *        IF THE SPRAY THERE IS A SPACE, WE DRAW THE NEW LETTER.  
+     732                    *        
+     733                    
+     734 00002710           CHANGED_LETTER
+     735 00002710     09c6           MOVI    1,A6
+         00002720     0001  
+     736 00002730     b0cd           MOVE    A6,*A13(SPIN_BUSY),W           ;INDICATE WE'RE CATCHING UP     
+         00002740     0060  
+     737                    *
+     738                    *        A5 HAS WHAT IS SPRAYED WHERE WE'RE INTERESTED IN
+     739                    *
+     740 00002750     4ca5           MOVE    A5,A5                          ;IS OUR COPY BLANK?
+     741 00002760     ca0a           JRZ     PLOT_LETTER                    ;YEP...PLOT THE LETTER
+     742                    *
+     743                    *        A5 IS NOT A SPACE....WE MUST ERASE THE ASCII A5
+     744                    *
+     745                    *         MOVI    SPACE,A6                       ;INIDICATE IN OUR PROCESS
+     746 00002770     56c6           CLR     A6                             ;INDICATE THAT *NOW* THERE'S NOTHING
+     747 00002780     8cc2           MOVB    A6,*A2                         ;THAT WE HAVE PUT A SPACE THERE
+     748                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   17
+
+     749 00002790                    JSRP    ERASE_A5                       ;ERASE THAT LETTER
+     750 00002800     c0bf           JRUC    CHANGE_LOOP                    ;NOW COMPARE WHAT RESULTS
+     751                    *
+     752                    *        A5 HAS NEW LETTER TO PLOT
+     753                    *
+     754 00002810           PLOT_LETTER
+     755 00002810     4c85           MOVE    A4,A5                          ;GET NEW LETTER IN A5
+     756 00002820     8ca2           MOVB    A5,*A2                         ;INDICATE THAT THIS IS WHAT IS SPRAYED
+     757 00002830                    JSRP    DRAW_A5                        ;PLOT THE CHARACTER IN A5
+     758 000028a0     c0b5           JRUC    CHANGE_LOOP
+     759                    
+     760                    **************************************************************************
+     761                    *                                                                        *
+     762                    *          DRAW_A5                                                       *
+     763                    *          ERASE_A5                                                      *
+     764                    *                                                                        *
+     765                    *          LETTER IS IN A5.                                              *
+     766                    *          LETTER NUMBER (1ST IS ZERO) IN A0.                            *
+     767                    *          FORK TO SPRAYER TO MAKE THE LETTER AND WAIT FOR IT TO         *
+     768                    *          FINISH.                                                       *
+     769                    *                                                                        *
+     770                    **************************************************************************
+     771 000028b0           ERASE_A5
+     772 000028b0     b7a8           MOVE    *A13(SPIN_ERASE_SCR),A8,L      ;INDICATE ERASE
+         000028c0     0090  
+     773 000028d0     c001           JRUC    DRAW_A5_1
+     774                    
+     775 000028e0           DRAW_A5
+     776 000028e0     5708           CLR     A8
+     777 000028f0           DRAW_A5_1
+     778 000028f0     0b45           CMPI    SPACE,A5                       ;USE UNDERSCORE FOR SPACE.
+         00002900     ffdf  
+     779 00002910     cb02           JRNZ    NOT_SPACE
+     780 00002920     09c5           MOVI    UNDERSCORE,A5
+         00002930     005f  
+     781 00002940           NOT_SPACE
+     782 00002940     4ca9           MOVE    A5,A9                          ;PASS CHAR IN A9
+     783 00002950     4daa           MOVE    A13,A10                        ;PASS OUR PROCESS STORE IN A10
+     784 00002960     4c0b           MOVE    A0,A11                         ;PASS X OFFSET IN A11
+     785                    
+     786 00002970     09e7           MOVI    SPRAY_DRONE,A7
+         00002980 00002aa0' 
+     787 000029a0     0d5f           CALLA   P_FORK                         ;START UP THE PROCESS
+         000029b0 00000000! 
+     788                    
+     789 000029d0     5600           CLR     A0
+     790 000029e0     b00d           MOVE    A0,*A13(SPIN_DRONE_DONE),W     ;NOW WAIT FOR DRONE TO FINISH
+         000029f0     0100  
+     791 00002a00           DRAW_2   SLEEP   4
+     792 00002a40     b5a0           MOVE    *A13(SPIN_DRONE_DONE),A0,W
+         00002a50     0100  
+     793 00002a60     caf9           JREQ    DRAW_2
+     794 00002a70                    RETP
+     795                    
+     796                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   18
+
+     797                    *                                                                        *
+     798                    *          SPRAY_DRONE                                                   *
+     799                    *                                                                        *
+     800                    *          THIS PROCESS IS CREATED TO SPRAY OUT A CHARACTER.             *
+     801                    *          A8 = ERASE SCRIPT (ZERO FOR NONE)                             *
+     802                    *          A9 = ASCII CHARACTER                                          *
+     803                    *          A10 = OTHER PROCESS WITH SOME RELEVANT DATA                   *
+     804                    *          A11 = CHARACTER NUMBER (X OFFSET AFTER SETUP SCRIPT)          *
+     805                    *                                                                        *
+     806                    *                                                                        *
+     807                    **************************************************************************
+     808 00002aa0           SPRAY_DRONE
+     809 00002aa0     0d5f           CALLA   RES_SCRL             ;MAKE SURE OUR Y IS IN SYNC
+         00002ab0 00000000! 
+     810 00002ad0     b744           MOVE    *A10(SPIN_SCRIPT_1),A4,L       ;GET SETUP SCRIPT
+         00002ae0     0070  
+     811 00002af0     098f           MMTM    SP,A8,A9,A10,A11               ;SAVE OUR DATA
+         00002b00     00f0  
+     812 00002b10                    JSRP    P_SCRIPT
+     813 00002b80     09af          MMFM    SP,A8,A9,A10,A11               ;SAVE OUR DATA
+         00002b90     0f00  
+     814                    
+     815 00002ba0     4d04           MOVE    A8,A4                          ;CHANGE BRUSHES IF NEEDED
+     816 00002bb0     ca0b           JREQ    NO_BLANK_BRUSH
+     817                    
+     818 00002bc0     098f           MMTM    SP,A8,A9,A10,A11               ;SAVE OUR DATA
+         00002bd0     00f0  
+     819 00002be0                    JSRP    P_SCRIPT
+     820 00002c50     09af          MMFM    SP,A8,A9,A10,A11               ;SAVE OUR DATA
+         00002c60     0f00  
+     821                    
+     822 00002c70           NO_BLANK_BRUSH
+     823                    *
+     824                    *        NOW WE'RE READY TO DRAW...EXCEPT....THAT WE MUST
+     825                    *        MOVE THE X OVER BY THE NUMBER OF CHARCTERS WE'RE DRAWING
+     826                    *
+     827 00002c70     b740           MOVE    *A10(SPIN_DX),A0,L             ;THIS IS X UNITS PER CHAR
+         00002c80     00e0  
+     828 00002c90     5e0b           MPYU    A0,A11                         ;MULT INTO CHAR COUNT
+     829 00002ca0     4d63           MOVE    A11,A3                         ;FOR ADD SCALED A3 TO X
+     830 00002cb0     0d5f           CALLA   X_PL_SA3                       ;CALL THE MODULE THAT KNOWS OFFSETS
+         00002cc0 00000000! 
+     831                    
+     832 00002ce0     05a0           MOVE    @SPRAYS,A0,W
+         00002cf0 00000000- 
+     833 00002d10     1020           INC     A0                             ;1 MORE SPRAY GOING
+     834 00002d20     0580           MOVE    A0,@SPRAYS,W                   ;STORE IT!
+         00002d30 00000000- 
+     835                    
+     836 00002d50     0b40           CMPI    1,A0                           ;TURN ON TIME?
+         00002d60     fffe  
+     837 00002d70     cb06           JRNZ    ALREADY_ON                     ;NOPE
+     838 00002d80                    SOUND1  START_SPRAY                    ;START SPRAY SOUND
+     839                    
+     840 00002de0           ALREADY_ON
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   19
+
+     841 00002de0     4d20           MOVE    A9,A0                          ;GET SET FOR SPRAY
+     842 00002df0     0b80           ANDI    BYTE_MASK,A0                   ;CUZ I'M PARANOID
+         00002e00 ffffff00  
+     843 00002e20     4d44           MOVE    A10,A4                         ;SAVE OTHER PROCESS PTR
+     844                    *
+     845                    *        WE'RE ABOUT TO START A SPRAY...START SOUND
+     846                    *
+     847 00002e30                    JSRP    SPR_CHAR
+     848                    
+     849 00002ea0     05a0           MOVE    @SPRAYS,A0,W
+         00002eb0 00000000- 
+     850 00002ed0     1420           DEC     A0                             ;1 MORE SPRAY GOING
+     851 00002ee0     0580           MOVE    A0,@SPRAYS,W                   ;STORE IT!
+         00002ef0 00000000- 
+     852 00002f10     cb06           JRNZ    DONT_SHUTOFF
+     853                    
+     854 00002f20                    SOUND1  KIL_SPRY                     ;TURN IT OFF!
+     855                    
+     856 00002f80           DONT_SHUTOFF
+     857 00002f80     09c0           MOVI    1,A0
+         00002f90     0001  
+     858 00002fa0     b004           MOVE    A0,*A4(SPIN_DRONE_DONE),W
+         00002fb0     0100  
+     859 00002fc0     c080           JAUC    SUCIDE                         ;AND DIE!
+         00002fd0 00000000! 
+     860                    
+     861 00002ff0           START_SPRAY
+     862 00002ff0     f3de           .WORD  0F3DEH,010H,080ADH,0            ;START SPRAY PAINT
+     863 00003030           KIL_SPRY
+     864 00003030     f3de           .WORD  0F3DEH,010H,0807FH,0            ;KILL SPRAY PAINT
+     865                    
+     866                    **************************************************************************
+     867                    *                                                                        *
+     868                    *          PALETTE_SETUP_PROC                                            *
+     869                    *                                                                        *
+     870                    *          THIS PROCESS IS CREATED TO SETUP THE PALETTES                 *
+     871                    *          FOR THE SPRAYERS....THIS WILL KEEP ANTS OFF                   *
+     872                    *          THE SCREEN EACH LETTER.                                       *
+     873                    *                                                                        *
+     874                    **************************************************************************
+     875 00003070           PALETTE_SETUP_PROC
+     876 00003070     09e4           MOVI    SC_CRAM,A4
+         00003080 00000000! 
+     877 000030a0                    JSRP    P_SCRIPT
+     878 00003110     c080           JAUC    SUCIDE             ;THIS IS ALL WE DO!
+         00003120 00000000! 
+     879                    
+     880                    **************************************************************************
+     881                    *                                                                        *
+     882                    *          HAND_PART_2                                                   *
+     883                    *                                                                        *
+     884                    *          THIS IS CALLED TO CHANGE THE POSITION OF THE 2ND PART         *
+     885                    *          OF THE HAND BASED ON THE POSITION OF THE 1ST PART OF THE      *
+     886                    *          HAND.  THE 1ST PART IN POINTED TO BY A8.                      *
+     887                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   20
+
+     888                    *          THE 2ND PART IS IN THE PROCESS STORE AREA AT ENT_HAND_OBJ     *
+     889                    *                                                                        *
+     890                    **************************************************************************
+     891 00003140           HAND_PART_2
+     892 00003140     098f           MMTM    SP,A0,A1
+         00003150     c000  
+     893 00003160     b7a0           MOVE    *A13(ENT_HAND_OBJ),A0,L        ;GET PART 2 POINTER
+         00003170     0180  
+     894 00003180     b701           MOVE    *A8(OXVAL),A1,L                ;GET X OF MAIN PART
+         00003190     0080  
+     895 000031a0     0b21           ADDI    -21*TABLE_UNIT,A1
+         000031b0 ffeb0000  
+     896 000031d0     b220           MOVE    A1,*A0(OXVAL),L
+         000031e0     0080  
+     897                    
+     898 000031f0     b701           MOVE    *A8(OYVAL),A1,L                ;GET Y OF MAIN PART
+         00003200     00a0  
+     899 00003210     0b21           ADDI    32H*TABLE_UNIT,A1
+         00003220 00320000  
+     900 00003240     b220           MOVE    A1,*A0(OYVAL),L
+         00003250     00a0  
+     901 00003260     09af          MMFM    SP,A0,A1
+         00003270     0003  
+     902 00003280     0960          RETS
+     903                    
+     904                    **************************************************************************
+     905                    *                                                                        *
+     906                    *          HANDLE_BUTTONS                                                *
+     907                    *                                                                        *
+     908                    *          THIS IS CALLED TO WATCH FOR AND ACT ON THE BUTTONS FOR        *
+     909                    *          DOING THE ENTERING.                                           *
+     910                    *                                                                        *
+     911                    **************************************************************************
+     912 00003290           HANDLE_BUTTONS
+     913 00003290     b5a0           MOVE    *A13(ENT_ANI_TIMER),A0,W       ;ARE WE DEBOUNCING?
+         000032a0     01f0  
+     914 000032b0     ca06           JREQ    NOT_BOUNCING
+     915 000032c0     1420           DEC     A0                             ;COUNT DOWN DEBOUNCE TIMER
+     916 000032d0     b00d           MOVE    A0,*A13(ENT_ANI_TIMER),W
+         000032e0     01f0  
+     917 000032f0     0d3f           CALLR   FETCH_BUTTONS                  ;KEEP READING BUTTONS TO
+         00003300     010a  
+     918                    *                                               ;NUMB OUT BOUNCING STATES
+     919 00003310     c044           JRUC    NO_BUT_WORK                    ;RETURN NOT FINISHED YET.
+     920                    *
+     921                    *        FIRST ESTABLISH IF WE'RE LOOKING FOR OPEN OR CLOSE.
+     922                    *        IF ENT_PRESSED ZERO WE'RE LOOKING FOR CLOSE.  
+     923                    *        IF ITS NON-ZERO WE'RE LOOKING FOR OPEN ON THAT BUTTON
+     924                    *
+     925 00003320           NOT_BOUNCING
+     926 00003320     b5a2           MOVE    *A13(ENT_PRESSED),A2,W         ;WELL?
+         00003330     0200  
+     927 00003340     ca08           JREQ    HB_OPEN                        ;WE'RE OPEN.....HANDLE 1 WAY
+     928                    *
+     929                    *        WE'RE CLOSED....WATCH THE SWITCH INDICATE BY A2 FOR OPEN.
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   21
+
+     930                    *
+     931 00003350     0d3f           CALLR   FETCH_BUTTONS                  ;A0 HAS CURRENT BUTTONS
+         00003360     0104  
+     932                    
+     933 00003370     5040           AND     A2,A0                          ;IS THE ONE WE WANT CLOSED?
+     934 00003380     cb3d           JRNZ    NO_BUT_WORK                    ;STILL CLOSED....HANG STATE.
+     935                    *
+     936                    *        BUTTON WENT FROM CLOSED TO OPEN.
+     937                    *
+     938 00003390     5600           CLR     A0
+     939 000033a0     b00d           MOVE    A0,*A13(ENT_PRESSED),W         ;INDIATE WE'RE LOOKING AGAIN!
+         000033b0     0200  
+     940                    
+     941 000033c0     c032           JRUC    START_DEBOUNCE                 ;AND NULLIFY QUICK HIT
+     942                    *
+     943                    *        WE'RE LOOKING FOR CLOSURES
+     944                    *
+     945 000033d0           HB_OPEN 
+     946 000033d0     b7a0           MOVE    *A13(ENT_Y_OFFSET),A0,L        ;DECAY HAND BACK TO BASE
+         000033e0     01d0  
+     947 000033f0     cf07           JRNN    NO_HAND_ANI                    ;ITS THERE!
+     948 00003400     0b20           ADDI    5*TABLE_UNIT,A0                ;ADD A UNIT
+         00003410 00050000  
+     949 00003430     ce01           JRN     STORE_AS_IS                    ;STILL NEGATIVE?
+     950 00003440     5600           CLR     A0                             ;WENT POSITIVE...MAKE ZERO
+     951 00003450           STORE_AS_IS
+     952 00003450     b20d           MOVE    A0,*A13(ENT_Y_OFFSET),L
+         00003460     01d0  
+     953                    
+     954 00003470           NO_HAND_ANI
+     955 00003470     0d3f           CALLR   FETCH_BUTTONS                  ;LOOK FOR CLOSED THIS FRAME
+         00003480     00f2  
+     956 00003490     03e1           NOT     A1                             ;OPEN LAST FRAME
+     957 000034a0     5020           AND     A1,A0                          ;CLOSED THIS FRAME
+     958 000034b0     0b80           ANDI    BUTTON_BITS,A0                 ;JUST IN THESE BITS.
+         000034c0 ffffff0f  
+     959 000034e0     ca27           JREQ    NO_BUT_WORK                    ;NO ONE CLOSED....EXIT
+     960                    
+     961 000034f0     09c1           MOVI    1,A1                           ;WALK OUT TO THE 1ST ONE
+         00003500     0001  
+     962 00003510           LOOK_FOR_BIT
+     963 00003510     3021           RL      1,A1
+     964 00003520     4c22           MOVE    A1,A2
+     965 00003530     5002           AND     A0,A2
+     966 00003540     cafc           JREQ    LOOK_FOR_BIT
+     967                    *
+     968                    *        A1 HAS THE BUTTON THAT'S PRESSED
+     969                    *
+     970 00003550     b02d           MOVE    A1,*A13(ENT_PRESSED),W         ;TELL PROCESS THIS IS THE ONE
+         00003560     0200  
+     971                    
+     972 00003570     09e0           MOVI    -10*TABLE_UNIT,A0
+         00003580 fff60000  
+     973 000035a0     b20d           MOVE    A0,*A13(ENT_Y_OFFSET),L        ;THIS WILL PUNCH BUTTON
+         000035b0     01d0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   22
+
+     974                    
+     975 000035c0     b7a0           MOVE    *A13(ENT_FROB_OBJ),A0,L        ;GET OBJECT WE'RE PRESSING
+         000035d0     0150  
+     976 000035e0     ca0e           JRZ     SKIP_X_ADJ                     ;NONE THERE....SKIP
+     977                    
+     978 000035f0     b602           MOVE    *A0(OXVAL),A2,L                ;GET X POSITION OF LETTER
+         00003600     0080  
+     979 00003610     b601           MOVE    *A0(OIMG),A1,L                 ;GET IMAGE POINTER
+         00003620     0180  
+     980 00003630     8421           MOVE    *A1,A1,W                       ;GET WIDTH
+     981 00003640     25e1           SLL     15,A1                          ;HALF WIDTH
+     982 00003650     4022           ADD     A1,A2                          ;ADD THIS IN.
+     983 00003660     0d02           SUBI    HAND_X_ADJ,A2                  ;MOVE DISTANCE SO HAND LINES UP
+         00003670 fff2ffff  
+     984 00003690     b7a1           MOVE    *A13(ENT_X_COR),A1,L           ;GET BASE UPPER LEFT
+         000036a0     0060  
+     985 000036b0     4422           SUB     A1,A2                          ;FORM X OFFSET FROM THIS
+     986 000036c0     4c49           MOVE    A2,A9                          ;AND PLACE THIS IN X OFFSET REG!
+     987                    
+     988 000036d0           SKIP_X_ADJ
+     989 000036d0     0d3f           CALLR   ACT_ON_BUTTON                  ;DO AN ACTION
+         000036e0     000b  
+     990                    
+     991 000036f0           START_DEBOUNCE
+     992 000036f0     09c0           MOVI    2,A0                           ;3 FRAME DEBOUNCE
+         00003700     0002  
+     993 00003710     b00d           MOVE    A0,*A13(ENT_ANI_TIMER),W       ;STORE IT
+         00003720     01f0  
+     994 00003730     b5a0           MOVE    *A13(ENT_COUNT),A0,W           ;DID ACTION SAY EXIT?
+         00003740     00b0  
+     995 00003750     ca02           JREQ    EXIT_DETECTED
+     996                    
+     997 00003760           NO_BUT_WORK
+     998 00003760     0320           CLRC                    ;RETURN "LOOP"
+     999 00003770     0960           RETS
+    1000                    
+    1001 00003780           EXIT_DETECTED
+    1002 00003780     0de0           SETC                    ;RETURN EXIT CODE
+    1003 00003790     0960           RETS
+    1004                    
+    1005                    **************************************************************************
+    1006                    *                                                                        *
+    1007                    *          ACT_ON_BUTTON                                                 *
+    1008                    *                                                                        *
+    1009                    *          THIS IS CALLED ON THE FOREWARD PRESS OF ANY BUTTON            *
+    1010                    *          DURING ENTER YOUR INITIALS.   ITS JOB IS TO                   *
+    1011                    *          MAKE NECESSARY ADJUSTMENTS TO THE PROCESS AREA                *
+    1012                    *          TO REFLECT THE BUTTON PRESS.  THIS IS INVOLOVED               *
+    1013                    *          ONLY WITH DATA CHANGES AND NOT THE PHYSICAL ANIMATION         *
+    1014                    *          AND DEBOUNCE.                                                 *
+    1015                    *                                                                        *
+    1016                    **************************************************************************
+    1017 000037a0           ACT_ON_BUTTON
+    1018 000037a0     0d3f           CALLR   OP_P                           ;OPERATOR?
+         000037b0     0150  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   23
+
+    1019 000037c0     cb06           JRNZ    AB00                           ;NOPE
+    1020                    
+    1021 000037d0                    SOUND1  BEEP_1               ;MAKE A BEEP.
+    1022                    
+    1023 00003830     b5a0  AB00     MOVE    *A13(ENT_FROB_ASCII),A0,W      ;GET THE "LETTER"
+         00003840     0170  
+    1024 00003850     0b40           CMPI    FONT_SPACE,A0                  ;IS IT A SPACE?
+         00003860     ff81  
+    1025 00003870     cb03           JRNE    AB1                            ;NOPE
+    1026 00003880     09c0           MOVI    SPACE,A0                       ;REPLACE WITH A SPACE
+         00003890     0020  
+    1027 000038a0     c009           JRUC    AB2                            ;AND CONTINUE
+    1028                    
+    1029 000038b0     0b40  AB1      CMPI    FONT_RUB,A0                       ;RUB?
+         000038c0     ff80  
+    1030 000038d0     ca15           JREQ    DO_RUBOUT                      ;NO
+    1031                    
+    1032 000038e0     0b40           CMPI    FONT_END,A0                       ;END?
+         000038f0     ff7f  
+    1033 00003900     ca25           JREQ    DO_END
+    1034                    
+    1035 00003910     0b40           CMPI    FONT_CR,A0                     ;CR FOR OPERATOR IS "END"
+         00003920     ff7c  
+    1036 00003930     ca22           JREQ    DO_END
+    1037                    *
+    1038                    *        A0 HAS A CHARACTER TO ENTER
+    1039                    *
+    1040 00003940     b5a1  AB2      MOVE    *A13(ENT_COUNTDOWN),A1,W       ;ANY LEFT TO GET?
+         00003950     00c0  
+    1041 00003960     ca0b           JREQ    NO_ACTION                      ;NOPE....WE HAVE A PROBLEM
+    1042                    
+    1043 00003970     b7a2           MOVE    *A13(ENT_INIT_PTR),A2,L        ;GET PLACE TO PUT INITIAL
+         00003980     0130  
+    1044 00003990     8c02           MOVB    A0,*A2                         ;PUT IT OUT
+    1045 000039a0     b5a3           MOVE    *A13(ENT_INIT_SIZE),A3,W
+         000039b0     00a0  
+    1046 000039c0     4062           ADD     A3,A2                          ;PUSH POINTER TO NEXT INITIAL
+    1047 000039d0     b24d           MOVE    A2,*A13(ENT_INIT_PTR),L        ;PUT POINTER BACK IN MEMORY
+         000039e0     0130  
+    1048                    
+    1049 000039f0     1421           DEC     A1                             ;1 LESS IN COUNTER
+    1050 00003a00     b02d           MOVE    A1,*A13(ENT_COUNTDOWN),W       ;PUT COUNTER BACK
+         00003a10     00c0  
+    1051                    
+    1052 00003a20           NO_ACTION
+    1053 00003a20     0960           RETS                                   ;AND WE'RE DONE!
+    1054                    
+    1055 00003a30           DO_RUBOUT
+    1056 00003a30     b5a1           MOVE    *A13(ENT_COUNTDOWN),A1,W       ;GET NUMBER WE NEED
+         00003a40     00c0  
+    1057 00003a50     b5a2           MOVE    *A13(ENT_COUNT),A2,W           ;IS THIS NUMBER WE STARTED NEEDING?
+         00003a60     00b0  
+    1058 00003a70     4822           CMP     A1,A2
+    1059 00003a80     caf9           JREQ    NO_ACTION                      ;YEP....NO ACTION!
+    1060                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   24
+
+    1061 00003a90     b7a3           MOVE    *A13(ENT_INIT_PTR),A3,L        ;GET POINTER TO WHERE WE STASHED
+         00003aa0     0130  
+    1062 00003ab0     b5a4           MOVE    *A13(ENT_INIT_SIZE),A4,W       ;GET DISTANCE BETWEEN
+         00003ac0     00a0  
+    1063 00003ad0     4483           SUB     A4,A3                          ;MOVE POINTER TO LAST LETTER
+    1064 00003ae0     5684           CLR     A4                             ;PUT "NULL" AT CURRENT LETTER
+    1065 00003af0     8c83           MOVB    A4,*A3                         
+    1066 00003b00     b26d           MOVE    A3,*A13(ENT_INIT_PTR),L        ;PUT POINTER BACK
+         00003b10     0130  
+    1067 00003b20     1021           INC     A1
+    1068 00003b30     b02d           MOVE    A1,*A13(ENT_COUNTDOWN),W       ;PUT NEW COUNT BACK
+         00003b40     00c0  
+    1069 00003b50     0960           RETS
+    1070                    
+    1071 00003b60           DO_END
+    1072 00003b60     5600           CLR     A0
+    1073 00003b70     b00d           MOVE    A0,*A13(ENT_COUNT),W           ;SET START COUNT TO ZERO TO
+         00003b80     00b0  
+    1074 00003b90     0960           RETS                                   ;SIGNAL END RECEIVED.
+    1075                    
+    1076 00003ba0     f3df  BEEP_1   .WORD  0F3DFH,010H,080A2H,0            ;LOW BEEP 
+    1077                    
+    1078                    **************************************************************************
+    1079                    *                                                                        *
+    1080                    *          DO_FROB                                                       *
+    1081                    *                                                                        *
+    1082                    *          THIS IS CALLED TO TAKE CARE OF THE FROB AND THE THING         *
+    1083                    *          THE FROB IS ON.  THE FROB OBJECT IS IN A10.  THE              *
+    1084                    *          HAND OBJECT IS IN A8.  WE WANT TO FIND THE "LETTER"           *
+    1085                    *          OBJECT THAT IS CLOSEST TO A PARTICULAR OFFSET OF              *
+    1086                    *          THE HAND.  WE MOVE THE FROB TO BOX THAT ITEM, AND             *
+    1087                    *          HIGHLIGHT THAT LETTER (BY CHANGING ITS CONSTANT).             *
+    1088                    *                                                                        *
+    1089                    *          WE ARE RESPONSIBLE FOR CHANGING THE LAST ONE THAT             *
+    1090                    *          WAS HIGHLIGHTED TO ITS NORMAL COLOR.                          *
+    1091                    *                                                                        *
+    1092                    **************************************************************************
+    1093 00003be0     098f  DO_FROB  MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7
+         00003bf0     ff00  
+    1094 00003c00     b701           MOVE    *A8(OXVAL),A1,L      ;GET POSITION OF HAND
+         00003c10     0080  
+    1095 00003c20     b702           MOVE    *A8(OYVAL),A2,L
+         00003c30     00a0  
+    1096 00003c40     0b21           ADDI    HAND_HOT_DX,A1       ;MOVE TO "HOT" POINT
+         00003c50 00180000  
+    1097 00003c70     0b22           ADDI    HAND_HOT_DY,A2
+         00003c80 fffe0000  
+    1098 00003ca0     b7a3           MOVE    *A13(ENT_Y_OFFSET),A3,L  ;GET DELTA Y
+         00003cb0     01d0  
+    1099 00003cc0     4462           SUB     A3,A2                    ;"UN-DO" ANIMATION TO GET REAL POINT
+    1100                    
+    1101 00003cd0     b7a3           MOVE    *A13(ENT_OLIST),A3,L      ;WALK THROUGH OUR OBJECTS
+         00003ce0     0110  
+    1102 00003cf0     ca39           JRZ     NO_FROB_NOW               ;DON'T CHANGE IT.
+    1103                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   25
+
+    1104 00003d00     b467  DF1      MOVE    *A3(OID),A7,W             ;GET THE ID OF THE CURRENT GUY
+         00003d10     01a0  
+    1105                    *         CMPI    LET_A,A7                  ;IS IT A LETTER OF SPECIAL CHAR?
+    1106 00003d20     0b47           CMPI    EX_PT,A7                  ;IS IT A LETTER OF SPECIAL CHAR?
+         00003d30     ffde  
+    1107 00003d40     c831           JRLO    SKIP_OBJ                  ;NOPE...SKIP THIS ONE
+    1108                    
+    1109 00003d50     4c24           MOVE    A1,A4                     ;MOVE HAND X TO DESTRUCTABLE PLACE
+    1110 00003d60     b665           MOVE    *A3(OXVAL),A5,L           ;GET THE X OF THIS LETTER
+         00003d70     0080  
+    1111                    *
+    1112                    *        NOW FIND CENTER OF THE IMAGE AT THIS POINT
+    1113                    *
+    1114 00003d80     b666           MOVE    *A3(OIMG),A6,L            ;THIS IS IMAGE POINTER
+         00003d90     0180  
+    1115 00003da0     84c6           MOVE    *A6,A6,W                  ;THIS IS DX IN PIXELS
+    1116 00003db0     25e6           SLL     15,A6                     ;ALIGN, BUT DIVIDE BY 2!
+    1117 00003dc0     40c5           ADD     A6,A5                     ;THIS IS X WE ARE INTERESTED IN!
+    1118                    
+    1119 00003dd0     44a4           SUB     A5,A4                     ;THIS WILL BE POS IF HAND IS ON RIGHT
+    1120 00003de0     ce27           JRN     SKIP_OBJ                  ;THIS IS A NO GO!
+    1121                    *
+    1122                    *        THIS IS WHERE SPECIAL CASE FOR RUB, SPACE, END WILL GO
+    1123                    *
+    1124 00003df0     0b47           CMPI    FONT_SPACE,A7             ;ARE WE 3 SPECIAL GUYS?
+         00003e00     ff81  
+    1125 00003e10     c804           JRLO    NOT_RUB                   ;YEP...USE LARGER X
+    1126                    
+    1127 00003e20     0b64           CMPI    CLOSE_FOR_RUB,A4          ;RUB HAS A LARGER RANGE!
+         00003e30 ffe3ffff  
+    1128 00003e50     c204           JRLS    RUB_IN_RANGE              ;WE'RE CLOSE ENOUGH FOR RUB
+    1129                    
+    1130 00003e60           NOT_RUB
+    1131 00003e60     0b64           CMPI    CLOSE_X,A4                ;ARE WE CLOSE ENOUGH IN X TO CONSIDER?
+         00003e70 ffebffff  
+    1132 00003e90     c31c           JRHI    SKIP_OBJ                  ;NOPE....TRY NEXT OBJECT
+    1133                    
+    1134 00003ea0           RUB_IN_RANGE
+    1135 00003ea0     4c44           MOVE    A2,A4
+    1136                    
+    1137 00003eb0     b665           MOVE    *A3(OYVAL),A5,L           ;GET THE Y OF THIS LETTER
+         00003ec0     00a0  
+    1138 00003ed0     44a4           SUB     A5,A4                     ;THIS WILL BE POS IF HAND IS ON RIGHT
+    1139 00003ee0     ce17           JRN     SKIP_OBJ                  ;THIS IS A NO GO!
+    1140                    
+    1141 00003ef0     0b64           CMPI    CLOSE_Y,A4                ;ARE WE CLOSE ENOUGH IN X TO CONSIDER?
+         00003f00 ffe9ffff  
+    1142 00003f20     c313           JRHI    SKIP_OBJ                  ;NOPE....TRY NEXT OBJECT
+    1143                    *
+    1144                    *        WE HAVE THE LETTER TO FROB AROUND
+    1145                    *
+    1146 00003f30     b7a6           MOVE    *A13(ENT_FROB_OBJ),A6,L   ;GET LAST FROB
+         00003f40     0150  
+    1147 00003f50     ca06           JREQ    FROB_UNDEF                ;THIS IS THE 1ST FROB
+    1148 00003f60     4866           CMP     A3,A6                     ;SAME FROB?
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   26
+
+    1149 00003f70     ca11           JREQ    NO_FROB_NOW               ;YEP....NOTHING TO DO
+    1150                    
+    1151 00003f80     b5a0           MOVE    *A13(ENT_CONST),A0,W      ;GET THE CONSTANT
+         00003f90     00d0  
+    1152 00003fa0     b006           MOVE    A0,*A6(OCONST),W          ;RESTORE "BACKGROUND" COLOR FOR LETTER
+         00003fb0     0170  
+    1153                    
+    1154 00003fc0           FROB_UNDEF
+    1155 00003fc0     b26d           MOVE    A3,*A13(ENT_FROB_OBJ),L    ;STORE THE CURRENT ONE
+         00003fd0     0150  
+    1156 00003fe0     b0ed           MOVE    A7,*A13(ENT_FROB_ASCII),W  ;STORE THE "ASCII" FOR THIS ONE
+         00003ff0     0170  
+    1157                    *
+    1158                    *        A7 HAS THE ASCII OR SPECIAL CODE TO FROB AROUND
+    1159                    *        NOW GET A DX AND DY FOR THIS CODE
+    1160                    *
+    1161                    *         CALLR   GET_FROB_DY_DX
+    1162                    *
+    1163                    *         ADD     A2,A5                      ;A5 STILL HAS Y
+    1164                    *         MOVE    A5,*A11(OYVAL),L           ;A5 STILL HAS Y OF FROB LETTER
+    1165                    *         MOVE    *A3(OXVAL),A4,L
+    1166                    *         ADD     A1,A4                      ;ADD THE DY SPECIFIED
+    1167                    *         MOVE    A4,*A11(OXVAL),L           ;THIS SETS FROB POSITION
+    1168                    *
+    1169 00004000     09e0           MOVI    FROB_COLOR,A0
+         00004010 0000f5f5  
+    1170 00004030     b003           MOVE    A0,*A3(OCONST),W           ;MAKE CURRENT LETTER GLOW
+         00004040     0170  
+    1171 00004050     c003           JRUC    NO_FROB_NOW                ;WE'RE READY TO EXIT.
+    1172                    
+    1173 00004060     b663  SKIP_OBJ MOVE    *A3(OSLINK),A3,L           ;WALK TO NEXT
+         00004070     0020  
+    1174 00004080     cbc7           JRNZ    DF1
+    1175                    
+    1176 00004090           NO_FROB_NOW
+    1177 00004090     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7
+         000040a0     00ff  
+    1178 000040b0     0960          RETS
+    1179                    
+    1180                    **************************************************************************
+    1181                    *                                                                        *
+    1182                    *          GET_FROB_DY_DX                                                *
+    1183                    *                                                                        *
+    1184                    *          THIS IS CALLED BY DO_FROB TO GET AN OFFSET TO CENTER          *
+    1185                    *          THE BOX AROUND THE VARIOUS FIGURES.  A FIXED OFFSET           *
+    1186                    *          SHOULD WORK FOR A-Z.....THE SP RUB AND END WILL               *
+    1187                    *          REQUIRE THEIR OWN SPECIAL OFFSETS.                            *
+    1188                    *                                                                        *
+    1189                    **************************************************************************
+    1190                    *GET_FROB_DY_DX
+    1191                    *         MOVI    -9*TABLE_UNIT,A1
+    1192                    *         MOVI    -2*TABLE_UNIT,A2
+    1193                    *         RETS
+    1194                    
+    1195                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   27
+
+    1196                    *                                                                        *
+    1197                    *          LIMIT_RANGE                                                   *
+    1198                    *                                                                        *
+    1199                    *          THIS IS CALLED TO COMPARE THE NUMBER IN A0                    *
+    1200                    *          TO THE RANGE (UNSIGNED) IN A3,A4.  IF IT IS                   *
+    1201                    *          SMALLER THAN A3 WE RETURN A3 IN A0.  IF IT IS                 *
+    1202                    *          LARGER THAN A4 WE RETURN A4 IN A0.  ELSE WE                   *
+    1203                    *          RETURN A0 AS IS.                                              *
+    1204                    *                                                                        *
+    1205                    **************************************************************************
+    1206 000040c0           LIMIT_RANGE
+    1207 000040c0     4860           CMP     A3,A0                ;IS A0 TOO LOW
+    1208 000040d0     c901           JRHS    LR1                  ;NOPE
+    1209                    
+    1210 000040e0     4c60           MOVE    A3,A0
+    1211 000040f0     4880  LR1      CMP     A4,A0
+    1212 00004100     c201           JRLS    LR2
+    1213                    
+    1214 00004110     4c80           MOVE    A4,A0
+    1215 00004120     0960  LR2      RETS
+    1216                    
+    1217                    **************************************************************************
+    1218                    *                                                                        *
+    1219                    *          GET_DY_DX                                                     *
+    1220                    *                                                                        *
+    1221                    *          THIS IS CALLED IN STEADY STATE FOR ENTER YOUR INITIALS.       *
+    1222                    *          IT CHECKS THE JOYSTICK AND RETURNS THE DISTANCE               *
+    1223                    *          TO MOVE IN X IN A1, AND THE DISTANCE IN Y IN A2.              *
+    1224                    *                                                                        *
+    1225                    *          THIS DOES NOT HANDLE THE LIMITING.  THIS IS                   *
+    1226                    *          DONE BY THE CALLER.                                           *
+    1227                    *                                                                        *
+    1228                    **************************************************************************
+    1229 00004130           GET_DY_DX
+    1230 00004130     098f           MMTM    SP,A0,A3
+         00004140     9000  
+    1231 00004150     5621           CLR     A1
+    1232 00004160     5642           CLR     A2
+    1233                    
+    1234 00004170     0d3f           CALLR   GET_STICK_IN_A3
+         00004180     0032  
+    1235                    
+    1236 00004190     4c60           MOVE    A3,A0                     ;COPY
+    1237 000041a0     0b80           ANDI    1,A0                      ;IS UP PRESSED?
+         000041b0 fffffffe  
+    1238 000041d0     ca03           JRZ     NOT_UP
+    1239                    
+    1240 000041e0     0b22           ADDI    -3*TABLE_UNIT,A2          ;
+         000041f0 fffd0000  
+    1241                    
+    1242 00004210           NOT_UP
+    1243 00004210     4c60           MOVE    A3,A0
+    1244 00004220     0b80           ANDI    2,A0
+         00004230 fffffffd  
+    1245 00004250     ca03           JRZ     NOT_DOWN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   28
+
+    1246                    
+    1247 00004260     0b22           ADDI    3*TABLE_UNIT,A2
+         00004270 00030000  
+    1248                    
+    1249 00004290           NOT_DOWN
+    1250 00004290     4c60           MOVE    A3,A0
+    1251 000042a0     0b80           ANDI    4,A0
+         000042b0 fffffffb  
+    1252 000042d0     ca03           JRZ     NOT_LEFT
+    1253                    
+    1254 000042e0     0b21           ADDI    -4*TABLE_UNIT,A1
+         000042f0 fffc0000  
+    1255                    
+    1256 00004310           NOT_LEFT
+    1257 00004310     0b83           ANDI    8,A3
+         00004320 fffffff7  
+    1258 00004340     ca03           JRZ     NOT_RIGHT
+    1259                    
+    1260 00004350     0b21           ADDI    4*TABLE_UNIT,A1
+         00004360 00040000  
+    1261 00004380           NOT_RIGHT
+    1262 00004380     09af          MMFM    SP,A0,A3
+         00004390     0009  
+    1263 000043a0     0960          RETS
+    1264                    
+    1265                    **************************************************************************
+    1266                    *                                                                        *
+    1267                    *          FETCH_BUTTONS                                                 *
+    1268                    *                                                                        *
+    1269                    *          THIS IS CALLED TO READ THE CURRENT STATE OF THE               *
+    1270                    *          CURRENT PLAYERS BUTTONS INTO THE PROCESS                      *
+    1271                    *          AREA.  THE OLD BUTTONS ARE RETURNED IN A1.                    *
+    1272                    *          THE NEW BUTTONS ARE RETURNED IN A0 AND                        *
+    1273                    *          STORED IN THE PROCESS AREA.                                   *
+    1274                    *                                                                        *
+    1275                    *          WE ALSO RETURN A COMPARE OF THE LAST AND CURRENT STATE        *
+    1276                    *                                                                        *
+    1277                    **************************************************************************
+    1278 000043b0           FETCH_BUTTONS
+    1279 000043b0     098f           MMTM    SP,A3
+         000043c0     1000  
+    1280 000043d0     0d3f           CALLR   GET_STICK_IN_A3           ;GET A NEW STICK
+         000043e0     000c  
+    1281                    
+    1282 000043f0     4c60           MOVE    A3,A0
+    1283 00004400     0b80           ANDI    BYTE_MASK,A0              ;JUST KEEP THIS PLAYER
+         00004410 ffffff00  
+    1284                    
+    1285 00004430     b5a1           MOVE    *A13(ENT_LAST_BUTTON),A1,W  ;SHOW LAST STATE
+         00004440     01c0  
+    1286 00004450     4801           CMP     A0,A1                       ;RETURN THE COMPARISON
+    1287 00004460     b00d           MOVE    A0,*A13(ENT_LAST_BUTTON)
+         00004470     01c0  
+    1288 00004480     09af          MMFM    SP,A3
+         00004490     0008  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   29
+
+    1289 000044a0     0960          RETS
+    1290                    
+    1291                    **************************************************************************
+    1292                    *                                                                        *
+    1293                    *          GET_STICK_IN_A3                                               *
+    1294                    *                                                                        *
+    1295                    *          THIS GETS THE 8 SWITCHES FOR THE CURRENT PLAYER               *
+    1296                    *          IN THE LOW BYTE OF A3.   THE HARDWARE IS 1 FOR OPEN,          *
+    1297                    *          BUT THIS ROUTINE RETURNS:                                     *
+    1298                    *                                                                        *
+    1299                    *                  BIT = 0 MEANS SWITCH OPEN                             *
+    1300                    *                  BIT = 1 MEANS SWITCH CLOSED                           *
+    1301                    *                                                                        *
+    1302                    *          THEY READ AS FOLLOWS:                                         *
+    1303                    *                                                                        *
+    1304                    *          MSB                                                 LSB       *
+    1305                    *             ROCKET  JUMP  FIRE  CROUCH  RIGHT  LEFT  DOWN  UP          *
+    1306                    *                                                                        *
+    1307                    **************************************************************************
+    1308 000044b0           GET_STICK_IN_A3
+    1309 000044b0     098f           MMTM    SP,A0
+         000044c0     8000  
+    1310 000044d0     b5a0           MOVE    *A13(ENT_STICK),A0,W      ;GET THE SHIFT COUNT
+         000044e0     0100  
+    1311 000044f0     05a3           MOVE    @SWITCH,A3,W              ;READ THE STICK
+         00004500 01c00000  
+    1312 00004520     03a0           NEG     A0                        ;BRAIN DAMAGE SRL USES 2'S COMPLE.
+    1313 00004530     6603           SRL     A0,A3                     ;SHIFT BASED ON PLAYER NUMBER
+    1314 00004540     03e3           NOT     A3                        ;INVERT SO 1 IS CLOSED
+    1315 00004550     0b83           ANDI    BYTE_MASK,A3              ;KEEP JUST THIS PLAYER'S BYTE
+         00004560 ffffff00  
+    1316 00004580     09af          MMFM    SP,A0
+         00004590     0001  
+    1317 000045a0     0960          RETS
+    1318                    
+    1319                    **************************************************************************
+    1320                    *                                                                        *
+    1321                    *          NEW_OBJ                                                       *
+    1322                    *                                                                        *
+    1323                    *          A14 = STFOBJ POINTER                                          *
+    1324                    *          A1  = RELATIVE X OFFSET FROM UPPER LEFT OF AREA               *
+    1325                    *          A2  = RELATIVE Y OFFSET FROM UPPER LEFT OF AREA               *
+    1326                    *                                                                        *
+    1327                    *          RETURN A0 POINTS AT NEW OBJECT                                *
+    1328                    *                 .EQ. IF FAIL                                           *
+    1329                    *                 .NE. IF OK                                             *
+    1330                    *                                                                        *
+    1331                    *          CALL INSOBJ AFTER WE RETURN                                   *
+    1332                    *                                                                        *
+    1333                    **************************************************************************
+    1334 000045b0           NEW_OBJ
+    1335 000045b0     0d5f           CALLA   GPALOBJ                   ;GET THE STUFF NECESSARY
+         000045c0 00000000! 
+    1336 000045e0     ca08           JREQ    RET_FAIL
+    1337 000045f0     0d5f           CALLA   STFOBJ                    ;STUFF IT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   30
+
+         00004600 00000000! 
+    1338                    
+    1339 00004620     0d3f           CALLR   LINK_TO_ME                ;STRING IT ONTO OUR LIST
+         00004630     00f1  
+    1340 00004640     0d3f           CALLR   STUFF_OBJECT_OFFSET       ;SET IT THERE!
+         00004650     00d9  
+    1341 00004660     4c00           MOVE    A0,A0                     ;RETURN .NE.
+    1342 00004670           RET_FAIL
+    1343 00004670     0960           RETS
+    1344                    
+    1345                    **************************************************************************
+    1346                    *                                                                        *
+    1347                    *          ADD_ALPHABET                                                  *
+    1348                    *                                                                        *
+    1349                    *          THIS IS CALLED TO GET ALL OF THE LETTER OBJECTS.              *
+    1350                    *                                                                        *
+    1351                    **************************************************************************
+    1352 00004680           ADD_ALPHABET
+    1353 00004680     098f           MMTM    SP,A1,A2,A3,A4,A5,A6,A7
+         00004690     7f00  
+    1354                    
+    1355 000046a0     0d3f           CALLR   OP_P                           ;IS IT THE OPERATOR
+         000046b0     0060  
+    1356 000046c0     ca3b           JRZ     ADD_OPABET                     ;YEP...PUT HIS SET OUT!
+    1357                    
+    1358 000046d0     09e2           MOVI    ALPHA_Y,A2
+         000046e0 00050000  
+    1359 00004700     09c3           MOVI    LET_A,A3                       ;THIS IS THE "CURRENT" LETTER
+         00004710     0041  
+    1360 00004720     09c4           MOVI    ALPHA_ROWS,A4                  ;THIS IS ROW COUNTER
+         00004730     0003  
+    1361 00004740           NEXT_ROW
+    1362 00004740     09e1           MOVI    ALPHA_X,A1                     ;RESET X TO LEFT MARGIN
+         00004750 00050000  
+    1363 00004770     09c5           MOVI    ALPHA_COLS,A5
+         00004780     000a  
+    1364 00004790           NEXT_LET
+    1365 00004790     09e6           MOVI    RD15FONT,A6                    ;POINT AT C-SET
+         000047a0 00000000! 
+    1366 000047c0     0d3f           CALLR   SETUP_LETTER                   ;SETUP THIS LETTER
+         000047d0     0079  
+    1367 000047e0     0b21           ADDI    ALPHA_DX,A1                    ;PUSH TO NEXT X POSITION
+         000047f0 00140000  
+    1368 00004810     0b43           CMPI    LET_Z,A3                       ;DID WE JUST DO THE Z?
+         00004820     ffa5  
+    1369 00004830     ca06           JREQ    SPECIAL_LETS                   ;YEP....DO THE ODDBALLS
+    1370 00004840     1023           INC     A3                             ;NEXT ASCII LETTER
+    1371 00004850     3da5           DSJS    A5,NEXT_LET
+    1372                    
+    1373 00004860     0b22           ADDI    ALPHA_DY,A2                    ;NEXT ROW POSITION
+         00004870 00160000  
+    1374 00004890     3ec4           DSJS    A4,NEXT_ROW
+    1375                    
+    1376 000048a0           SPECIAL_LETS
+    1377 000048a0     09c7           MOVI    FONT_END,A7                    ;LAST LETTER WILL BE "END"
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   31
+
+         000048b0     0080  
+    1378 000048c0           FINISH_OP
+    1379 000048c0     0b01           ADDI    Z_TO_SPACE,A1                  ;ADD EXTRA
+         000048d0     0000  
+    1380 000048e0     0b22           ADDI    SPACE_DY,A2                    ;PUSH SPACE DOWN A LITTLE
+         000048f0 00020000  
+    1381 00004910     09c3           MOVI    FONT_SPACE,A3                  ;POINT AT SPACE
+         00004920     007e  
+    1382 00004930     0d3f           CALLR   SETUP_LETTER                   ;SETUP THIS LETTER
+         00004940     0062  
+    1383                    
+    1384 00004950     0d02           SUBI    SPACE_DY,A2                    ;RESTORE Y TO "PRE" SPACE 
+         00004960 fffdffff  
+    1385 00004980     0b21           ADDI    SPACE_TO_RUB,A1                ;PUSH TO RUB X POSITION
+         00004990 00190000  
+    1386 000049b0     09c3           MOVI    FONT_RUB,A3
+         000049c0     007f  
+    1387 000049d0     0d3f           CALLR   SETUP_LETTER                   ;SETUP THIS LETTER
+         000049e0     0058  
+    1388                    
+    1389 000049f0     0b21           ADDI    RUB_TO_END,A1                  ;DISTANCE TO "END" POSITION
+         00004a00 001d0000  
+    1390 00004a20     4ce3           MOVE    A7,A3                          ;GET "LAST" SYMBOL.
+    1391 00004a30     0d3f           CALLR   SETUP_LETTER
+         00004a40     0052  
+    1392                    
+    1393 00004a50     09af          MMFM    SP,A1,A2,A3,A4,A5,A6,A7
+         00004a60     00fe  
+    1394 00004a70     0960          RETS
+    1395                    
+    1396              0017  OP_COLS  EQU     23
+    1397                    
+    1398                    **************************************************************************
+    1399                    *                                                                        *
+    1400                    *          ADD_OPABET                                                    *
+    1401                    *                                                                        *
+    1402                    *          THIS IS CALLED TO PUT OUT THE CHARACTER SET FOR THE           *
+    1403                    *          OPERATOR.  IT USES ALOT MORE OR THE CHARACTERS!               *
+    1404                    *                                                                        *
+    1405                    **************************************************************************
+    1406 00004a80           ADD_OPABET
+    1407 00004a80     09e7           MOVI    OP_TABLE,A7
+         00004a90 00004d60' 
+    1408 00004ab0     09e2           MOVI    ALPHA_Y,A2
+         00004ac0 00050000  
+    1409 00004ae0     09c4           MOVI    ALPHA_ROWS,A4                  ;THIS IS ROW COUNTER
+         00004af0     0003  
+    1410 00004b00           NEXT_ROW1
+    1411 00004b00     09e1           MOVI    ALPHA_X,A1                     ;RESET X TO LEFT MARGIN
+         00004b10 00050000  
+    1412 00004b30     09c5           MOVI    OP_COLS,A5
+         00004b40     0017  
+    1413 00004b50           NEXT_LET1
+    1414 00004b50     8ee3           MOVB    *A7,A3                         ;FETCH NEXT LETTER
+    1415 00004b60     ca12           JRZ     OP_LETS_DONE                   ;NO MORE!
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   32
+
+    1416 00004b70     0b83           ANDI    BYTE_MASK,A3                   ;KILL SIGN EXTEND
+         00004b80 ffffff00  
+    1417 00004ba0     0b07           ADDI    BYTE_SIZE,A7                   ;PUSH THE POINTER
+         00004bb0     0008  
+    1418                    
+    1419 00004bc0     09e6           MOVI    RD15FONT,A6                    ;POINT AT C-SET
+         00004bd0 00000000! 
+    1420 00004bf0     0d3f           CALLR   SETUP_LETTER                   ;SETUP THIS LETTER
+         00004c00     0036  
+    1421 00004c10     0b21           ADDI    ALPHA_DX,A1                    ;PUSH TO NEXT X POSITION
+         00004c20 00140000  
+    1422 00004c40     3e05           DSJS    A5,NEXT_LET1
+    1423                    
+    1424 00004c50     0b22           ADDI    ALPHA_DY,A2                    ;NEXT ROW POSITION
+         00004c60 00160000  
+    1425 00004c80     3f24           DSJS    A4,NEXT_ROW1
+    1426                    
+    1427 00004c90           OP_LETS_DONE
+    1428 00004c90     09c7           MOVI    FONT_CR,A7                     ;"CR" SYMBOL REPLACES END
+         00004ca0     0083  
+    1429 00004cb0     c0c0           JRUC    FINISH_OP                      ;THIS WILL WRAP IT UP!
+    1430                    
+    1431                    **************************************************************************
+    1432                    *                                                                        *
+    1433                    *          OP_P                                                          *
+    1434                    *                                                                        *
+    1435                    *          THIS IS CALLED TO SEE IF THE CURRENT GET_LET                  *
+    1436                    *          RUNNING IS FOR THE OPERATOR MESSAGE.                          *
+    1437                    *                                                                        *
+    1438                    *          .EQ.   YES                                                    *
+    1439                    *          .NE.   NO                                                     *
+    1440                    *                                                                        *
+    1441                    **************************************************************************
+    1442 00004cc0     098f  OP_P     MMTM    SP,A0
+         00004cd0     8000  
+    1443 00004ce0     b7a0           MOVE    *A13(ENT_Y_COR),A0,L      ;GET THE Y BASE
+         00004cf0     0080  
+    1444 00004d00     0b60           CMPI    OP_Y,A0
+         00004d10 feccffff  
+    1445 00004d30     09af          MMFM    SP,A0
+         00004d40     0001  
+    1446 00004d50     0960          RETS
+    1447                    
+    1448 00004d60       41  OP_TABLE .STRING "ABCDEFGHI123"
+    1449 00004dc0       22           .BYTE   ASCII_DQ
+    1450 00004dc8       81           .BYTE   FONT_RQUOTE
+    1451 00004dd0       27           .STRING "'.,!?()-/"
+    1452 00004e18       4a           .STRING "JKLMNOPQR456" 
+    1453 00004e78       23           .STRING "#$%&:;<=>[]"
+    1454 00004ed0       53           .STRING "STUVWXYZ"
+    1455 00004f10       7e           .BYTE   FONT_SPACE
+    1456 00004f18       37           .STRING "7890"
+    1457 00004f38       5e           .STRING "^_{}|"
+    1458 00004f60       82           .BYTE   FONT_EPOUND
+    1459 00004f68       00           .BYTE   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   33
+
+    1460 00004f70                    .EVEN
+    1461                    
+    1462                    **************************************************************************
+    1463                    *                                                                        *
+    1464                    *          SETUP_LETTER                                                  *
+    1465                    *                                                                        *
+    1466                    *          THIS IS CALLED TO GET AN OBJECT FOR A LETTER.                 *
+    1467                    *          A1,A2 HAS RELATIVE OFFSET POSITON FOR LETTER.                 *
+    1468                    *          A3 IS THE ASCII REP OF THE LETTER.                            *
+    1469                    *          A6 HAS FONT LIST OF LETTERS (E.G. RD15FONT)                   *
+    1470                    *                                                                        *
+    1471                    **************************************************************************
+    1472 00004f70           SETUP_LETTER
+    1473 00004f70     098f           MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A14
+         00004f80     ff82  
+    1474 00004f90     4c67           MOVE    A3,A7                ;SAVE ASCII IN A7
+    1475 00004fa0     0be3           SUBI    EX_PT,A3             ;EXPT IS FIRST CHAR.....NOW WE'RE AT BASE
+         00004fb0     ffde  
+    1476 00004fc0     c83f           JRC     BAD_LETTER           ;LETTER TOO LOW FOR SET
+    1477                    
+    1478 00004fd0     24a3           SLL     5,A3                 ;MAKE LONG WORD OFFSET
+    1479 00004fe0     4066           ADD     A3,A6                ;NOW A6 POINTS AT IMAGE STRUCTURE.
+    1480 00004ff0     86c6           MOVE    *A6,A6,L             ;FETCH THE IMAGE STRUCTURE
+    1481                    *
+    1482                    *        A6 POINTS AT X,Y WIDTH IN PIXELS.
+    1483                    *
+    1484 00005000     09e8           MOVI    ALPHA_DX,A8          ;THIS IS INTER CHARACTER WIDTH
+         00005010 00140000  
+    1485 00005030     84c0           MOVE    *A6,A0,W             ;GET THE X WIDTH OF LETTER
+    1486 00005040     2600           SLL     16,A0                ;SHIFT UP TO PIXEL UNITS
+    1487 00005050     4408           SUB     A0,A8                ;THIS IS EXCESS WHITESPACE
+    1488 00005060     2be8           SRA     1,A8                 ;THIS IS AMOUNT TO INDENT (COULD BE NEGATIVE!)
+    1489 00005070     4101           ADD     A8,A1                ;ADD THIS TO THE PASSED X POSITION
+    1490                    
+    1491 00005080     09ee           MOVI    LETTER_TEMPLATE,A14  ;POINT AT STUFF FOR OBJECT
+         00005090 00000280' 
+    1492                    
+    1493 000050b0     0d5f           CALLA   GETOBJ               ;GET AN OBJECT PALETTE AND OBJECT
+         000050c0 00000000! 
+    1494 000050e0     ca2d           JREQ    BAD_LETTER           ;CAN'T GET OBJECT....EXIT
+    1495                    
+    1496 000050f0     4c03           MOVE    A0,A3                ;OBJECT IN A3
+    1497                    
+    1498 00005100     09e0           MOVI    NARCS,A0               ;USE NARCS PALETTE
+         00005110 00000000! 
+    1499 00005130     0d5f          CALLA   GETFPAL                   ;GET A PALETTE
+         00005140 00000000! 
+    1500                    
+    1501 00005160     ca21          JRZ     NO_PALETTE              ;COULD NOT GET THE PALETTE
+    1502 00005170     0580          MOVE    A0,@CURPAL,W            ;STUFF THIS IN CURRENT PAL
+         00005180 00000000! 
+    1503                    
+    1504 000051a0     4c60           MOVE    A3,A0                ;GET OBJECT IN A0
+    1505 000051b0     09ee           MOVI    LETTER_TEMPLATE,A14  ;SET FOR STUFFING
+         000051c0 00000280' 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   34
+
+    1506 000051e0     0d5f           CALLA   STFOBJ               ;STUFF SOME STUFF
+         000051f0 00000000! 
+    1507 00005210     0d3f           CALLR   STUFF_OBJECT_OFFSET  ;ADD IN A1, A2 AND STORE OFFSET
+         00005220     001c  
+    1508                    
+    1509 00005230     b0e0           MOVE    A7,*A0(OID),W        ;PUT ASCII LETTER AS THE ID
+         00005240     01a0  
+    1510                    
+    1511 00005250     4cc1           MOVE    A6,A1                ;GIVE IMAGE POINTER FOR ANI
+    1512 00005260     4c08           MOVE    A0,A8                ;OBJECT STRUCTURE FOR ANI
+    1513 00005270     b404           MOVE    *A0(OFLAGS),A4,W     ;FETCH THE OFLAGS
+         00005280     0100  
+    1514 00005290     0d5f           CALLA   ANI                  ;SET NEW ANIMATION PICTURE
+         000052a0 00000000! 
+    1515                    
+    1516 000052c0     b5a1           MOVE    *A13(ENT_CONST),A1,W ;GET THE CONSTANT
+         000052d0     00d0  
+    1517 000052e0     b020           MOVE    A1,*A0(OCONST),W        ;PUT IN OBJECT BLOCK
+         000052f0     0170  
+    1518                    
+    1519 00005300     0d5f           CALLA   INSOBJ               ;NOW PUT ON OBJECT LIST
+         00005310 00000000! 
+    1520 00005330     0d3f           CALLR   LINK_TO_ME           ;LINK IT IN SO WE HAVE IT!
+         00005340     0020  
+    1521 00005350     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A14
+         00005360     41ff  
+    1522 00005370     0960          RETS
+    1523                    *
+    1524                    *        ERROR EXITS
+    1525                    *
+    1526 00005380           NO_PALETTE
+    1527 00005380     4c60           MOVE    A3,A0                ;GET OBJECT POINTER BACK IN A0
+    1528 00005390     0d5f          CALLA   FREEOBJ
+         000053a0 00000000! 
+    1529                    
+    1530 000053c0           BAD_LETTER
+    1531 000053c0     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A14
+         000053d0     41ff  
+    1532 000053e0     0960          RETS
+    1533                    
+    1534                    **************************************************************************
+    1535                    *                                                                        *
+    1536                    *          STUFF_OBJECT_OFFSET                                           *
+    1537                    *                                                                        *
+    1538                    *          THIS IS CALLED TO TAKE A NEWLY CREATED OBJECT IN A0           *
+    1539                    *          AND TO POSITION IT AT X=A1, Y=A2 AWAY FROM OUR UPPER          *
+    1540                    *          LEFT CORNER.                                                  *
+    1541                    *                                                                        *
+    1542                    **************************************************************************
+    1543 000053f0           STUFF_OBJECT_OFFSET
+    1544 000053f0     098f           MMTM    SP,A1,A2
+         00005400     6000  
+    1545 00005410     0d3f           CALLR   ADD_BASE_TO_A1_A2
+         00005420     0007  
+    1546 00005430     b220           MOVE    A1,*A0(OXVAL),L           ;STORE IN OBJECT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   35
+
+         00005440     0080  
+    1547 00005450     b240           MOVE    A2,*A0(OYVAL),L           ;STORE IN OBJECT
+         00005460     00a0  
+    1548 00005470     09af          MMFM    SP,A1,A2
+         00005480     0006  
+    1549 00005490     0960          RETS
+    1550                    
+    1551                    **************************************************************************
+    1552                    *                                                                        *
+    1553                    *          ADD_BASE_TO_A1_A2                                             *
+    1554                    *                                                                        *
+    1555                    *          THIS CHANGES A1,A2 FROM AN X,Y OFFSET (FROM                   *
+    1556                    *          OUR UPPER LEFT CORNER) TO ABSOULE X AND Y                     *
+    1557                    *          COORDINATES BY ADDING IN THE UPPER LEFT CORNER.               *
+    1558                    *                                                                        *
+    1559                    **************************************************************************
+    1560 000054a0           ADD_BASE_TO_A1_A2
+    1561 000054a0     098f           MMTM    SP,A3
+         000054b0     1000  
+    1562 000054c0     b7a3           MOVE    *A13(ENT_X_COR),A3,L      ;GET X FOR CORNER
+         000054d0     0060  
+    1563 000054e0     4061           ADD     A3,A1                     ;MOVE IN BY A1
+    1564                    
+    1565 000054f0     b7a3           MOVE    *A13(ENT_Y_COR),A3,L      ;GET Y FOR CORNER
+         00005500     0080  
+    1566 00005510     4062           ADD     A3,A2                     ;MOVE IN BY A2
+    1567 00005520     09af          MMFM    SP,A3
+         00005530     0008  
+    1568 00005540     0960          RETS
+    1569                    
+    1570                    **************************************************************************
+    1571                    *                                                                        *
+    1572                    *          LINK_TO_ME                                                    *
+    1573                    *                                                                        *
+    1574                    *          THIS IS CALLED TO LINK THE OBJECT BLOCK IN A0                 *
+    1575                    *          TO THE LIST FOR THE CONTROLLING PROCESS.                      *
+    1576                    *                                                                        *
+    1577                    *          THE LIST STARTS AT END_OLIST OFFSET IN THE                    *
+    1578                    *          CONTROLLING PROCESS STORE AREA.                               *
+    1579                    *                                                                        *
+    1580                    **************************************************************************
+    1581 00005550           LINK_TO_ME
+    1582 00005550     098f           MMTM    SP,A1
+         00005560     4000  
+    1583 00005570     b7a1           MOVE    *A13(ENT_OLIST),A1,L      ;GET THE LIST POINTER
+         00005580     0110  
+    1584 00005590     b220           MOVE    A1,*A0(OSLINK),L          ;STORE OUR LIST AS HIS PTR
+         000055a0     0020  
+    1585 000055b0     b20d           MOVE    A0,*A13(ENT_OLIST),L      ;STORE HIM AS HEAD OF LIST
+         000055c0     0110  
+    1586 000055d0     09af          MMFM    SP,A1
+         000055e0     0002  
+    1587 000055f0     0960          RETS
+    1588                    
+    1589                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   36
+
+    1590                    *                                                                        *
+    1591                    *          STUFF_ENT_PDATA                                               *
+    1592                    *                                                                        *
+    1593                    *          THIS IS CALLED TO STUFF THE ROM DATA INTO THE                 *
+    1594                    *          ENTRY PROCESS AREA.                                           *
+    1595                    *                                                                        *
+    1596                    *          A8 = DATA FOR AREA                                            *
+    1597                    *                                                                        *
+    1598                    **************************************************************************
+    1599 00005600           STUFF_ENT_PDATA
+    1600 00005600     098f           MMTM    SP,A8,A1,A2
+         00005610     6080  
+    1601 00005620     4da1           MOVE    A13,A1               ;USE A1 FOR PROCESS AREA
+    1602 00005630     0b01           ADDI    PDATA,A1             ;POINT A1 AT PDATA
+         00005640     0060  
+    1603 00005650     09c2           MOVI    ENT_STRUCT_IN_WORDS,A2    ;THIS IS COUNT OF WHAT TO MOVE
+         00005660     000b  
+    1604 00005670     9901  STUFF1   MOVE    *A8+,*A1+,W
+    1605 00005680     3c42           DSJS    A2,STUFF1
+    1606 00005690     09af          MMFM    SP,A8,A1,A2
+         000056a0     0106  
+    1607 000056b0     0960          RETS
+    1608                    
+    1609                    **************************************************************************
+    1610                    *                                                                        *
+    1611                    *          E_TITLES                                                      *
+    1612                    *                                                                        *
+    1613                    *          THIS IS CALLED BEFORE ENTER YOUR INITIALS TO PUT UP           *
+    1614                    *          TITLES FOR PLAYER 1 OR PLAYER 2.                              *
+    1615                    *                                                                        *
+    1616                    *          ENT_DATA POINTS AT PLAYER ROM STRUCTURE FOR PLAYER            *
+    1617                    *                                                                        *
+    1618                    *          NEED TO SAVE ONLY A8,A9,A10,A11                               *
+    1619                    *                                                                        *
+    1620                    **************************************************************************
+    1621 000056c0           E_TITLES
+    1622 000056c0     098f           MMTM    SP,A8,A9,A10,A11
+         000056d0     00f0  
+    1623                    
+    1624 000056e0     0d3f           CALLR   OP_P                      ;OPERATOR?
+         000056f0     ff5c  
+    1625 00005700     ca40           JRZ     ET_X                      ;YEP...NO MESSAGE!
+    1626                    
+    1627 00005710     b7a1           MOVE    *A13(ENT_DATA),A1,L       ;FETCH THE DATA POINTER
+         00005720     0220  
+    1628 00005730     5600           CLR     A0                        ;NO SLEEP TIME
+    1629 00005740     b5a6           MOVE    *A13(ENT_CONST),A6,W      ;USE THIS RAM VERSION OF COLOR
+         00005750     00d0  
+    1630 00005760     b628           MOVE    *A1(LET_MESS),A8,L        ;THIS IS THE MESSAGE
+         00005770     0140  
+    1631 00005780     b629           MOVE    *A1(ENT_X_COR-PDATA),A9,L ;GET X OFFSET
+         00005790     0000  
+    1632 000057a0     0b29           ADDI    12H*TABLE_UNIT,A9         ;PLACE FOR MESSAGE
+         000057b0 00120000  
+    1633 000057d0     2e09           SRL     16,A9                     ;SHIFT IT DOWN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   37
+
+    1634 000057e0     b623           MOVE    *A1(ENT_Y_COR-PDATA),A3,L ;GET X OFFSET
+         000057f0     0020  
+    1635 00005800     0d03           SUBI    0C0H*TABLE_UNIT,A3
+         00005810 ff3fffff  
+    1636 00005830     0b83           ANDI    0FFFF0000H,A3                  ;MASK Y
+         00005840 0000ffff  
+    1637 00005860     4069           ADD     A3,A9                          ;THIS POINTS AT PLACE FOR "PLAYER"
+    1638                    
+    1639 00005870     09ca           MOVI    00000002H,A10             ;SMALL SPACING
+         00005880     0002  
+    1640 00005890     09eb           MOVI    RD20FONT,A11
+         000058a0 00000000! 
+    1641 000058c0                    JSRP    STRLNRM
+    1642                    *
+    1643                    *        NOW PUT THE "ENTER YOUR INITIALS" PART
+    1644                    *
+    1645 00005930     b629           MOVE    *A1(ENT_X_COR-PDATA),A9,L         ;GET X OFFSET
+         00005940     0000  
+    1646 00005950     0b29           ADDI    4*TABLE_UNIT,A9             ;PLACE FOR MESSAGE
+         00005960 00040000  
+    1647 00005980     2e09           SRL     16,A9                       ;SHIFT IT DOWN
+    1648 00005990     b623           MOVE    *A1(ENT_Y_COR-PDATA),A3,L         ;GET X OFFSET
+         000059a0     0020  
+    1649 000059b0     0d03           SUBI    0A0H*TABLE_UNIT,A3
+         000059c0 ff5fffff  
+    1650 000059e0     0b83           ANDI    0FFFF0000H,A3                  ;MASK Y
+         000059f0 0000ffff  
+    1651 00005a10     4069           ADD     A3,A9                          ;THIS POINTS AT PLACE FOR "PLAYER"
+    1652                    
+    1653 00005a20     09e8           MOVI    MESS_3,A8                      ;POINT AT TEXT STRING
+         00005a30 00005be0' 
+    1654 00005a50     09eb           MOVI    RD15FONT,A11
+         00005a60 00000000! 
+    1655                    
+    1656 00005a80     09ca           MOVI    00000001H,A10             ;SMALL SPACING
+         00005a90     0001  
+    1657                    
+    1658 00005aa0                    JSRP    STRLNRM
+    1659 00005b10     09af  ET_X    MMFM    SP,A8,A9,A10,A11
+         00005b20     0f00  
+    1660 00005b30     0960          RETS
+    1661                    
+    1662                    **************************************************************************
+    1663                    *                                                                        *
+    1664                    *          STRING DEFINITIONS                                            *
+    1665                    *                                                                        *
+    1666                    **************************************************************************
+    1667                    
+    1668 00005b40       50  MESS_1   .BYTE   "PLAYER  1",0
+    1669 00005b90       50  MESS_2   .BYTE   "PLAYER  2",0
+    1670 00005be0       45  MESS_3   .BYTE   "ENTER YOUR INITIALS:",0
+    1671                    
+    1672                    *****************************************************************************
+    1673 00005c90                    .EVEN                             ;AFTER BYTE BLOCK WE EVEN IT OUT!
+    1674                    *****************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:58 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+Enter Your Initials                                                  PAGE   38
+
+    1675                             .END
+
+ No Errors,  No Warnings

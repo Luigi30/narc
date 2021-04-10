@@ -1,4 +1,4 @@
-	.FILE	'NARCHSTD.ASM'
+	.FILE	"NARCHSTD.ASM"
 	.TITLE	"High Score to Date Management"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -1514,100 +1514,100 @@ SCR_M    $MACRO  A,B,C,D
          .BYTE   :B:
          .BYTE   :C:
          .BYTE   :D:
-         $END
+         $ENDM
 
 INIT_M   $MACRO  A,B,C
          .BYTE   :A:
          .BYTE   :B:
          .BYTE   :C:
          .BYTE   0               ;CHECKBYTE
-         $END
+         $ENDM
 
 ALL_TIME_ROM_TABLE:
          SCR_M   02H,12H,21H,45H                ;****ZERO ENTRY...NOT SEEN!
-         INIT_M  "E","P","J"
+         INIT_M  'E','P','J'
 ROM_ENTRY_SIZE      EQU     $-ALL_TIME_ROM_TABLE
          SCR_M   01H,00H,00H,01H
-         INIT_M  "J","E","H"           ;1
+         INIT_M  'J','E','H'           ;1
          SCR_M   00H,92H,52H,21H
-         INIT_M  "J","R","N"           ;2
+         INIT_M  'J','R','N'           ;2
          SCR_M   00H,88H,88H,88H
-         INIT_M  "T","J","E"           ;3
+         INIT_M  'T','J','E'           ;3
          SCR_M   00H,79H,82H,18H
-         INIT_M  "L","I","N"           ;4           
+         INIT_M  'L','I','N'           ;4           
          SCR_M   00H,77H,77H,77H
-         INIT_M  "M","L"," "           ;5   ;LOCASIO
+         INIT_M  'M','L',' '           ;5   ;LOCASIO
          SCR_M   00H,69H,69H,96H
-         INIT_M  "G","W","S"           ;6
+         INIT_M  'G','W','S'           ;6
          SCR_M   00H,66H,66H,66H
-         INIT_M  "A","L"," "           ;7
+         INIT_M  'A','L',' '           ;7
          SCR_M   00H,65H,10H,08H
-         INIT_M  "B","L","S"           ;8   
+         INIT_M  'B','L','S'           ;8   
          SCR_M   00H,57H,02H,18H
-         INIT_M  "J","R","H"           ;9 ;J.R.
+         INIT_M  'J','R','H'           ;9 ;J.R.
          SCR_M   00H,55H,55H,55H 
-         INIT_M  "J"," ","P"           ;10  ;J.P.
+         INIT_M  'J',' ','P'           ;10  ;J.P.
          SCR_M   00H,55H,01H,27H                 
-         INIT_M  "D","T","W"           ;11  ;WATSON
+         INIT_M  'D','T','W'           ;11  ;WATSON
          SCR_M   00H,51H,11H,15H
-         INIT_M  "D"," ","P"           ;12  ;DIANA
+         INIT_M  'D',' ','P'           ;12  ;DIANA
          SCR_M   00H,48H,48H,47H
-         INIT_M  "R","A","Y"           ;13
+         INIT_M  'R','A','Y'           ;13
          SCR_M   00H,44H,44H,44H
-         INIT_M  "W","B","D"           ;14  ;WE KNOW WHAT B.D. STANDS FOR
+         INIT_M  'W','B','D'           ;14  ;WE KNOW WHAT B.D. STANDS FOR
          SCR_M   00H,41H,82H,80H
-         INIT_M  "K","J","F"           ;15  ;THE MAN
+         INIT_M  'K','J','F'           ;15  ;THE MAN
          SCR_M   00H,39H,20H,35H
-         INIT_M  "N","D","N"           ;16
+         INIT_M  'N','D','N'           ;16
          SCR_M   00H,38H,10H,90H
-         INIT_M  "J"," ","B"           ;17    IS HE BEAGLE?
+         INIT_M  'J',' ','B'           ;17    IS HE BEAGLE?
          SCR_M   00H,36H,02H,13H
-         INIT_M  "S","S","R"           ;18
+         INIT_M  'S','S','R'           ;18
          SCR_M   00H,33H,09H,60H
-         INIT_M  "M","R"," "           ;19
+         INIT_M  'M','R',' '           ;19
          SCR_M   00H,32H,66H,66H
-         INIT_M  "B","I","G"           ;20
+         INIT_M  'B','I','G'           ;20
          SCR_M   00H,31H,00H,55H
-         INIT_M  "L","E","P"
+         INIT_M  'L','E','P'
          SCR_M   00H,30H,75H,65H
-         INIT_M  "M","D","R"
+         INIT_M  'M','D','R'
          SCR_M   00H,29H,72H,56H
-         INIT_M  "B","A","C"
+         INIT_M  'B','A','C'
          SCR_M   00H,28H,70H,70H
-         INIT_M  "W"," ","R"
+         INIT_M  'W',' ','R'
          SCR_M   00H,27H,60H,60H
-         INIT_M  "M","P","T"
+         INIT_M  'M','P','T'
          SCR_M   00H,26H,55H,20H
-         INIT_M  "S","U","E"
+         INIT_M  'S','U','E'
          SCR_M   00H,25H,44H,80H
-         INIT_M  "M","O","M"
+         INIT_M  'M','O','M'
          SCR_M   00H,24H,44H,79H
-         INIT_M  "D","A","D"
+         INIT_M  'D','A','D'
          SCR_M   00H,23H,44H,78H
-         INIT_M  "S","F","D"
+         INIT_M  'S','F','D'
          SCR_M   00H,22H,44H,77H
-         INIT_M  "A","K","D"
+         INIT_M  'A','K','D'
 ALL_TIME_ENTRIES     EQU     ($-ALL_TIME_ROM_TABLE)/ROM_ENTRY_SIZE
 
 TODAYS_ROM_TABLE:
          SCR_M   02H,12H,21H,45H                ;****ZERO ENTRY...NOT SEEN!
-         INIT_M  "E","P","J"
+         INIT_M  'E','P','J'
          SCR_M   00H,20H,01H,27H
-         INIT_M  "D","R","J"
+         INIT_M  'D','R','J'
          SCR_M   00H,10H,08H,65H
-         INIT_M  "G","N","P"
+         INIT_M  'G','N','P'
          SCR_M   00H,08H,21H,64H
-         INIT_M  "T","R","A"
+         INIT_M  'T','R','A'
          SCR_M   00H,05H,72H,18H
-         INIT_M  "L","E","D"
+         INIT_M  'L','E','D'
          SCR_M   00H,05H,12H,55H
-         INIT_M  "M","L"," "        
+         INIT_M  'M','L',' '        
          SCR_M   00H,04H,12H,50H
-         INIT_M  "L","E","D"
+         INIT_M  'L','E','D'
          SCR_M   00H,03H,19H,20H
-         INIT_M  "F","O","O"
+         INIT_M  'F','O','O'
          SCR_M   00H,03H,19H,19H
-         INIT_M  "B","A","R"
+         INIT_M  'B','A','R'
 TODAYS_ENTRIES     EQU     ($-TODAYS_ROM_TABLE)/ROM_ENTRY_SIZE
          .END
 

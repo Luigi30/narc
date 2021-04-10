@@ -1,4 +1,4 @@
- 	.FILE	'NARCBUG.ASM'
+ 	.FILE	"NARCBUG.ASM"
 	.TITLE	" <<< N  A  R  C  -- BUG >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -29,8 +29,8 @@
 
 	.GLOBAL	BUGBURN	;for WENDIE
 
-;HELLBUGS .WORD	>F300|NINTEQ,>80,>809F,0	;bugs from hell..
-;BUGHTSND .WORD	>F320,>20,0>809D,0		;bug shot (fly away)
+;HELLBUGS .WORD	0F300H|NINTEQ,080H,0809FH,0	;bugs from hell..
+;BUGHTSND .WORD	0F320H,020H,00809DH,0		;bug shot (fly away)
 
 
 ;* bug on player process block offsets
@@ -77,7 +77,7 @@ BUG_FUNCS:
 	.long	BOOF
 	.long	GoDestV
 	.long	GetXVel
-	.long	>FFFF	;MaxXZAngle
+	.long	0FFFFH	;MaxXZAngle
 	.long	10	;FlipTiks
 ;To catch a nulled dereference through BUG_FUNCS
 BOOF:	jruc	$
@@ -103,7 +103,7 @@ VARINIT:
 BUGINIT
 	.LONG	0,0,0,0
 	.WORD	0,0
-	.LONG	bugwk1,>120012,BUGCOLL		;BUGZSIZ
+	.LONG	bugwk1,0120012H,BUGCOLL		;BUGZSIZ
 	.WORD	DMAWNZ,BUGEOID
 	.LONG	BUGBLIP
 **************************************************************************
@@ -113,7 +113,7 @@ BUGCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -183,7 +183,7 @@ DoEnq:
 BUGGER:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 	INCW	@SLPBUGS
@@ -417,12 +417,12 @@ GoingUp:
 	cmpi	2,A0
 	jrgt	SkJmpYV
 	move	*A8(OYVEL),A0,L
-	addi	>B000,A0
+	addi	0B000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	SkCkDest
 SkJmpYV:
 	move	*A8(OYVEL),A0,L
-	addi	>18000,A0
+	addi	018000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	SkCkDest
 
@@ -485,7 +485,7 @@ ListLeft:
 AnimX:
 
 **** Find Next Event ****
-	movi	>FF,A7
+	movi	0FFH,A7
 	movb	*A13(BRAINTIKS),A1
 	and	A7,A1
 	jrnz	BTok
@@ -828,9 +828,9 @@ GoJmp:
 
 	movk	2,A0
 	movb	A0,*A13(FLYING)
-	movi	>38000,A0
+	movi	038000H,A0
 	calla	RANDU
-	addi	>38000,A0
+	addi	038000H,A0
 	neg	A0
 	move	*A8(OYVEL),A1,L
 	add	A0,A1
@@ -984,9 +984,9 @@ BugPlCol:
 	sub	A11,A10
 	move	A10,A2
 	abs	A2
-	cmpi	>50,A2
+	cmpi	050H,A2
 	jrlt	GrabOn
-	cmpi	>4000,A10
+	cmpi	04000H,A10
 	jrlt	PlyrGoUp
 
 	;* Player coming down..
@@ -1120,7 +1120,7 @@ FallLp:
 	MOVE	*A0(OYVEL),A2,L
 	MOVE	*A0(OZVEL),A3,L
 	sub	A3,A2
-	cmpi	>4000,A2
+	cmpi	04000H,A2
 	jrlt	BugOff
 
 	move	*A13(VICTIM),A1,L
@@ -1193,7 +1193,7 @@ BugSplt:
 	jrle	SkBon1
 	;GIVE BIG BONUS
 	movi	P1DATA,A2
-	movi	>1000,A1
+	movi	01000H,A1
 	calla	SCORE
 	calla	PUT1K
 SkBon1:
@@ -1206,7 +1206,7 @@ BMPP2CNT:
 	jrle	SkBon2
 	;GIVE BIG BONUS
 	movi	P2DATA,A2
-	movi	>1000,A1
+	movi	01000H,A1
 	calla	SCORE
 	calla	PUT1K
 SkBon2:
@@ -1363,7 +1363,7 @@ SkMaxY:
 	;* cause BITE damage
 	sub	A4,A2   	;how many pixels from the top?
 	sll	8,A2
-	movi	>1E00,A0
+	movi	01E00H,A0
 	sub	A2,A0
 	move	*A13(VICTIMDATA),A2,L
 	calla	BUGBITE
@@ -1409,24 +1409,24 @@ SkClrAnT:
 
 ShakeOff:
 	move	*A1(OYVEL),A2,L
-	movi	>30000,A0
+	movi	030000H,A0
 	calla	RANDU
-	subi	>4000,A0
+	subi	04000H,A0
 	sub	A0,A2
 	move	A2,*A8(OYVEL),L
 
 	move	*A1(OZVEL),A2,L
-	movi	>20000,A0
+	movi	020000H,A0
 	calla	RANDU
-	subi	>10000,A0
+	subi	010000H,A0
 	add	A0,A2
 	move	A2,*A8(OZVEL),L
 
 	move	*A13(VOLDXV),A2,W
 	sll	16,A2
-	movi	>80000,A0
+	movi	080000H,A0
 	calla	RANDU
-	subi	>40000,A0
+	subi	040000H,A0
 	add	A0,A2
 	move	A2,*A8(OXVEL),L
 
@@ -1594,9 +1594,9 @@ BUGTAB	.LONG	BUGOFF
 
 **************************************************************************
 * BUG FRAME TABLES	
-CRAWLXVEL	.set	>18000
-JUMPXVEL	.set	>30000
-FLYXVEL		.set	>38000
+CRAWLXVEL	.set	018000H
+JUMPXVEL	.set	030000H
+FLYXVEL		.set	038000H
 
 
 BUGCRAWL:

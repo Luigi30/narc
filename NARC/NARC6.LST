@@ -1,0 +1,2191 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARC6.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      10                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      11                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      12                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      13                    *       LOCAL STUFF
+      14                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      15                            .INCLUDE        "NARCTEQU.ASM"          ;TODD JIZZ
+      16                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      17                            .INCLUDE        "NARCFRAG.GLO"
+      18                            .INCLUDE        "NARCLOAF.TBL"          ;LOFFREDO IMAGE HEADERS
+      19                            .INCLUDE        "narcxtra.glo"          ;Get the Xtra image palettes    
+      20                            .GLOBAL         GETSUBDR,SUBOPEN
+      21                            .GLOBAL         ZCHK,SWAPAL0,CARCHK
+      22                            .GLOBL  LOFFCRM1,BOZCHK
+      23                            .GLOBAL LOFDEXP,LDEXP1,OIDATA,LOFRAG1,LOFRAG2,LOFRAG3,LOFRAG4
+      24                            .GLOBAL LOFDEXP1,LOFDFLA,LOFDROCK
+      25 00000000                   .TEXT                                                            
+      26                    *
+      27                    *LOFFREDO DISPATCHER
+      28                    *
+      29                    *EUGDISP
+      30                    *       MOVI    7,A0
+      31                    *       MOVE    A0,@LOFMAX,W            ;MAX LOF COUNT
+      32                    *       MOVI    100,A0
+      33                    *       MOVE    A0,@LOFFIRE,W           ;LOFFREDO FIRE PROBABILITY
+      34                    *       CREATE  0,DASDIS3
+      35                    *       RETS
+      36                    *DASDIS3
+      37                    *       CLR     A5
+      38                    *       MOVI    000450E10H,A14
+      39                    *       CALLR   LOFCOLD
+      40                    *       SLOOP   320,DASDIS3             ;WAIT FOR THEM TO DIE
+      41                    *
+      42                    *LOAF COLD START
+      43                    *A5=Y:X COORD; IF ZERO THEN MAKE-UP COORDINATE
+      44                    *A6=0:Z COORD
+      45                    *A14= 0; FIX NUMBER:RANDOM NUMBER; 0E; ENEMY TYPE:ENEMY SUBTYPE (BYTE FIELDS)
+      46                    *
+      47 00000000           LOFCOLD:
+      48 00000000     098f          MMTM    SP,A0,A5,A11,A14
+         00000010     8412  
+      49 00000020     4dca          MOVE    A14,A10                 ;SAVE OID
+      50 00000030     4ca9          MOVE    A5,A9
+      51 00000040     4dc2          MOVE    A14,A2  
+      52 00000050     2502          SLL     8,A2                    ;GET FIXED COUNT
+      53 00000060     2c82          SRL     28,A2
+      54 00000070     4dc0          MOVE    A14,A0
+      55 00000080     2580          SLL     12,A0                   ;GET RANDOM COUNT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    2
+
+      56 00000090     2c80          SRL     28,A0
+      57 000000a0     ca04          JRZ     LOFCLD0                 ;BR = NO RANDOM GUYS
+      58 000000b0     0d5f          CALLA   RANDU
+         000000c0 00000000! 
+      59 000000e0     4002          ADD     A0,A2
+      60 000000f0           LOFCLD0
+      61 000000f0     4dcb          MOVE    A14,A11                 ;GET SUBTYPE CODE
+      62 00000100     278b          SLL     28,A11
+      63 00000110     2c8b          SRL     28,A11  
+      64                    
+      65                    *CHECK BOZO MODE
+      66 00000120     0b4b          CMPI    5,A11
+         00000130     fffa  
+      67 00000140     cb14          JRNE    LOFCLD00                ;RED DUDE?
+      68 00000150     05a0          MOVE    @WAVE,A0,W
+         00000160 00000000! 
+      69 00000180     0b40          CMPI    1,A0                    ;WAVE 1?
+         00000190     fffe  
+      70 000001a0     cb0e          JRNE    LOFCLD00
+      71 000001b0     09e0          MOVI    P1DATA,A0              
+         000001c0 00000000! 
+      72 000001e0     0d3f          CALLR   BOZCHK
+         000001f0     001b  
+      73 00000200     c806          JRC     LFCLD000
+      74 00000210     09e0          MOVI    P2DATA,A0              
+         00000220 00000000! 
+      75 00000240     0d3f          CALLR   BOZCHK
+         00000250     0015  
+      76 00000260     c902          JRNC    LOFCLD00
+      77 00000270           LFCLD000
+      78 00000270     09cb          MOVI    3,A11                   ;CONVERT TO GREENER
+         00000280     0003  
+      79 00000290           LOFCLD00
+      80 00000290     09c0          MOVI    0B0H,A0
+         000002a0     00b0  
+      81 000002b0     5e0b          MPYU    A0,A11
+      82 000002c0     0b2b          ADDI    LTTAB,A11               ;FORM TABLE REFERENCE BASE ADDR
+         000002d0 00000570' 
+      83 000002f0           LOFCLD1:
+      84 000002f0                   CREATE  LOFPID,DAS1X            ;MAKE 'EM
+      85 00000370     3d22          DSJS    A2,LOFCLD1
+      86 00000380     09af          MMFM    SP,A0,A5,A11,A14
+         00000390     4821  
+      87 000003a0     0960          RETS
+      88                    *
+      89                    *BOZO CHECK
+      90                    *A0=PDATA POINTER
+      91                    *CS IF PLAYER IS A BOZO
+      92                    *
+      93 000003b0           BOZCHK
+      94 000003b0     098f          MMTM    SP,A1
+         000003c0     4000  
+      95 000003d0     b601          MOVE    *A0(POBJ),A1,L
+         000003e0     00a0  
+      96 000003f0     ca0f          JREQ    BOZFAIL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    3
+
+      97 00000400     b401          MOVE    *A0(PBUYINS),A1,W
+         00000410     02c0  
+      98 00000420     0b41          CMPI    IBUYINS,A1
+         00000430     e0bf  
+      99 00000440     cb05          JRNE    BOZCK1                  ;BUYIN BOZO
+     100 00000450     b401          MOVE    *A0(PLIVES),A1,W
+         00000460     02b0  
+     101 00000470     0b41          CMPI    1,A1
+         00000480     fffe  
+     102 00000490     c305          JRHI    BOZFAIL
+     103 000004a0           BOZCK1
+     104 000004a0     b401          MOVE    *A0(PBUSTS),A1,W
+         000004b0     0230  
+     105 000004c0     0b41          CMPI    8,A1
+         000004d0     fff7  
+     106 000004e0     c204          JRLS    BOZOK
+     107 000004f0           BOZFAIL
+     108 000004f0     0320          CLRC
+     109 00000500     09af          MMFM    SP,A1
+         00000510     0002  
+     110 00000520     0960          RETS
+     111 00000530           BOZOK
+     112 00000530     0de0          SETC
+     113 00000540     09af          MMFM    SP,A1
+         00000550     0002  
+     114 00000560     0960          RETS
+     115                    *
+     116                    *LOAF TYPES
+     117                    *DOOR PROB, KNEEL PROB, LAY PROB, CASH PROB, DRUG PROB, AMMO PROB
+     118                    *
+     119              0000  DORPRB  EQU     0
+     120              0010  KNLPRB  EQU     010H
+     121              0020  LAYPRB  EQU     020H
+     122              0030  BUKPRB  EQU     030H
+     123              0040  DRGPRB  EQU     040H
+     124              0050  CLPPRB  EQU     050H    
+     125              0060  ROKCNT  EQU     060H
+     126              0070  LSPEED  EQU     070H
+     127              0080  ANIRATE EQU     080H
+     128              0090  SWPAL   EQU     090H
+     129                    *
+     130 00000570           LTTAB:
+     131 00000570     012c          .WORD   300,000,000,000,200,000,000,00100H,00005H               ;"0" STANDUP DUDE
+     132 00000600 00000000          .LONG   0
+     133 00000620     03e7          .WORD   999,000,000,200,000,000,000,00100H,00005H               ;"1" DOOR STANDUP
+     134 000006b0 00000000          .LONG   0
+     135 000006d0     03e7          .WORD   999,400,400,150,150,100,000,00140H,00004H               ;"2" DOOR  KNEEL/LAYDOWN
+     136 00000760 00000000!         .LONG   fnklof
+     137 00000780     012c          .WORD   300,400,400,150,150,100,000,00140H,00004H               ;"3" KNEEL/LAYDOWN
+     138 00000810 00000000!         .LONG   fnklof
+     139 00000830     012c          .WORD   300,000,000,000,000,000,002,00100H,00005H               ;"4" ROCKET MAN STANDUP 
+     140 000008c0 00000000!         .LONG   blulof  
+     141 000008e0     012c          .WORD   300,400,400,000,200,000,000,00200H,00003H               ;"5" SUPER LOAF KNEEL/LAYDOWN
+     142 00000970 00000000!         .LONG   pnklof
+     143 00000990     012c          .WORD   300,000,000,000,000,999,000,00100H,00005H               ;"6" bullet MAN STANDUP 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    4
+
+     144 00000a20 00000000!         .LONG   blulof  
+     145 00000a40     0000          .WORD   000,400,400,000,200,000,000,00200H,00003H               ;"7" CHOP SUPER LOAF 
+     146 00000ad0 00000000!         .LONG   pnklof
+     147 00000af0     0000          .WORD   000,400,400,150,150,100,000,00140H,00004H               ;"8" JUMPERS
+     148 00000b80 00000000!         .LONG   fnklof
+     149                    *
+     150                    *DISPATCH YOUR LOFS
+     151                    *A9=Y:X COORD
+     152                    *A10=OID
+     153                    *A11=LTTAB TYPE ADDRESS
+     154 00000ba0           DAS1X:
+     155 00000ba0     05a0          MOVE    @LOFCNT,A0,W
+         00000bb0 00000000! 
+     156 00000bd0     05a1          MOVE    @LOFMAX,A1,W
+         00000be0 00000000! 
+     157 00000c00     4801          CMP     A0,A1
+     158 00000c10     c719          JRGT    DAS10
+     159 00000c20     05a0          MOVE    @LOFWAIT,A0,W
+         00000c30 00000000! 
+     160 00000c50     0b40          CMPI    8,A0
+         00000c60     fff7  
+     161 00000c70     c980          JAHS    SUCIDE                  ;DIE, MANY WAITING
+         00000c80 00000000! 
+     162 00000ca0     1020          INC     A0
+     163 00000cb0     0580          MOVE    A0,@LOFWAIT,W
+         00000cc0 00000000! 
+     164 00000ce0     5729          CLR     A9                      ;WIPE OUT PREFAB COORD.
+     165 00000cf0                   SLEEP   3
+     166 00000d30     05a0          MOVE    @LOFWAIT,A0,W
+         00000d40 00000000! 
+     167 00000d60     1420          DEC     A0
+     168 00000d70     0580          MOVE    A0,@LOFWAIT,W
+         00000d80 00000000! 
+     169 00000da0     c0df          JRUC    DAS1X                   ;CHECK FOR WAKEUP
+     170 00000db0           DAS10
+     171 00000db0     4d29          MOVE    A9,A9                   ;COORD PREFAB?
+     172 00000dc0     cb20          JRNE    LOFWST                  ;YES
+     173                    
+     174 00000dd0     05a1          MOVE    @WORLDTL,A1,W           ;COME FROM EDGE OF SCREEN
+         00000de0 00000000! 
+     175 00000e00     07a2          MOVE    @SCROLLX,A2,L
+         00000e10 00000000! 
+     176 00000e30     09c0          MOVI    250,A0
+         00000e40     00fa  
+     177 00000e50     0d5f          CALLA   RANDPER
+         00000e60 00000000! 
+     178 00000e80     c901          JRNC    DAS2X           
+     179 00000e90     03a2          NEG     A2                      ;COME FROM BEHIND
+     180 00000ea0           DAS2X:
+     181 00000ea0     4c42          MOVE    A2,A2
+     182 00000eb0     ce02          JRN     DAS3X
+     183 00000ec0     0b01          ADDI    512,A1                  ;START HIM AT RIGHT SCREEN EDGE
+         00000ed0     0200  
+     184 00000ee0           DAS3X:
+     185 00000ee0     0521          ZEXT    A1                      ;Y COORDINATE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    5
+
+     186 00000ef0     05b0          MOVE    @PLYMIN,B0,W
+         00000f00 00000000! 
+     187 00000f20     05b1          MOVE    @PLYMAX,B1,W
+         00000f30 00000000! 
+     188 00000f50     0d5f          CALLA   RANGRAND
+         00000f60 00000000! 
+     189 00000f80     0be0          SUBI    72,A0
+         00000f90     ffb7  
+     190 00000fa0     2600          SLL     16,A0
+     191 00000fb0     4001          ADD     A0,A1
+     192 00000fc0     4c29          MOVE    A1,A9
+     193                    *
+     194                    *WARM START A LOAF
+     195                    *A9=Y:X POSITION
+     196                    *A10=OID
+     197                    *A11=PARAMETER LIST
+     198 00000fd0           LOFWST:
+     199 00000fd0     098c          MMTM    A12,A10,A11             ;SAVE STUFF ON PROCESS STACK
+         00000fe0     0030  
+     200 00000ff0     b760          MOVE    *A11(KNLPRB),A0,L       ;GET KNLPRB, LAYPRB
+         00001000     0010  
+     201 00001010     b20d          MOVE    A0,*A13(ETEMP1),L
+         00001020     0180  
+     202 00001030     b560          MOVE    *A11(DORPRB),A0,W       ;COME OUT OF A DOOR?
+         00001040     0000  
+     203 00001050     0d5f          CALLA   RANDPER
+         00001060 00000000! 
+     204 00001080     c978          JRNC    LOFFF0          ;NO
+     205                    
+     206                    *DISPATCH FROM SUBWAY DOOR      
+     207 00001090     0d5f          CALLA   GETSUBDR
+         000010a0 00000000! 
+     208 000010c0     ca26          JREQ    LOFFF00
+     209 000010d0     4cc9          MOVE    A6,A9
+     210 000010e0                   CREATE  INDPID,SUBOPEN  
+     211 00001160     09ee          MOVI    LOFINIT,A14
+         00001170 000065b0' 
+     212 00001190     0d5f          CALLA   DOORRITE
+         000011a0 00000000! 
+     213 000011c0     09e5          MOVI    [1,1],A5        ;NORMAL SPEED LOFFREDO
+         000011d0 00010001  
+     214 000011f0     09e6          MOVI    LOFTAB,A6
+         00001200 000069b0' 
+     215 00001220     0d5f          CALLA   ESINITUL        ;CREATE DAS LOFF
+         00001230 00000000! 
+     216 00001250     ca80          JAEQ    SUCIDE          ;CREATE BOMBED
+         00001260 00000000! 
+     217 00001280     09ac          MMFM    A12,A10,A11     ;GET BACK JIVE
+         00001290     0c00  
+     218 000012a0     0d3f          CALLR   SWAPAL
+         000012b0     0044  
+     219 000012c0     b148          MOVE    A10,*A8(OID),W  ;SAVE OBJECT ID
+         000012d0     01a0  
+     220 000012e0                   SLEEP   20              ;WAIT FOR DOOR TO OPEN
+     221 00001320     c064          JRUC    LOFFF01
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    6
+
+     222                    
+     223                    *DISPATCH FROM A REGULAR DOOR
+     224 00001330           LOFFF00
+     225 00001330     0d5f          CALLA   GETDOOR                 ;GO GET YOUR DOOR
+         00001340 00000000! 
+     226 00001360     ca4a          JREQ    LOFFF0                  ;NO DOORS AVAILABLE
+     227 00001370                   JSRP    DOOROPEN                ;OPEN SEZ-A-ME
+     228 000013e0                   CREATE  INDPID,CLOZDOOR         ;CLOSE THE DOOR
+     229 00001460     09ee          MOVI    LOFINIT,A14
+         00001470 000065b0' 
+     230 00001490     0d5f          CALLA   DOORRITE
+         000014a0 00000000! 
+     231 000014c0     09e5          MOVI    [1,1],A5        ;NORMAL SPEED LOFFREDO
+         000014d0 00010001  
+     232 000014f0     09e6          MOVI    LOFTAB,A6
+         00001500 000069b0' 
+     233 00001520     0d5f          CALLA   ESINITUL        ;CREATE DAS LOFF
+         00001530 00000000! 
+     234 00001550     ca80          JAEQ    SUCIDE          ;CREATE BOMBED
+         00001560 00000000! 
+     235 00001580     09ac          MMFM    A12,A10,A11             ;GET BACK JIVE
+         00001590     0c00  
+     236 000015a0     0d3f          CALLR   SWAPAL
+         000015b0     0014  
+     237 000015c0     b148          MOVE    A10,*A8(OID),W  ;SAVE OBJECT ID
+         000015d0     01a0  
+     238 000015e0     09e2          MOVI    [-1,0],A2       ;X VELOCITY
+         000015f0 ffff0000  
+     239 00001610     09e9          MOVI    LOFWLR,A9       ;GET ANIMATION SCRIPT
+         00001620 00006c80' 
+     240 00001640     098c          MMTM    A12,A10,A11     ;SAVE JIVE
+         00001650     0030  
+     241 00001660                   JSRP    OUTDOOR
+     242 000016d0     09ac          MMFM    A12,A10,A11     ;GET BACK JIVE
+         000016e0     0c00  
+     243 000016f0     c02a          JRUC    LOFINC
+     244                    
+     245                    *
+     246                    *GET A DIFFERENT PALETTE
+     247                    *A8=OBJECT, A0=NEW PALETTE
+     248 00001700           SWAPAL:
+     249 00001700     b760          move    *A11(SWPAL),A0,L
+         00001710     0090  
+     250 00001720           SWAPAL0:
+     251 00001720     4c00          MOVE    A0,A0
+     252 00001730     ca0c          JRZ     SWPLX                   ;NO NEW PALETTE
+     253 00001740     0d5f          calla   GETFPAL
+         00001750 00000000! 
+     254 00001770     ca08          jrz     SWPLX
+     255 00001780     4c01          move    A0,A1
+     256 00001790     b500          move    *A8(OPAL),A0,W
+         000017a0     0160  
+     257 000017b0     0d5f          calla   FREEPAL
+         000017c0 00000000! 
+     258 000017e0     b028          move    A1,*A8(OPAL),W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    7
+
+         000017f0     0160  
+     259 00001800           SWPLX
+     260 00001800     0960          RETS
+     261                    
+     262                    * THE LOFFREDO ENEMY PROCESS                                             *
+     263                    * A1  = Y:X INITIAL ENEMY POSITION
+     264                    * A5  = Y:X SPEED       
+     265                    * A6  = PTR TO MAIN ANIMATION TABLE
+     266                    * A10 = OID
+     267                    * A11 = INIT TABLE
+     268 00001810           LOFFF0:
+     269 00001810     4d21          MOVE    A9,A1
+     270 00001820     09e5          MOVI    [1,1],A5        ;NORMAL SPEED LOFFREDO
+         00001830 00010001  
+     271 00001850     09e6          MOVI    LOFTAB,A6
+         00001860 000069b0' 
+     272 00001880     09ee          MOVI    LOFINIT,A14     ;LOFFREDO ENEMY INIT
+         00001890 000065b0' 
+     273 000018b0     0d5f          CALLA   ESINITUL        ;CREATE DAS LOFF
+         000018c0 00000000! 
+     274 000018e0     ca80          JAEQ    SUCIDE          ;CREATE ERROR, EXIT
+         000018f0 00000000! 
+     275 00001910     09ac          MMFM    A12,A10,A11     ;GET BACK JIVE
+         00001920     0c00  
+     276 00001930     0d3f          CALLR   SWAPAL
+         00001940     ffdb  
+     277 00001950     b148          MOVE    A10,*A8(OID),W  ;SAVE OBJECT ID
+         00001960     01a0  
+     278 00001970           LOFFF01:
+     279 00001970     09e9          MOVI    LOFWLR,A9       ;GET ANIMATION SCRIPT
+         00001980 00006c80' 
+     280 000019a0           LOFINC:
+     281 000019a0     05a0          MOVE    @LOFCNT,A0,W
+         000019b0 00000000! 
+     282 000019d0     1020          INC     A0
+     283 000019e0     0580          MOVE    A0,@LOFCNT,W    ;INCREMENT THE GLOBAL LOF COUNT
+         000019f0 00000000! 
+     284                    
+     285 00001a10     b560          MOVE    *A11(BUKPRB),A0,W       ;GIVE HIM SOME MONEY?
+         00001a20     0030  
+     286 00001a30     0d5f          CALLA   RANDPER
+         00001a40 00000000! 
+     287                    *       JRNC    LOFFF1                  ;NO
+     288 00001a60     1820          MOVK    1,A0
+     289 00001a70     0d5f          CALLA   ADDBUCKS
+         00001a80 00000000! 
+     290 00001aa0           LOFFF1:
+     291 00001aa0     b560          MOVE    *A11(DRGPRB),A0,W       ;GIVE HIM SOME BUCKS?
+         00001ab0     0040  
+     292 00001ac0     0d5f          CALLA   RANDPER
+         00001ad0 00000000! 
+     293 00001af0     c904          JRNC    LOFFF2          ;NO
+     294 00001b00     1820          MOVK    1,A0
+     295 00001b10     0d5f          CALLA   ADDDRUGS
+         00001b20 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    8
+
+     296 00001b40           LOFFF2: 
+     297 00001b40     b560          MOVE    *A11(CLPPRB),A0,W
+         00001b50     0050  
+     298 00001b60     0d5f          CALLA   RANDPER
+         00001b70 00000000! 
+     299 00001b90     c904          JRNC    LOFFF3
+     300 00001ba0     1820          MOVK    1,A0
+     301 00001bb0     0d5f          CALLA   ADDCLIPS
+         00001bc0 00000000! 
+     302 00001be0           LOFFF3:
+     303 00001be0     b560          MOVE    *A11(ROKCNT),A0,W       ;GET ROCKETS
+         00001bf0     0060  
+     304 00001c00     0d5f          CALLA   ADDROCKS
+         00001c10 00000000! 
+     305                    
+     306 00001c30     b560          MOVE    *A11(LSPEED),A0,W       ;GET SPEED
+         00001c40     0070  
+     307 00001c50     2500          SLL     8,A0
+     308 00001c60     b20d          MOVE    A0,*A13(ETEMP2),L
+         00001c70     01a0  
+     309                            
+     310 00001c80     b560          MOVE    *A11(ANIRATE),A0,W      ;GET SLEEP TIME
+         00001c90     0080  
+     311 00001ca0     b00d          MOVE    A0,*A13(ETEMP3),W
+         00001cb0     01c0  
+     312                    
+     313                            
+     314 00001cc0     b500          MOVE    *A8(OID),A0,W
+         00001cd0     01a0  
+     315 00001ce0     2780          SLL     28,A0
+     316 00001cf0     2c80          SRL     28,A0
+     317 00001d00     0b40          CMPI    7,A0
+         00001d10     fff8  
+     318 00001d20     c900          JRHS    LOFCHOP         ;CHOPPER DUDE
+         00001d30     00fe  
+     319                    
+     320 00001d40     09c0          MOVI    120,A0
+         00001d50     0078  
+     321 00001d60     0d5f          CALLA   RANDPER
+         00001d70 00000000! 
+     322 00001d90     c90a          JRNC    LOFLOOP0
+     323 00001da0     0d5f          CALLA   SELCTPLY        ;TARGET PLAYER IN A11
+         00001db0 00000000! 
+     324 00001dd0                   JSRP    LOFHANG         ;HANG OUT FOR A BIT
+     325                    
+     326 00001e40           LOFLOOP0:
+     327 00001e40     0d5f          CALLA   SELCTPLY        ;TARGET PLAYER IN A11
+         00001e50 00000000! 
+     328 00001e70           LOFLOOP:
+     329 00001e70                   JSRP    CKLBUST
+     330 00001ee0                   JSRP    CKGVUP1
+     331                    
+     332                    *GET VELOCITY
+     333                    
+     334 00001f50           LOFLOOP1:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE    9
+
+     335 00001f50     4d60          MOVE    A11,A0          ;TARGET PLAYER IN A0
+     336 00001f60     0d5f          CALLA   GETPLYR
+         00001f70 00000000! 
+     337 00001f90     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         00001fa0     00a0  
+     338 00001fb0     0d5f          CALLA   XZCHK
+         00001fc0 00000000! 
+     339 00001fe0     b7a5          MOVE    *A13(ETEMP2),A5,L       ;GET Z VEL
+         00001ff0     01a0  
+     340 00002000     4ca6          MOVE    A5,A6                   ;GET X VEL
+     341 00002010     4c42          MOVE    A2,A2
+     342 00002020     cf01          JRNN    LOFZ1
+     343 00002030     03a5          NEG     A5              
+     344 00002040           LOFZ1:
+     345 00002040     0b44          CMPI    4,A4            ;IF TOO CLOSE, ZERO OUT ZVEL
+         00002050     fffb  
+     346 00002060     c301          JRHI    LOFX0
+     347 00002070     56a5          CLR     A5
+     348 00002080           LOFX0:
+     349 00002080     4c21          MOVE    A1,A1
+     350 00002090     cf01          JRNN    LOFX1
+     351 000020a0     03a6          NEG     A6              
+     352 000020b0           LOFX1:
+     353 000020b0     0b43          CMPI    80,A3           ;IF TOO CLOSE, ZERO OUT XVEL
+         000020c0     ffaf  
+     354 000020d0     c301          JRHI    LOFX2
+     355 000020e0     56c6          CLR     A6
+     356 000020f0           LOFX2:
+     357 000020f0     b2a8          MOVE    A5,*A8(OYVEL),L
+         00002100     0060  
+     358 00002110     b2a8          MOVE    A5,*A8(OZVEL),L
+         00002120     00e0  
+     359 00002130     b2c8          MOVE    A6,*A8(OXVEL),L
+         00002140     0040  
+     360 00002150     54c5          OR      A6,A5            ;STOPPED?
+     361 00002160     cb11          JRNE    LOFX3            ;NO
+     362 00002170     09e9          MOVI    LOFSTND,A9       ;SET HIS STOPPED FRAME
+         00002180 00006d40' 
+     363                    
+     364 000021a0     09c0          MOVI    15,A0
+         000021b0     000f  
+     365 000021c0     0d5f          CALLA   RANDPER
+         000021d0 00000000! 
+     366 000021f0     c908          JRNC    LOFX3
+     367 00002200                   JSRP    LOFHANG          ;HANG OUT FOR A BIT
+     368 00002270     c0bf          JRUC    LOFLOOP
+     369                    
+     370 00002280           LOFX3:
+     371 00002280     4cc6          MOVE    A6,A6
+     372 00002290     ca03          JREQ    LOFX5
+     373                    *       JRNE    LOFX4
+     374                    *       MOVI    50,A0
+     375                    *       CALLA   RANDPER
+     376                    *       JRNC    LOFX5
+     377                    *       JRUC    LOFBAK          ;BACK OFF, DUDE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   10
+
+     378 000022a0           LOFX4:
+     379 000022a0     0d5f          CALLA   FLP
+         000022b0 00000000! 
+     380 000022d0           LOFX5:
+     381 000022d0     0d5f          CALLA   SHVELCPY         
+         000022e0 00000000! 
+     382                    
+     383                    *CHECK OUT A SHOT
+     384                    
+     385 00002300                   JSRP    LOFSHOOT
+     386 00002370     c907          JRNC    LOFLP1
+     387                    
+     388 00002380     09e9          MOVI    LOFSTND,A9
+         00002390 00006d40' 
+     389 000023b0     c015          JRUC    LOFLP2
+     390                            
+     391 000023c0           LOFLP0:
+     392 000023c0     09e9          MOVI    LOFWLR,A9
+         000023d0 00006c80' 
+     393 000023f0           LOFLP1:
+     394 000023f0     0d5f          CALLA   ZCHK
+         00002400 00000000! 
+     395 00002420     09c1          MOVI    4,A1
+         00002430     0004  
+     396 00002440                   JSRP    FRANIM                  ;WALK AROUND A BIT
+     397 000024b0     c8f0          JRC     LOFLP0
+     398 000024c0     b5a0          MOVE    *A13(ETEMP3),A0,W
+         000024d0     01c0  
+     399 000024e0     0d5f          CALLA   PRCSLP
+         000024f0 00000000! 
+     400 00002510           LOFLP2:
+     401 00002510     0d3f          CALLR   OFSCRCK                 ;OFF SCREEN CHECK
+         00002520     02e1  
+     402 00002530     c093          JRUC    LOFLOOP
+     403                    *
+     404                    *LOF BACK OFF
+     405                    *
+     406                    *LOFBAK:        
+     407                    *       MOVI    30,A0
+     408                    *       CALLA   RANDU
+     409                    *       ADDI    10,A0
+     410                    *       MOVE    A0,A10          ;BACKOFF COUNT
+     411                    *       MOVI    LOFBKOF,A9      ;GET ANIMATION SEQUENCE
+     412                    *LOFBAK0:
+     413                    *       JSRP    CKLBUST
+     414                    *       MOVE    A11,A0          ;TARGET PLAYER IN A0
+     415                    *       CALLA   GETPLYR
+     416                    *       MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+     417                    *       CALLA   XZCHK
+     418                    *       MOVI    010000H,A5      ;GET Z VEL
+     419                    *       MOVE    A2,A2
+     420                    *       JRNN    LOFBZ1
+     421                    *       NEG     A5              
+     422                    *LOFBZ1:
+     423                    *       CMPI    6,A4            ;IF TOO CLOSE, ZERO OUT ZVEL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   11
+
+     424                    *       JRHI    LOFBX0
+     425                    *       CLR     A5
+     426                    *LOFBX0:
+     427                    *       MOVI    010000H,A6      ;GET X VEL
+     428                    *       MOVE    A1,A1
+     429                    *       JRN     LOFBX1
+     430                    *       NEG     A6              
+     431                    *LOFBX1:
+     432                    *       MOVE    A5,*A8(OYVEL),L
+     433                    *       MOVE    A5,*A8(OZVEL),L
+     434                    *       MOVE    A6,*A8(OXVEL),L
+     435                    *       MMTM    SP,A3
+     436                    *       MOVE    A6,A6
+     437                    *       JRN     LOFBX2
+     438                    *       CALLA   YFLP
+     439                    *       JRUC    LOFBX3
+     440                    *LOFBX2:
+     441                    *       CALLA   NOYFLP
+     442                    *LOFBX3:
+     443                    *       CALLA   SHVELCPY         
+     444                    *       MMFM    SP,A3
+     445                    *       JSRP    LOFSHOOT
+     446                    *       JRNC    LOFBAK2
+     447                    *
+     448                    *       MOVI    LOFBSTND,A9
+     449                    *       JRUC    LOFBAK3
+     450                    *
+     451                    *LOFBAK1:
+     452                    *       MOVI    LOFBKOF,A9
+     453                    *       MOVI    0,A1
+     454                    *LOFBAK2:
+     455                    *       JSRP    FRANIM                  ;WALK AROUND A BIT
+     456                    *       JRC     LOFBAK1
+     457                    *LOFBAK3:
+     458                    *       CALLR   OFSCRCK                 ;OFF SCREEN CHECK
+     459                    *       DSJ     A10,LOFBAK0
+     460                    *       MOVI    LOFWLR,A9               ;TIME OUT, SPLIT
+     461                    *       JRUC    LOFLOOP0
+     462                    *
+     463                    *LOFFREDO HANG OUT
+     464                    *
+     465 00002540           LOFHANG:
+     466 00002540     0d5f          CALLA   PSTOP
+         00002550 00000000! 
+     467 00002570     09c0          MOVI    4,A0
+         00002580     0004  
+     468 00002590     0d5f          CALLA   RANDU
+         000025a0 00000000! 
+     469 000025c0     1420          DEC     A0
+     470 000025d0     24a0          SLL     5,A0
+     471 000025e0     0b20          ADDI    HANGTAB,A0
+         000025f0 00008ca0' 
+     472 00002610     8609          MOVE    *A0,A9,L        ;GET YOUR HANG OUT FRAME
+     473 00002620           LOFHNG1
+     474 00002620                   JSRP    CKLBUST
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   12
+
+     475 00002690                   JSRP    CKGVUP1
+     476 00002700     5621          CLR     A1
+     477 00002710                   JSRP    FRANIM
+     478 00002780     c9e9          JRNC    LOFHNG1
+     479 00002790     09e9          MOVI    LOFSTND,A9       ;SET HIS STOPPED FRAME
+         000027a0 00006d40' 
+     480 000027c0                   RETP
+     481                    *
+     482                    *LOFREDO SHOOT
+     483                    *A8=OBJ, A3=ABS DX, A11=PLAYER
+     484                    *RETURNS CC= NO SHOT, CS = SHOOT
+     485                    *
+     486 000027f0           LOFSHOOT:
+     487 000027f0     05a0          MOVE    @WAVE,A0,W
+         00002800 00000000! 
+     488 00002820     0b40          CMPI    1,A0            ;WAVE 1?
+         00002830     fffe  
+     489 00002840     cb0c          JRNE    LOFSH00         ;NO
+     490 00002850     4d60          MOVE    A11,A0          ;TARGET PLAYER IN A0
+     491 00002860     0d5f          CALLA   GETPLYR
+         00002870 00000000! 
+     492 00002890     0d3f          CALLR   BOZCHK
+         000028a0     fdb0  
+     493 000028b0     c905          JRNC    LOFSH00         ;NO BOZO TARGET
+     494 000028c0     05a0          MOVE    @LOFFIRE,A0,W
+         000028d0 00000000! 
+     495 000028f0     2fe0          SRL     1,A0    
+     496 00002900     c003          JRUC    LOFSH01         ;SHOOT HALF AS OFTEN
+     497 00002910           LOFSH00
+     498 00002910     05a0          MOVE    @LOFFIRE,A0,W
+         00002920 00000000! 
+     499 00002940           LOFSH01
+     500 00002940     0d5f          CALLA   RANDPER
+         00002950 00000000! 
+     501 00002970     c936          JRNC    LOFSHX          ;NO GO
+     502 00002980     0b43          CMPI    30,A3           ;TOO CLOSE FOR A SHOT?
+         00002990     ffe1  
+     503 000029a0     c233          JRLS    LOFSHX
+     504 000029b0     0d5f          CALLA   ZCHK
+         000029c0 00000000! 
+     505 000029e0     09e9          MOVI    LOFSS,A9
+         000029f0 00008420' 
+     506                    
+     507 00002a10     b5a0          MOVE    *A13(ETEMP1),A0,W       ;GO FOR A SQUAT SHOT?
+         00002a20     0180  
+     508 00002a30     0d5f          CALLA   RANDPER
+         00002a40 00000000! 
+     509 00002a60     c907          JRNC    LOFSH0          ;NO
+     510 00002a70     0b43          CMPI    40,A3           ;TOO CLOSE FOR A DOWNER?
+         00002a80     ffd7  
+     511 00002a90     c204          JRLS    LOFSH0
+     512 00002aa0     09e9          MOVI    LOFKS,A9
+         00002ab0 00008520' 
+     513 00002ad0     c00c          JRUC    LOFSH1
+     514 00002ae0           LOFSH0:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   13
+
+     515 00002ae0     b5a0          MOVE    *A13(ETEMP1+010H),A0,W  ;GO FOR A DOWN SHOT?
+         00002af0     0190  
+     516 00002b00     0d5f          CALLA   RANDPER
+         00002b10 00000000! 
+     517 00002b30     c906          JRNC    LOFSH1          ;NO
+     518 00002b40     0b43          CMPI    70,A3           ;TOO CLOSE FOR A DOWNER?
+         00002b50     ffb9  
+     519 00002b60     c203          JRLS    LOFSH1
+     520 00002b70     09e9          MOVI    LOFSL,A9
+         00002b80 00008620' 
+     521 00002ba0           LOFSH1:
+     522 00002ba0     0d5f          CALLA   PSTOP
+         00002bb0 00000000! 
+     523 00002bd0     4d60          MOVE    A11,A0
+     524 00002be0     0d5f          CALLA   FACEPLYR                ;FACE THE PLAYER BOYS
+         00002bf0 00000000! 
+     525 00002c10     09c1          MOVI    1,A1
+         00002c20     0001  
+     526 00002c30                   JSRP    FRANIM       
+     527 00002ca0     0de0          SETC
+     528 00002cb0                   RETP
+     529 00002ce0           LOFSHX:
+     530 00002ce0     0320          CLRC
+     531 00002cf0                   RETP
+     532                    *
+     533                    *LOAFER ON A CHOPPER
+     534                    *A8  = LOF
+     535                    *A10 = CHOPPER MAIN
+     536                    *A11 = PLAYER SELECTED
+     537                    *
+     538 00002d20           LOFCHOP:
+     539                    *FIND A CHOPPER
+     540 00002d20     07aa          MOVE    @CARLIST,A10,L
+         00002d30 00000000! 
+     541 00002d50     ca00          JREQ    LOFLOOP0
+         00002d60     ff0d  
+     542 00002d70           CSCL1
+     543 00002d70     b541          MOVE    *A10(OID),A1,W
+         00002d80     01a0  
+     544 00002d90     0b41          CMPI    CAR3OID|CBODYID,A1
+         00002da0     f3df  
+     545 00002db0     ca05          JREQ    CSCLX
+     546                    
+     547 00002dc0     b74a          MOVE    *A10(OSLINK),A10,L
+         00002dd0     0020  
+     548 00002de0     cbf8          JRNE    CSCL1
+     549 00002df0     c000          JRUC    LOFLOOP0                
+         00002e00     ff03  
+     550 00002e10           CSCLX
+     551 00002e10     5600          CLR     A0              ;COUNT CHOPPER LOFS
+     552 00002e20     07a1          MOVE    @ENEMIES,A1,L
+         00002e30 00000000! 
+     553 00002e50     ca0d          JREQ    CSCL3
+     554 00002e60           CSCL20
+     555 00002e60     b422          MOVE    *A1(OID),A2,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   14
+
+         00002e70     01a0  
+     556 00002e80     0b42          CMPI    00E18H,A2
+         00002e90     f1e7  
+     557 00002ea0     cb01          JRNE    CSCL200
+     558 00002eb0     1020          INC     A0
+     559 00002ec0           CSCL200
+     560 00002ec0     0b42          CMPI    00E17H,A2
+         00002ed0     f1e8  
+     561 00002ee0     cb01          JRNE    CSCL2
+     562 00002ef0     1020          INC     A0
+     563 00002f00     b621  CSCL2   MOVE    *A1(OSLINK),A1,L
+         00002f10     0020  
+     564 00002f20     cbf3          JRNE    CSCL20
+     565 00002f30           CSCL3   
+     566 00002f30     1420          DEC     A0                      ;COMPUTE OFFSET
+     567 00002f40     09c1          MOVI    21,A1
+         00002f50     0015  
+     568 00002f60     5e20          MPYU    A1,A0
+     569 00002f70     09c0          MOVI    6,A0
+         00002f80     0006  
+     570 00002f90     0d5f          CALLA   SRAND
+         00002fa0 00000000! 
+     571 00002fc0     1480          SUBK    4,A0
+     572 00002fd0     4020          ADD     A1,A0
+     573 00002fe0     b00d          MOVE    A0,*A13(ETEMP4),W       ;OFFSET FROM CENTER
+         00002ff0     01e0  
+     574 00003000     09e9          MOVI    LOFLY,A9                ;MAKE THE DUDE FLY
+         00003010 00006ec0' 
+     575 00003030     1881          MOVK    4,A1
+     576 00003040                   JSRP    FRANIM
+     577 000030b0           LOFCHLP:
+     578 000030b0     0d3f          CALLR   LOFCH1
+         000030c0     008a  
+     579 000030d0     0d5f          CALLA   SCRTST          ;ONLY JUMP ON SCREEN
+         000030e0 00000000! 
+     580 00003100     cb21          JRNE    LOFCHSL
+     581 00003110     09c0          MOVI    4,A0            ;JUMP EVERY NOW AND THEN FOR FUN
+         00003120     0004  
+     582 00003130     b501          MOVE    *A8(OID),A1,W
+         00003140     01a0  
+     583 00003150     0b41          CMPI    0E18H,A1
+         00003160     f1e7  
+     584 00003170     c80e          JRLO    LOFCHS7
+     585 00003180     b501          MOVE    *A8(OXVEL+010H),A1,W
+         00003190     0050  
+     586 000031a0     c60b          JRLE    LOFCHS7
+     587 000031b0     05a1          MOVE    @WORLDTL,A1,W           ;COME FROM EDGE OF SCREEN
+         000031c0 00000000! 
+     588 000031e0     0b01          ADDI    80,A1
+         000031f0     0050  
+     589 00003200     b502          MOVE    *A8(OXPOS),A2,W
+         00003210     0090  
+     590 00003220     4841          CMP     A2,A1
+     591 00003230     c902          JRHS    LOFCHS7
+     592 00003240     09c0          MOVI    999,A0          ;JUMPERS REALLY GO FOR IT!!!!
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   15
+
+         00003250     03e7  
+     593 00003260           LOFCHS7
+     594 00003260     0d5f          CALLA   RANDPER
+         00003270 00000000! 
+     595 00003290     c800          JRC     LDOWN
+         000032a0     00ae  
+     596 000032b0                   JSRP    LCHFIRE
+     597 00003320           LOFCHSL
+     598 00003320                   SLEEP   2
+     599 00003360     c0d4          JRUC    LOFCHLP
+     600                    *
+     601                    *LOF FIRE FROM CHOPPER
+     602                    *
+     603 00003370           LCHFIRE
+     604 00003370     0d5f          CALLA   SELCTPLY        ;TARGET PLAYER IN A11
+         00003380 00000000! 
+     605 000033a0     4d60          MOVE    A11,A0          ;TARGET PLAYER IN A0
+     606 000033b0     0d5f          CALLA   GETPLYR
+         000033c0 00000000! 
+     607 000033e0     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         000033f0     00a0  
+     608 00003400     0d5f          CALLA   XZCHK           ;COMPUTE DELTA X,Z
+         00003410 00000000! 
+     609 00003430     0b44          CMPI    40,A4
+         00003440     ffd7  
+     610 00003450     c211          JRLS    LCHF0           ;OK FOR SHOT
+     611 00003460     09e0          MOVI    P1DATA,A0       ;TRY THE OTHER ONE
+         00003470 00000000! 
+     612 00003490     480b          CMP     A0,A11
+     613 000034a0     cb03          JRNE    LCHF00
+     614 000034b0     09e0          MOVI    P2DATA,A0       ;CHECK OTHER
+         000034c0 00000000! 
+     615 000034e0           LCHF00
+     616 000034e0     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         000034f0     00a0  
+     617 00003500     ca34          JREQ    LCHFX
+     618 00003510     0d5f          CALLA   XZCHK           ;COMPUTE DELTA X,Z
+         00003520 00000000! 
+     619 00003540     0b44          CMPI    40,A4
+         00003550     ffd7  
+     620 00003560     c92e          JRHS    LCHFX           ;Z TOO FAR OFF FOR SHOT
+     621 00003570           LCHF0
+     622 00003570     4c21          MOVE    A1,A1
+     623 00003580     0d5f          CALLA   FLP             ;FLIP PROPERLY
+         00003590 00000000! 
+     624 000035b0     09e9          MOVI    LOFHF,A9
+         000035c0 00008320' 
+     625 000035e0     b503          MOVE    *A8(OYPOS),A3,W
+         000035f0     00b0  
+     626 00003600     b404          MOVE    *A0(OYPOS),A4,W
+         00003610     00b0  
+     627 00003620     4464          SUB     A3,A4
+     628 00003630     0384          ABS     A4
+     629 00003640     0b44          CMPI    30,A4
+         00003650     ffe1  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   16
+
+     630 00003660     c903          JRHS    LCHF1
+     631 00003670     09e9          MOVI    LOFKS,A9
+         00003680 00008520' 
+     632 000036a0           LCHF1
+     633 000036a0     0d5f          CALLA   DFRMGRND        ;IS HE ON THE GROUND?
+         000036b0 00000000! 
+     634 000036d0     0b41          CMPI    20,A1
+         000036e0     ffeb  
+     635 000036f0     c903          JRHS    LCHF2           ;NO
+     636 00003700     09e9          MOVI    LOFKS,A9        ;YES, DONT SHOOT DOWN
+         00003710 00008520' 
+     637 00003730           LCHF2
+     638 00003730     0d3f          CALLR   LOFCH1          ;DO YOUR SHOOT DUDE
+         00003740     0022  
+     639 00003750                   SLEEP   4
+     640 00003790     1881          MOVK    4,A1
+     641 000037a0                   JSRP    FRANIM
+     642 00003810     c9f1          JRNC    LCHF2
+     643 00003820                   RETP
+     644 00003850           LCHFX
+     645 00003850     09e9          MOVI    LOFLY,A9        ;DEFAULT FRAME
+         00003860 00006ec0' 
+     646 00003880     1881          MOVK    4,A1
+     647 00003890                   JSRP    FRANIM
+     648 00003900                   SLEEP   10
+     649 00003940                   RETP
+     650                    *
+     651                    *CHECK LOF VELOCITY, POSTION AND JUMP
+     652                    *A8=LOAF
+     653                    *A10=CHOPPER
+     654 00003970           LOFCH1
+     655 00003970     b740          MOVE    *A10(OCVECT),A0,L
+         00003980     01d0  
+     656 00003990     0b60          CMPI    DUMCOLL,A0
+         000039a0 ffffffff! 
+     657 000039c0     ca38          JREQ    LDOWN0          ;JUMP OFF THE DEAD CHOPPER
+     658                    
+     659                    *GET X COORD STRAIGHT
+     660 000039d0                   SWAP    A10,A8
+     661 00003a00     0d5f          CALLA   GETANIXY
+         00003a10 00000000! 
+     662 00003a30                   SWAP    A10,A8
+     663 00003a60     b500          MOVE    *A8(OSIZEX),A0,W
+         00003a70     0140  
+     664 00003a80     25e0          SLL     15,A0
+     665 00003a90     4403          SUB     A0,A3
+     666 00003aa0     b5a1          MOVE    *A13(ETEMP4),A1,W               ;ADD IN YOUR OFFSET
+         00003ab0     01e0  
+     667 00003ac0     b540          MOVE    *A10(OFLAGS),A0,W               ;CHECK HELI-FLIP
+         00003ad0     0100  
+     668 00003ae0     1f60          BTST    B_FLIPH,A0
+     669 00003af0     ca01          JREQ    LOFCH10
+     670 00003b00     03a1          NEG     A1
+     671 00003b10           LOFCH10
+     672 00003b10     2601          SLL     16,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   17
+
+     673 00003b20     4023          ADD     A1,A3
+     674 00003b30     b268          MOVE    A3,*A8(OXVAL),L
+         00003b40     0080  
+     675                    
+     676                    *GET Y COORD STRAIGHT
+     677 00003b50     4c41          MOVE    A2,A1
+     678 00003b60     0d5f          CALLA   GETANIXY
+         00003b70 00000000! 
+     679 00003b90     0b22          ADDI    0FFC00000H,A2
+         00003ba0 ffc00000  
+     680 00003bc0     4441          SUB     A2,A1
+     681 00003bd0     b700          MOVE    *A8(OYVAL),A0,L
+         00003be0     00a0  
+     682 00003bf0     4020          ADD     A1,A0
+     683 00003c00     b208          MOVE    A0,*A8(OYVAL),L
+         00003c10     00a0  
+     684                    *GET Z COORD STRAIGHT
+     685 00003c20     b542          MOVE    *A10(OZPOS),A2,W        
+         00003c30     00d0  
+     686 00003c40     0b02          ADDI    4,A2
+         00003c50     0004  
+     687 00003c60     b048          MOVE    A2,*A8(OZPOS),W
+         00003c70     00d0  
+     688                    *GET VELOCITIES STRAIGHT
+     689 00003c80     b743          MOVE    *A10(OXVEL),A3,L        
+         00003c90     0040  
+     690 00003ca0     b744          MOVE    *A10(OYVEL),A4,L        
+         00003cb0     0060  
+     691 00003cc0     b745          MOVE    *A10(OZVEL),A5,L        
+         00003cd0     00e0  
+     692 00003ce0     b268          MOVE    A3,*A8(OXVEL),L 
+         00003cf0     0040  
+     693 00003d00     b288          MOVE    A4,*A8(OYVEL),L 
+         00003d10     0060  
+     694 00003d20     b2a8          MOVE    A5,*A8(OZVEL),L 
+         00003d30     00e0  
+     695 00003d40     0960          RETS
+     696                    *
+     697                    *LOF JUMP DOWN AND LAND
+     698                    *A8=OBJECT SITTING ON CHOPPER WITH CHOPPER XVEL
+     699                    *
+     700 00003d50           LDOWN0
+     701 00003d50     4dac          MOVE    A13,A12
+     702 00003d60     0b0c          ADDI    PRCSIZ,A12      ;FORM PROCESS STACK POINTER
+         00003d70     05a0  
+     703 00003d80     100f          ADDK    32,SP           ;PULL OFF CALL
+     704 00003d90           LDOWN:
+     705 00003d90     0d3f          CALLR   LSHADST
+         00003da0     0051  
+     706 00003db0     09e9          MOVI    LOFJMP,A9       ;JUMP ON THE DUDE
+         00003dc0 00006df0' 
+     707 00003de0     09e0          MOVI    -020000H,A0     ;JUMP UP A SMIDGE
+         00003df0 fffe0000  
+     708 00003e10     b208          MOVE    A0,*A8(OYVEL),L
+         00003e20     0060  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   18
+
+     709 00003e30     5600          CLR     A0
+     710 00003e40     b208          MOVE    A0,*A8(OZVEL),L
+         00003e50     00e0  
+     711 00003e60     0d5f          CALLA   SHVELCPY        ;COPY VELOCITY TO SHADOW
+         00003e70 00000000! 
+     712 00003e90           JUMP0:
+     713 00003e90     1881          MOVK    4,A1            ;DO YOUR ANIMATION
+     714 00003ea0                   JSRP    FRANIM
+     715 00003f10     c904          JRNC    JUMP1
+     716 00003f20     09e9          MOVI    LOFJMP0,A9      ;HOLDING FRAME
+         00003f30 00006e20' 
+     717 00003f50     c0f3          JRUC    JUMP0
+     718                    *FALLING GRAVITY PROCESS
+     719 00003f60           JUMP1:
+     720 00003f60                   SLEEP   3
+     721 00003fa0     b700          MOVE    *A8(OXVEL),A0,L         ;DAMP OUT XVEL
+         00003fb0     0040  
+     722 00003fc0     4c01          MOVE    A0,A1
+     723 00003fd0     2b61          SRA     5,A1
+     724 00003fe0     4420          SUB     A1,A0
+     725 00003ff0     b208          MOVE    A0,*A8(OXVEL),L
+         00004000     0040  
+     726 00004010     0d5f          CALLA   SHVELCPY                ;COPY VELOCITY TO SHADOW
+         00004020 00000000! 
+     727 00004040     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         00004050     0060  
+     728 00004060     0b00          ADDI    05000H,A0
+         00004070     5000  
+     729 00004080     b208          MOVE    A0,*A8(OYVEL),L
+         00004090     0060  
+     730 000040a0     cede          JRN     JUMP0                   ;UPWARD VEL, NO LAND
+     731 000040b0     0d5f          CALLA   DFRMGRND
+         000040c0 00000000! 
+     732 000040e0     0b41          CMPI    10,A1
+         000040f0     fff5  
+     733 00004100     c7d8          JRGT    JUMP0                   ;IN THE AIR STILL
+     734                    
+     735 00004110     09c0          MOVI    0E15H,A0                        ;CHANGE ID TO SUPER LOAF
+         00004120     0e15  
+     736 00004130     b008          MOVE    A0,*A8(OID),W
+         00004140     01a0  
+     737 00004150     09e9          MOVI    LOFLND,A9            ;LANDING FRAMES
+         00004160 00006e70' 
+     738 00004180     1821          MOVK    1,A1
+     739 00004190                   JSRP    FRANIM
+     740                    
+     741 00004200     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         00004210 00000000! 
+     742 00004230     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+     743 00004240     0d5f          CALLA   DELSHAD
+         00004250 00000000! 
+     744 00004270     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00004280 00000000! 
+     745 000042a0     c000          JRUC    LOFLOOP0
+         000042b0     fdb8  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   19
+
+     746                    *
+     747                    *START A SHADOW IF NONE EXISTS
+     748                    *A8=OBJECT TO BE SHADOWED
+     749 000042c0           LSHADST:
+     750 000042c0     098f          MMTM    SP,A0
+         000042d0     8000  
+     751 000042e0     b700          MOVE    *A8(OSHAD),A0,L
+         000042f0     0240  
+     752 00004300     cb03          JRNE    LSHADSX         ;ALREADY GOT ONE
+     753 00004310     0d5f          CALLA   SHADST
+         00004320 00000000! 
+     754 00004340           LSHADSX
+     755 00004340     09af          MMFM    SP,A0
+         00004350     0001  
+     756 00004360     0960          RETS
+     757                    
+     758                    *
+     759                    *LOF RUN AWAY
+     760                    *CHANGE YOUR SPEED
+     761                    *GET DIRECTION
+     762                    *RUN OFF SCREEN
+     763                    *
+     764 00004370           LOFRUN:
+     765 00004370     09c0          MOVI    500,A0
+         00004380     01f4  
+     766 00004390     0d5f          CALLA   RANDPER
+         000043a0 00000000! 
+     767 000043c0     c906          JRNC    LOFR00
+     768 000043d0     09e0          MOVI    FREZSND,A0
+         000043e0 00000000! 
+     769 00004400     0d5f          CALLA   ONESND
+         00004410 00000000! 
+     770 00004430           LOFR00:
+     771 00004430     4d60          MOVE    A11,A0
+     772 00004440     0d5f          CALLA   XZCHK
+         00004450 00000000! 
+     773 00004470     09e0          MOVI    020000H,A0      ;GET FLEE VELOCITY
+         00004480 00020000  
+     774 000044a0     4c21          MOVE    A1,A1
+     775 000044b0     cf01          JRNN    LOFR01
+     776 000044c0     03a0          NEG     A0
+     777 000044d0           LOFR01:
+     778 000044d0     b208          MOVE    A0,*A8(OXVEL),L
+         000044e0     0040  
+     779 000044f0     0d5f          CALLA   SHVELFLP                ;DO SHADOW VELOCITY AND FLIP
+         00004500 00000000! 
+     780 00004520     09cb          MOVI    2,A11                   ;GET # OF STEPS
+         00004530     0002  
+     781 00004540           LOFRUNL:        
+     782 00004540     0d5f          CALLA   ZCHK
+         00004550 00000000! 
+     783 00004570     09e9          MOVI    LOFWLR,A9
+         00004580 00006c80' 
+     784 000045a0     09c1          MOVI    1,A1
+         000045b0     0001  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   20
+
+     785 000045c0                   JSRP    FRANIM
+     786 00004630     0d3f          CALLR   OFSCRCK                 ;OFF SCREEN CHECK
+         00004640     00cf  
+     787 00004650     3e4b          DSJS    A11,LOFRUNL
+     788                    
+     789 00004660     09c0          MOVI    2,A0                    ;GET RANDOM # OF STEPS
+         00004670     0002  
+     790 00004680     0d5f          CALLA   RANDU
+         00004690 00000000! 
+     791 000046b0     0b00          ADDI    1,A0
+         000046c0     0001  
+     792 000046d0     4c0b          MOVE    A0,A11
+     793 000046e0           LOFRNL: 
+     794 000046e0     09e9          MOVI    LOFWLR,A9
+         000046f0 00006c80' 
+     795 00004710     09c1          MOVI    1,A1
+         00004720     0001  
+     796 00004730                   JSRP    FRANIM
+     797 000047a0     0d3f          CALLR   OFSCRCK                 ;OFF SCREEN CHECK
+         000047b0     00b8  
+     798 000047c0                   JSRP    CKGVUP
+     799 00004830     3ecb          DSJS    A11,LOFRNL
+     800 00004840     09e9          MOVI    LOFWLR,A9
+         00004850 00006c80' 
+     801 00004870     c000          JRUC    LOFLOOP0                ;HE GOT AWAY...
+         00004880     fd5b  
+     802                    *
+     803                    *CHECK GIVE UP
+     804                    *CALLED FROM MAIN LOOP
+     805 00004890           CKGVUP1:
+     806 00004890     05a0          MOVE    @DEATHCNT,A0,W
+         000048a0 00000000! 
+     807 000048c0     0b40          CMPI    3,A0
+         000048d0     fffc  
+     808 000048e0     c27e          JRLS    CKGVX
+     809 000048f0     05a0          MOVE    @LOFCNT,A0,W
+         00004900 00000000! 
+     810 00004920     0b40          CMPI    2,A0
+         00004930     fffd  
+     811 00004940     c378          JRHI    CKGVX
+     812 00004950     09c0          MOVI    600,A0
+         00004960     0258  
+     813 00004970     0d5f          CALLA   RANDPER
+         00004980 00000000! 
+     814 000049a0     c972          JRNC    CKGVX
+     815 000049b0     0d5f          CALLA   PSTOP
+         000049c0 00000000! 
+     816 000049e0     09ca          MOVI    10,A10
+         000049f0     000a  
+     817 00004a00           CKGV1L:
+     818 00004a00                   SLEEP   2
+     819 00004a40     09c0          MOVI    CHANCVSD,A0
+         00004a50     0000  
+     820 00004a60     09c1          MOVI    EXPLOPRI,A1     
+         00004a70     0025  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   21
+
+     821 00004a80     0d5f          CALLA   CKSNDPRI
+         00004a90 00000000! 
+     822 00004ab0     c91b          JRNC    GIVUP
+     823 00004ac0     3daa          DSJS    A10,CKGV1L
+     824 00004ad0     c019          JRUC    GIVUP
+     825                    
+     826                    *CALLED FROM LOFRUN
+     827 00004ae0           CKGVUP:
+     828 00004ae0     0d5f          CALLA   GETCPLY
+         00004af0 00000000! 
+     829 00004b10     b600          MOVE    *A0(POBJ),A0,L
+         00004b20     00a0  
+     830 00004b30     09c6          MOVI    20,A6
+         00004b40     0014  
+     831 00004b50     09c5          MOVI    90,A5
+         00004b60     005a  
+     832 00004b70     0d5f          CALLA   XZCHK
+         00004b80 00000000! 
+     833 00004ba0     c952          JRNC    CKGVX
+     834                    
+     835                    *IS PLAYER FACING YOU ?
+     836 00004bb0     2821          SRA     31,A1
+     837 00004bc0     b402          MOVE    *A0(OFLAGS),A2,W
+         00004bd0     0100  
+     838 00004be0     5622          XOR     A1,A2
+     839 00004bf0     1f62          BTST    B_FLIPH,A2
+     840 00004c00     ca4c          JREQ    CKGVX           ;PLAYER NOT FACING ENEMY
+     841 00004c10     09c0          MOVI    0300H,A0
+         00004c20     0300  
+     842 00004c30     0d5f          CALLA   RANDPER
+         00004c40 00000000! 
+     843 00004c60     c946          JRNC    CKGVX
+     844                    
+     845 00004c70           GIVUP:
+     846 00004c70     0d5f          CALLA   PSTOP           ;STOP THE DUDE
+         00004c80 00000000! 
+     847 00004ca0     09e0          MOVI    IGIVSND,A0
+         00004cb0 00000000! 
+     848 00004cd0     0d5f          CALLA   ONESND
+         00004ce0 00000000! 
+     849 00004d00     5621          CLR     A1
+     850 00004d10     09e9          MOVI    LOFBUST,A9      ;GIVE UP POSE
+         00004d20 00008780' 
+     851 00004d40                   JSRP    FRANIM
+     852 00004db0     09c0          MOVI    10,A0           ;GET TIME TO WAIT
+         00004dc0     000a  
+     853 00004dd0     0d5f          CALLA   RANDU
+         00004de0 00000000! 
+     854 00004e00     0b00          ADDI    30,A0
+         00004e10     001e  
+     855 00004e20     4c0a          MOVE    A0,A10
+     856 00004e30           CKGVL:
+     857 00004e30     0d5f          CALLA   CKBUST          ;WAIT TO BE BUSTED
+         00004e40 00000000! 
+     858 00004e60     c80a          JRC     CKGV0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   22
+
+     859 00004e70                   SLEEP   5
+     860 00004eb0     3d2a          DSJS    A10,CKGVL
+     861 00004ec0     4dac          MOVE    A13,A12
+     862 00004ed0     0b0c          ADDI    PRCSIZ,A12      ;FORM PROCESS STACK POINTER
+         00004ee0     05a0  
+     863                    *       MMFM    A12,A0          ;PULL CALL OFF STACK
+     864 00004ef0     c000          JRUC    LOFR00          ;RUN AWAY, NO BUST
+         00004f00     ff52  
+     865 00004f10           CKGV0:
+     866 00004f10     09e9          MOVI    LOFBUST,A9      ;GET ANIMATION FOR BUST
+         00004f20 00008780' 
+     867 00004f40     09c2          MOVI    010H,A2         ;ESCAPE PROBABILITY
+         00004f50     0010  
+     868 00004f60                   JSRP    GBUST           ;GET BUSTED
+     869 00004fd0     c805          JRC     CKGV1           
+     870                    *       MMFM    A12,A0          ;PULL CALL OFF STACK
+     871 00004fe0     4dac          MOVE    A13,A12
+     872 00004ff0     0b0c          ADDI    PRCSIZ,A12      ;FORM PROCESS STACK POINTER
+         00005000     05a0  
+     873 00005010     c000          JRUC    LOFRUN          ;NO LONGER BUSTED, RUN AWAY
+         00005020     ff34  
+     874 00005030           CKGV1:
+     875 00005030                   DECW    @LOFCNT
+     876 000050a0     c080          JAUC    SUCIDE          ;WE'RE TOTALLY BUSTED, DIE
+         000050b0 00000000! 
+     877 000050d0           CKGVX:
+     878 000050d0                   RETP
+     879                    *
+     880                    *CHECK IF LOF BUSTED
+     881                    *A8=OBJECT
+     882 00005100           CKLBUST:
+     883 00005100     0d5f          CALLA   CKBUST          ;ARE WE BUSTED?
+         00005110 00000000! 
+     884 00005130     c91d          JRNC    CKLBSTX         ;NO WE ARE NOT...
+     885 00005140     0d5f          CALLA   ZCHK
+         00005150 00000000! 
+     886 00005170     09e9          MOVI    LOFBUST,A9      ;GET ANIMATION FOR BUST
+         00005180 00008780' 
+     887 000051a0     09c2          MOVI    70,A2           ;BUST PROBABILITY
+         000051b0     0046  
+     888 000051c0                   JSRP    GBUST           ;GET BUSTED
+     889 00005230     c803          JRC     CKLBST1         ;NO LONGER BUSTED, RUN AWAY
+     890 00005240     100c          ADDK    020H,A12                ;PULL CALL OFF STACK
+     891 00005250     c000          JRUC    LOFRUN
+         00005260     ff10  
+     892 00005270           CKLBST1:
+     893 00005270                   DECW    @LOFCNT
+     894 000052e0     c080          JAUC    SUCIDE          ;WE'RE TOTALLY BUSTED, DIE
+         000052f0 00000000! 
+     895 00005310           CKLBSTX:
+     896 00005310                   RETP
+     897                    *
+     898                    *CHECK IF LOAF OFFSCREEN AND DIE
+     899                    *A8=LOAF OBJECT
+     900 00005340           OFSCRCK:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   23
+
+     901 00005340     05a0          MOVE    @WORLDTL,A0,W           ;CHECK FOR FAR OFF SCREEN
+         00005350 00000000! 
+     902 00005370     0b00          ADDI    256,A0                  ;NORMALIZE FOR SCREEN CENTER
+         00005380     0100  
+     903 00005390     b501          MOVE    *A8(OXPOS),A1,W 
+         000053a0     0090  
+     904 000053b0     4401          SUB     A0,A1
+     905 000053c0     0381          ABS     A1
+     906 000053d0     0b41          CMPI    330,A1
+         000053e0     feb5  
+     907 000053f0     c204          JRLS    LOFOFOK                 ;NOT OFF SCREEN
+     908 00005400     05a0          MOVE    @LOFWAIT,A0,W
+         00005410 00000000! 
+     909 00005430     cb01          JRNE    LOFOFFX                 ;GUYS WAITING, CAN IT
+     910 00005440           LOFOFOK
+     911 00005440     0960          RETS
+     912 00005450           LOFOFFX:
+     913 00005450     97e0          MOVE    *SP+,A0,L       ;PULL CALL OFF STACK
+     914 00005460                   DECW    @LOFCNT
+     915 000054d0     4d00          MOVE    A8,A0
+     916 000054e0     0d5f          CALLA   DELENEMY        ;OFF ENEMY
+         000054f0 00000000! 
+     917 00005510     c080          JAUC    SUCIDE          ;BAG IT...
+         00005520 00000000! 
+     918                    *
+     919                    *LOFFREDO HIT BY A CAR
+     920                    *A0 = PTR TO LOF OBJECT
+     921                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     922                    *
+     923 00005540           LOFCAR:
+     924 00005540     0d5f          CALLA   CARCHK
+         00005550 00000000! 
+     925 00005570     c801          JRC     LOFCSND
+     926 00005580     0960          RETS
+     927 00005590           LOFCSND:
+     928 00005590                   PUSH    A0
+     929 000055a0                   SOUND1  LCARSND                 ;THUD!
+     930 00005600                   PULL    A0
+     931 00005620     c009          JRUC    LOFBUL
+     932                    
+     933 00005630           LCARSND
+     934 00005630     f020          .WORD   0F000H|SPEAKPRI,0AH,08044H,08011H,0
+     935 00005680           LFALSND
+     936 00005680     f021          .WORD   0F000H|SPEAKPRI+1,020H,08016H,0
+     937                    
+     938                    *
+     939                    *LOFFREDO HIT BY A BULLET
+     940                    *A0 = PTR TO LOF OBJECT
+     941                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     942                    *
+     943 000056c0           LOFBUL:
+     944                    *MAKE A BLOOD SPLAT
+     945 000056c0     098f          MMTM    SP,A0,A1,A3,A8
+         000056d0     d080  
+     946 000056e0     b509          MOVE    *A8(OYPOS),A9,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   24
+
+         000056f0     00b0  
+     947 00005700     b50b          MOVE    *A8(OID),A11,W
+         00005710     01a0  
+     948 00005720     4c08          MOVE    A0,A8
+     949 00005730                   CREATE  0EDH,SPLATBOX
+     950 000057b0     09af          MMFM    SP,A0,A1,A3,A8
+         000057c0     010b  
+     951                    *DEATH BY BULLET
+     952 000057d0     b701          MOVE    *A8(OXVEL),A1,L         ;GIVE HIM BULLET VELOCITY
+         000057e0     0040  
+     953 000057f0     2be1          SRA     1,A1
+     954 00005800     b502          MOVE    *A8(OID),A2,W
+         00005810     01a0  
+     955 00005820     0b82          ANDI    0FF0H,A2
+         00005830 fffff00f  
+     956 00005850     0b42          CMPI    TRAN1OID,A2             ;IF CAR GIVE HIM MORE OF A HIT
+         00005860     f3cf  
+     957 00005870     ca01          JREQ    LOFBUL1
+     958 00005880     2be1          SRA     1,A1
+     959 00005890           LOFBUL1
+     960 00005890     b220          MOVE    A1,*A0(OXVEL),L
+         000058a0     0040  
+     961 000058b0     b602          MOVE    *A0(OSHAD),A2,L
+         000058c0     0240  
+     962 000058d0     ca02          JREQ    LOFBL000
+     963 000058e0     b222          MOVE    A1,*A2(OXVEL),L
+         000058f0     0040  
+     964 00005900           LOFBL000:
+     965 00005900     05a1          MOVE    @LOFCNT,A1,W            ;DECREMENT CLOWN COUNT
+         00005910 00000000! 
+     966 00005930     1421          DEC     A1
+     967 00005940     0581          MOVE    A1,@LOFCNT,W
+         00005950 00000000! 
+     968                    *       MOVI    SPLTCOLBOX,A14
+     969 00005970     09ee          MOVI    DUMCOLL,A14
+         00005980 00000000! 
+     970 000059a0     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         000059b0     01d0  
+     971 000059c0     4c08          MOVE    A0,A8
+     972 000059d0     0d5f          CALLA   SCRKIL                  ;SCORE YOUR POINTS
+         000059e0 00000000! 
+     973                    
+     974 00005a00     b500          MOVE    *A8(OID),A0,W
+         00005a10     01a0  
+     975 00005a20     2780          SLL     28,A0
+     976 00005a30     2c80          SRL     28,A0
+     977 00005a40     0b40          CMPI    7,A0
+         00005a50     fff8  
+     978 00005a60     cb0c          JRNE    LOFBL001                ;CHOPPER DUDE
+     979                    
+     980 00005a70     0d5f          CALLA   OIDATA                  ;GET PLAYER DATA FROM OID
+         00005a80 00000000! 
+     981 00005aa0     c808          JRC     LOFBL001                ;NOT PLAYER KILL
+     982 00005ab0     09c1          MOVI    02500H,A1
+         00005ac0     2500  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   25
+
+     983 00005ad0     0d5f          CALLA   SCORE                   ;GET YOUR BONUS FOR DUDE
+         00005ae0 00000000! 
+     984 00005b00     0d5f          CALLA   PUT2x5K                 ;DO A FLOATER
+         00005b10 00000000! 
+     985                    
+     986 00005b30           LOFBL001
+     987 00005b30     b700          MOVE    *A8(OPLINK),A0,L
+         00005b40     01f0  
+     988 00005b50     09c1          MOVI    0EDh,A1
+         00005b60     00ed  
+     989 00005b70     09e7          MOVI    LOFDIE1,A7
+         00005b80 00005bf0' 
+     990 00005ba0     0d5f          CALLA   XFERPROC                ;CREATE A NEW ENEMY DEATH PROCESS
+         00005bb0 00000000! 
+     991 00005bd0     0320          CLRC                            ;TELL COLLISION SCANNER NOT TO DELETE
+     992 00005be0     0960          RETS
+     993                    *
+     994                    *FALL DOWN DEAD
+     995                    *A8=LOF OBJECT
+     996                    *
+     997 00005bf0           LOFDIE1:
+     998 00005bf0     0d5f          CALLA   GRUNTRND
+         00005c00 00000000! 
+     999 00005c20     0d5f          CALLA   DROPSTUF
+         00005c30 00000000! 
+    1000 00005c50     0d5f          CALLA   DFRMGRND
+         00005c60 00000000! 
+    1001 00005c80     0b41          CMPI    10,A1
+         00005c90     fff5  
+    1002 00005ca0     c43f          JRLT    LOFDIE2                 ;ON THE GROUND  BYPASS
+    1003                    
+    1004 00005cb0     0d5f          CALLA   PSTOP
+         00005cc0 00000000! 
+    1005 00005ce0     09e2          MOVI    018000H,A2
+         00005cf0 00018000  
+    1006 00005d10     05a1          MOVE    @WORLDTL,A1,W           ;GO TOWARD CENTER SCREEN
+         00005d20 00000000! 
+    1007 00005d40     0b01          ADDI    250,A1
+         00005d50     00fa  
+    1008 00005d60     b500          MOVE    *A8(OXPOS),A0,W
+         00005d70     0090  
+    1009 00005d80     4401          SUB     A0,A1
+    1010 00005d90     cf01          JRNN    LOFDIE0
+    1011 00005da0     03a2          NEG     A2
+    1012 00005db0           LOFDIE0
+    1013 00005db0     b248          MOVE    A2,*A8(OXVEL),L
+         00005dc0     0040  
+    1014 00005dd0     09e0          MOVI    020000H,A0      
+         00005de0 00020000  
+    1015 00005e00     b208          MOVE    A0,*A8(OYVEL),L
+         00005e10     0060  
+    1016 00005e20     0d5f          CALLA   LSHADST
+         00005e30 000042c0' 
+    1017 00005e50           LOFDIE1L:
+    1018 00005e50                   SOUND1  LFALSND
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   26
+
+    1019 00005eb0     09e9          MOVI    LOFALL,A9
+         00005ec0 00006f10' 
+    1020 00005ee0     1881          MOVK    4,A1
+    1021 00005ef0                   JSRP    FRANIM
+    1022 00005f60           LOFDIE10
+    1023 00005f60     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         00005f70     0060  
+    1024 00005f80     0b00          ADDI    07FFFH,A0
+         00005f90     7fff  
+    1025 00005fa0     b208          MOVE    A0,*A8(OYVEL),L
+         00005fb0     0060  
+    1026 00005fc0                   SLEEP   6
+    1027 00006000     0d5f          CALLA   DFRMGRND
+         00006010 00000000! 
+    1028 00006030     0b41          CMPI    10,A1
+         00006040     fff5  
+    1029 00006050     c7f0          JRGT    LOFDIE10                ;STILL IN THE AIR
+    1030 00006060     4d00          MOVE    A8,A0                   ;GET RID OF SHADOW IF ANY
+    1031 00006070     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00006080 00000000! 
+    1032 000060a0           LOFDIE2 
+    1033 000060a0     4d00          MOVE    A8,A0                   ;GET RID OF SHADOW IF ANY
+    1034 000060b0     0d5f          CALLA   DELSHAD
+         000060c0 00000000! 
+    1035 000060e0     09e9          MOVI    LOFDBUL,A9              ;DO YOUR DEATH ANIMATION
+         000060f0 00006f60' 
+    1036 00006110           LOFDIE3
+    1037 00006110     0d5f          CALLA   ZCHK
+         00006120 00000000! 
+    1038 00006140     5621          CLR     A1
+    1039 00006150                   JSRP    FRANIM
+    1040 000061c0     c9f4          JRNC    LOFDIE3
+    1041                    *
+    1042                    *SINK INTO THE GROUND
+    1043                    *A8=LOF OBJECT
+    1044                    *
+    1045 000061d0     09e9          MOVI    [1,1],A9
+         000061e0 00010001  
+    1046 00006200                   CREATE  0DFh,ESINK      ;CREATE THE DEADMAN SINK         
+    1047 00006280     c080          JAUC    SUCIDE          ;DIE
+         00006290 00000000! 
+    1048                    *
+    1049                    *ROCKET,EXPLODE COLLISION ROUTINE
+    1050                    *A0 = PTR TO LOFFREDO OBJECT
+    1051                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+    1052                    *ENEMY EXPLODE
+    1053 000062b0           LOFCOLE
+    1054 000062b0     b401          MOVE    *A0(OID),A1,W
+         000062c0     01a0  
+    1055 000062d0     2781          SLL     28,A1
+    1056 000062e0     2c81          SRL     28,A1
+    1057 000062f0     0b41          CMPI    7,A1
+         00006300     fff8  
+    1058 00006310     ca27          JREQ    LOFCOLX         ;NO CHOPPER DUDE ON ENEMY EXPLODE
+    1059                            
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   27
+
+    1060 00006320           LOFCOL0
+    1061 00006320     b709          MOVE    *A8(OXVEL),A9,L         ;GET PROJECTILE DATA
+         00006330     0040  
+    1062 00006340     b70a          MOVE    *A8(OYVEL),A10,L
+         00006350     0060  
+    1063 00006360     b50b          MOVE    *A8(OID),A11,W          
+         00006370     01a0  
+    1064                    
+    1065 00006380     4d06          MOVE    A8,A6                   ;STORE KILLERS OBLOCK
+    1066 00006390     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+    1067 000063a0     0d5f          CALLA   DELSHAD
+         000063b0 00000000! 
+    1068 000063d0     09ee          MOVI    DUMCOLL,A14
+         000063e0 00000000! 
+    1069 00006400     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00006410     01d0  
+    1070                    
+    1071 00006420     b600          MOVE    *A0(OPLINK),A0,L
+         00006430     01f0  
+    1072 00006440     09c1          MOVI    0EDh,A1
+         00006450     00ed  
+    1073 00006460     09e7          MOVI    WENDIE,A7
+         00006470 00000000! 
+    1074 00006490     0d5f          CALLA   XFERPROC                        ;CREATE A NEW ENEMY DEATH PROCESS
+         000064a0 00000000! 
+    1075                    
+    1076 000064c0     bac0          MOVE    *A6(ODMAXY),*A0(PDATA),L        ;PASS KILLERS DMA XY POSITION
+         000064d0     0210  
+         000064e0     0060  
+    1077 000064f0     bac0          MOVE    *A6(OSIZE),*A0(PDATA+20H),L     ;AND KILLERS XY SIZE
+         00006500     0140  
+         00006510     0080  
+    1078                    
+    1079 00006520     05a9          MOVE    @LOFCNT,A9,W
+         00006530 00000000! 
+    1080 00006550     1429          DEC     A9
+    1081 00006560     0589          MOVE    A9,@LOFCNT,W
+         00006570 00000000! 
+    1082 00006590           LOFCOLX
+    1083 00006590     0320          CLRC                    ;TELL COLLISION SCANNER NOT TO DELETE
+    1084 000065a0     0960          RETS
+    1085                    
+    1086                    *
+    1087                    *STFOBJ INITIALIZING DATA
+    1088                    *       .LONG   OXVEL,OYVEL,OXVAL,OYVAL
+    1089                    *       .WORD   OZPOS,OZVEL
+    1090                    *       .LONG   OIMG,OZSIZ,OCVECT
+    1091                    *       .WORD   OFLAGS,OID
+    1092 000065b0           LOFINIT
+    1093 000065b0 00000000          .LONG   0,0,0,0
+    1094 00006630     0000          .WORD   0,0
+    1095 00006650 00000200"         .LONG   lfwk5,LOFZ,LOFCOLL
+    1096 000066b0     8002          .WORD   DMAWNZ,0E01H
+    1097 000066d0 00000000!         .LONG   LOFBLIP
+    1098                    *COLLISION TABLE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   28
+
+    1099 000066f0           LOFCOLL 
+    1100 000066f0     0b10          .WORD   B1OID|BULLETID
+    1101 00006700 000056c0'         .LONG   LOFBUL
+    1102 00006720     0b12          .WORD   B1OID|EXPLODID
+    1103 00006730 00006320'         .LONG   LOFCOL0
+    1104 00006750     0b14          .WORD   B1OID|ROCKETID
+    1105 00006760 00006320'         .LONG   LOFCOL0
+    1106 00006780     0b20          .WORD   B2OID|BULLETID
+    1107 00006790 000056c0'         .LONG   LOFBUL
+    1108 000067b0     0b22          .WORD   B2OID|EXPLODID
+    1109 000067c0 00006320'         .LONG   LOFCOL0
+    1110 000067e0     0b24          .WORD   B2OID|ROCKETID
+    1111 000067f0 00006320'         .LONG   LOFCOL0
+    1112 00006810     0be2          .WORD   BEOID|EXPLODID
+    1113 00006820 000062b0'         .LONG   LOFCOLE
+    1114 00006840     0c30          .WORD   TRAN1OID+CBODYID
+    1115 00006850 00005540'         .LONG   LOFCAR
+    1116 00006870     0c40          .WORD   TRAN2OID+CBODYID
+    1117 00006880 00005540'         .LONG   LOFCAR
+    1118 000068a0     0c42          .WORD   TRAN2OID+WSHLDID
+    1119 000068b0 00005540'         .LONG   LOFCAR
+    1120 000068d0     0c00          .WORD   C1OID+CBODYID
+    1121 000068e0 00005540'         .LONG   LOFCAR
+    1122 00006900     0000          .WORD   0
+    1123 00006910 00000000!         .LONG   DUMRTSG
+    1124                    *
+    1125                    *ENEMY ANIMATION TABLE OFFSETS
+    1126                    
+    1127 00006930     0001  LOFOFF  .WORD   1,3,4,9,19,19,19,19
+    1128                    *
+    1129                    *THE LOFFREDO ENEMY, ANIMATION PTR TABLE, FIRST LONG WORD IS THE OFFSET PTR
+    1130                    *
+    1131 000069b0 00006930' LOFTAB  .LONG   LOFOFF
+    1132 000069d0 00006c80'         .LONG   LOFWLR,LOFWLR,LOFWLR,LOFDBUL,LOFDFLA,LOFDEXP,LOFDEXP1,LOFDROCK
+    1133                    
+    1134 00006ad0 00007440'         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1135 00006b50 00007440'         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1136 00006bd0 00007980'         .LONG   LOFRAG4,0
+    1137                    
+    1138 00006c10 00006c30'         .LONG   LOFSTAND
+    1139                    
+    1140                    *LOFFREDO FRAME TABLES
+    1141                    *NORMAL TABLE ENTRY:
+    1142                    *       .LONG   FRAME1
+    1143                    *       .WORD   SLEEPT,FLIP_FACTOR
+    1144                    *       .LONG   FRAME2
+    1145                    *       .
+    1146                    *       .
+    1147                    *       .
+    1148                    *SPECIAL ENTRY(FOR STORED OFFSETS AND PROCESSES)
+    1149                    *       .LONG   FRAME1
+    1150                    *       .WORD   -SLEEPT,XOFF,YOFF,PROC. ID
+    1151                    *       .LONG   PROCESS STARTING ADDRESS
+    1152                    *       .WORD   FLIP_FACTOR
+    1153                    *       .LONG   FRAME2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   29
+
+    1154                    *       .
+    1155                    *       .
+    1156                    *       .
+    1157                    *standing loffredo
+    1158 00006c30           LOFSTAND
+    1159 00006c30 00000200"         .LONG   lfwk5
+    1160 00006c50     0003          .WORD   3
+    1161 00006c60 00000000          .LONG   0
+    1162                    *walking loffredo
+    1163 00006c80           LOFWLR:
+    1164 00006c80 00000200"         .LONG   lfwk5
+    1165 00006ca0     0005          .WORD   5
+    1166 00006cb0 00000080"         .LONG   lfwk2
+    1167 00006cd0     0005          .WORD   5
+    1168 00006ce0 00000100"         .LONG   lfwk3
+    1169 00006d00     0005          .WORD   5
+    1170 00006d10 00000180"         .LONG   lfwk4
+    1171 00006d30     0005          .WORD   5
+    1172 00006d40           LOFSTND:
+    1173 00006d40 00000200"         .LONG   lfwk5
+    1174 00006d60     0005          .WORD   5
+    1175 00006d70 00000280"         .LONG   lfwk6
+    1176 00006d90     0005          .WORD   5
+    1177 00006da0 00000000"         .LONG   lfwk1
+    1178 00006dc0     0005          .WORD   5
+    1179 00006dd0 00000000          .LONG   0
+    1180                    
+    1181                    *WALK BACKWARDS
+    1182                    
+    1183                    *LOFBKOF:
+    1184                    *       .LONG   lfwk1
+    1185                    *       .WORD   5
+    1186                    *       .LONG   lfwk6
+    1187                    *       .WORD   5
+    1188                    *LOFBSTND:
+    1189                    *       .LONG   lfwk5
+    1190                    *       .WORD   5
+    1191                    *       .LONG   lfwk4
+    1192                    *       .WORD   5
+    1193                    *       .LONG   lfwk3
+    1194                    *       .WORD   5
+    1195                    *       .LONG   lfwk2
+    1196                    *       .WORD   5
+    1197                    *       .LONG   lfwk5
+    1198                    *       .WORD   5
+    1199                    *       .LONG   0
+    1200                    *
+    1201                    **LOF JUMP TAKE OFF
+    1202 00006df0           LOFJMP:
+    1203 00006df0 00000c00"         .LONG   ljmp1
+    1204 00006e10     0006          .WORD   6
+    1205 00006e20           LOFJMP0:
+    1206 00006e20 00000c80"         .LONG   ljmp6
+    1207 00006e40     0003          .WORD   3
+    1208 00006e50 00000000          .LONG   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   30
+
+    1209                    **LOF LANDING SEQUENCE
+    1210 00006e70           LOFLND:
+    1211 00006e70 00000c00"         .LONG   ljmp1
+    1212 00006e90     0004          .WORD   4
+    1213 00006ea0 00000000          .LONG   0
+    1214                    *
+    1215                    *LOF FLYING
+    1216                    *
+    1217 00006ec0           LOFLY:
+    1218 00006ec0 00000a00"         .LONG   hell1
+    1219 00006ee0     0002          .WORD   2
+    1220 00006ef0 00000000          .LONG   0
+    1221                    *       
+    1222                    *LOF FALLING
+    1223                    *
+    1224 00006f10           LOFALL:
+    1225 00006f10 00000b80"         .LONG   hell7
+    1226 00006f30     0002          .word   2
+    1227 00006f40 00000000          .long   0
+    1228                    
+    1229                    *LOFFREDO DIE FROM A BULLET
+    1230                    
+    1231 00006f60           LOFDBUL:
+    1232 00006f60 00000500"         .LONG   ldth2
+    1233 00006f80     0008          .WORD   8
+    1234 00006f90 00000580"         .LONG   ldth4
+    1235 00006fb0     0008          .WORD   8
+    1236 00006fc0 00000600"         .LONG   ldth6
+    1237 00006fe0     0008          .WORD   8
+    1238 00006ff0           LOFDEAD:
+    1239 00006ff0 00000680"         .LONG   ldth7
+    1240 00007010     0001          .WORD   1
+    1241 00007020 00000000          .LONG   0
+    1242                    
+    1243 00007040           LOFDFLA:                                ;DEATH BY FLAME
+    1244 00007040 00000000!         .long   BGDTHF1
+    1245 00007060     2006          .word   NEWPALET|6
+    1246 00007070 00000000!         .LONG   NARCS
+    1247 00007090 00000000!         .LONG   BGDTHF2
+    1248 000070b0     0004          .WORD   4
+    1249 000070c0 00000000!         .LONG   BGDTHF3
+    1250 000070e0     0004          .WORD   4
+    1251 000070f0 00000000!         .LONG   BGDTHF4
+    1252 00007110     0004          .WORD   4
+    1253 00007120           LDEXP1
+    1254 00007120 00000000!         .long   BGDTHF5
+    1255 00007140     2004          .word   NEWPALET|4
+    1256 00007150 00000000!         .LONG   NARCS
+    1257 00007170 00000000!         .LONG   BGDTHF6
+    1258 00007190     0003          .WORD   3
+    1259 000071a0 00000000!         .LONG   BGDTHF7
+    1260 000071c0     0003          .WORD   3
+    1261 000071d0 00000000!         .LONG   BGDTHF8
+    1262 000071f0     0003          .WORD   3
+    1263 00007200 00000000!         .LONG   BGDTHF9
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   31
+
+    1264 00007220     0003          .WORD   3
+    1265 00007230 00000000!         .LONG   BGDTHF10
+    1266 00007250     0004          .WORD   4
+    1267 00007260 00000000!         .LONG   BGDTHF9
+    1268 00007280     0004          .WORD   4
+    1269 00007290 00000000!         .LONG   BGDTHF10
+    1270 000072b0     0004          .WORD   4
+    1271 000072c0 00000000!         .LONG   BGDTHF11
+    1272 000072e0     0004          .WORD   4
+    1273 000072f0 00000000!         .LONG   BGDTHF12
+    1274 00007310     0004          .WORD   4
+    1275 00007320 00000000!         .LONG   BGDTHF13
+    1276 00007340     0004          .WORD   4
+    1277 00007350 00000000!         .LONG   BGDTHF14
+    1278 00007370     0002          .WORD   2
+    1279 00007380 00000000!         .LONG   BGDTHF15
+    1280 000073a0     0002          .WORD   2
+    1281 000073b0 00000000          .LONG   0
+    1282                    
+    1283 000073d0           LOFDROCK:                               ;LOF HIT BY ROCKET
+    1284 000073d0 00000000!         .long   LCREOSOTE
+    1285 000073f0     2007          .word   NEWPALET|7
+    1286 00007400 00000000!         .LONG   NARCS
+    1287 00007420 00000000          .LONG   0
+    1288                    
+    1289 00007440 00000000! LOFRAG1 .LONG   LLEG1
+    1290 00007460     2002          .word   NEWPALET|2
+    1291 00007470 00000000!         .LONG   NARCS
+    1292 00007490 00000000!         .LONG   LLEG2
+    1293 000074b0     0002          .WORD   2
+    1294 000074c0 00000000!         .LONG   LLEG3
+    1295 000074e0     0002          .WORD   2
+    1296 000074f0 00000000!         .LONG   LLEG4
+    1297 00007510     0002          .WORD   2
+    1298 00007520 00000000!         .LONG   LLEG5
+    1299 00007540     0002          .WORD   2
+    1300 00007550 00000000!         .LONG   LLEG6
+    1301 00007570     0002          .WORD   2
+    1302 00007580 00000000!         .LONG   LLEG7
+    1303 000075a0     0002          .WORD   2
+    1304 000075b0 00000000!         .LONG   LLEG8
+    1305 000075d0     0002          .WORD   2
+    1306 000075e0 00000000          .LONG   0
+    1307                    
+    1308                    
+    1309 00007600 00000000! LOFRAG2 .LONG   L4ARM1
+    1310 00007620     2002          .word   NEWPALET|2
+    1311 00007630 00000000!         .LONG   NARCS
+    1312 00007650 00000000!         .LONG   L4ARM2
+    1313 00007670     0002          .WORD   2
+    1314 00007680 00000000!         .LONG   L4ARM3
+    1315 000076a0     0002          .WORD   2
+    1316 000076b0 00000000!         .LONG   L4ARM4
+    1317 000076d0     0002          .WORD   2
+    1318 000076e0 00000000!         .LONG   L4ARM5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   32
+
+    1319 00007700     0002          .WORD   2
+    1320 00007710 00000000!         .LONG   L4ARM6
+    1321 00007730     0002          .WORD   2
+    1322 00007740 00000000!         .LONG   L4ARM7
+    1323 00007760     0002          .WORD   2
+    1324 00007770 00000000!         .LONG   L4ARM8
+    1325 00007790     0002          .WORD   2
+    1326 000077a0 00000000          .LONG   0
+    1327                    
+    1328 000077c0 00000000! LOFRAG3 .LONG   LSHIN1
+    1329 000077e0     2002          .word   NEWPALET|2
+    1330 000077f0 00000000!         .LONG   NARCS
+    1331 00007810 00000000!         .LONG   LSHIN2
+    1332 00007830     0002          .WORD   2
+    1333 00007840 00000000!         .LONG   LSHIN3
+    1334 00007860     0002          .WORD   2
+    1335 00007870 00000000!         .LONG   LSHIN4
+    1336 00007890     0002          .WORD   2
+    1337 000078a0 00000000!         .LONG   LSHIN5
+    1338 000078c0     0002          .WORD   2
+    1339 000078d0 00000000!         .LONG   LSHIN6
+    1340 000078f0     0002          .WORD   2
+    1341 00007900 00000000!         .LONG   LSHIN7
+    1342 00007920     0002          .WORD   2
+    1343 00007930 00000000!         .LONG   LSHIN8
+    1344 00007950     0002          .WORD   2
+    1345 00007960 00000000          .LONG   0
+    1346                    
+    1347 00007980 00000000! LOFRAG4 .LONG   LGOAT1
+    1348 000079a0     2002          .word   NEWPALET|2
+    1349 000079b0 00000000!         .LONG   NARCS
+    1350 000079d0 00000000!         .LONG   LGOAT2
+    1351 000079f0     0002          .WORD   2
+    1352 00007a00 00000000!         .LONG   LGOAT3
+    1353 00007a20     0002          .WORD   2
+    1354 00007a30 00000000!         .LONG   LGOAT4
+    1355 00007a50     0002          .WORD   2
+    1356 00007a60 00000000!         .LONG   LGOAT5
+    1357 00007a80     0002          .WORD   2
+    1358 00007a90 00000000!         .LONG   LGOAT6
+    1359 00007ab0     0002          .WORD   2
+    1360 00007ac0 00000000!         .LONG   LGOAT7
+    1361 00007ae0     0002          .WORD   2
+    1362 00007af0 00000000!         .LONG   LGOAT8
+    1363 00007b10     0002          .WORD   2
+    1364 00007b20 00000000!         .LONG   LGOAT9
+    1365 00007b40     0002          .WORD   2
+    1366 00007b50 00000000!         .LONG   LGOAT10
+    1367 00007b70     0002          .WORD   2
+    1368 00007b80 00000000          .LONG   0
+    1369                    
+    1370 00007ba0           LOFDEXP:                                ;DEATH BY EXPLOSION CLOCKWISE SPIN
+    1371 00007ba0 00000000!         .long   BGDF1C
+    1372 00007bc0     6002          .word   FLIPBITS|NEWPALET|2
+    1373 00007bd0     0000          .WORD   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   33
+
+    1374 00007be0 00000000!         .LONG   NARCS
+    1375 00007c00 00000000!         .LONG   BGDF2C
+    1376 00007c20     4002          .WORD   FLIPBITS|2,0
+    1377 00007c40 00000000!         .LONG   BGDF3C
+    1378 00007c60     4002          .WORD   FLIPBITS|2,0
+    1379 00007c80 00000000!         .LONG   BGDF4C
+    1380 00007ca0     4002          .WORD   FLIPBITS|2,0
+    1381 00007cc0 00000000!         .LONG   BGDF3C
+    1382 00007ce0     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1383 00007d00 00000000!         .LONG   BGDF2C
+    1384 00007d20     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1385 00007d40 00000000!         .LONG   BGDF1C
+    1386 00007d60     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1387 00007d80 00000000!         .LONG   BGDF1C
+    1388 00007da0     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1389 00007dc0 00000000!         .LONG   BGDF2C
+    1390 00007de0     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1391 00007e00 00000000!         .LONG   BGDF3C
+    1392 00007e20     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1393 00007e40 00000000!         .LONG   BGDF4C
+    1394 00007e60     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1395 00007e80 00000000!         .LONG   BGDF3C
+    1396 00007ea0     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1397 00007ec0 00000000!         .LONG   BGDF2C
+    1398 00007ee0     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1399 00007f00 00000000!         .LONG   BGDF1C
+    1400 00007f20     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1401 00007f40 00000000          .LONG   0
+    1402                    
+    1403 00007f60           LOFDEXP1:                               ;DEATH BY EXPLOSION COUNTER-CLOCK SPIN
+    1404 00007f60 00000000!         .long   BGDF1C
+    1405 00007f80     6002          .word   FLIPBITS|NEWPALET|2
+    1406 00007f90     0010          .WORD   M_FLIPH
+    1407 00007fa0 00000000!         .LONG   NARCS
+    1408 00007fc0 00000000!         .LONG   BGDF2C
+    1409 00007fe0     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1410 00008000 00000000!         .LONG   BGDF3C
+    1411 00008020     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1412 00008040 00000000!         .LONG   BGDF4C
+    1413 00008060     4002          .WORD   FLIPBITS|2,(M_FLIPH)
+    1414 00008080 00000000!         .LONG   BGDF3C
+    1415 000080a0     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1416 000080c0 00000000!         .LONG   BGDF2C
+    1417 000080e0     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1418 00008100 00000000!         .LONG   BGDF1C
+    1419 00008120     4002          .WORD   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    1420 00008140 00000000!         .LONG   BGDF1C
+    1421 00008160     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1422 00008180 00000000!         .LONG   BGDF2C
+    1423 000081a0     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1424 000081c0 00000000!         .LONG   BGDF3C
+    1425 000081e0     4002          .WORD   FLIPBITS|2,M_FLIPV
+    1426 00008200 00000000!         .LONG   BGDF4C
+    1427 00008220     4002          .WORD   FLIPBITS|2,0
+    1428 00008240 00000000!         .LONG   BGDF3C
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   34
+
+    1429 00008260     4002          .WORD   FLIPBITS|2,0
+    1430 00008280 00000000!         .LONG   BGDF2C
+    1431 000082a0     4002          .WORD   FLIPBITS|2,0
+    1432 000082c0 00000000!         .LONG   BGDF1C
+    1433 000082e0     4002          .WORD   FLIPBITS|2,0
+    1434 00008300 00000000          .LONG   0
+    1435                    
+    1436                    *LOFFREDO SHOOT AIR DOWN 45
+    1437 00008320           LOFHF
+    1438 00008320 00000a80"         .LONG   hell2
+    1439 00008340     0004          .WORD   4
+    1440 00008350 00000a80"         .LONG   hell2
+    1441 00008370     8002          .WORD   SPAWNP|2,0DH,0FFFCH,0EBH
+    1442 000083b0 00000000!         .LONG   EBULL45
+    1443 000083d0 00000b00"         .LONG   hell3
+    1444 000083f0     0008          .WORD   8
+    1445 00008400 00000000          .LONG   0
+    1446                    
+    1447                    *LOFFREDO SHOOT STAND
+    1448 00008420           LOFSS:                         
+    1449 00008420 00000800"         .LONG   lsho4
+    1450 00008440     0006          .WORD   6
+    1451 00008450 00000800"         .LONG   lsho4
+    1452 00008470     8002          .WORD   SPAWNP|2,01BH,0FFE6H,0EBH
+    1453 000084b0 00000000!         .LONG   EBULLET
+    1454 000084d0 00000880"         .LONG   lsho5
+    1455 000084f0     0008          .WORD   8
+    1456 00008500 00000000          .LONG   0
+    1457                    
+    1458                    *LOFFREDO KNEELING SHOOT
+    1459 00008520           LOFKS:
+    1460 00008520 00000700"         .LONG   lsho1
+    1461 00008540     0006          .WORD   6
+    1462 00008550 00000700"         .LONG   lsho1
+    1463 00008570     8002          .WORD   SPAWNP|2,01CH,-20,0EBH
+    1464 000085b0 00000000!         .LONG   EBULLET
+    1465 000085d0 00000780"         .LONG   lsho2
+    1466 000085f0     0008          .WORD   8
+    1467 00008600 00000000          .LONG   0
+    1468                    
+    1469                    *shoot laying down
+    1470 00008620           LOFSL:
+    1471 00008620 00000780"         .LONG   lsho2
+    1472 00008640     0008          .word   8
+    1473 00008650 00000900"         .LONG   lsho6
+    1474 00008670     0006          .WORD   6
+    1475 00008680 00000900"         .LONG   lsho6
+    1476 000086a0     8002          .WORD   SPAWNP|2,032H,-4,0EBH
+    1477 000086e0 00000000!         .LONG   EBULLET
+    1478 00008700 00000980"         .LONG   lsho7
+    1479 00008720     0008          .WORD   8
+    1480 00008730 00000780"         .LONG   lsho2
+    1481 00008750     0008          .WORD   8
+    1482 00008760 00000000          .LONG   0
+    1483                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   35
+
+    1484                    *GET BUSTED DUDE
+    1485 00008780           LOFBUST:        
+    1486 00008780 00000300"         .LONG   lcuf2
+    1487 000087a0     000a          .WORD   10
+    1488 000087b0 00000380"         .LONG   lcuf4
+    1489 000087d0     000a          .WORD   10
+    1490 000087e0 00000400"         .LONG   lcuf5
+    1491 00008800     000a          .WORD   10
+    1492 00008810 00000480"         .LONG   lcuf8
+    1493 00008830     000a          .word   10
+    1494 00008840 00000000          .LONG   0
+    1495                            
+    1496                    *LOF LOOK AROUND        
+    1497 00008860           LOFLOOK:
+    1498 00008860           LOFLK1:
+    1499 00008860 00000d00"         .LONG   hang1
+    1500 00008880     000a          .word   10
+    1501 00008890 00000d80"         .LONG   hang2
+    1502 000088b0     000a          .word   10
+    1503 000088c0 00000e00"         .LONG   hang3
+    1504 000088e0     000f          .word   15
+    1505 000088f0 00000d80"         .LONG   hang2
+    1506 00008910     000a          .word   10
+    1507 00008920 00000d00"         .LONG   hang1
+    1508 00008940     000a          .word   10
+    1509 00008950 00000000          .LONG   0
+    1510 00008970           LOFLK2:
+    1511 00008970 00000e00"         .LONG   hang3
+    1512 00008990     000a          .word   10
+    1513 000089a0 00000d80"         .LONG   hang2
+    1514 000089c0     000a          .word   10
+    1515 000089d0 00000e80"         .LONG   hang4
+    1516 000089f0     000a          .word   10
+    1517 00008a00 00000f00"         .LONG   hang5
+    1518 00008a20     0014          .word   20
+    1519 00008a30 00000e80"         .LONG   hang4
+    1520 00008a50     000a          .word   10
+    1521 00008a60 00000000          .LONG   0
+    1522 00008a80           LOFLK3:
+    1523 00008a80 00000d00"         .LONG   hang1
+    1524 00008aa0     0014          .word   20
+    1525 00008ab0 00000d80"         .LONG   hang2
+    1526 00008ad0     0014          .word   20
+    1527 00008ae0 00000d00"         .LONG   hang1
+    1528 00008b00     0014          .word   20
+    1529 00008b10 00000d80"         .LONG   hang2
+    1530 00008b30     000a          .word   10
+    1531 00008b40 00000e00"         .LONG   hang3
+    1532 00008b60     0014          .word   20
+    1533 00008b70 00000000          .LONG   0
+    1534 00008b90           LOFLK4:
+    1535 00008b90 00000d00"         .LONG   hang1
+    1536 00008bb0     000a          .word   10
+    1537 00008bc0 00000e80"         .LONG   hang4
+    1538 00008be0     000a          .word   10
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   36
+
+    1539 00008bf0 00000f00"         .LONG   hang5
+    1540 00008c10     000a          .word   10
+    1541 00008c20 00000e80"         .LONG   hang4
+    1542 00008c40     000a          .word   10
+    1543 00008c50 00000d80"         .LONG   hang2
+    1544 00008c70     000a          .word   10
+    1545 00008c80 00000000          .LONG   0
+    1546 00008ca0           HANGTAB:
+    1547 00008ca0 00008860'         .LONG   LOFLK1,LOFLK2,LOFLK3,LOFLK4
+    1548                    
+    1549                    *
+    1550                    *THE LOFFREDO CRIME ROUTINE
+    1551 00008d20     f020  OHNOSND .WORD   0F000H|SPEAKPRI,05DH,0801EH,0   ;"OH NO! THE NARCS MAN"
+    1552 00008d60           LOFFCRM1:
+    1553 00008d60                   SOUND1  ALARMSND
+    1554 00008dc0                   SLEEP   20
+    1555 00008e00     0d5f          calla   GETDOOR
+         00008e10 00000000! 
+    1556 00008e30                   JSRP    DOOROPEN                ;OPEN SEZ-A-ME
+    1557 00008ea0                   CREATE  INDPID,CLOZCRMD         ;CLOSE THE DOOR
+    1558 00008f20     09ee          movi    LOFINIT,A14
+         00008f30 000065b0' 
+    1559 00008f50     0d5f          calla   DOORRITE        ;rets upper Y,X start pos in A1
+         00008f60 00000000! 
+    1560 00008f80     56c6          clr     A6
+    1561 00008f90     0d5f          calla   ENINITUL
+         00008fa0 00000000! 
+    1562 00008fc0     5600          clr     A0
+    1563 00008fd0     b208          move    A0,*A8(OBLIPIMG),L
+         00008fe0     0260  
+    1564 00008ff0     4d00          move    A8,A0
+    1565 00009000     0d5f          calla   DELSHAD
+         00009010 00000000! 
+    1566 00009030     09e2          movi    -010000H,A2     ;X VELOCITY
+         00009040 ffff0000  
+    1567 00009060     09e9          movi    LOFWLR,A9       ;GET ANIMATION SCRIPT
+         00009070 00006c80' 
+    1568 00009090                   JSRP    OUTDOOR
+    1569 00009100     0d5f          calla   ClrVel
+         00009110 00000000! 
+    1570 00009130                   SOUND1  OHNOSND 
+    1571                    
+    1572 00009190     09e9          movi    LOFLK1,A9,L
+         000091a0 00008860' 
+    1573 000091c0     1821          movk    1,A1
+    1574 000091d0                   JSRP    FRANIM
+    1575                    
+    1576 00009240           LOFCL1
+    1577 00009240     09c0          MOVI    CHANCVSD,A0
+         00009250     0000  
+    1578 00009260     1801          MOVK    SPEAKPRI,A1     
+    1579 00009270     0d5f          CALLA   CKSNDPRI
+         00009280 00000000! 
+    1580 000092a0     c907          JRNC    LOFCX                   ;SPEAKING IS DONE
+    1581 000092b0                   SLOOP   1,LOFCL1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:38 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE eugene ENEMY >>>                             PAGE   37
+
+    1582 00009320           LOFCX
+    1583 00009320                   SOUND1  YAMOFF                  ;TURN OFF THE YAMAHA SIDE
+    1584                    
+    1585 00009380     09e1          MOVI    ENEMIES,A1
+         00009390 00000000! 
+    1586 000093b0     4d00          MOVE    A8,A0
+    1587 000093c0     0d5f          CALLA   DELSUPP
+         000093d0 00000000! 
+    1588 000093f0     b501          move    *A8(OPAL),A1,W
+         00009400     0160  
+    1589 00009410     0581          move    A1,@CRIMEPAL,W
+         00009420 00000000! 
+    1590 00009440     0d5f          CALLA   DELSOBJ
+         00009450 00000000! 
+    1591 00009470                   RETP
+    1592                    
+    1593                    *CLOZCRMD - PROCESS TO CLOSE THE DOOR
+    1594                    *A8=DOOR OBJECT
+    1595 000094a0           CLOZCRMD:
+    1596 000094a0                   SLEEP   20H
+    1597 000094e0                   JSRP    DOORCLOZ
+    1598 00009550     c080          JAUC    SUCIDE
+         00009560 00000000! 
+    1599                    
+
+ No Errors,  No Warnings

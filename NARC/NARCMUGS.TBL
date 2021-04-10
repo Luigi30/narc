@@ -1,50 +1,50 @@
 	.DATA
 warntxt:
 	.word	104,25,0,0
-	.long	>FFF93000,warntxtp
+	.long	0FFF93000H,warntxtp
 filestxt:
 	.word	177,40,0,0
-	.long	>FFF96CF0,fbitxt4
+	.long	0FFF96CF0H,fbitxt4
 authtxt:
 	.word	99,44,0,0
-	.long	>FFF98910,fbitxt4
+	.long	0FFF98910H,fbitxt4
 gangmug:
 	.word	256,200,0,0
-	.long	>FFF99F70,gang4
+	.long	0FFF99F70H,gang4
 mbigmug:
 	.word	256,200,0,0
-	.long	>FFFA2BA0,mbig4
+	.long	0FFFA2BA0H,mbig4
 loafmug:
 	.word	256,200,0,0
-	.long	>FFFAACC0,loaf4
+	.long	0FFFAACC0H,loaf4
 hypomug:
 	.word	256,200,0,0
-	.long	>FFFB53E0,hypo4
+	.long	0FFFB53E0H,hypo4
 dumpmug:
 	.word	256,200,0,0
-	.long	>FFFBE170,dump4
+	.long	0FFFBE170H,dump4
 rambomug:
 	.word	256,200,0,0
-	.long	>FFFC9B20,rambo4
+	.long	0FFFC9B20H,rambo4
 clownmug:
 	.word	256,200,0,0
-	.long	>FFFD6140,clown4
+	.long	0FFFD6140H,clown4
 badge:
 	.word	168,184,0,0
-	.long	>FFFE1870,badge4
+	.long	0FFFE1870H,badge4
 fbity1:
 	.word	233,20,0,0
-	.long	>FFFEC0D0,badge4
+	.long	0FFFEC0D0H,badge4
 fbity2:
 	.word	169,55,0,0
-	.long	>FFFED500,badge4
+	.long	0FFFED500H,badge4
 fbiseal:
 	.word	110,165,0,0
-	.long	>FFFEF2C0,badge4
+	.long	0FFFEF2C0H,badge4
 NARCALF1a:
 	.word	208,186,0,0
-	.long	>FFFF1550,NARCsupr
+	.long	0FFFF1550H,NARCsupr
 NARCALF2:
 	.word	168,164,0,0
-	.long	>FFFF8760,NARCsupr
+	.long	0FFFF8760H,NARCsupr
 	.TEXT

@@ -1,5 +1,5 @@
- 	.FILE	'NARCUTIL.ASM'
-	.TITLE	" <<< NARC - TODD'S UTILITIES >>>"
+ 	.FILE	"NARCUTIL.ASM"
+	.TITLE	" <<< NARC - TODD"S UTILITIES >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
 	.MNOLIST
@@ -656,7 +656,7 @@ XdeltaP2:
 	
 	divu	A9,A7
 SetSlp:
-	movi >FF,A1
+	movi 0FFH,A1
 	cmp	A1,A7
 	jrle	SlpOk
 	move	A1,A7
@@ -799,7 +799,7 @@ XdeltaN:
 SetSlp2:
 	move	A7,A7
 	jrn	FixSlp
-	movi >FF,A1
+	movi 0FFH,A1
 	cmp	A1,A7
 	jrle	SlpOk2
 	move	A1,A7
@@ -933,7 +933,7 @@ ZOFF:
 	jrz	ZoffX		;No Xoff -> no Zoff
 	btst	BSPAWNP,A0
 	jrz	SPAWNSk2
-	addi	>50,A9
+	addi	050H,A9
 SPAWNSk2:
 	btst	BFLIPBIT,A0
 	jrz	FLIPSk2
@@ -1174,7 +1174,7 @@ ClosestP:
 	move	*A8(OXPOS),A2,W
 	move	*A8(OZPOS),A3,W
 
-	movi	>7FFF,A4		;so P2 can be selected if no P1
+	movi	07FFFH,A4		;so P2 can be selected if no P1
 	movi	P1DATA,A1
 	move	*A1(POBJ),A1,L
 	jrz	TryP2
@@ -1220,7 +1220,7 @@ ClosestFP:
 	move	*A8(OXPOS),A2,W
 	move	*A8(OZPOS),A3,W
 
-	movi	>7FFF,A4		;so P2 can be selected if no P1
+	movi	07FFFH,A4		;so P2 can be selected if no P1
 	movi	P1DATA,A1
 	move	*A1(POBJ),A1,L
 	jrz	NotP1
@@ -1415,7 +1415,7 @@ EvFleeD:
 ;	
 ;returns dist to nearest plyr in A7
 
-	movi	>7FFF,A7
+	movi	07FFFH,A7
 	move	A1,A14
 	jrz	GetP2Dst
 	subxy	A0,A14
@@ -1816,7 +1816,7 @@ GotNxtFr:
 	move	*A9+,A0,W		;BITS|Sleep Time
 	btst	BSPAWNP,A0
 	jrz	SPAWNSk1
-	addi	>50,A9
+	addi	050H,A9
 SPAWNSk1:
 	btst	BFLIPBIT,A0
 	jrz	FLIPSk1
@@ -1826,7 +1826,7 @@ FLIPSk1:
 	jrz	PALSk1
 	addk	16,A9
 PALSk1:
-	andi	>FFF,A0
+	andi	0FFFH,A0
 	cmp	A1,A0
 	jrgt	GotFrm
 	sub	A0,A1
@@ -1853,7 +1853,7 @@ SlpSumLp:
 	move	*A9+,A0,W		;BITS|Sleep Time
 	btst	BSPAWNP,A0
 	jrz	SPAWNSk
-	addi	>50,A9
+	addi	050H,A9
 SPAWNSk:
 	btst	BFLIPBIT,A0
 	jrz	FLIPSk
@@ -1863,7 +1863,7 @@ FLIPSk:
 	jrz	PALSk
 	addk	16,A9
 PALSk:
-	andi	>FFF,A0
+	andi	0FFFH,A0
 	add	A0,A1
 	jruc	SlpSumLp
 SlpSumX:
@@ -2236,7 +2236,7 @@ PUTBONUS:
 	jrz	NoPal
 	MOVE	A0,*A8(OPAL),W
 
-	movi	>8000|M_WRNONZ|M_NOCOLL,A4
+	movi	08000H|M_WRNONZ|M_NOCOLL,A4
 	move	A11,A1	
 	calla	ANI
 

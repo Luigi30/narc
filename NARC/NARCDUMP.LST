@@ -1,0 +1,1814 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "DUMP.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      21                    *       LOCAL STUFF
+      22                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      23                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      24                            .INCLUDE        "NARCTEQU.ASM"          ;TODD JIZZ
+      25                            .INCLUDE        "NARCDUMP.TBL"          ;Image Label Equates
+      26                    
+      27                            .GLOBAL HEADBUTT,ZCHK
+      28                            .GLOBAL DUMPCRM1,OIDATA
+      29                    
+      30 00000000                   .TEXT
+      31                    *
+      32                    *DUMPSTER MAN DISPATCHER
+      33                    *
+      34                    *DUMPDISP:
+      35                    *DUMPDIS1:
+      36                    *       MOVE    @DUMPCNT,A0,W           ;HOW MANY DUMP BABIES?
+      37                    *       MOVE    @DUMPMAX,A1,W
+      38                    *       CMP     A0,A1
+      39                    *       JRLS    DUMPDIS4                ;DON'T NEED MORE
+      40                    *
+      41                    *       CLR     A5
+      42                    *       MOVI    00E50H,A14              ;OID
+      43                    *       CALLR   DUMPCOLD
+      44                    *       DEC     A11
+      45                    *       JAEQ    SUCIDE                  ;CASH IT IN FOLKS
+      46                    *DUMPDIS4:
+      47                    *       SLOOP   30,DUMPDIS1             ;WAIT FOR THEM TO DIE
+      48                    *
+      49                    *DUMPSTER MAN COLD START 
+      50                    *A5=Y:X
+      51                    *A6=Z
+      52                    *A14=OID
+      53 00000000           DUMPCOLD:               
+      54 00000000     4ca9          MOVE    A5,A9
+      55 00000010     4dca          MOVE    A14,A10
+      56 00000020                   CREATE  0E5H,DUMPMAN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    2
+
+      57 000000a0     0960          RETS
+      58                    *
+      59                    *DUMPSTER MAN PROCESS
+      60                    *A9=XY COORD
+      61                    *A10=OID
+      62                    *
+      63 000000b0           DUMPMAN:
+      64 000000b0     4d29          MOVE    A9,A9
+      65 000000c0     cb19          JRNE    DUMPWST         ;ALREADY GOT COORDINATE
+      66 000000d0     05a1          MOVE    @WORLDTL,A1,W   ;COME FROM EDGE OF SCREEN
+         000000e0 00000000! 
+      67 00000100     0d5f          CALLA   RANDOM
+         00000110 00000000! 
+      68 00000130     4c00          MOVE    A0,A0
+      69 00000140     ce02          JRN     DUMP2X          
+      70 00000150     0b01          ADDI    512,A1          ;START HIM AT RIGHT SCREEN EDGE
+         00000160     0200  
+      71 00000170           DUMP2X:
+      72 00000170     0521          ZEXT    A1                      ;Y COORDINATE
+      73 00000180     05b0          MOVE    @PLYMIN,B0,W
+         00000190 00000000! 
+      74 000001b0     05b1          MOVE    @PLYMAX,B1,W
+         000001c0 00000000! 
+      75 000001e0     0d5f          CALLA   RANGRAND
+         000001f0 00000000! 
+      76 00000210     0be0          SUBI    93,A0
+         00000220     ffa2  
+      77 00000230     2600          SLL     16,A0
+      78 00000240     4001          ADD     A0,A1
+      79 00000250     4c29          MOVE    A1,A9
+      80                    *
+      81                    *WARM START DUMPMAN 
+      82                    *A9=STARTING COORD.
+      83                    *A10=OID
+      84 00000260           DUMPWST:
+      85 00000260     05a0          MOVE    @DUMPCNT,A0,W           ;HOW MANY DUMP BABIES?
+         00000270 00000000! 
+      86 00000290     05a1          MOVE    @DUMPMAX,A1,W
+         000002a0 00000000! 
+      87 000002c0     4801          CMP     A0,A1
+      88 000002d0     c280          JALS    SUCIDE                  ;DON'T NEED MORE
+         000002e0 00000000! 
+      89                    
+      90 00000300     05a0          MOVE    @DUMPSHT,A0,W           ;SHOTS TO TAKE
+         00000310 00000000! 
+      91 00000330     4c01          MOVE    A0,A1
+      92 00000340     0d5f          CALLA   RANDU
+         00000350 00000000! 
+      93 00000370     4020          ADD     A1,A0
+      94 00000380     b00d          MOVE    A0,*A13(ETEMP3),W       ;SETUP SHOT COUNT
+         00000390     01c0  
+      95                    
+      96 000003a0     4d21          MOVE    A9,A1           ;GET Y:X COORD
+      97 000003b0     09e5          MOVI    [1,1],A5        ;SET SPEED
+         000003c0 00010001  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    3
+
+      98 000003e0     09e6          MOVI    DUMPTAB,A6
+         000003f0 000062c0' 
+      99 00000410     09ee          MOVI    DUMPINIT,A14    ;DUMP ENEMY INIT
+         00000420 00006000' 
+     100 00000440     098f          MMTM    SP,A10          ;SAVE YOUR OID
+         00000450     0020  
+     101 00000460     0d5f          CALLA   ENINITUL        ;CREATE DUMP
+         00000470 00000000! 
+     102 00000490     09af          MMFM    SP,A10
+         000004a0     0400  
+     103 000004b0     ca80          JAEQ    SUCIDE          ;CREATE ERROR, EXIT
+         000004c0 00000000! 
+     104                    
+     105 000004e0     b148          MOVE    A10,*A8(OID),W
+         000004f0     01a0  
+     106 00000500     05a0          MOVE    @DUMPCNT,A0,W
+         00000510 00000000! 
+     107 00000530     1020          INC     A0
+     108 00000540     0580          MOVE    A0,@DUMPCNT,W   ;INCREMENT DUMP COUNT
+         00000550 00000000! 
+     109 00000570     4d00          MOVE    A8,A0
+     110 00000580     0d5f          CALLA   DELSHAD
+         00000590 00000000! 
+     111                    *
+     112                    *DUMPSTER MAN PROCESS
+     113                    *
+     114 000005b0           GCAN0:
+     115 000005b0     5600          CLR     A0
+     116 000005c0     b00d          MOVE    A0,*A13(ETEMP1),W               ;HAS NO CAN
+         000005d0     0180  
+     117 000005e0     b20d          MOVE    A0,*A13(ETEMP2),L       ;NO CAN YET
+         000005f0     01a0  
+     118 00000600     09e9          MOVI    DUMPWLK,A9      ;ANIMATION SCRIPT
+         00000610 000062e0' 
+     119 00000630           GCAN01
+     120 00000630     0d3f          CALLR   GETCAN          ;TARGET CAN IN A11
+         00000640     038c  
+     121 00000650     ca00          JREQ    GPLAYR          ;GO HEAD BUTT PLAYER
+         00000660     01e6  
+     122                    
+     123 00000670     b500          MOVE    *A8(OID),A0,W
+         00000680     01a0  
+     124 00000690     1fe0          BTST    0,A0
+     125 000006a0     cb00          JRNE    GPLAYR          ;ALWAYS GET PLAYER SUBTYPE ODD
+         000006b0     01e1  
+     126                            
+     127 000006c0     05a0          MOVE    @DUMPBTT,A0,W   ;GET BUTT PROB
+         000006d0 00000000! 
+     128 000006f0     2fe0          SRL     1,A0
+     129 00000700     0d5f          CALLA   RANDPER         ;HEAD BUTT ODDS
+         00000710 00000000! 
+     130 00000730     c800          JRC     GPLAYR
+         00000740     01d8  
+     131 00000750           GCANLP:
+     132 00000750     0d5f          CALLA   ZCHK
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    4
+
+         00000760 00000000! 
+     133 00000780     1881          MOVK    4,A1
+     134 00000790                   JSRP    FRANIM
+     135 00000800     c904          JRNC    GCANL1
+     136 00000810     09e9          MOVI    DUMPWLK,A9
+         00000820 000062e0' 
+     137 00000840     c0f0          JRUC    GCANLP
+     138 00000850           GCANL1:
+     139 00000850     2fe0          SRL     1,A0
+     140 00000860     4c0a          MOVE    A0,A10          ;SAVE SLEEP TIME        
+     141 00000870     0d3f          CALLR   CKPLAYR         ;CLOSE TO PLAYER ???
+         00000880     03bd  
+     142 00000890     c908          JRNC    GCANLL          ;NO, GET CAN
+     143 000008a0     05a0          MOVE    @DUMPBTT,A0,W
+         000008b0 00000000! 
+     144 000008d0     0d5f          CALLA   RANDPER
+         000008e0 00000000! 
+     145 00000900     c800          JRC     GPLAYR          ;GO GET IM....
+         00000910     01bb  
+     146 00000920           GCANLL:
+     147 00000920     4d60          MOVE    A11,A0          ;IS THE CAN STILL THERE??
+     148 00000930     07a1          MOVE    @BACKSLST,A1,L
+         00000940 00000000! 
+     149 00000960     0d5f          CALLA   ON_SLIST
+         00000970 00000000! 
+     150 00000990     c9c9          JRNC    GCAN01          ;CAN IS MISSING GET ANOTHER
+     151 000009a0     0d3f          CALLR   CKCAN           ;ARE WE THERE YET ?
+         000009b0     0386  
+     152 000009c0     c918          JRNC    GCANL3          ;NOPE...
+     153 000009d0     b700          MOVE    *A8(OXVEL),A0,L ;NO X VEL ?
+         000009e0     0040  
+     154 000009f0     ca15          JREQ    GCANL3          ;GIVE HIM XVEL
+     155 00000a00     5600          CLR     A0
+     156 00000a10     b208          MOVE    A0,*A8(OZVEL),L ;COOL VELOCITY
+         00000a20     00e0  
+     157 00000a30     b208          MOVE    A0,*A8(OYVEL),L ;COOL VELOCITY
+         00000a40     0060  
+     158 00000a50     0d5f          CALLA   SHVELCPY        ;DO IT FOR SHADOW
+         00000a60 00000000! 
+     159 00000a80     0b43          CMPI    25,A3
+         00000a90     ffe6  
+     160 00000aa0     c80c          JRLO    GCANL4          ;TOO CLOSE
+     161 00000ab0     4c21          MOVE    A1,A1           ;TEST SIGN OF A1
+     162 00000ac0     ce04          JRN     GCANL20         ;ADJUST YOUR FLIP TO GET CAN
+     163 00000ad0     0d5f          CALLA   NOYFLP
+         00000ae0 00000000! 
+     164 00000b00     c05b          JRUC    PKCAN
+     165 00000b10           GCANL20:
+     166 00000b10     0d5f          CALLA   YFLP
+         00000b20 00000000! 
+     167 00000b40     c057          JRUC    PKCAN           ;WE'RE CLOSE, TIME TO GRAB IT
+     168 00000b50           GCANL3:
+     169 00000b50     0d3f          CALLR   DMPDIR          ;GET DIRECTION AND VELOCITY
+         00000b60     03b1  
+     170 00000b70           GCANL4:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    5
+
+     171 00000b70                   SLEEP   2
+     172 00000bb0     0d8a          DSJ     A10,GCANLL
+         00000bc0     ffd5  
+     173 00000bd0     c0b7          JRUC    GCANLP          ;NOPE, KEEP GOING
+     174                    *
+     175                    *HIT BY SOMETHING WHILE WALKING
+     176                    *A8=OBJECT
+     177                    *A13=PROCESS
+     178 00000be0           DWHIT:
+     179 00000be0     5600          CLR     A0                      ;RESET HIT FLAG
+     180 00000bf0     b00d          MOVE    A0,*A13(EFLAGS),W
+         00000c00     0080  
+     181 00000c10     b501          MOVE    *A8(OXPOS),A1,W         ;KNOCK HIM A BIT
+         00000c20     0090  
+     182 00000c30     1441          SUBK    2,A1
+     183 00000c40     b028          MOVE    A1,*A8(OXPOS),W
+         00000c50     0090  
+     184                    
+     185 00000c60                   SRAM    2,*A8(OXVEL),L          ;SLOW HIM DOWN
+     186 00000cc0                   SRAM    2,*A8(OYVEL),L
+     187 00000d20                   SRAM    2,*A8(OZVEL),L
+     188 00000d80     0d5f          CALLA   SHVELCPY                ;COPY VELOCITIES TO SHADOW
+         00000d90 00000000! 
+     189 00000db0     09e9          MOVI    DUMPHIT,A9
+         00000dc0 000064b0' 
+     190 00000de0     1821          MOVK    1,A1
+     191 00000df0                   JSRP    FRANIM                  ;RUN YOUR HIT UNTIL DONE
+     192 00000e60                   SLLM    2,*A8(OXVEL),L          ;SPEED HIM BACK UP
+     193 00000eb0                   SLLM    2,*A8(OYVEL),L
+     194 00000f00                   SLLM    2,*A8(OZVEL),L
+     195 00000f50     0d5f          CALLA   SHVELCPY                ;COPY VELOCITIES TO SHADOW
+         00000f60 00000000! 
+     196 00000f80                   RETP
+     197                    *       
+     198                    *HIT WHILE PICKING UP
+     199                    *
+     200 00000fb0           DPHIT:
+     201 00000fb0     5621          CLR     A1
+     202 00000fc0     b02d          MOVE    A1,*A13(ETEMP1),W       ;CHANGE STATUS WORD, CAN IS THROWN
+         00000fd0     0180  
+     203 00000fe0     b22d          MOVE    A1,*A13(ETEMP2),L       ;NO MORE CAN ATTACHED   
+         00000ff0     01a0  
+     204 00001000                   CREATE  0E1h,AIRCAN             ;LET CAN FLY 
+     205 00001080     bba0          MOVE    *A13(ETEMP4),*A0(ETEMP4),L
+         00001090     01e0  
+         000010a0     01e0  
+     206 000010b0     c0b2          JRUC    DWHIT
+     207                    *
+     208                    *THROW THE CAN
+     209                    *A8=DUMPSTER MAN
+     210                    *A11=THE CAN
+     211                    *
+     212                    *PICK UP THE CAN
+     213                    *
+     214 000010c0           PKCAN:  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    6
+
+     215 000010c0     b760          MOVE    *A11(OPLINK),A0,L       ;IS THERE A PROCESS
+         000010d0     01f0  
+     216 000010e0     cb00          JRNZ    GCAN0                   ;BR = YES, DON'T BOTHER WITH THIS 
+         000010f0     ff4b  
+     217 00001100     4d60          MOVE    A11,A0
+     218 00001110     0d5f          CALLA   ISBB
+         00001120 00000000! 
+     219 00001140     c900          JRNC    GCAN0                   ;BR = CAN IS NOT CORRECT
+         00001150     ff45  
+     220 00001160     5600          CLR     A0                      ;RESET HIT FLAG
+     221 00001170     b00d          MOVE    A0,*A13(EFLAGS),W
+         00001180     0080  
+     222 00001190     1820          MOVK    1,A0
+     223 000011a0     b00d          MOVE    A0,*A13(ETEMP1) ;PICKING UP STAGE
+         000011b0     0180  
+     224 000011c0     b36d          MOVE    A11,*A13(ETEMP2),L      ;STORE CAN TARGET
+         000011d0     01a0  
+     225 000011e0     bb6d          MOVE    *A11(OCVECT),*A13(ETEMP4),L
+         000011f0     01d0  
+         00001200     01e0  
+     226 00001210     09e1          MOVI    DUMCOLL,A1
+         00001220 00000000! 
+     227 00001240     b22b          MOVE    A1,*A11(OCVECT),L
+         00001250     01d0  
+     228 00001260     0d5f          CALLA   PSTOP           ;STOP DUMPSTER MAN
+         00001270 00000000! 
+     229 00001290     09e9          MOVI    DUMPICK,A9      ;PICK UP ANIMATION
+         000012a0 00006870' 
+     230 000012c0     09ea          MOVI    PKOFFTAB,A10    ;OFFSET TABLE FOR CAN
+         000012d0 00003330' 
+     231 000012f0     4d60          MOVE    A11,A0
+     232 00001300     09e1          MOVI    BACKSLST,A1
+         00001310 00000000! 
+     233 00001330     0d5f          CALLA   DELSUPP
+         00001340 00000000! 
+     234 00001360     09e1          MOVI    ENEMIES,A1
+         00001370 00000000! 
+     235 00001390     0d5f          CALLA   ADDSUPP
+         000013a0 00000000! 
+     236 000013c0     0d5f          CALLA   DELBB           ;PULL BLOCK OFF BACKGROUND LIST
+         000013d0 00000000! 
+     237 000013f0                   SWAP    A11,A8
+     238 00001420     0d5f          CALLA   SHADST          ;GIVE CAN A SHADOW
+         00001430 00000000! 
+     239 00001450                   SWAP    A11,A8
+     240 00001480     09e0          MOVI    CPICKSND,A0
+         00001490 00002d30' 
+     241 000014b0     0d5f          CALLA   ONESND
+         000014c0 00000000! 
+     242                            
+     243 000014e0           PKCAN0: 
+     244 000014e0     b5a0          MOVE    *A13(EFLAGS),A0,W       ;CHECK IF HIT
+         000014f0     0080  
+     245 00001500     ca09          JREQ    PKCAN1
+     246 00001510                   JSRP    DPHIT                   ;HIT WHILE PICKING UP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    7
+
+     247 00001580     c000          JRUC    GCAN0                   ;GRAB IT AGAIN
+         00001590     ff01  
+     248 000015a0           PKCAN1:
+     249 000015a0     b561          MOVE    *A11(OYPOS),A1,W        ;GET CURRENT CAN X,Y POS
+         000015b0     00b0  
+     250 000015c0     b560          MOVE    *A11(OXPOS),A0,W
+         000015d0     0090  
+     251 000015e0     9542          MOVE    *A10+,A2,W              ;ADD DELTAS
+     252 000015f0     b505          MOVE    *A8(OFLAGS),A5,W
+         00001600     0100  
+     253 00001610     1f65          BTST    B_FLIPH,A5
+     254 00001620     ca01          JRZ     PKCAN2                  ;NO FLIP
+     255 00001630     03a2          NEG     A2                      ;NEGATE DELTA X FOR FLIP
+     256 00001640           PKCAN2: 
+     257 00001640     b565          MOVE    *A11(OZPOS),A5,W
+         00001650     00d0  
+     258 00001660     56e7          CLR     A7
+     259 00001670     9543          MOVE    *A10+,A3,W
+     260 00001680     ca09          JREQ    PKCAN3
+     261 00001690     b506          MOVE    *A8(OZPOS),A6,W
+         000016a0     00d0  
+     262 000016b0     44a6          SUB     A5,A6
+     263 000016c0     0be6          SUBI    7,A6                    ;ADJUST Z?
+         000016d0     fff8  
+     264 000016e0     ca03          JREQ    PKCAN3                  ;NOPE, ZERO
+     265 000016f0     1827          MOVK    1,A7
+     266 00001700     cf01          JRNN    PKCAN3
+     267 00001710     03a7          NEG     A7
+     268 00001720           PKCAN3:
+     269 00001720     40e5          ADD     A7,A5
+     270 00001730     b0ab          MOVE    A5,*A11(OZPOS),W
+         00001740     00d0  
+     271 00001750     4040          ADD     A2,A0
+     272 00001760     4061          ADD     A3,A1
+     273 00001770     40e1          ADD     A7,A1
+     274 00001780     b00b          MOVE    A0,*A11(OXPOS),W
+         00001790     0090  
+     275 000017a0     b02b          MOVE    A1,*A11(OYPOS),W
+         000017b0     00b0  
+     276                    
+     277 000017c0     b764          MOVE    *A11(OSHAD),A4,L        ;UPDATE SHADOW X
+         000017d0     0240  
+     278 000017e0     ca0f          JREQ    PKCAN00
+     279 000017f0     b480          MOVE    *A4(OXPOS),A0,W
+         00001800     0090  
+     280 00001810     4040          ADD     A2,A0
+     281 00001820     b004          MOVE    A0,*A4(OXPOS),W
+         00001830     0090  
+     282 00001840     b485          MOVE    *A4(OZPOS),A5,W
+         00001850     00d0  
+     283 00001860     40e5          ADD     A7,A5
+     284 00001870     b0a4          MOVE    A5,*A4(OZPOS),W         ;UPDATE SHADOW Z
+         00001880     00d0  
+     285 00001890     b480          MOVE    *A4(OYPOS),A0,W
+         000018a0     00b0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    8
+
+     286 000018b0     40e0          ADD     A7,A0
+     287 000018c0     b004          MOVE    A0,*A4(OYPOS),W         ;UPDATE SHADOW Y
+         000018d0     00b0  
+     288 000018e0           PKCAN00:
+     289 000018e0     5621          CLR     A1
+     290 000018f0                   JSRP    FRANIM          ;RUN UNTIL PICKED UP
+     291 00001960     c9b7          JRNC    PKCAN0
+     292                    *
+     293                    *WALK WITH THE CAN
+     294                    *
+     295 00001970     1840          MOVK    2,A0
+     296 00001980     b00d          MOVE    A0,*A13(ETEMP1) ;WALK WITH CAN STAGE
+         00001990     0180  
+     297                    
+     298 000019a0     09e9          MOVI    DUMPTHWLK,A9
+         000019b0 00006d20' 
+     299 000019d0     09ea          MOVI    COFFTAB,A10             ;CARRY OFFSET TABLE
+         000019e0 000035f0' 
+     300 00001a00           CARRYL:
+     301 00001a00     09c5          MOVI    200,A5
+         00001a10     00c8  
+     302 00001a20     09c6          MOVI    50,A6
+         00001a30     0032  
+     303 00001a40     0d5f          CALLA   GETCPLY
+         00001a50 00000000! 
+     304 00001a70     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         00001a80     00a0  
+     305 00001a90     0d5f          CALLA   XZCHK           ;ARE WE IN POSITION
+         00001aa0 00000000! 
+     306 00001ac0     c83e          JRC     THC00           ;YES, THROW IT
+     307 00001ad0     0d3f          CALLR   DMPDIR          ;NO GET DIRECTION
+         00001ae0     02b9  
+     308 00001af0     b701          MOVE    *A8(OXVEL),A1,L         ;COPY VELOCITY TO CAN
+         00001b00     0040  
+     309 00001b10     b22b          MOVE    A1,*A11(OXVEL),L
+         00001b20     0040  
+     310 00001b30     b701          MOVE    *A8(OZVEL),A1,L
+         00001b40     00e0  
+     311 00001b50     b22b          MOVE    A1,*A11(OZVEL),L
+         00001b60     00e0  
+     312 00001b70     b22b          MOVE    A1,*A11(OYVEL),L
+         00001b80     0060  
+     313 00001b90                   SWAP    A8,A11
+     314 00001bc0     0d5f          CALLA   SHVELCPY        ;GET CAN SHADOW
+         00001bd0 00000000! 
+     315 00001bf0                   SWAP    A8,A11
+     316 00001c20     9540          MOVE    *A10+,A0,W      ;ADD OFFSET FOR X POSITION
+     317 00001c30     b501          MOVE    *A8(OFLAGS),A1,W
+         00001c40     0100  
+     318 00001c50     1f61          BTST    B_FLIPH,A1
+     319 00001c60     cb01          JRNE    CARRY02A
+     320 00001c70     03a0          NEG     A0
+     321 00001c80           CARRY02A:
+     322 00001c80                   ADDRM   A0,*A11(OXPOS),W
+     323 00001cd0     b764          MOVE    *A11(OSHAD),A4,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE    9
+
+         00001ce0     0240  
+     324 00001cf0     ca05          JREQ    CARRY03
+     325 00001d00                   ADDRM   A0,*A4(OXPOS),W
+     326 00001d50           CARRY03:
+     327 00001d50     9540          MOVE    *A10+,A0,W      ;ADD OFFSET FOR Y POSITION
+     328 00001d60                   ADDRM   A0,*A11(OYPOS),W
+     329 00001db0     5621          CLR     A1
+     330 00001dc0                   JSRP    FRANIM          ;RELOAD FRANIM AT END
+     331 00001e30     c906          JRNC    CARRY1
+     332 00001e40     09e9          MOVI    DUMPTHWLK,A9
+         00001e50 00006d20' 
+     333 00001e70     09ea          MOVI    COFFTAB,A10             ;CARRY OFFSET TABLE
+         00001e80 000035f0' 
+     334 00001ea0           CARRY1:
+     335 00001ea0     c0b5          JRUC    CARRYL
+     336                    *     
+     337                    *THROW THE CAN
+     338                    *
+     339 00001eb0           THC00
+     340 00001eb0     1860          MOVK    3,A0
+     341 00001ec0     b00d          MOVE    A0,*A13(ETEMP1)         ;THROWING STAGE
+         00001ed0     0180  
+     342                    
+     343 00001ee0     0d5f          CALLA   PSTOP                   ;STOP DUMPSTER MAN
+         00001ef0 00000000! 
+     344 00001f10                   SWAP    A8,A11
+     345 00001f40     0d5f          CALLA   PSTOP                   ;STOP THE CAN
+         00001f50 00000000! 
+     346 00001f70                   SWAP    A8,A11
+     347 00001fa0     0d5f          CALLA   GETCPLY
+         00001fb0 00000000! 
+     348 00001fd0     0d5f          CALLA   FACEPLYR                ;FACE THE DUDE
+         00001fe0 00000000! 
+     349 00002000     09ea          MOVI    THOFFTAB,A10            ;OFFSET TABLE FOR CAN THROW
+         00002010 00003470' 
+     350 00002030     09e9          MOVI    DUMPTHRW,A9             ;THROW ANIMATION
+         00002040 00006b00' 
+     351 00002060           THCAN0: 
+     352 00002060     b5a0          MOVE    *A13(EFLAGS),A0,W       ;CHECK IF HIT
+         00002070     0080  
+     353 00002080     ca04          JREQ    THCAN1
+     354 00002090                   SLEEP   8
+     355 000020d0           THCAN1:
+     356 000020d0     b561          MOVE    *A11(OYPOS),A1,W        ;GET CURRENT CAN X,Y POS
+         000020e0     00b0  
+     357 000020f0     b560          MOVE    *A11(OXPOS),A0,W
+         00002100     0090  
+     358 00002110     9542          MOVE    *A10+,A2,W              ;ADD DELTAS
+     359 00002120     9543          MOVE    *A10+,A3,W
+     360 00002130     4040          ADD     A2,A0
+     361 00002140     4061          ADD     A3,A1
+     362 00002150     b00b          MOVE    A0,*A11(OXPOS),W
+         00002160     0090  
+     363 00002170     b02b          MOVE    A1,*A11(OYPOS),W
+         00002180     00b0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   10
+
+     364                    
+     365 00002190     b764          MOVE    *A11(OSHAD),A4,L        ;UPDATE SHADOW X
+         000021a0     0240  
+     366 000021b0     ca05          JREQ    THCAN00
+     367 000021c0     b480          MOVE    *A4(OXPOS),A0,W
+         000021d0     0090  
+     368 000021e0     4040          ADD     A2,A0
+     369 000021f0     b004          MOVE    A0,*A4(OXPOS),W
+         00002200     0090  
+     370 00002210           THCAN00:
+     371 00002210     0b69          CMPI    DUMPFLY,A9
+         00002220 ffff949f' 
+     372 00002240     cb1d          JRNE    THCAN01
+     373 00002250     0d3f          CALLR   FLYCAN          ;LAUNCH THE DUDE
+         00002260     00b8  
+     374 00002270           THCAN0A:
+     375 00002270     5621          CLR     A1
+     376 00002280     b02d          MOVE    A1,*A13(ETEMP1),W       ;CHANGE STATUS WORD, CAN IS THROWN
+         00002290     0180  
+     377 000022a0     b22d          MOVE    A1,*A13(ETEMP2),L       ;NO MORE CAN ATTACHED   
+         000022b0     01a0  
+     378 000022c0     5621          CLR     A1
+     379 000022d0                   JSRP    FRANIM                  ;RUN ANIMATION OUT
+     380 00002340     c800          JRC     GCAN0
+         00002350     fe25  
+     381 00002360     b5a0          MOVE    *A13(EFLAGS),A0,W       ;CHECK IF HIT
+         00002370     0080  
+     382 00002380     caee          JREQ    THCAN0A
+     383 00002390                   JSRP    DWHIT                   ;HIT WHILE PICKING UP
+     384 00002400     c000          JRUC    GCAN0                   ;GO GET ANOTHER
+         00002410     fe19  
+     385                    
+     386 00002420           THCAN01
+     387 00002420     5621          CLR     A1
+     388 00002430                   JSRP    FRANIM          ;RUN UNTIL THROWN
+     389 000024a0     c9bb          JRNC    THCAN0
+     390 000024b0     c000          JRUC    GCAN0           ;GO GET ANOTHER ONE
+         000024c0     fe0e  
+     391                    *
+     392                    *GET PLAYER AND HEAD BUTT
+     393                    *A8=DUMPMAN OBJECT
+     394 000024d0           GPLAYR:
+     395 000024d0     09c0          MOVI    500,A0                  ;GET TIME OUT VALUE
+         000024e0     01f4  
+     396 000024f0     0d5f          CALLA   RANDU
+         00002500 00000000! 
+     397 00002520     0b00          ADDI    250,A0
+         00002530     00fa  
+     398 00002540     4c0b          MOVE    A0,A11
+     399 00002550           GPLAYR0:
+     400 00002550     09e9          MOVI    DUMPWLK,A9
+         00002560 000062e0' 
+     401 00002580           GPLAYR1:
+     402 00002580     1881          MOVK    4,A1
+     403 00002590                   JSRP    FRANIM
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   11
+
+     404 00002600     4c0a          MOVE    A0,A10          ;SAVE SLEEP TIME
+     405 00002610     c8f3          JRC     GPLAYR0
+     406 00002620           GPLAYRL:
+     407 00002620     0d5f          CALLA   ZCHK            ;STAY IN BOUNDS
+         00002630 00000000! 
+     408 00002650     0d5f          CALLA   GETCPLY
+         00002660 00000000! 
+     409 00002680     b607          MOVE    *A0(PFLAGS),A7,L
+         00002690     0080  
+     410 000026a0     09c5          MOVI    25,A5
+         000026b0     0019  
+     411 000026c0     09c6          MOVI    15,A6
+         000026d0     000f  
+     412 000026e0     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         000026f0     00a0  
+     413 00002700     0d5f          CALLA   XZCHK           ;ARE WE IN POSITION
+         00002710 00000000! 
+     414 00002730     c913          JRNC    GPLAYR2         ;NO, GET DIRECTION
+     415 00002740     1fa7          BTST    BJUMP2,A7       ;PLAYER IN AIR ?
+     416 00002750     cb11          JRNE    GPLAYR2         ;YES, NO BUTT
+     417 00002760     4c42          MOVE    A2,A2
+     418 00002770     cf0f          JRNN    GPLAYR2         ;DONT DO IT IN BACK
+     419 00002780     0b43          CMPI    15,A3
+         00002790     fff0  
+     420 000027a0     c920          JRHS    DMPBUTT         ;NOT TOO CLOSE
+     421 000027b0     b700          MOVE    *A8(OXVEL),A0,L ;NO X VEL ?
+         000027c0     0040  
+     422 000027d0     ca09          JREQ    GPLAYR2         ;GIVE HIM XVEL
+     423 000027e0     5600          CLR     A0
+     424 000027f0     b208          MOVE    A0,*A8(OZVEL),L ;COOL VELOCITY
+         00002800     00e0  
+     425 00002810     b208          MOVE    A0,*A8(OYVEL),L ;COOL VELOCITY
+         00002820     0060  
+     426 00002830     0d5f          CALLA   SHVELCPY        ;DO IT FOR SHADOW
+         00002840 00000000! 
+     427 00002860     c00a          JRUC    GPLAYR20
+     428 00002870           GPLAYR2:
+     429 00002870     1fa7          BTST    BJUMP2,A7       ;PLAYER IN AIR ?
+     430 00002880     ca06          JRZ     GPLYR20         ;NO
+     431 00002890     09c0          MOVI    15,A0           ;YES, BE STUPID?
+         000028a0     000f  
+     432 000028b0     0d5f          CALLA   RANDPER
+         000028c0 00000000! 
+     433 000028e0     c902          JRNC    GPLAYR20        ;YIP
+     434 000028f0           GPLYR20:
+     435 000028f0     0d3f          CALLR   DMPDIR          ;NO GET DIRECTION
+         00002900     01d7  
+     436 00002910           GPLAYR20:
+     437 00002910                   SLEEP   1
+     438 00002950     384b          DSJS    A11,GPLAYR3     ;TIME OUT CHECK
+     439 00002960     c000          JRUC    GCAN0           ;GO FOR A CAN
+         00002970     fdc3  
+     440 00002980           GPLAYR3:
+     441 00002980     0d8a          DSJ     A10,GPLAYRL
+         00002990     ffc8  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   12
+
+     442 000029a0     c0bd          JRUC    GPLAYR1
+     443 000029b0           DMPBUTT:
+     444 000029b0     4c21          MOVE    A1,A1           ;FLIP THE DUDE PROPERLY
+     445 000029c0     ce04          JRN     DMPBTT0
+     446 000029d0     0d5f          CALLA   NOYFLP
+         000029e0 00000000! 
+     447 00002a00     c003          JRUC    DMPBTT1
+     448 00002a10           DMPBTT0:
+     449 00002a10     0d5f          CALLA   YFLP
+         00002a20 00000000! 
+     450 00002a40           DMPBTT1:
+     451 00002a40     0d5f          CALLA   PSTOP                   ;STOP THE DUDE
+         00002a50 00000000! 
+     452 00002a70     0d5f          CALLA   GETCPLY
+         00002a80 00000000! 
+     453 00002aa0     4c02          MOVE    A0,A2
+     454 00002ab0     0d5f          CALLA   HEADBUTT
+         00002ac0 00000000! 
+     455 00002ae0     09e9          MOVI    DUMPBUTT,A9             ;GET ANIMATION
+         00002af0 00006c70' 
+     456 00002b10           DMPBUT2:
+     457 00002b10     1821          MOVK    1,A1
+     458 00002b20                   JSRP    FRANIM                  ;BUTT HIM
+     459 00002b90     0d5f          CALLA   RANDOM
+         00002ba0 00000000! 
+     460 00002bc0     ce98          JRN     GPLAYR0                 ;GET HIM AGAIN
+     461 00002bd0     09e0          MOVI    CHEADYEA,A0
+         00002be0 00002db0' 
+     462 00002c00     0d5f          CALLA   ONESND
+         00002c10 00000000! 
+     463 00002c30     c000          JRUC    GCAN0                   ;GO FOR A CAN
+         00002c40     fd96  
+     464                    **************************************************************************
+     465                    *DUMPSTER MAN SOUNDS
+     466                    *                                                                        *
+     467                    * CHANNEL #0    CVSD SOUNDS                                              *
+     468                    * CHANNEL #1    DAC A                                                    *
+     469                    * CHANNEL #2    DAC B                                                    *
+     470                    * CHANNEL #3    MUSIC                                                    *
+     471                    *                                                                        *
+     472                    *SOUND DESCRIPTION= PRIORITY,TIME,SOUND CODE,(PRIORITY),(TIME),(SOUND CODE),0
+     473                    *SOUND ENDS IN 0000.
+     474                    *PRIORITY WORD = 1111IENNPPPPPPPP; I=1=NON-INTERRUPTABLE, E=1=NON-INT BY EQUAL
+     475                    *NN=CHANNEL #(0-3);
+     476                    *PP=PRIORITY (00-FF), FF=HIGHEST.
+     477                    *TIME WORD =TTTT (0000-7FFF X 16MS).
+     478                    *SOUND WORD =8SSS SSS=SOUND CODE(000-FFF).
+     479                    *SOUND WORD =4SSS SSS=SOUND CODE (ZERO TIME SOUND CODE)
+     480                    *CAN HIT SOUND
+     481 00002c50     f020  CNHTSND .WORD   0F020H,012H,0804FH,01,08002H,0
+     482                    *CAN THROW SOUND
+     483 00002cb0     f020  CNTHSND .WORD   0F020H,008H,0801BH,0
+     484                    *CAN FLY SOUND
+     485 00002cf0     f320  CNFLSND .WORD   0F320H,010H,08093H,0
+     486                    *PICK UP SOMETHING
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   13
+
+     487 00002d30     f020  CPICKSND .WORD  0F020H,064H,08012H,0
+     488                    *HIT BY BULLET
+     489 00002d70     f81f  CBULHITR .WORD  0F01FH|0800H,038H,08023H,0              ;BULLET HITS
+     490                    *THE "AFTER HEAD BUTT" GROWL
+     491 00002db0     f01f  CHEADYEA .WORD  0F01FH,046H,08026H,0
+     492                    *
+     493                    *LET IT FLY
+     494                    *
+     495 00002df0           FLYCAN:
+     496 00002df0     0d5f          CALLA   GETCPLY
+         00002e00 00000000! 
+     497 00002e20     b607          MOVE    *A0(POBJ),A7,L          ;PLAYER OBJECT
+         00002e30     00a0  
+     498 00002e40     b4e2          MOVE    *A7(OXPOS),A2           ;FORM DELTAS
+         00002e50     0090  
+     499 00002e60     b4e3          MOVE    *A7(OZPOS),A3
+         00002e70     00d0  
+     500 00002e80     b500          MOVE    *A8(OXPOS),A0
+         00002e90     0090  
+     501 00002ea0     b501          MOVE    *A8(OZPOS),A1
+         00002eb0     00d0  
+     502 00002ec0     4402          SUB     A0,A2
+     503 00002ed0     4c44          MOVE    A2,A4           ;SAVE DELTA X
+     504 00002ee0     4423          SUB     A1,A3
+     505 00002ef0     1940          MOVK    10,A0           ;ADD RANDOM OFFSET TO X
+     506 00002f00     0d5f          CALLA   SRAND
+         00002f10 00000000! 
+     507 00002f30     4003          ADD     A0,A3
+     508 00002f40     1940          MOVK    10,A0           ;ADD RANDOM OFFSET TO Z
+     509 00002f50     0d5f          CALLA   SRAND
+         00002f60 00000000! 
+     510 00002f80     4002          ADD     A0,A2
+     511 00002f90     0384          ABS     A4
+     512 00002fa0     0b44          CMPI    50,A4           ;SHORT DISTANCE ?
+         00002fb0     ffcd  
+     513 00002fc0     c906          JRHS    FLYC1
+     514 00002fd0     2582          SLL     12,A2
+     515 00002fe0     2583          SLL     12,A3
+     516 00002ff0     09e0          MOVI    018000H,A0
+         00003000 00018000  
+     517 00003020     c00e          JRUC    FLYC3
+     518 00003030           FLYC1:
+     519 00003030     0b44          CMPI    100,A4          ;SHORT DISTANCE ?
+         00003040     ff9b  
+     520 00003050     c906          JRHS    FLYC2
+     521 00003060     2562          SLL     11,A2
+     522 00003070     2563          SLL     11,A3
+     523 00003080     09e0          MOVI    -010000H,A0
+         00003090 ffff0000  
+     524 000030b0     c005          JRUC    FLYC3
+     525 000030c0           FLYC2:
+     526 000030c0     2542          SLL     10,A2
+     527 000030d0     2543          SLL     10,A3
+     528 000030e0     09e0          MOVI    -030000H,A0
+         000030f0 fffd0000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   14
+
+     529 00003110           FLYC3:
+     530 00003110     b24b          MOVE    A2,*A11(OXVEL),L        ;LOAD UP CAN
+         00003120     0040  
+     531 00003130     b26b          MOVE    A3,*A11(OZVEL),L
+         00003140     00e0  
+     532 00003150     4060          ADD     A3,A0                   ;ADD ZVEL TO YVEL
+     533 00003160     b20b          MOVE    A0,*A11(OYVEL),L
+         00003170     0060  
+     534 00003180                   SWAP    A11,A8
+     535 000031b0     0d5f          CALLA   SHVELCPY
+         000031c0 00000000! 
+     536 000031e0                   SWAP    A11,A8
+     537 00003210     09e0          MOVI    CNTHSND,A0              ;MAKE YOUR GRUNT
+         00003220 00002cb0' 
+     538 00003240     0d5f          CALLA   ONESND
+         00003250 00000000! 
+     539 00003270                   CREATE  0E1h,AIRCAN             ;LET CAN FLY 
+     540 000032f0     bba0          MOVE    *A13(ETEMP4),*A0(ETEMP4),L
+         00003300     01e0  
+         00003310     01e0  
+     541 00003320     0960          RETS
+     542                    *
+     543                    *OFFSET TABLE FOR LIFTING CAN
+     544                    *DX,DY
+     545 00003330           PKOFFTAB:
+     546 00003330     0000          .WORD   0,0,0,0,0,0,0,0,0,-10,0,-20,0,-20,-10,-16,-10,-7,-10,-7
+     547                    *
+     548                    *OFFSET TABLE FOR THROWING CAN
+     549                    *DX,DY
+     550 00003470           THOFFTAB:
+     551 00003470     0000          .WORD   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+     552                    *
+     553                    *OFFSET TABLE FOR CARRYING CAN
+     554                    *DX,DY
+     555 000035f0           COFFTAB:
+     556 000035f0     0003          .WORD   3,3,1,1,0,0,0,0,1,1,-2,-2,-3,-3,0,0,0,0
+     557                    *
+     558                    *CAN IN THE AIR
+     559                    *A11 = CAN OBJECT
+     560                    *
+     561 00003710           AIRCAN: 
+     562 00003710     4d68          MOVE    A11,A8
+     563 00003720     4d00          MOVE    A8,A0
+     564 00003730     09e1          MOVI    ENEMIES,A1
+         00003740 00000000! 
+     565 00003760     0d5f          CALLA   DELSUPP
+         00003770 00000000! 
+     566 00003790     09e1          MOVI    ENEMY_BULLETS,A1
+         000037a0 00000000! 
+     567 000037c0     0d5f          CALLA   ADDSUPP
+         000037d0 00000000! 
+     568 000037f0           AIRCANL:
+     569 000037f0                   SLEEP   3
+     570 00003830     5600          CLR     A0              
+     571 00003840     b501          MOVE    *A8(OZPOS),A1,W         ;CHECK IF Z LEGAL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   15
+
+         00003850     00d0  
+     572 00003860     05a2          MOVE    @PLZMIN,A2,W
+         00003870 00000000! 
+     573 00003890     0b02          ADDI    10,A2
+         000038a0     000a  
+     574 000038b0     05a3          MOVE    @PLZMAX,A3,W
+         000038c0 00000000! 
+     575 000038e0     0be3          SUBI    10,A3
+         000038f0     fff5  
+     576 00003900     4841          CMP     A2,A1                   ;CHECK LOWER BOUND
+     577 00003910     c402          JRLT    ZBAD
+     578 00003920     4861          CMP     A3,A1
+     579 00003930     c409          JRLT    ZOK2
+     580 00003940           ZBAD:
+     581 00003940     b208          MOVE    A0,*A8(OZVEL),L         ;ZERO ZV'S OF CAN AND SHADOW
+         00003950     00e0  
+     582 00003960     b704          MOVE    *A8(OSHAD),A4,L
+         00003970     0240  
+     583 00003980     ca04          JREQ    ZOK2
+     584 00003990     b204          MOVE    A0,*A4(OZVEL),L
+         000039a0     00e0  
+     585 000039b0     b204          MOVE    A0,*A4(OYVEL),L
+         000039c0     0060  
+     586 000039d0           ZOK2:
+     587 000039d0     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         000039e0     0060  
+     588 000039f0     0b00          ADDI    05000H,A0
+         00003a00     5000  
+     589 00003a10     b208          MOVE    A0,*A8(OYVEL),L
+         00003a20     0060  
+     590 00003a30     cedb          JRN     AIRCANL                 ;IF YV IS UP DONT STOP IT
+     591 00003a40     0d5f          CALLA   DFRMGRND
+         00003a50 00000000! 
+     592 00003a70     cfd7          JRNN    AIRCANL                 ;IN THE AIR STILL
+     593                    
+     594 00003a80     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         00003a90     0060  
+     595 00003aa0     0b60          CMPI    010000H,A0
+         00003ab0 fffeffff  
+     596 00003ad0     c21c          JRLS    CANLAND
+     597 00003ae0     2ba0          SRA     3,A0                    ;BOUNCE VELOCITY
+     598 00003af0     03a0          NEG     A0
+     599 00003b00     b208          MOVE    A0,*A8(OYVEL),L         ;CUT DOWN Y
+         00003b10     0060  
+     600 00003b20     b701          MOVE    *A8(OZVEL),A1,L         ;CUT DOWN Z
+         00003b30     00e0  
+     601 00003b40     2be1          SRA     1,A1
+     602 00003b50     b228          MOVE    A1,*A8(OZVEL),L
+         00003b60     00e0  
+     603 00003b70     b700          MOVE    *A8(OXVEL),A0,L         ;CUT DOWN X
+         00003b80     0040  
+     604 00003b90     2be0          SRA     1,A0
+     605 00003ba0     b208          MOVE    A0,*A8(OXVEL),L
+         00003bb0     0040  
+     606 00003bc0     b704          MOVE    *A8(OSHAD),A4,L         ;CUT DOWN X OF SHADOW
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   16
+
+         00003bd0     0240  
+     607 00003be0     ca04          JRZ     AIRCNLL
+     608 00003bf0     b204          MOVE    A0,*A4(OXVEL),L
+         00003c00     0040  
+     609 00003c10     b224          MOVE    A1,*A4(OZVEL),L
+         00003c20     00e0  
+     610 00003c30           AIRCNLL:
+     611 00003c30     09e0          MOVI    CNHTSND,A0              ;MAKE YOUR SOUND
+         00003c40 00002c50' 
+     612 00003c60     0d5f          CALLA   ONESND
+         00003c70 00000000! 
+     613 00003c90     c0b5          JRUC    AIRCANL
+     614 00003ca0           CANLAND:
+     615 00003ca0     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         00003cb0 00000000! 
+     616 00003cd0     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+     617 00003ce0     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00003cf0 00000000! 
+     618 00003d10     0d5f          CALLA   DELSHAD                 ;GET RID OF SHADOW
+         00003d20 00000000! 
+     619 00003d40     09e0          MOVI    CNHTSND,A0              ;MAKE YOUR SOUND
+         00003d50 00002c50' 
+     620 00003d70     0d5f          CALLA   ONESND
+         00003d80 00000000! 
+     621 00003da0     4d00          MOVE    A8,A0
+     622 00003db0     bba0          MOVE    *A13(ETEMP4),*A0(OCVECT),L
+         00003dc0     01e0  
+         00003dd0     01d0  
+     623 00003de0     09e1          MOVI    ENEMY_BULLETS,A1
+         00003df0 00000000! 
+     624 00003e10     0d5f          CALLA   DELSUPP
+         00003e20 00000000! 
+     625 00003e40     09e1          MOVI    BACKSLST,A1
+         00003e50 00000000! 
+     626 00003e70     0d5f          CALLA   ADDSUPP
+         00003e80 00000000! 
+     627 00003ea0     1821          MOVK    1,A1                    ;PUT HIM BACK IN BACKGROUND JIVE
+     628 00003eb0     0d5f          CALLA   ADDBB
+         00003ec0 00000000! 
+     629                    *AIRCANX:
+     630 00003ee0     c080          JAUC    SUCIDE                  ;BAG IT....
+         00003ef0 00000000! 
+     631                    *
+     632                    *GET A GARBAGE CAN
+     633                    *DUMPSTER MAN IN A8
+     634                    *CAN RETURNED IN A11    
+     635                    *RETURNS EQ IF NO CAN FOUND
+     636                    *
+     637 00003f10           GETCAN:
+     638 00003f10     098f          MMTM    SP,A0
+         00003f20     8000  
+     639 00003f30     07ab          MOVE    @BACKSLST,A11,L
+         00003f40 00000000! 
+     640 00003f60     ca28          JREQ    GETCANX                 ;NOBODY HOME...
+     641 00003f70           GETCAN0:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   17
+
+     642 00003f70     b760          MOVE    *A11(OIMG),A0,L         ;IS IT A CAN ?
+         00003f80     0180  
+     643 00003f90     0b60          CMPI    LAMPTOP,A0
+         00003fa0 ffffffff! 
+     644 00003fc0     ca1f          JREQ    GETCANL
+     645 00003fd0     0b60          CMPI    LAMPOST,A0
+         00003fe0 ffffffff! 
+     646 00004000     ca1b          JREQ    GETCANL                 ;NO
+     647 00004010     b560          MOVE    *A11(OID),A0,W
+         00004020     01a0  
+     648 00004030     2f00          SRL     8,A0
+     649 00004040     2500          SLL     8,A0                    ;CHECK FOR GNARLY NO-NO OBJECTS
+     650 00004050     0b40          CMPI    BGDCID,A0
+         00004060     faff  
+     651 00004070     ca14          JREQ    GETCANL
+     652 00004080     0b40          CMPI    BGGDCID,A0
+         00004090     f8ff  
+     653 000040a0     ca11          JREQ    GETCANL
+     654 000040b0     0b40          CMPI    BGWCID,A0
+         000040c0     f9ff  
+     655 000040d0     ca0e          JREQ    GETCANL
+     656                    
+     657 000040e0     098f          MMTM    SP,A8
+         000040f0     0080  
+     658 00004100     4d68          MOVE    A11,A8
+     659 00004110     0d5f          CALLA   DFRMGRND                ;ITS ON THE GROUND?
+         00004120 00000000! 
+     660 00004140     09af          MMFM    SP,A8
+         00004150     0100  
+     661 00004160     0381          ABS     A1
+     662 00004170     0b41          CMPI    10,A1
+         00004180     fff5  
+     663 00004190     c302          JRHI    GETCANL                 ;NOPE
+     664 000041a0     4d6b          MOVE    A11,A11                 ;RETURN NE
+     665 000041b0     c003          JRUC    GETCANX
+     666 000041c0           GETCANL:
+     667 000041c0     b76b          MOVE    *A11(OSLINK),A11,L
+         000041d0     0020  
+     668 000041e0     cbd8          JRNE    GETCAN0
+     669 000041f0           GETCANX:
+     670 000041f0     09af          MMFM    SP,A0
+         00004200     0001  
+     671 00004210     0960          RETS
+     672                    *
+     673                    *CHECK FOR CAN INTERSECTION
+     674                    *CALLING PARAMETERS:
+     675                    *A8=DUMPSTER MAN
+     676                    *A11=CAN HE IS GOING FOR
+     677                    *RETURNS:
+     678                    *CARRY SET IF HE IS CLOSE TO CAN
+     679                    *A1=DELTA X
+     680                    *A2=DELTA Y
+     681                    *A3=ABS DELTA X
+     682                    *A4=ABS DELTA Z
+     683 00004220           CKCAN:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   18
+
+     684 00004220     098f          MMTM    SP,A0,A8
+         00004230     8080  
+     685 00004240     b503          MOVE    *A8(OXPOS),A3,W
+         00004250     0090  
+     686 00004260     b502          MOVE    *A8(OSIZEX),A2,W        ;CHECK CENTERS
+         00004270     0140  
+     687 00004280     2fe2          SRL     1,A2
+     688 00004290     4043          ADD     A2,A3
+     689 000042a0     b504          MOVE    *A8(OZPOS),A4,W
+         000042b0     00d0  
+     690 000042c0     b561          MOVE    *A11(OXPOS),A1,W
+         000042d0     0090  
+     691 000042e0     b562          MOVE    *A11(OSIZEX),A2,W       ;CHECK CENTERS
+         000042f0     0140  
+     692 00004300     2fe2          SRL     1,A2
+     693 00004310     4041          ADD     A2,A1
+     694 00004320     b562          MOVE    *A11(OZPOS),A2,W
+         00004330     00d0  
+     695 00004340     4482          SUB     A4,A2
+     696 00004350     4461          SUB     A3,A1
+     697 00004360     4c23          MOVE    A1,A3
+     698 00004370     4c44          MOVE    A2,A4
+     699 00004380     0383          ABS     A3
+     700 00004390     0384          ABS     A4
+     701 000043a0     0b43          CMPI    30,A3
+         000043b0     ffe1  
+     702 000043c0     c906          JRNC    CKCANX
+     703 000043d0     4c42          MOVE    A2,A2
+     704 000043e0     cf03          JRNN    CKCANF
+     705 000043f0     0b44          CMPI    14,A4
+         00004400     fff1  
+     706 00004410     c001          JRUC    CKCANX
+     707 00004420           CKCANF:
+     708 00004420     0320          CLRC            ;FAIL TEST
+     709 00004430           CKCANX:
+     710 00004430     09af          MMFM    SP,A0,A8
+         00004440     0101  
+     711 00004450     0960          RETS
+     712                    *
+     713                    *CHECK IF DUMPMAN CLOSE TO PLAYER
+     714                    *RETURNS A7=PLAYER TO GO AFTER, CARRY SET IF IN RANGE
+     715 00004460           CKPLAYR:
+     716 00004460     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6
+         00004470     fe00  
+     717 00004480     09e7          MOVI    P1DATA,A7               ;OTHERWISE PLAYER ONE
+         00004490 00000000! 
+     718 000044b0     b6e0          MOVE    *A7(POBJ),A0,L          ;GET EXPECTED PLAYERS OBJECT    
+         000044c0     00a0  
+     719 000044d0     ca08          JREQ    CKPL1                   ;ZERO INDICATES DEAD
+     720 000044e0     09c5          MOVI    45,A5                   ;CHECK IF WERE CLOSE
+         000044f0     002d  
+     721 00004500     09c6          MOVI    30,A6
+         00004510     001e  
+     722 00004520     0d5f          CALLA   XZCHK
+         00004530 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   19
+
+     723 00004550     c80f          JRC     CKPLX
+     724 00004560           CKPL1:
+     725 00004560     09e7          MOVI    P2DATA,A7
+         00004570 00000000! 
+     726 00004590     b6e0          MOVE    *A7(POBJ),A0,L          ;GET EXPECTED PLAYERS OBJECT    
+         000045a0     00a0  
+     727 000045b0     ca08          JREQ    CKPLX0                  ;PLAYER 2  DEAD
+     728 000045c0     09c5          MOVI    30,A5                   ;CHECK IF WERE CLOSE
+         000045d0     001e  
+     729 000045e0     09c6          MOVI    20,A6
+         000045f0     0014  
+     730 00004600     0d5f          CALLA   XZCHK
+         00004610 00000000! 
+     731 00004630     c801          JRC     CKPLX
+     732 00004640           CKPLX0:
+     733 00004640     0320          CLRC
+     734 00004650           CKPLX:
+     735 00004650     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6
+         00004660     007f  
+     736 00004670     0960          RETS
+     737                    *
+     738                    *GET DIRECTION FOR DUMPSTER MAN
+     739                    *A1=DELTA X
+     740                    *A2=DELTA Z
+     741                    *A3=ABS DX
+     742                    *A4=ABS DZ
+     743                    *A8=OBJECT
+     744                    *
+     745 00004680           DMPDIR:
+     746 00004680     4c6e          MOVE    A3,A14          ;SAVE ABS DX
+     747 00004690     05a3          MOVE    @DUMPSPD,A3,W   ;X VELOCITY
+         000046a0 00000000! 
+     748 000046c0     2503          SLL     8,A3            ;NORMALIZE IT
+     749 000046d0     4c64          MOVE    A3,A4
+     750 000046e0     2fe4          SRL     1,A4            ;Z VELOCITY
+     751 000046f0     0381          ABS     A1              ;NEGATE FOR NEGATIVE X
+     752 00004700     ce01          JRN     DMPDIR1
+     753 00004710     03a3          NEG     A3
+     754 00004720           DMPDIR1:
+     755 00004720     0b02          ADDI    7,A2            ;ADD IN FUDGE FACTOR
+         00004730     0007  
+     756 00004740     0382          ABS     A2              ;NEGATE FOR NEGATIVE Z
+     757 00004750     ce01          JRN     DMPDIR2
+     758 00004760     03a4          NEG     A4
+     759 00004770           DMPDIR2:        
+     760                    *       CMPI    10,A1           ;CLEAR IF REAL CLOSE
+     761                    *       JRHI    DMPDIR3
+     762                    *       CLR     A3
+     763 00004770           DMPDIR3:
+     764 00004770     0b42          CMPI    6,A2            ;CLEAR IF REAL CLOSE
+         00004780     fff9  
+     765 00004790     c301          JRHI    DMPDIR4
+     766 000047a0     5684          CLR     A4
+     767 000047b0           DMPDIR4:
+     768 000047b0     b288          MOVE    A4,*A8(OYVEL),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   20
+
+         000047c0     0060  
+     769 000047d0     b288          MOVE    A4,*A8(OZVEL),L
+         000047e0     00e0  
+     770 000047f0     0b4e          CMPI    30,A14          ;DONT CHANGE XVEL IF CLOSE (ANTI STAIRSTEP)
+         00004800     ffe1  
+     771 00004810     c904          JRHS    DMPDIR5
+     772 00004820     b70e          MOVE    *A8(OXVEL),A14,L
+         00004830     0040  
+     773 00004840     ca01          JREQ    DMPDIR5
+     774 00004850     4dc3          MOVE    A14,A3
+     775 00004860           DMPDIR5:
+     776 00004860     b268          MOVE    A3,*A8(OXVEL),L ;STORE VELOCITY
+         00004870     0040  
+     777 00004880           DMPDIR6:
+     778 00004880     0d5f          CALLA   SHVELCPY
+         00004890 00000000! 
+     779 000048b0     4c63          MOVE    A3,A3           ;TEST X VELOCITY
+     780 000048c0     ce80          JAN     YFLP
+         000048d0 00000000! 
+     781 000048f0     c080          JAUC    NOYFLP
+         00004900 00000000! 
+     782                    *
+     783                    *DUMPSTER MAN COLLSION ROUTINE
+     784                    *A0 = PTR TO DUMPSTER MAN OBJECT
+     785                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     786                    *
+     787                    *HIT BY A BULLET
+     788                    *
+     789 00004920           DMPBUL:
+     790 00004920     4e00          MOVE    A0,B0                   ;MAKE BULLET HIT SOUND
+     791 00004930     09e0          MOVI    CBULHITR,A0
+         00004940 00002d70' 
+     792 00004960     0d5f          CALLA   ONESND
+         00004970 00000000! 
+     793 00004990     4e10          MOVE    B0,A0
+     794 000049a0     b603          MOVE    *A0(OPLINK),A3,L
+         000049b0     01f0  
+     795 000049c0     b461          MOVE    *A3(ETEMP3),A1,W        ;DECREMENT HIT COUNT
+         000049d0     01c0  
+     796 000049e0     0b41          CMPI    3,A1
+         000049f0     fffc  
+     797 00004a00     c911          JRHS    DUMPB0
+     798                    *MAKE A BLOOD SPLAT
+     799 00004a10     098f          MMTM    SP,A0,A1,A3,A8
+         00004a20     d080  
+     800 00004a30     b509          MOVE    *A8(OYPOS),A9,W
+         00004a40     00b0  
+     801 00004a50     b40b          MOVE    *A0(OID),A11,W
+         00004a60     01a0  
+     802 00004a70     4c08          MOVE    A0,A8
+     803 00004a80                   CREATE  0EDH,SPLATBOX
+     804 00004b00     09af          MMFM    SP,A0,A1,A3,A8
+         00004b10     010b  
+     805 00004b20           DUMPB0:
+     806 00004b20     1421          DEC     A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   21
+
+     807 00004b30     b023          MOVE    A1,*A3(ETEMP3),W        
+         00004b40     01c0  
+     808 00004b50     c725          JRGT    DMPBL00                 ;NOT DEAD YET...
+     809                    
+     810 00004b60     b701          MOVE    *A8(OXVEL),A1,L         ;GIVE HIM BULLET VELOCITY
+         00004b70     0040  
+     811 00004b80     2bc1          SRA     2,A1
+     812 00004b90     b220          MOVE    A1,*A0(OXVEL),L
+         00004ba0     0040  
+     813 00004bb0     b602          MOVE    *A0(OSHAD),A2,L
+         00004bc0     0240  
+     814 00004bd0     ca02          JREQ    DMPBL000
+     815 00004be0     b222          MOVE    A1,*A2(OXVEL),L
+         00004bf0     0040  
+     816 00004c00           DMPBL000
+     817 00004c00     0d3f          CALLR   DMPCLNUP                ;HE IS DEAD
+         00004c10     0084  
+     818 00004c20     0d5f          CALLA   SHADST
+         00004c30 00000000! 
+     819 00004c50     09c1          MOVI    0EDh,A1
+         00004c60     00ed  
+     820 00004c70     09e7          MOVI    DMPBDIE,A7
+         00004c80 000052d0' 
+     821 00004ca0     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00004cb0 00000000! 
+     822 00004cd0     4d6b          MOVE    A11,A11                 ;GOT A CAN?
+     823 00004ce0     ca35          JREQ    DMPCOLX                 ;NOPE...
+     824 00004cf0                   CREATE  0E1h,AIRCAN             ;LET CAN FLY 
+     825 00004d70     ba60          MOVE    *A3(ETEMP4),*A0(ETEMP4),L
+         00004d80     01e0  
+         00004d90     01e0  
+     826 00004da0     c029          JRUC    DMPCOLX
+     827 00004db0           DMPBL00
+     828 00004db0     1982          MOVK    12,A2                   ;FIND BULLET DIRECTION
+     829 00004dc0     b501          MOVE    *A8(OXVEL+010H),A1,W
+         00004dd0     0050  
+     830 00004de0     cf01          JRNN    DMPBUL1
+     831 00004df0     03a2          NEG     A2
+     832 00004e00           DMPBUL1:
+     833 00004e00     b401          MOVE    *A0(OXPOS),A1,W         ;KNOCK HIM A BIT
+         00004e10     0090  
+     834 00004e20     4041          ADD     A2,A1
+     835 00004e30     b020          MOVE    A1,*A0(OXPOS),W
+         00004e40     0090  
+     836 00004e50     b604          MOVE    *A0(OSHAD),A4,L
+         00004e60     0240  
+     837 00004e70     ca05          JREQ    DMPBUL2
+     838 00004e80     b481          MOVE    *A4(OXPOS),A1,W         ;KNOCK SHADOW
+         00004e90     0090  
+     839 00004ea0     4041          ADD     A2,A1
+     840 00004eb0     b024          MOVE    A1,*A4(OXPOS),W
+         00004ec0     0090  
+     841 00004ed0           DMPBUL2:
+     842 00004ed0     b605          MOVE    *A0(OPLINK),A5,L
+         00004ee0     01f0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   22
+
+     843 00004ef0     b6a5          MOVE    *A5(ETEMP2),A5,L
+         00004f00     01a0  
+     844 00004f10     ca12          JREQ    DMPCOLX                 ;NO...
+     845 00004f20     b4a1          MOVE    *A5(OXPOS),A1,W         ;KNOCK HIM A BIT
+         00004f30     0090  
+     846 00004f40     4041          ADD     A2,A1
+     847 00004f50     b025          MOVE    A1,*A5(OXPOS),W
+         00004f60     0090  
+     848 00004f70     b6a4          MOVE    *A5(OSHAD),A4,L
+         00004f80     0240  
+     849 00004f90     ca05          JREQ    DMPBUL3
+     850 00004fa0     b481          MOVE    *A4(OXPOS),A1,W         ;KNOCK SHADOW
+         00004fb0     0090  
+     851 00004fc0     4041          ADD     A2,A1
+     852 00004fd0     b024          MOVE    A1,*A4(OXPOS),W
+         00004fe0     0090  
+     853 00004ff0           DMPBUL3:
+     854 00004ff0           DMPCOL0:
+     855 00004ff0     1822          MOVK    1,A2                    ;SIGNAL DUDE IS HIT
+     856 00005000     b601          MOVE    *A0(OPLINK),A1,L
+         00005010     01f0  
+     857 00005020     b241          MOVE    A2,*A1(EFLAGS),L
+         00005030     0080  
+     858                            
+     859 00005040           DMPCOLX:
+     860 00005040     0320          CLRC                    ;TELL COLLISION SCANNER NOT TO DELETE
+     861 00005050     0960          RETS
+     862                    *
+     863                    *DUMPSTER MAN HIT BY ROCKET
+     864                    *A0 = PTR TO DUMPSTER MAN OBJECT
+     865                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     866                    *
+     867 00005060           DMPROK:
+     868 00005060           DMPEXP:
+     869 00005060     b605          MOVE    *A0(OPLINK),A5,L
+         00005070     01f0  
+     870 00005080     0d3f          CALLR   DMPCLNUP
+         00005090     003c  
+     871 000050a0     09c1          MOVI    0EDh,A1
+         000050b0     00ed  
+     872 000050c0     09e7          MOVI    DMPDIE,A7
+         000050d0 00005a10' 
+     873 000050f0     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00005100 00000000! 
+     874 00005120     0d5f          CALLA   SHADST
+         00005130 00000000! 
+     875 00005150     0d3f          CALLR   EXPVEL
+         00005160     0050  
+     876                    
+     877 00005170     4d6b          MOVE    A11,A11                 ;GOT A CAN?
+     878 00005180     caeb          JREQ    DMPCOLX                 ;NOPE...
+     879 00005190                   SWAP    A11,A8
+     880 000051c0     0d3f          CALLR   EXPVEL
+         000051d0     0049  
+     881 000051e0                   SWAP    A11,A8
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   23
+
+     882 00005210           DMPEXP1:
+     883 00005210                   CREATE  0E1h,AIRCAN             ;LET CAN FLY 
+     884 00005290     baa0          MOVE    *A5(ETEMP4),*A0(ETEMP4),L
+         000052a0     01e0  
+         000052b0     01e0  
+     885 000052c0     c0d7          JRUC    DMPCOLX
+     886                    *
+     887                    *DUMPMAN DIE HIT BY A BULLET
+     888                    *
+     889 000052d0           DMPBDIE:
+     890 000052d0     09e9          MOVI    DUMPDIE0,A9             ;DO YOUR DEATH ANIMATION
+         000052e0 000066a0' 
+     891 00005300     1821          MOVK    1,A1
+     892 00005310                   JSRP    FRANIM
+     893 00005380     09e9          MOVI    [1,1],A9
+         00005390 00010001  
+     894 000053b0                   CREATE  0DFh,ESINK      ;CREATE THE DEADMAN SINK         
+     895 00005430     c080          JAUC    SUCIDE          ;DIE
+         00005440 00000000! 
+     896                    *
+     897                    *MISC. DEATH CHORES FOR DUMPMAN
+     898                    *
+     899 00005460           DMPCLNUP:
+     900 00005460     05a1          MOVE    @DUMPCNT,A1,W           ;DECREMENT DUMPSTER COUNT
+         00005470 00000000! 
+     901 00005490     1421          DEC     A1
+     902 000054a0     0581          MOVE    A1,@DUMPCNT,W
+         000054b0 00000000! 
+     903 000054d0     09ee          MOVI    DUMCOLL,A14
+         000054e0 00000000! 
+     904 00005500     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00005510     01d0  
+     905 00005520     b50b          MOVE    *A8(OID),A11,W          ;GET ENEMY ID FOR POINTS
+         00005530     01a0  
+     906 00005540     4d06          MOVE    A8,A6
+     907 00005550     4c08          MOVE    A0,A8
+     908 00005560     0d5f          CALLA   SCRKIL                  ;SCORE YOUR POINTS
+         00005570 00000000! 
+     909 00005590     0d5f          CALLA   OIDATA
+         000055a0 00000000! 
+     910 000055c0     c803          JRC     DMPCLN1
+     911 000055d0     0d5f          CALLA   PUT2x5K                 ;DO A LITTLE FELLER
+         000055e0 00000000! 
+     912 00005600           DMPCLN1
+     913 00005600     b700          MOVE    *A8(OPLINK),A0,L
+         00005610     01f0  
+     914 00005620     b60b          MOVE    *A0(ETEMP2),A11,L       ;GOT A CAN?
+         00005630     01a0  
+     915 00005640     c080          JAUC    KILL                    ;KILL YOUR OLD PROCESS
+         00005650 00000000! 
+     916                    *
+     917                    *EXPLOSION VELOCITY
+     918                    *A8=OBJECT, A6=SHIT THAT HIT YOU
+     919                    *
+     920 00005670           EXPVEL:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   24
+
+     921 00005670     0d5f          CALLA   PSTOP           ;BLOW DUDE INTO THE AIR                                  
+         00005680 00000000! 
+     922 000056a0     09e0          MOVI    060000H,A0      ;GET RANDOM Y VELOCITY
+         000056b0 00060000  
+     923 000056d0     0d5f          CALLA   RANDU
+         000056e0 00000000! 
+     924 00005700     0b20          ADDI    020000H,A0
+         00005710 00020000  
+     925 00005730     4c03          MOVE    A0,A3
+     926 00005740     03a3          NEG     A3
+     927 00005750     09e0          MOVI    040000H,A0      ;GET RANDOM X VELOCITY
+         00005760 00040000  
+     928 00005780     0d5f          CALLA   RANDU
+         00005790 00000000! 
+     929 000057b0     0b20          ADDI    018000H,A0      ;ADD IN BIAS
+         000057c0 00018000  
+     930 000057e0     b4ce          MOVE    *A6(OXVEL+010H),A14  ;GET ROCKET VELOCITY
+         000057f0     0050  
+     931 00005800     ca03          JREQ    DMPEX1
+     932 00005810     cf15          JRNN    DMPEX2
+     933 00005820     03a0          NEG     A0
+     934 00005830     c013          JRUC    DMPEX2
+     935 00005840           DMPEX1:                          ;ZERO VELOCITY CASE, (EXPLOSION)
+     936 00005840     0d00          SUBI    018000H,A0       ;REMOVE BIAS
+         00005850 fffe7fff  
+     937 00005870     0d5f          CALLA   GETCPNT
+         00005880 00000000! 
+     938 000058a0                   SWAP    A6,A8
+     939 000058d0     4c22          MOVE    A1,A2            ;A2=DUMPSTER MAN CENTER
+     940 000058e0     0d5f          CALLA   GETCPNT
+         000058f0 00000000! 
+     941 00005910                   SWAP    A6,A8            ;A1=EXPLOSION CENTER
+     942 00005940     e222          SUBXY   A1,A2
+     943 00005950     cd01          JRXNN   DMPEX2
+     944 00005960     03a0          NEG     A0
+     945 00005970           DMPEX2:
+     946 00005970     b208          MOVE    A0,*A8(OXVEL),L
+         00005980     0040  
+     947 00005990     b268          MOVE    A3,*A8(OYVEL),L
+         000059a0     0060  
+     948 000059b0     b704          MOVE    *A8(OSHAD),A4,L
+         000059c0     0240  
+     949 000059d0     ca02          JREQ    DMPEXP0
+     950 000059e0     b204          MOVE    A0,*A4(OXVEL),L
+         000059f0     0040  
+     951 00005a00           DMPEXP0:
+     952 00005a00     0960          RETS
+     953                    *
+     954                    *DUMPSTER MAN DIE
+     955                    *
+     956 00005a10           DMPDIE:
+     957 00005a10                   CREATE  0EDH,DMPFALL    ;FALL DUDE
+     958 00005a90           DMPDIE0:
+     959 00005a90     09e9          MOVI    DUMPBLO,A9      ;DO YOUR BLO UP ANIMATION
+         00005aa0 00006560' 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   25
+
+     960 00005ac0           DMPDIEL:
+     961 00005ac0     5621          CLR     A1
+     962 00005ad0                   JSRP    FRANIM
+     963 00005b40     c8f4          JRC     DMPDIE0
+     964 00005b50     0d5f          CALLA   DFRMGRND
+         00005b60 00000000! 
+     965 00005b80     ce07          JRN     DMPDIE1
+     966 00005b90     ca06          JREQ    DMPDIE1
+     967 00005ba0     b502          MOVE    *A8(OYVEL+010H),A2      ;CHECK VELOCITY TO START DEATH EARLY?
+         00005bb0     0070  
+     968 00005bc0     ceef          JRN     DMPDIEL
+     969 00005bd0     2482          SLL     4,A2
+     970 00005be0     4841          CMP     A2,A1
+     971 00005bf0     c7ec          JRGT    DMPDIEL
+     972 00005c00           DMPDIE1:
+     973 00005c00     09e9          MOVI    DUMPDIE,A9      ;DO YOUR DEATH ANIMATION
+         00005c10 00006730' 
+     974 00005c30     1821          MOVK    1,A1
+     975 00005c40                   JSRP    FRANIM
+     976 00005cb0     09e9          MOVI    [1,1],A9
+         00005cc0 00010001  
+     977 00005ce0                   CREATE  0DFh,ESINK      ;CREATE THE DEADMAN SINK         
+     978 00005d60     c080          JAUC    SUCIDE          ;DIE
+         00005d70 00000000! 
+     979                    
+     980 00005d90           DMPFALL:
+     981 00005d90           DMPFAL2:
+     982 00005d90                   SLEEP   3
+     983 00005dd0     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         00005de0     0060  
+     984 00005df0     0b00          ADDI    05000H,A0
+         00005e00     5000  
+     985 00005e10     b208          MOVE    A0,*A8(OYVEL),L
+         00005e20     0060  
+     986 00005e30     0d5f          CALLA   DFRMGRND
+         00005e40 00000000! 
+     987 00005e60     cff2          JRNN    DMPFAL2                 ;IN THE AIR STILL
+     988                    
+     989 00005e70     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         00005e80 00000000! 
+     990 00005ea0     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+     991 00005eb0     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00005ec0 00000000! 
+     992 00005ee0                   DIE                             
+     993                    *
+     994                    *HORIZONTAL FLIP OF OBJECT
+     995                    *A8=OBJECT
+     996                    *FLIPS OBJECT ABOUT Y AXIS
+     997 00005f10           HFLIP:
+     998 00005f10     098f          MMTM    SP,A1,A4
+         00005f20     4800  
+     999 00005f30     b704          MOVE    *A8(OFLAGS),A4,L
+         00005f40     0100  
+    1000 00005f50     0bc4          XORI    M_FLIPH,A4      ;FLIP THE DUDE
+         00005f60 00000010  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   26
+
+    1001 00005f80     b701          MOVE    *A8(OIMG),A1,L
+         00005f90     0180  
+    1002 00005fa0     0d5f          CALLA   ANI
+         00005fb0 00000000! 
+    1003 00005fd0     09af          MMFM    SP,A1,A4
+         00005fe0     0012  
+    1004 00005ff0     0960          RETS
+    1005                    *
+    1006                    *STFOBJ INITIALIZING DATA
+    1007                    *       .LONG   OXVEL,OYVEL,OXVAL,OYVAL
+    1008                    *       .WORD   OZPOS,OZVEL
+    1009                    *       .LONG   OIMG,OZSIZ,OCVECT
+    1010                    *       .WORD   OFLAGS,OID
+    1011 00006000           DUMPINIT
+    1012 00006000 00000000          .LONG   0,0,0,0
+    1013 00006080     0000          .WORD   0,0
+    1014 000060a0 00000480"         .LONG   bwlk4_vda,LOFZ,DMPCOL
+    1015 00006100     8002          .WORD   DMAWNZ,0E05H
+    1016 00006120 00000000!         .LONG   DUMPBLIP
+    1017                    
+    1018 00006140           DMPCOL:
+    1019 00006140     0b10          .WORD   B1OID+BULLETID
+    1020 00006150 00004920'         .LONG   DMPBUL
+    1021 00006170     0b20          .WORD   B2OID+BULLETID
+    1022 00006180 00004920'         .LONG   DMPBUL
+    1023 000061a0     0b14          .WORD   B1OID+ROCKETID
+    1024 000061b0 00005060'         .LONG   DMPROK
+    1025 000061d0     0b24          .WORD   B2OID+ROCKETID
+    1026 000061e0 00005060'         .LONG   DMPROK
+    1027 00006200     0b12          .WORD   B1OID+EXPLODID
+    1028 00006210 00005060'         .LONG   DMPEXP
+    1029 00006230     0b22          .WORD   B2OID+EXPLODID
+    1030 00006240 00005060'         .LONG   DMPEXP
+    1031 00006260     0be2          .WORD   BEOID+EXPLODID
+    1032 00006270 00005060'         .LONG   DMPEXP
+    1033 00006290     0000          .WORD   0
+    1034 000062a0 00000000!         .LONG   DUMRTSG
+    1035                    *
+    1036                    *ANIMATION TABLES
+    1037                    *
+    1038 000062c0 00000000  DUMPTAB .LONG   0
+    1039                    *
+    1040                    ***********************************************
+    1041                    *DUMPSTER MAN ANIMATIONS
+    1042                    ***********************************************
+    1043                    *
+    1044                    *DUMPSTER MAN WALK
+    1045                    *
+    1046 000062e0           DUMPWLK:
+    1047 000062e0 00000480"         .long   bwlk4_vda
+    1048 00006300     0005          .word   5
+    1049 00006310 00000500"         .long   bwlk5_vda
+    1050 00006330     0005          .word   5
+    1051 00006340 00000580"         .long   bwlk6_vda
+    1052 00006360     0005          .word   5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   27
+
+    1053 00006370 00000600"         .long   bwlk8_vda
+    1054 00006390     0005          .word   5
+    1055 000063a0           DUMPWLK2:
+    1056 000063a0 00000680"         .long   bwlk9_vda
+    1057 000063c0     0005          .word   5
+    1058 000063d0 00000700"         .long   bwlk10_vda
+    1059 000063f0     0005          .word   5
+    1060 00006400 00000780"         .long   bwlk12_vda
+    1061 00006420     0005          .word   5
+    1062 00006430 00000800"         .long   bwlk13_vda
+    1063 00006450     0005          .word   5
+    1064 00006460 00000880"         .long   bwlk14_vda
+    1065 00006480     0005          .word   5
+    1066 00006490 00000000          .long   0
+    1067                    *
+    1068                    *DUMPSTER MAN HIT
+    1069                    *
+    1070 000064b0           DUMPHIT:
+    1071 000064b0 00000900"         .long   bdie1
+    1072 000064d0     0006          .word   6
+    1073 000064e0 00000980"         .long   bdie2
+    1074 00006500     0006          .word   6
+    1075 00006510 00000a00"         .long   bdie3
+    1076 00006530     0006          .word   6
+    1077 00006540 00000000          .long   0
+    1078                    *
+    1079                    *DUMPSTER MAN BLOW UP THROUGH THE AIR
+    1080                    *
+    1081 00006560           DUMPBLO:
+    1082 00006560 00000900"         .long   bdie1
+    1083 00006580     0008          .word   8
+    1084 00006590 00000980"         .long   bdie2
+    1085 000065b0     0008          .word   8
+    1086 000065c0 00000a00"         .long   bdie3
+    1087 000065e0     0008          .word   8
+    1088 000065f0 00000a80"         .long   bdie4
+    1089 00006610     0008          .word   8
+    1090 00006620 00000b00"         .long   bdie5
+    1091 00006640     0008          .word   8
+    1092 00006650 00000b80"         .long   bdie6
+    1093 00006670     0008          .word   8
+    1094 00006680 00000000          .LONG   0
+    1095                    *DUMPDIE 0
+    1096 000066a0           DUMPDIE0:
+    1097 000066a0 00000900"         .long   bdie1
+    1098 000066c0     0004          .word   4
+    1099 000066d0 00000980"         .long   bdie2
+    1100 000066f0     0004          .word   4
+    1101 00006700 00000a00"         .long   bdie3
+    1102 00006720     0004          .word   4
+    1103                    *       .long   bdie4
+    1104                    *       .word   4
+    1105                    *       .long   bdie5
+    1106                    *       .word   4
+    1107                    *       .long   bdie6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   28
+
+    1108                    *       .word   4
+    1109                    *
+    1110                    *DUMPSTER MAN DIE
+    1111                    *
+    1112 00006730           DUMPDIE:
+    1113 00006730 00000c00"         .long   bdie7
+    1114 00006750     0004          .word   4
+    1115 00006760 00000c80"         .long   bdie9
+    1116 00006780     0004          .word   4
+    1117 00006790 00000d00"         .long   bdie10
+    1118 000067b0     0004          .word   4
+    1119 000067c0 00000d80"         .long   bdie11
+    1120 000067e0     0004          .word   4
+    1121 000067f0 00000e00"         .long   bdie12
+    1122 00006810     0004          .word   4
+    1123 00006820 00000e80"         .long   bdie14
+    1124 00006840     000a          .word   10
+    1125 00006850 00000000          .long   0
+    1126                    *
+    1127                    *DUMPSTER MAN PICKUP
+    1128                    *
+    1129 00006870           DUMPICK:
+    1130 00006870 00000000"         .long   pick2
+    1131 00006890     0006          .word   6
+    1132 000068a0 00000080"         .long   pick3
+    1133 000068c0     0006          .word   6
+    1134 000068d0 00000100"         .long   pick4
+    1135 000068f0     0006          .word   6
+    1136 00006900 00000180"         .long   pick6
+    1137 00006920     0006          .word   6
+    1138 00006930 00000200"         .long   pick7
+    1139 00006950     0006          .word   6
+    1140 00006960 00000280"         .long   pick8
+    1141 00006980     0006          .word   6
+    1142 00006990 00000300"         .long   pick9
+    1143 000069b0     0006          .word   6
+    1144 000069c0 00000380"         .long   pick10
+    1145 000069e0     0006          .word   6
+    1146 000069f0 00000400"         .long   pick11
+    1147 00006a10     0006          .word   6
+    1148 00006a20 00000000          .long   0
+    1149                    *
+    1150                    *DUMPSTER MAN THROW 
+    1151                    *
+    1152 00006a40 00000f00"         .long   dmthr1
+    1153 00006a60     0006          .word   6
+    1154 00006a70 00000f80"         .long   dmthr2
+    1155 00006a90     0006          .word   6
+    1156 00006aa0 00001000"         .long   dmthr3
+    1157 00006ac0     0006          .word   6
+    1158 00006ad0 00001080"         .long   dmthr4
+    1159 00006af0     0006          .word   6
+    1160 00006b00           DUMPTHRW:
+    1161 00006b00 00001100"         .long   dmthr5
+    1162 00006b20     0006          .word   6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   29
+
+    1163 00006b30 00001180"         .long   dmthr7
+    1164 00006b50     0006          .word   6
+    1165 00006b60           DUMPFLY:
+    1166 00006b60 00001200"         .long   dmthr8
+    1167 00006b80     0006          .word   6
+    1168 00006b90 00001280"         .long   dmthr9
+    1169 00006bb0     0006          .WORD   6
+    1170 00006bc0 00001300"         .long   dmthr10
+    1171 00006be0     0006          .word   6
+    1172 00006bf0 00001380"         .long   dmthr11
+    1173 00006c10     0006          .word   6
+    1174 00006c20 00001400"         .long   dmthr12
+    1175 00006c40     0006          .word   6
+    1176 00006c50 00000000          .long   0
+    1177                    *
+    1178                    *dumpster man head butt
+    1179                    *
+    1180 00006c70           DUMPBUTT:
+    1181 00006c70 00000000"         .long   pick2
+    1182 00006c90     0006          .word   6
+    1183 00006ca0 00000300"         .long   pick9
+    1184 00006cc0     0006          .word   6
+    1185 00006cd0 00000000"         .long   pick2
+    1186 00006cf0     0006          .word   6
+    1187 00006d00 00000000          .long   0
+    1188                    *       
+    1189                    *DUMPSTER MAN THROW WALK
+    1190                    *
+    1191 00006d20           DUMPTHWLK:
+    1192 00006d20 00000f00"         .long   dmthr1
+    1193 00006d40     0006          .word   6
+    1194 00006d50 00000f80"         .long   dmthr2
+    1195 00006d70     0006          .word   6
+    1196 00006d80 00001000"         .long   dmthr3
+    1197 00006da0     0006          .word   6
+    1198 00006db0 00001080"         .long   dmthr4
+    1199 00006dd0     0006          .word   6
+    1200 00006de0 00001480"         .long   dmthra
+    1201 00006e00     0006          .word   6
+    1202 00006e10 00001500"         .long   dmthrb
+    1203 00006e30     0006          .word   6
+    1204 00006e40 00001580"         .long   dmthrc
+    1205 00006e60     0006          .word   6
+    1206 00006e70 00000000          .long   0
+    1207                    *
+    1208                    *dumpster man shake
+    1209                    *
+    1210 00006e90           DUMPSHAK:
+    1211 00006e90 00000200"         .long   pick7
+    1212 00006eb0     0004          .word   4
+    1213 00006ec0 00000300"         .long   pick9
+    1214 00006ee0     0004          .word   4
+    1215 00006ef0 00000380"         .long   pick10
+    1216 00006f10     0004          .word   4
+    1217 00006f20 00000400"         .long   pick11
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   30
+
+    1218 00006f40     0004          .word   4
+    1219 00006f50 00000380"         .long   pick10
+    1220 00006f70     0004          .word   4
+    1221 00006f80 00000300"         .long   pick9
+    1222 00006fa0     0004          .word   4
+    1223 00006fb0 00000000          .long   0
+    1224                    
+    1225                    *
+    1226                    *DUMPSTER MAN CRIME SCENE
+    1227                    *
+    1228 00006fd0           DUMPCRM1:
+    1229 00006fd0     05a0          move    @(WORLDTLX+16),A0,W                              
+         00006fe0 00000010! 
+    1230 00007000     0b00          addi    150,A0
+         00007010     0096  
+    1231 00007020     05a1          move    @PLYMIN,A1,W                                                                     
+         00007030 00000000! 
+    1232 00007050     0b01          addi    5,A1
+         00007060     0005  
+    1233 00007070     2601          sll     16,A1
+    1234 00007080     ec01          movx    A0,A1
+    1235 00007090     56c6          clr     A6
+    1236 000070a0     09ee          movi    DUMPINIT,A14    
+         000070b0 00006000' 
+    1237 000070d0     0d5f          calla   ESINITLL
+         000070e0 00000000! 
+    1238 00007100     5600          clr     A0
+    1239 00007110     b208          move    A0,*A8(OBLIPIMG),L
+         00007120     0260  
+    1240                    
+    1241 00007130     0d5f          calla   PSTOP
+         00007140 00000000! 
+    1242 00007160     0d5f          calla   NOYFLP
+         00007170 00000000! 
+    1243 00007190     09e0          movi    01C000H,A0
+         000071a0 0001c000  
+    1244 000071c0     b208          move    A0,*A8(OXVEL),L
+         000071d0     0040  
+    1245 000071e0     09e9          movi    DUMPWLK2,A9
+         000071f0 000063a0' 
+    1246 00007210     1821          movk    1,A1
+    1247 00007220                   jsrp    FRANIM
+    1248 00007290                   SOUND1  CNTHSND
+    1249 000072f0     09e9          movi    DUMPWLK,A9
+         00007300 000062e0' 
+    1250 00007320     1821          movk    1,A1
+    1251 00007330                   jsrp    FRANIM
+    1252 000073a0           CRM1X:
+    1253 000073a0     09e1          MOVI    ENEMIES,A1
+         000073b0 00000000! 
+    1254 000073d0     4d00          MOVE    A8,A0
+    1255 000073e0     0d5f          CALLA   DELSUPP
+         000073f0 00000000! 
+    1256 00007410     b501          move    *A8(OPAL),A1,W
+         00007420     0160  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:31 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< D U M P S T E R   M A N >>>                                     PAGE   31
+
+    1257 00007430     0581          move    A1,@CRIMEPAL,W
+         00007440 00000000! 
+    1258 00007460     0d5f          CALLA   DELSOBJ
+         00007470 00000000! 
+    1259 00007490                   retp
+    1260                    
+    1261                            .END
+
+ No Errors,  No Warnings

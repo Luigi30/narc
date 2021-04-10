@@ -1,0 +1,655 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCATT.ASM"
+       3                    
+       4                            .OPTION B,D,L
+       5                            .MNOLIST
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      10                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      11                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      12                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      13                    *       LOCAL STUFF
+      14                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      15                    
+      16 00000000                   .BSS    AWAVE,32
+      17                    
+      18 00000000                   .TEXT
+      19                    *
+      20                    *GLOBALS IN THIS FILE
+      21                            .GLOBAL ATSTRT
+      22                    *
+      23                    *EXTERNALS
+      24                            .GLOBAL HSTDTAB,TITLPAGE,FBIBADGE,CRED_P,CRD_SCRN
+      25                            .GLOBAL NRAMINIT,INITFGND,GOALXFER
+      26                    
+      27                    *ATTRACT MODE START UP ROUTINE
+      28 00000000           ATSTRT
+      29 00000000     098f          MMTM    SP,A0,A1,A7
+         00000010     c100  
+      30 00000020     05a0          MOVE    @GAMSTATE,A0
+         00000030 00000000! 
+      31 00000050     0b40          CMPI    INDIAG,A0
+         00000060     ffbf  
+      32 00000070     ca24          JREQ    ATSTRTX
+      33 00000080     1820          MOVK    1,A0
+      34 00000090     0580          MOVE    A0,@DISPLAYON,W ;TURN DISPLAY PROCESSOR ON
+         000000a0 00000000! 
+      35 000000c0     0d5f          CALLA   NRAMINIT        ;INITIALIZE GAME RAM
+         000000d0 00000000! 
+      36 000000f0     09c0          MOVI    INAMODE,A0
+         00000100     0030  
+      37 00000110     0580          MOVE    A0,@GAMSTATE,W
+         00000120 00000000! 
+      38 00000140     0d5f          CALLA   AUTOEOFF        ;TURN OFF AUTOERASE
+         00000150 00000000! 
+      39 00000170     0d5f          CALLA   SYNCFULL
+         00000180 00000000! 
+      40 000001a0     0d5f          CALLA   CLR_SCRN        ;ZERO THE BIT MAP
+         000001b0 00000000! 
+      41 000001d0     0d5f          CALLA   COLRSTRT        ;START THE COLORS
+         000001e0 00000000! 
+      42 00000200                   CREATE  AMODPID,AMODE   ;CREATE THE ATTRACT MODE
+      43 00000280     5600          CLR     A0
+      44 00000290     0580          MOVE    A0,@PLAYPAGE,W  ;CLEAR AMODE PLAY PAGE
+         000002a0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    2
+
+      45 000002c0           ATSTRTX
+      46 000002c0     09af          MMFM    SP,A0,A1,A7
+         000002d0     0083  
+      47 000002e0     0960          RETS
+      48                    
+      49                    *AMODUS ZYKLEN
+      50 000002f0           AMODE
+      51 000002f0     0d5f          CALLA   WIPEOUT
+         00000300 00000000! 
+      52 00000320     0d5f          CALLA   COLRSTRT        ;START THE COLORS
+         00000330 00000000! 
+      53 00000350                   JSRP    HSTDTAB
+      54                    
+      55 000003c0     0d5f          CALLA   WIPEOUT
+         000003d0 00000000! 
+      56 000003f0     0d5f          CALLA   COLRSTRT
+         00000400 00000000! 
+      57 00000420                   JSRP    ATTPLAY         ;DO SOME ATTRACT MODE PLAY STUFF
+      58 00000490     c027          JRUC    AMODE2
+      59 000004a0           AMODE1
+      60 000004a0     0d5f          CALLA   WIPEOUT
+         000004b0 00000000! 
+      61 000004d0     0d5f          CALLA   COLRSTRT
+         000004e0 00000000! 
+      62 00000500                   JSRP    ATTPLAY         ;DO SOME ATTRACT MODE PLAY STUFF
+      63                    
+      64 00000570     0d5f          CALLA   WIPEOUT
+         00000580 00000000! 
+      65 000005a0     0d5f          CALLA   COLRSTRT        ;START THE COLORS
+         000005b0 00000000! 
+      66 000005d0                   JSRP    HSTDTAB
+      67                    
+      68 00000640     0d5f          CALLA   WIPEOUT
+         00000650 00000000! 
+      69 00000670     0d5f          CALLA   COLRSTRT
+         00000680 00000000! 
+      70 000006a0                   JSRP    ATTPLAY         ;DO SOME ATTRACT MODE PLAY STUFF
+      71 00000710           AMODE2
+      72 00000710     0d5f          CALLA   WIPEOUT
+         00000720 00000000! 
+      73 00000740     0d5f          CALLA   COLRSTRT        ;START THE COLORS
+         00000750 00000000! 
+      74 00000770                   JSRP    TITLPAGE
+      75                    
+      76 000007e0     0d5f          CALLA   WIPEOUT
+         000007f0 00000000! 
+      77 00000810     0d5f          CALLA   COLRSTRT
+         00000820 00000000! 
+      78 00000840                   JSRP    ATTPLAY         ;DO SOME ATTRACT MODE PLAY STUFF
+      79                    
+      80 000008b0     0d5f          CALLA   WIPEOUT
+         000008c0 00000000! 
+      81 000008e0     0d5f          CALLA   COLRSTRT        ;START THE COLORS
+         000008f0 00000000! 
+      82 00000910                   JSRP    FBIBADGE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    3
+
+      83                    
+      84                    ***     CALLA   CRED_P
+      85                    ***     JRZ     AMODE1          ;DON'T SHOW 0 CREDITS BOZO
+      86 00000980                   JSRP    CRD_SCRN
+      87 000009f0                   SLEEP   600
+      88 00000a40     09c0          MOVI    AMODPID,A0
+         00000a50     0aaa  
+      89 00000a60     b00d          MOVE    A0,*A13(PROCID),W       ;I AM WHAT I AM!
+         00000a70     0020  
+      90 00000a80     c0a1          JRUC    AMODE1
+      91                    
+      92                    **************************************************************************
+      93                    *                                                                        *
+      94                    * ATTPLAY - ATTRACT MODE GAME PLAY                                       *
+      95                    * NOTE: CALL WITH JSRP                                                   *
+      96                    *                                                                        *
+      97                    **************************************************************************
+      98              0003  NATTWAVS .EQU   3                       ;# OF ATTRACT MODE WAVES
+      99                    
+     100 00000a90           ATTPLAY
+     101 00000a90     1820          MOVK    1,A0
+     102 00000aa0     0580          MOVE    A0,@SOUNDSUP,W          ;TURN ALL SOUNDS OFF
+         00000ab0 00000000! 
+     103                    
+     104 00000ad0     05a0          MOVE    @AWAVE,A0,W
+         00000ae0 00000000- 
+     105 00000b00     1020          INC     A0
+     106 00000b10     0b40          CMPI    NATTWAVS,A0
+         00000b20     fffc  
+     107 00000b30     c201          JRLS    ATTWGO
+     108 00000b40           ATTWRST
+     109 00000b40     1820          MOVK    1,A0                    ;RESET TO WAVE 1
+     110 00000b50           ATTWGO
+     111 00000b50     0580          MOVE    A0,@AWAVE,W
+         00000b60 00000000- 
+     112 00000b80     0580          MOVE    A0,@WAVE,W
+         00000b90 00000000! 
+     113 00000bb0     1820          MOVK    1,A0
+     114 00000bc0     0580          MOVE    A0,@PLAYPAGE,W          ;MARK IT AS THE PLAY PAGE
+         00000bd0 00000000! 
+     115 00000bf0                   JSRP    AMODWAVE
+     116                    
+     117 00000c60     09eb          MOVI    P1DATA,A11
+         00000c70 00000000! 
+     118 00000c90     5708          CLR     A8
+     119                    
+     120 00000ca0     b10b          MOVE    A8,*A11(PDRUGS),W       ;CLEAR COUNTERS FOR SAFETY
+         00000cb0     0210  
+     121 00000cc0     b10b          MOVE    A8,*A11(PMONEY),W
+         00000cd0     0220  
+     122 00000ce0     b10b          MOVE    A8,*A11(PBUSTS),W
+         00000cf0     0230  
+     123                    
+     124 00000d00           ATTWRELD
+     125 00000d00     05a9          MOVE    @AWAVE,A9,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    4
+
+         00000d10 00000000- 
+     126 00000d30     1429          DEC     A9
+     127 00000d40     24a9          SLL     5,A9
+     128 00000d50     0b29          ADDI    AMOVETAB,A9
+         00000d60 000010b0' 
+     129 00000d80     8729          MOVE    *A9,A9,L                ;GET THIS WAVES MOVEMENT TABLE
+     130 00000d90           ATTNEXT
+     131 00000d90     9520          MOVE    *A9+,A0,W               ;GET SOME JOYSTICK BITS
+     132 00000da0     0b40          CMPI    0FFFFFFFFH,A0
+         00000db0     0000  
+     133 00000dc0     caf3          JREQ    ATTWRELD                ;RELOAD THE TABLE
+     134                    
+     135 00000dd0     0580          MOVE    A0,@P1CTRL,W
+         00000de0 00000000! 
+     136 00000e00     952a          MOVE    *A9+,A10,W              ;GET THE SLEEP TIME
+     137 00000e10                   JSRP    ATTPSLP
+     138 00000e80     c9f0          JRNC    ATTNEXT
+     139                    
+     140 00000e90     1028          INC     A8
+     141 00000ea0     0b48          CMPI    2,A8
+         00000eb0     fffd  
+     142 00000ec0     c906          JRHS    ATTP1DUN
+     143 00000ed0                   SLEEP   160
+     144 00000f20     c0e6          JRUC    ATTNEXT
+     145 00000f30           ATTP1DUN
+     146 00000f30                   SLEEP   60
+     147 00000f80           ATTWXXX
+     148 00000f80     5600          CLR     A0
+     149 00000f90     0580          MOVE    A0,@SOUNDSUP,W          ;TURN ALL SOUNDS ON
+         00000fa0 00000000! 
+     150 00000fc0     0780          MOVE    A0,@P1DATA+POBJ,L       ;MAKE SURE ALL OBJECT PTRS ARE CLEAR
+         00000fd0 000000a0! 
+     151 00000ff0     0780          MOVE    A0,@P1DATA+PLOBJ,L
+         00001000 00000120! 
+     152 00001020     0780          MOVE    A0,@P2DATA+POBJ,L
+         00001030 000000a0! 
+     153 00001050     0780          MOVE    A0,@P2DATA+PLOBJ,L
+         00001060 00000120! 
+     154 00001080                   RETP
+     155                    
+     156 000010b0           AMOVETAB
+     157 000010b0 000012f0'         .LONG   AWAV1MOV,AWAV2MOV,AWAV3MOV,AWAV4MOV,AWAV5MOV,AWAV6MOV
+     158 00001170 000012f0'         .LONG   AWAV1MOV,AWAV2MOV,AWAV3MOV,AWAV4MOV,AWAV5MOV,AWAV6MOV
+     159 00001230 000012f0'         .LONG   AWAV1MOV,AWAV2MOV,AWAV3MOV,AWAV4MOV,AWAV5MOV,AWAV6MOV
+     160                    
+     161                    *
+     162                    *ATTRACT MODE PLAYER MOVEMENT TABLES
+     163                    *       .WORD   STICK_BITS,SLEEP_TIME
+     164                    *       .
+     165                    *       .
+     166                    *       .WORD   0FFFFH
+     167 000012f0           AWAV1MOV
+     168 000012f0           AWAV4MOV
+     169 000012f0           AWAV5MOV
+     170 000012f0     0008          .WORD   PRYTE,20H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    5
+
+     171 00001310     0029          .WORD   PRYTE|PUP|PFIRE,30H
+     172 00001330     0008          .WORD   PRYTE,20H
+     173 00001350     0014          .WORD   PLEFT|PCROUCH,1
+     174 00001370     0030          .WORD   PCROUCH|PFIRE,20H
+     175 00001390     004a          .WORD   PJUMP|PDOWN|PRYTE,20H
+     176 000013b0     0000          .WORD   0,30H
+     177 000013d0     0090          .WORD   PCROUCH|PFROCK,16H
+     178 000013f0     0011          .WORD   PCROUCH|PUP,10H
+     179 00001410     0018          .WORD   PCROUCH|PRYTE,20H
+     180 00001430     0060          .WORD   PJUMP|PFIRE,20H
+     181 00001450     0006          .WORD   PDOWN|PLEFT,40H
+     182 00001470     0018          .WORD   PRYTE|PCROUCH,1
+     183 00001490     0090          .WORD   PCROUCH|PFROCK,20H
+     184 000014b0     0004          .WORD   PLEFT,20H
+     185 000014d0     0001          .WORD   PUP,10H
+     186 000014f0     ffff          .WORD   0FFFFH
+     187                    
+     188 00001500           AWAV2MOV
+     189 00001500     0009          .WORD   PRYTE|PUP,20H
+     190 00001520     0049          .WORD   PRYTE|PUP|PJUMP,30H
+     191 00001540     0020          .WORD   PFIRE,20H
+     192 00001560     0030          .WORD   PCROUCH|PFIRE,20H
+     193 00001580     0000          .WORD   0,30H
+     194 000015a0     000a          .WORD   PRYTE|PDOWN,10H
+     195 000015c0     0008          .WORD   PRYTE,10H
+     196 000015e0     0014          .WORD   PLEFT|PCROUCH,1
+     197 00001600     0030          .WORD   PCROUCH|PFIRE,10H
+     198 00001620     00c0          .WORD   PJUMP|PFROCK,20H
+     199 00001640     0006          .WORD   PDOWN|PLEFT,40H
+     200 00001660     0018          .WORD   PRYTE|PCROUCH,1
+     201 00001680     0090          .WORD   PCROUCH|PFROCK,20H
+     202 000016a0     0004          .WORD   PLEFT,20H
+     203 000016c0     0001          .WORD   PUP,10H
+     204 000016e0     0008          .WORD   PRYTE,20H
+     205 00001700     0029          .WORD   PRYTE|PUP|PFIRE,30H
+     206 00001720     0008          .WORD   PRYTE,20H
+     207 00001740     0014          .WORD   PLEFT|PCROUCH,1
+     208 00001760     0030          .WORD   PCROUCH|PFIRE,20H
+     209 00001780     004a          .WORD   PJUMP|PDOWN|PRYTE,20H
+     210 000017a0     0000          .WORD   0,30H
+     211 000017c0     ffff          .WORD   0FFFFH
+     212                    
+     213 000017d0           AWAV3MOV
+     214 000017d0     0001          .WORD   PUP,20H
+     215 000017f0     0024          .WORD   PLEFT|PFIRE,10H
+     216 00001810     0084          .WORD   PLEFT|PFROCK,10H
+     217 00001830     0008          .WORD   PRYTE,5H
+     218 00001850     0088          .WORD   PRYTE|PFROCK,10H
+     219 00001870     0028          .WORD   PRYTE|PFIRE,10H
+     220 00001890     000a          .WORD   PRYTE|PDOWN,38H
+     221 000018b0     0008          .WORD   PRYTE,50H
+     222 000018d0     0048          .WORD   PRYTE|PJUMP,20H
+     223 000018f0     0008          .WORD   PRYTE,60H
+     224 00001910     0004          .WORD   PLEFT,30H
+     225 00001930     0010          .WORD   PCROUCH,5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    6
+
+     226 00001950     0024          .WORD   PFIRE|PLEFT,20H
+     227 00001970     0010          .WORD   PCROUCH,10H
+     228 00001990     0008          .WORD   PRYTE,50H
+     229 000019b0     0088          .WORD   PRYTE|PFROCK,1H 
+     230 000019d0     0009          .WORD   PRYTE|PUP,18H
+     231 000019f0     000a          .WORD   PRYTE|PDOWN,30H
+     232 00001a10     0009          .WORD   PRYTE|PUP,18H
+     233 00001a30     0040          .WORD   PJUMP,10H
+     234 00001a50     0000          .WORD   0,30H
+     235 00001a70     0090          .WORD   PCROUCH|PFROCK,16H
+     236 00001a90     0011          .WORD   PCROUCH|PUP,10H
+     237 00001ab0     0018          .WORD   PCROUCH|PRYTE,20H
+     238 00001ad0     0060          .WORD   PJUMP|PFIRE,20H
+     239 00001af0     0006          .WORD   PDOWN|PLEFT,40H
+     240 00001b10     0018          .WORD   PRYTE|PCROUCH,1
+     241 00001b30     0090          .WORD   PCROUCH|PFROCK,20H
+     242 00001b50     0004          .WORD   PLEFT,20H
+     243 00001b70     0001          .WORD   PUP,10H
+     244 00001b90     ffff          .WORD   0FFFFH
+     245                    
+     246 00001ba0           AWAV6MOV
+     247 00001ba0     0035          .WORD   PLEFT|PFIRE|PCROUCH|PUP,20H
+     248 00001bc0     0002          .WORD   PDOWN,10H
+     249 00001be0     0090          .WORD   PCROUCH|PFROCK,10H
+     250 00001c00     0000          .WORD   0,10H
+     251 00001c20     0088          .WORD   PRYTE|PFROCK,20H
+     252 00001c40     0000          .WORD   0,2
+     253 00001c60     0080          .WORD   PFROCK,20H
+     254 00001c80     0000          .WORD   0,2
+     255 00001ca0     0040          .WORD   PJUMP,5H
+     256 00001cc0     0080          .WORD   PFROCK,5H
+     257 00001ce0     0000          .WORD   0,10H
+     258 00001d00     0008          .WORD   PRYTE,20H
+     259 00001d20     0029          .WORD   PRYTE|PUP|PFIRE,30H
+     260 00001d40     0008          .WORD   PRYTE,20H
+     261 00001d60     0014          .WORD   PLEFT|PCROUCH,1
+     262 00001d80     0030          .WORD   PCROUCH|PFIRE,20H
+     263 00001da0     004a          .WORD   PJUMP|PDOWN|PRYTE,20H
+     264 00001dc0     0000          .WORD   0,30H
+     265 00001de0     0090          .WORD   PCROUCH|PFROCK,16H
+     266 00001e00     0011          .WORD   PCROUCH|PUP,10H
+     267 00001e20     0018          .WORD   PCROUCH|PRYTE,20H
+     268 00001e40     0060          .WORD   PJUMP|PFIRE,20H
+     269 00001e60     0006          .WORD   PDOWN|PLEFT,40H
+     270 00001e80     0018          .WORD   PRYTE|PCROUCH,1
+     271 00001ea0     0090          .WORD   PCROUCH|PFROCK,20H
+     272 00001ec0     0004          .WORD   PLEFT,20H
+     273 00001ee0     0001          .WORD   PUP,10H
+     274 00001f00     0009          .WORD   PRYTE|PUP,20H
+     275 00001f20     0049          .WORD   PRYTE|PUP|PJUMP,30H
+     276 00001f40     0020          .WORD   PFIRE,20H
+     277 00001f60     0030          .WORD   PCROUCH|PFIRE,20H
+     278 00001f80     0000          .WORD   0,30H
+     279 00001fa0     000a          .WORD   PRYTE|PDOWN,10H
+     280 00001fc0     0008          .WORD   PRYTE,10H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    7
+
+     281 00001fe0     0014          .WORD   PLEFT|PCROUCH,1
+     282 00002000     0030          .WORD   PCROUCH|PFIRE,10H
+     283 00002020     00c0          .WORD   PJUMP|PFROCK,20H
+     284 00002040     0006          .WORD   PDOWN|PLEFT,40H
+     285 00002060     0018          .WORD   PRYTE|PCROUCH,1
+     286 00002080     0090          .WORD   PCROUCH|PFROCK,20H
+     287 000020a0     0004          .WORD   PLEFT,20H
+     288 000020c0     0001          .WORD   PUP,10H
+     289 000020e0     0008          .WORD   PRYTE,20H
+     290 00002100     0029          .WORD   PRYTE|PUP|PFIRE,30H
+     291 00002120     ffff          .WORD   0FFFFH  
+     292                    
+     293                    **************************************************************************
+     294                    *                                                                        *
+     295                    * ATTPSLP - ATTRACT MODE PLAYER SLEEP, CHECKS FOR DEATH EACH TICK        *
+     296                    * A10 = # TICKS TO SLEEP                                                 *
+     297                    * A11 = PLINDX                                                           *
+     298                    * RETURNS:                                                               *
+     299                    *       CARRY CLEAR = NOT DEAD YET                                       *
+     300                    *       CARRY SET = DEAD!                                                *
+     301                    * NOTE: CALL WITH JSRP                                                   *
+     302                    *                                                                        *
+     303                    **************************************************************************
+     304 00002130           ATTPSLP
+     305 00002130                   PUSHP   A10
+     306 00002140           ATTPSLPL
+     307 00002140     b760          MOVE    *A11(PFLAGS),A0,L
+         00002150     0080  
+     308 00002160     1da0          BTST    BDEAD,A0
+     309 00002170     cb07          JRNE    ATTPSLPD                ;BR = CAN IT, HE'S DEAD
+     310 00002180                   SLEEP   1
+     311 000021c0     3d2a          DSJS    A10,ATTPSLPL
+     312 000021d0     0320          CLRC
+     313 000021e0     c001          JRUC    ATTPSLPX
+     314 000021f0           ATTPSLPD
+     315 000021f0     0de0          SETC
+     316 00002200           ATTPSLPX
+     317 00002200                   PULLP   A10
+     318 00002220                   RETP
+     319                    
+     320                    **************************************************************************
+     321                    *                                                                        *
+     322                    * AMODWAVE - INITIALIZE AN ATTRACT MODE WAVE:                            *
+     323                    *               - MAKE BACKGROUND BLOCKS USING WAVE BGND INIT. TABLE     *
+     324                    *               - FIRE OFF ALL PROCESS USING WAVE PROC. INIT. TABLE      *
+     325                    * CURRENT ATTRACT WAVE MUST BE INDICATED IN VARIABLE, AWAVE.             *
+     326                    * IT IS ASSUMED THAT THE DISPLAYON FLAG IS CLEAR WHEN THIS IS CALLED.    *
+     327                    * THIS ROUTINE WILL SET THAT FLAG BEFORE FINISHING.                      *
+     328                    * NOTE: CALL WITH JSRP                                                   *
+     329                    *                                                                        *
+     330                    **************************************************************************
+     331 00002250           AMODWAVE
+     332 00002250     098c          MMTM    A12,A8,A9,A10,A11
+         00002260     00f0  
+     333 00002270     5600          CLR     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    8
+
+     334 00002280     0580          MOVE    A0,@DISPLAYON,W
+         00002290 00000000! 
+     335 000022b0     0d5f          CALLA   DMAQWAIT
+         000022c0 00000000! 
+     336 000022e0     0d5f          CALLA   CLR_SCRN
+         000022f0 00000000! 
+     337 00002310     0d5f          CALLA   MYOINIT
+         00002320 00000000! 
+     338 00002340     0d5f          CALLA   WRAMINIT                ;INITIALIZE WAVE RAM
+         00002350 00000000! 
+     339 00002370     0d5f          CALLA   BBINIT
+         00002380 00000000! 
+     340 000023a0     0d5f          CALLA   GETWAVE                 ;SET UP WAVE DIFFICULTY PARAMS
+         000023b0 00000000! 
+     341                    
+     342 000023d0     1820          MOVK    1,A0                                                     
+     343 000023e0     0580          MOVE    A0,@DISPLAYON,W                                          
+         000023f0 00000000! 
+     344                    
+     345                    *SET UP SCORE AREA
+     346 00002410     0d5f          CALLA   P1LLINIT                ;SEND OUT PLAYER ONE
+         00002420 00000000! 
+     347                    
+     348 00002440     09eb          MOVI    P1DATA,A11
+         00002450 00000000! 
+     349 00002470                   CREATE  P1PID|PMPID,PRESCONT
+     350 000024f0     09eb          MOVI    P2DATA,A11
+         00002500 00000000! 
+     351 00002520                   CREATE  P2PID|PMPID,PRESCONT
+     352                    
+     353 000025a0     09e0          MOVI    SCRNMID,A0              ;POINT FROM WHICH TO START THE EXPAND
+         000025b0 00ff0100  
+     354 000025d0     0780          MOVE    A0,@SCRNTL,L
+         000025e0 00000000! 
+     355 00002600     0780          MOVE    A0,@SCRNLR,L            ;MAKE THE SCREEN WINDOW A POINT
+         00002610 00000000! 
+     356                    
+     357 00002630     09ea          MOVI    WAVEBGND,A10
+         00002640 00000000! 
+     358 00002660     05a0          MOVE    @AWAVE,A0,W
+         00002670 00000000- 
+     359 00002690     1420          DEC     A0              ;MAKE WAVE # 0 BASED
+     360 000026a0     2780          SLL     28,A0           ;WAVE ONLY SIGNIFICANT TO 4 BITS RIGHT NOW
+     361 000026b0     2d20          SRL     23,A0
+     362                    ***     SLL     5,A0
+     363                    
+     364 000026c0     09e1          MOVI    BAKSTAKS,A1
+         000026d0 00000000! 
+     365 000026f0     0781          MOVE    A1,@BAKSTAKP,L  ;INITIALIZE BACKGROUND STACK POINTER
+         00002700 00000000! 
+     366                    
+     367 00002720     09e1          MOVI    OBJSTAKS,A1
+         00002730 00000000! 
+     368 00002750     0781          MOVE    A1,@OBJSTAKP,L  ;INITIALIZE OBJECT STACK POINTER
+         00002760 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE    9
+
+     369                    
+     370 00002780     400a          ADD     A0,A10
+     371 00002790     874a          MOVE    *A10,A10,L
+     372 000027a0     0d5f          CALLA   INITBGND                ;INITIALIZE THE CURRENT BACKGROUND
+         000027b0 00000000! 
+     373                    
+     374 000027d0     9541          MOVE    *A10+,A1,W              ;AND THE SCROLL STOPPER 
+     375 000027e0     0581          MOVE    A1,@GOALCARD,W  
+         000027f0 00000000! 
+     376 00002810     0d5f          CALLA   GOALXFER                ;TRANSFER GOAL DATA TO RAM BLOCK
+         00002820 00000000! 
+     377 00002840     09ee          MOVI    GOALDOOR,A14
+         00002850 00000000! 
+     378 00002870     0d5f          CALLA   INITFGND                ;INITIALIZE THESE FORE GROUND DITTIES
+         00002880 00000000! 
+     379                    
+     380 000028a0     0d5f          CALLA   SCORAREA
+         000028b0 00000000! 
+     381                    
+     382 000028d0                   CREATE  BGNDPID,BSCHKG          ;CREATE THE SCROLL CHECKER
+     383 00002950                   CREATE  BUPDPID,BBOFSCRN        ;CREATE THE BACKGROUND UPDATE PROCESS
+     384                    ****    CREATE  INDPID,GAMEOTXT         ;PUT UP THE "GAME OVER" TEXT    
+     385                    
+     386 000029d0     09c0          MOVI    40,A0
+         000029e0     0028  
+     387 000029f0     09ea          MOVI    SCRNST,A10
+         00002a00 00500000  
+     388 00002a20     09eb          MOVI    SCRNEND,A11
+         00002a30 01900200  
+     389 00002a50                   JSRP    SCREXP32                ;EXPAND THE PLAYFIELD SCREEN
+     390                    
+     391 00002ac0     09c9          MOVI    1000H,A9
+         00002ad0     1000  
+     392 00002ae0                   CREATE  SKYPID,SKYUP
+     393 00002b60                   CREATE  MASTERID,MASTERDP       ;CREATE MASTER DISPATCH
+     394                    
+     395 00002be0     1841          MOVK    2,A1
+     396 00002bf0     0581          MOVE    A1,@GAMERASE,W          ;FULL SCREEN AUTO-ERASE
+         00002c00 00000000! 
+     397                    
+     398 00002c20     09ac          MMFM    A12,A8,A9,A10,A11
+         00002c30     0f00  
+     399 00002c40                   RETP
+     400                    
+     401 00002c70       4e          .STRING "NNAARRCC  CCOOPPYYRRIIGGHHTT  ((CC))  11998888  "
+         00002c78       4e  
+         00002c80       41  
+         00002c88       41  
+         00002c90       52  
+         00002c98       52  
+         00002ca0       43  
+         00002ca8       43  
+         00002cb0       20  
+         00002cb8       20  
+         00002cc0       43  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE   10
+
+         00002cc8       43  
+         00002cd0       4f  
+         00002cd8       4f  
+         00002ce0       50  
+         00002ce8       50  
+         00002cf0       59  
+         00002cf8       59  
+         00002d00       52  
+         00002d08       52  
+         00002d10       49  
+         00002d18       49  
+         00002d20       47  
+         00002d28       47  
+         00002d30       48  
+         00002d38       48  
+         00002d40       54  
+         00002d48       54  
+         00002d50       20  
+         00002d58       20  
+         00002d60       28  
+         00002d68       28  
+         00002d70       43  
+         00002d78       43  
+         00002d80       29  
+         00002d88       29  
+         00002d90       20  
+         00002d98       20  
+         00002da0       31  
+         00002da8       31  
+         00002db0       39  
+         00002db8       39  
+         00002dc0       38  
+         00002dc8       38  
+         00002dd0       38  
+         00002dd8       38  
+         00002de0       20  
+         00002de8       20  
+     402 00002df0       57      .STRING "WWIILLLLIIAAMMSS  EELLEECCTTRROONNIICCSS  GGAAMMEESS,,  IINNCC.."  
+         00002df8       57  
+         00002e00       49  
+         00002e08       49  
+         00002e10       4c  
+         00002e18       4c  
+         00002e20       4c  
+         00002e28       4c  
+         00002e30       49  
+         00002e38       49  
+         00002e40       41  
+         00002e48       41  
+         00002e50       4d  
+         00002e58       4d  
+         00002e60       53  
+         00002e68       53  
+         00002e70       20  
+         00002e78       20  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:14 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- ATTRACT MODE >>>                                 PAGE   11
+
+         00002e80       45  
+         00002e88       45  
+         00002e90       4c  
+         00002e98       4c  
+         00002ea0       45  
+         00002ea8       45  
+         00002eb0       43  
+         00002eb8       43  
+         00002ec0       54  
+         00002ec8       54  
+         00002ed0       52  
+         00002ed8       52  
+         00002ee0       4f  
+         00002ee8       4f  
+         00002ef0       4e  
+         00002ef8       4e  
+         00002f00       49  
+         00002f08       49  
+         00002f10       43  
+         00002f18       43  
+         00002f20       53  
+         00002f28       53  
+         00002f30       20  
+         00002f38       20  
+         00002f40       47  
+         00002f48       47  
+         00002f50       41  
+         00002f58       41  
+         00002f60       4d  
+         00002f68       4d  
+         00002f70       45  
+         00002f78       45  
+         00002f80       53  
+         00002f88       53  
+         00002f90       2c  
+         00002f98       2c  
+         00002fa0       20  
+         00002fa8       20  
+         00002fb0       49  
+         00002fb8       49  
+         00002fc0       4e  
+         00002fc8       4e  
+         00002fd0       43  
+         00002fd8       43  
+         00002fe0       2e  
+         00002fe8       2e  
+     403 00002ff0                   .EVEN
+     404                    
+
+ No Errors,  No Warnings

@@ -1,0 +1,2698 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCSCOR.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L,T
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      21                    *       LOCAL STUFF
+      22                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      23                            .INCLUDE        "NARCAUDN.ASM"          ;NARC Audit Equates
+      24                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      25                    
+      26                    *
+      27                    *GLOBALS IN THIS FILE
+      28                            .GLOBAL         ADDMRBIG,P_MBIGS,P_GOLD,OUTMBIGS,CRCMESS,CLRMESS
+      29                            .GLOBAL         PICKMESS,OUTNEXTR,PIXQINIT
+      30                    *
+      31                    *EXTERNALS
+      32                            .GLOBAL         GET_ADJ,AUD1,CR_STRTP,CR_CONTP,G_CRED,GET_CSTR
+      33                            .GLOBAL         STR_OBJ,STRCAT,STR_FREE,BCDBIN,BTIME
+      34                    
+      35 00000000                   .EVEN
+      36 00000000                   .TEXT
+      37                    
+      38                    **************************************************************************
+      39                    *                                                                        *
+      40                    * SCANNER - SCANNER AREA PROCESS                                         *
+      41                    *                                                                        *
+      42                    **************************************************************************
+      43 00000000           SCANNER
+      44 00000000     05a0          MOVE    @UNIVENDX,A0,W
+         00000010 00000000! 
+      45 00000030     09c9          MOVI    SCANXSIZ-15,A9          ;GET THE SCANNER X DIMENSION
+         00000040     009c  
+      46 00000050     2609          SLL     16,A9
+      47 00000060     5a09          DIVU    A0,A9                   ;A9 = SCANNER X RATIO
+      48 00000070     05a0          MOVE    @UNIVENDY,A0,W
+         00000080 00000000! 
+      49                    ***     CMPI    800,A0
+      50                    ***     JRLO    SCANM400                ;BR = BONUS AREA NOT APPARENT
+      51                    ***     SUBI    400,A0                  ;SUBTRACT OFF THE BONUS AREA
+      52 000000a0           SCANM400
+      53 000000a0     09cb          MOVI    SCANYSIZ-15,A11         ;GET THE SCANNER Y DIMENSION
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    2
+
+         000000b0     0021  
+      54 000000c0     260b          SLL     16,A11
+      55 000000d0     5a0b          DIVU    A0,A11                  ;A11 = SCANNER Y RATIO
+      56 000000e0     09ea          MOVI    SCANOFST,A10            ;GET THE SCANNER UPPER LEFT OFFSET
+         000000f0 001000aa  
+      57 00000110           SCANLP
+      58 00000110     0d5f          CALLA   PIXQINIT
+         00000120 00000680' 
+      59 00000140     09e8          MOVI    OBJLST,A8               ;GET THE OBJECT LIST
+         00000150 00000000! 
+      60 00000170     5642          CLR     A2                      ;AND CONSTANT PALETTE
+      61 00000180     57ce          CLR     A14                     ;BOUNDRY COMPARISON
+      62 00000190     09e6          MOVI    [SCANYSIZ,SCANXSIZ],A6
+         000001a0 003000ab  
+      63 000001c0           SCANOLP
+      64 000001c0     8708          MOVE    *A8,A8,L                ;GET THE NEXT OBJECT
+      65 000001d0     ca07          JREQ    SCANNLST                ;BR = DONE
+      66 000001e0     b703          MOVE    *A8(OBLIPIMG),A3,L
+         000001f0     0260  
+      67 00000200     cafb          JREQ    SCANOLP                 ;BR = NO BLIP FOR THIS DUDE
+      68 00000210     0d3f          CALLR   SCANSUB
+         00000220     0023  
+      69 00000230     c913          JRHS    SCANUPD                 ;QUEUE IS LOADED
+      70 00000240     c0f7          JRUC    SCANOLP
+      71 00000250           SCANNLST
+      72 00000250     4f80          MOVE    A12,B0
+      73 00000260     09ec          MOVI    BBACTIVE,A12
+         00000270 00000000! 
+      74 00000290           SCANNLP
+      75 00000290     878c          MOVE    *A12,A12,L
+      76 000002a0     ca0b          JRZ     SCANNDN
+      77 000002b0     b580          MOVE    *A12(NDATA),A0,W
+         000002c0     0040  
+      78 000002d0     cbfb          JRNZ    SCANNLP                 ;BR = THIS THING GOT CAUGHT LAST TIME
+      79 000002e0     b788          MOVE    *A12(NPTR),A8,L
+         000002f0     0020  
+      80 00000300     b703          MOVE    *A8(OBLIPIMG),A3,L
+         00000310     0260  
+      81 00000320     caf6          JREQ    SCANNLP                 ;NOBODY WANTS HIM
+      82 00000330     0d3f          CALLR   SCANSUB 
+         00000340     0011  
+      83 00000350     c8f3          JRLO    SCANNLP
+      84 00000360           SCANNDN
+      85 00000360     4e1c          MOVE    B0,A12
+      86 00000370           SCANUPD
+      87 00000370     1820          MOVK    1,A0
+      88 00000380     0580          MOVE    A0,@PIXQVAL,W           ;LET THEM BE
+         00000390 00000000! 
+      89 000003b0           SCANSLP
+      90 000003b0     05a0          MOVE    @PIXQVAL,A0,W
+         000003c0 00000000! 
+      91 000003e0     cad2          JREQ    SCANLP
+      92 000003f0                   SLOOP   10,SCANSLP
+      93                    *       
+      94                    *SCANNER SETUP SUBROUTINE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    3
+
+      95                    *A3 = PTR TO THE BLIP IMAGE TABLE
+      96                    *RETURNS: C CLR QUEUE IS LOADED
+      97 00000460           SCANSUB
+      98 00000460     b500          MOVE    *A8(OFLAGS),A0,W
+         00000470     0100  
+      99 00000480     1f60          BTST    B_FLIPH,A0
+     100 00000490     cb02          JRNE    SCANSUB1                ;BR = HE'S FLIPPED, LOAD FLIPPED IMAGE
+     101 000004a0     8663          MOVE    *A3,A3,L                ;OTHERWISE LOAD UNFLIPPED
+     102 000004b0     c002          JRUC    SCANSUB2
+     103 000004c0           SCANSUB1
+     104 000004c0     b663          MOVE    *A3(20H),A3,L           ;FLIPPED
+         000004d0     0020  
+     105 000004e0           SCANSUB2
+     106 000004e0     0d5f          CALLA   GETCPNT
+         000004f0 00000000! 
+     107 00000510     ee25          MOVY    A1,A5
+     108 00000520     2e05          SRL     16,A5
+     109 00000530     0521          ZEXT    A1
+     110 00000540     5f21          MPYU    A9,A1
+     111 00000550     2e01          SRL     16,A1
+     112 00000560     ec20          MOVX    A1,A0
+     113 00000570     5f65          MPYU    A11,A5
+     114 00000580     eea0          MOVY    A5,A0
+     115 00000590     e5c0          CMPXY   A14,A0
+     116 000005a0                   JRXLT   SCANOFF                 ;BR = TOO FAR LEFT
+     117 000005b0                   JRYLT   SCANOFF                 ;BR = TOO HIGH?
+     118 000005c0     8667          MOVE    *A3,A7,L
+     119 000005d0     e007          ADDXY   A0,A7                   ;A7 = [LOWER RIGHT Y,LOWER RIGHT X]
+     120 000005e0     e4c7          CMPXY   A6,A7
+     121 000005f0     c503          JRXGT   SCANOFF                 ;BR = TOO FAR RIGHT
+     122 00000600     c302          JRYGT   SCANOFF                 ;BR = TOO LOW
+     123 00000610     4140          ADD     A10,A0                  ;ADD IN SCANNER UPPER LEFT OFFSET
+     124 00000620     c001          JRUC    SCANOK
+     125 00000630           SCANOFF
+     126 00000630     5600          CLR     A0
+     127 00000640           SCANOK
+     128 00000640     0d5f          CALLA   PIXQADD
+         00000650 00000790' 
+     129 00000670     0960          RETS
+     130                    
+     131                    **************************************************************************
+     132                    *                                                                        *
+     133                    * PIXQINIT - PIXEL QUEUE INITIALIZATION                                  *
+     134                    *                                                                        *
+     135                    **************************************************************************
+     136 00000680           PIXQINIT
+     137 00000680                   PUSH    A0
+     138 00000690     5600          CLR     A0
+     139 000006a0     0580          MOVE    A0,@PIXQVAL,W
+         000006b0 00000000! 
+     140 000006d0     09e0          MOVI    PIXQUEUE,A0             ;INITIALIZE THE PIXEL XFER QUEUE
+         000006e0 00000000! 
+     141 00000700     0780          MOVE    A0,@PIXQHEAD,L
+         00000710 00000000! 
+     142 00000730     0780          MOVE    A0,@PIXQTAIL,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    4
+
+         00000740 00000000! 
+     143 00000760                   PULL    A0
+     144 00000780     0960          RETS
+     145                    **************************************************************************
+     146                    *                                                                        *
+     147                    * PIXQADD - ADD THESE ELEMENTS TO THE PIXEL QUEUE                        *
+     148                    * A0 = [Y,X] POSITION                                                    *
+     149                    * A2 = PALETTE                                                           *
+     150                    * A3 = PTR TO BLIP IMAGE TABLE                                           *
+     151                    * A8 = PTR TO OBJECT BEING REPRESENTED                                   *
+     152                    * RETURNS:                                                               *
+     153                    *       C BIT CLR = QUEUE FULL                                           *
+     154                    *       C BIT SET = SUCCESS                                              *
+     155                    *                                                                        *
+     156                    **************************************************************************
+     157 00000790           PIXQADD
+     158 00000790                   PUSH    A4
+     159 000007a0     07a4          MOVE    @PIXQTAIL,A4,L
+         000007b0 00000000! 
+     160 000007d0     0b64          CMPI    PIXQEND,A4
+         000007e0 ffffffff! 
+     161 00000800     c90a          JRHS    PIXQXXX
+     162 00000810     9044          MOVE    A2,*A4+,W
+     163 00000820     9264          MOVE    A3,*A4+,L
+     164 00000830     d304          MOVE    *A8(OEBLIP),*A4+,L
+         00000840     0280  
+     165 00000850     b208          MOVE    A0,*A8(OEBLIP),L                ;STORE AS AN ERASE LOCATION
+         00000860     0280  
+     166 00000870     9204          MOVE    A0,*A4+,L
+     167 00000880     0784          MOVE    A4,@PIXQTAIL,L
+         00000890 00000000! 
+     168 000008b0           PIXQXXX
+     169 000008b0                   PULL    A4
+     170 000008d0     0960          RETS
+     171                    
+     172                    **************************************************************************
+     173                    *                                                                        *
+     174                    * BLIPOFF - TURN AN OBJECTS SCANNER BLIP OFF                             *
+     175                    * A8 = PTR TO OBJECT                                                     *
+     176                    *                                                                        *
+     177                    **************************************************************************
+     178 000008e0           BLIPOFF
+     179 000008e0     098f          MMTM    SP,A0,A2,A3
+         000008f0     b000  
+     180 00000900     b703          MOVE    *A8(OBLIPIMG),A3,L
+         00000910     0260  
+     181 00000920     ca16          JREQ    NOBLIP                  ;BR = NO SCANNER BLIP
+     182 00000930     b500          MOVE    *A8(OFLAGS),A0,W
+         00000940     0100  
+     183 00000950     1f60          BTST    B_FLIPH,A0
+     184 00000960     cb02          JRNE    BLIPOFF1                
+     185 00000970     8663          MOVE    *A3,A3,L
+     186 00000980     c002          JRUC    BLIPOFF2
+     187 00000990           BLIPOFF1
+     188 00000990     b663          MOVE    *A3(20H),A3,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    5
+
+         000009a0     0020  
+     189 000009b0           BLIPOFF2
+     190 000009b0     5642          CLR     A2                      ;AND CONSTANT PALETTE
+     191 000009c0     5600          CLR     A0                      ;ERASE LAST PLOT
+     192 000009d0     0580          MOVE    A0,@PIXQVAL,W           ;QUEUE IS INVALID WHILE UPDATING
+         000009e0 00000000! 
+     193 00000a00     0d5f          CALLA   PIXQADD                 ;ERASE THE LAST BLIP
+         00000a10 00000790' 
+     194 00000a30     b208          MOVE    A0,*A8(OBLIPIMG),L
+         00000a40     0260  
+     195 00000a50     1820          MOVK    1,A0
+     196 00000a60     0580          MOVE    A0,@PIXQVAL,W           ;MAKE SURE THIS GETS WRITTEN
+         00000a70 00000000! 
+     197 00000a90           NOBLIP
+     198 00000a90     09af          MMFM    SP,A0,A2,A3
+         00000aa0     000d  
+     199 00000ab0     0960          RETS    
+     200                    
+     201                    **************************************************************************
+     202                    *                                                                        *
+     203                    * BLIPON - TURN OBJECTS SCANNER BLIP ON                                  *
+     204                    * A8 = PTR TO OBJECT                                                     *
+     205                    * A3 = PTR TO BLIP TABLE                                                 *
+     206                    *                                                                        *
+     207                    **************************************************************************
+     208 00000ac0           BLIPON
+     209 00000ac0     b268          MOVE    A3,*A8(OBLIPIMG),L
+         00000ad0     0260  
+     210 00000ae0     0960          RETS
+     211                    **************************************************************************
+     212                    *                                                                        *
+     213                    * SCORAREA - OUTPUT THE SCORE AREA AND UPDATE ALL PLAYER STATUS          *
+     214                    *                                                                        *
+     215                    **************************************************************************
+     216 00000af0           SCORAREA
+     217 00000af0     0d3f          CALLR   SSAREA                  ;PUT OUT THE SCORE AREA
+         00000b00     0008  
+     218 00000b10     0d3f          CALLR   UPSTAT                  ;UPDATE PLAYERS STATUS
+         00000b20     0077  
+     219 00000b30     0d3f          CALLR   WAVENUM                 ;AND OUTPUT THE WAVE # (TITLE)
+         00000b40     0009  
+     220 00000b50     0d5f          CALLA   G_CREDONLY
+         00000b60 00005a40' 
+     221 00000b80     0960          RETS
+     222                    *
+     223                    *OUTPUT THE WHOLE SCORE/STATUS AREA, P1 AND P2, PLUS THE NARQUEE
+     224                    *
+     225 00000b90     0d3f  SSAREA  CALLR   P1SSAREA
+         00000ba0     0026  
+     226 00000bb0     0d3f          CALLR   NARQUEE
+         00000bc0     0030  
+     227 00000bd0     c029          JRUC    P2SSAREA
+     228                    
+     229                    **************************************************************************
+     230                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    6
+
+     231                    * WAVENUM - OUTPUT THE WAVE # IN IT'S AREA                               *
+     232                    *                                                                        *
+     233                    **************************************************************************
+     234 00000be0           WAVENUM
+     235 00000be0     098f          MMTM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         00000bf0     fbf0  
+     236 00000c00     09e3          MOVI    [5,225],A3
+         00000c10 000500e1  
+     237 00000c30     09e4          MOVI    [10,108],A4
+         00000c40 000a006c  
+     238 00000c60     0d5f          CALLA   BLNKAREA
+         00000c70 00000000! 
+     239 00000c90     5600          CLR     A0
+     240 00000ca0     09e6          MOVI    0F9F9H,A6
+         00000cb0 0000f9f9  
+     241                    
+     242 00000cd0     07a8          MOVE    @BGNAME,A8,L    ;GET THE NAME OF THIS BACKGROUND
+         00000ce0 00000000! 
+     243                    
+     244 00000d00     09e9          MOVI    [5,226],A9      ;POSITION
+         00000d10 000500e2  
+     245 00000d30     09eb          MOVI    RD7FONT,A11     ;VERY SMALL LETTERS
+         00000d40 00000000! 
+     246 00000d60     182a          MOVK    1,A10           ;ONE SPACE BETWEEN LETTERS
+     247 00000d70                   JSRP    STRLNRM         ;AND STICK IT OUT THERE
+     248 00000de0     09af          MMFM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         00000df0     0fdf  
+     249 00000e00     0960          RETS
+     250                            
+     251                    *
+     252                    *OUTPUT PLAYER 1'S SCORE/STATUS AREA
+     253                    *
+     254 00000e10           P1SSAREA:
+     255 00000e10     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A14
+         00000e20     fc02  
+     256 00000e30     09e0          MOVI    P1SSTAB,A0
+         00000e40 00001080' 
+     257 00000e60     c00e          JRUC    SSOUT1
+     258                    *
+     259                    *OUTPUT PLAYER 2'S SCORE/STATUS AREA
+     260                    *
+     261 00000e70           P2SSAREA:
+     262 00000e70     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A14
+         00000e80     fc02  
+     263 00000e90     09e0          MOVI    P2SSTAB,A0
+         00000ea0 00001120' 
+     264 00000ec0     c008          JRUC    SSOUT1
+     265                    *
+     266                    *OUTPUT THE MARQUEE(SCANNER) BETWEEN P1 AND P2 SSAREAS
+     267                    *
+     268 00000ed0     098f  NARQUEE MMTM    SP,A0,A1,A2,A3,A4,A5,A14
+         00000ee0     fc02  
+     269 00000ef0     09e0          MOVI    NARQTAB,A0
+         00000f00 000011c0' 
+     270 00000f20     c002          JRUC    SSOUT1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    7
+
+     271                    **************************************************************************
+     272                    *                                                                        *
+     273                    * SSOUT - OUTPUT SOME SCORE/STATUS AREA PIECES VIA A TABLE.              *
+     274                    *       FIRST ENTRY IS AREA TO BLANK                                     *
+     275                    * A0 = PTR TO TABLE                                                      *
+     276                    * RETURNS                                                                *
+     277                    * A0 = PTING TO NEXT WORD AFTER THE TABLE                                *
+     278                    *                                                                        *
+     279                    **************************************************************************
+     280 00000f30           SSOUT
+     281 00000f30     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A14
+         00000f40     fc02  
+     282 00000f50           SSOUT1
+     283 00000f50     9603          MOVE    *A0+,A3,L
+     284 00000f60     9604          MOVE    *A0+,A4,L
+     285 00000f70     0d5f          CALLA   BLNKAREA
+         00000f80 00000000! 
+     286 00000fa0     5621          CLR     A1                      ;CONSTANT:PALETTE
+     287 00000fb0     09e5          MOVI    DMAWNZ,A5               ;DRAW
+         00000fc0 00008002  
+     288 00000fe0     960e          MOVE    *A0+,A14,L              ;KICK IT OFF COUSIN
+     289 00000ff0           SSOUTL
+     290 00000ff0     9603          MOVE    *A0+,A3,L
+     291 00001000     0d5f          CALLA   DTIME                   ;DO IT
+         00001010 00000000! 
+     292 00001030     960e          MOVE    *A0+,A14,L              ;GET THE NEXT
+     293 00001040     cbfa          JRNZ    SSOUTL                  ;BR = DO IT AGAIN
+     294 00001050     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A14
+         00001060     403f  
+     295 00001070     0960          RETS
+     296                    *
+     297                    *SCORE AREA TABS
+     298                    *       .LONG   BLANK [Y,X] DAG
+     299                    *       .LONG   BLANK [Y,X] SIZE
+     300                    *       .LONG   PIECE 1 HEADER
+     301                    *       .LONG   PIECE 1 [Y,X] DAG
+     302                    *       .
+     303                    *       .
+     304                    *       .LONG   PIECE N HEADER
+     305                    *       .LONG   PIECE N [Y,X] DAG
+     306                    *       .LONG   0
+     307 00001080           P1SSTAB
+     308 00001080 00000001          .LONG   (0*10000H)+1
+     309 000010a0 005000a9          .LONG   (80*10000H)+169
+     310 000010c0 00000000!         .LONG   SCORESIDE
+     311 000010e0 00000001          .LONG   (0*10000H)+1
+     312 00001100 00000000          .LONG   0
+     313 00001120           P2SSTAB
+     314 00001120 00000156          .LONG   (0*10000H)+342
+     315 00001140 005000a9          .LONG   (80*10000H)+169
+     316 00001160 00000000!         .LONG   SCORESIDE
+     317 00001180 00000156          .LONG   (0*10000H)+342
+     318 000011a0 00000000          .LONG   0
+     319 000011c0           NARQTAB 
+     320 000011c0 000000aa          .LONG   (0*10000H)+170
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    8
+
+     321 000011e0 005000ac          .LONG   (80*10000H)+172
+     322 00001200 00000000!         .LONG   SCORETOP
+     323 00001220 000000aa          .LONG   (0*10000H)+170
+     324 00001240 00000000!         .LONG   SCOREBOT
+     325 00001260 004300aa          .LONG   (67*10000H)+170
+     326 00001280 00000000          .LONG   0
+     327                                      
+     328                    *
+     329                    *UPDATE BOTH PLAYER 1 AND PLAYER 2'S STATUS
+     330 000012a0     a24f  UPSTAT  MOVE    A2,-*SP,L
+     331 000012b0     09e2          MOVI    P1DATA,A2               ;UPDATE PLAYER ONE
+         000012c0 00000000! 
+     332 000012e0     0d3f          CALLR   UPDSL
+         000012f0     0007  
+     333 00001300     09e2          MOVI    P2DATA,A2               ;NOW PLAYER TWO
+         00001310 00000000! 
+     334 00001330     0d3f          CALLR   UPDSL
+         00001340     0002  
+     335 00001350     97e2          MOVE    *SP+,A2,L
+     336 00001360     0960          RETS
+     337                    
+     338                    *
+     339                    *UPDATE THE PLAYERS SCORE,LIVES & ROCKETS
+     340                    *A2 = PLAYER DATA STRUCTURE
+     341 00001370           UPDSL
+     342                    *FIRST OUTPUT THE AREA
+     343 00001370     0b62          CMPI    P1DATA,A2
+         00001380 ffffffff! 
+     344 000013a0     cb03          JRNE    UPDSLP2
+     345 000013b0     0d3f          CALLR   P1SSAREA
+         000013c0     ffa4  
+     346 000013d0     c002          JRUC    UPDSL1
+     347 000013e0           UPDSLP2
+     348 000013e0     0d3f          CALLR   P2SSAREA
+         000013f0     ffa7  
+     349 00001400           UPDSL1
+     350 00001400                   PUSH    A0
+     351 00001410     b640          MOVE    *A2(PSCORE),A0,L        ;GET THE SCORE IN A0
+         00001420     01a0  
+     352 00001430     0d5f          CALLA   OUTSCR                  ;AND OUTPUT IT
+         00001440 00002190' 
+     353 00001460     0d5f          CALLA   OUTLIVES
+         00001470 00003c00' 
+     354 00001490     0d5f          CALLA   OUTENRGY
+         000014a0 00003650' 
+     355 000014c0     0d5f          CALLA   OUTROCKS
+         000014d0 00005200' 
+     356 000014f0     0d5f          CALLA   OUTBULLS
+         00001500 000050d0' 
+     357 00001520     0d5f          CALLA   OUTDRUGS
+         00001530 00005340' 
+     358 00001550     0d5f          CALLA   OUTBUCKS
+         00001560 00005480' 
+     359 00001580     0d5f          CALLA   OUTBUSTS
+         00001590 000055c0' 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE    9
+
+     360 000015b0     0d5f          CALLA   OUTCARDS
+         000015c0 00004740' 
+     361 000015e0     0d5f          CALLA   OUTMBIGS
+         000015f0 00004040' 
+     362 00001610     0d3f          CALLR   OUTNEXTR
+         00001620     04eb  
+     363 00001630           UPDSX
+     364 00001630                   PULL    A0
+     365 00001650     0960          RETS
+     366                    
+     367                    *EUGENE'S SCORE ROUTINES
+     368                    *
+     369                    *BCD ADD ROUTINE
+     370                    *A0=SCORE (8 DIGIT BCD) 32 BITS
+     371                    *A1=NUMBER TO ADD TO A0 (8 DIGIT BCD)
+     372                    *PACKED BCD FORMAT 4-BITS/ DIGIT
+     373 00001660           BCDADD: 
+     374 00001660     098f          MMTM    SP,A1,A3,A4,A5,A6
+         00001670     5e00  
+     375 00001680     1905          MOVK    8,A5            ;DO 8 DIGITS
+     376 00001690     0320          CLRC                    ;CLEAR THE CARRY
+     377 000016a0     1946          MOVK    0Ah,A6
+     378 000016b0           BCDLP:
+     379 000016b0     19e3          MOVK    0Fh,A3
+     380 000016c0     19e4          MOVK    0Fh,A4
+     381 000016d0     5023          AND     A1,A3           ;MASK GARBAGE
+     382 000016e0     5004          AND     A0,A4
+     383 000016f0     4264          ADDC    A3,A4
+     384 00001700     48c4          CMP     A6,A4           ;NEED TO ADJUST?
+     385 00001710     c808          JRLO    BCDAD1
+     386 00001720     10c4          ADDK    6,A4
+     387 00001730     2f80          SRL     4,A0
+     388 00001740     2784          SLL     28,A4
+     389 00001750     4080          ADD     A4,A0
+     390 00001760     2f81          SRL     4,A1
+     391 00001770     0de0          SETC
+     392 00001780     3dc5          DSJS    A5,BCDLP
+     393 00001790     c006          JRUC    BCDADX
+     394 000017a0           BCDAD1: 
+     395 000017a0     2f80          SRL     4,A0    
+     396 000017b0     2784          SLL     28,A4
+     397 000017c0     4080          ADD     A4,A0
+     398 000017d0     2f81          SRL     4,A1
+     399 000017e0     0320          CLRC
+     400 000017f0     3ea5          DSJS    A5,BCDLP
+     401 00001800           BCDADX: 
+     402 00001800     09af          MMFM    SP,A1,A3,A4,A5,A6       
+         00001810     007a  
+     403 00001820     0960          RETS
+     404                            
+     405                    **************************************************************************
+     406                    *                                                                        *
+     407                    * SCORE2P - ADD THE SAME SCORE VALUE TO BOTH PLAYERS, IF ACTIVE          *
+     408                    *               AND IN A VEHICLE.                                        *
+     409                    * A1 = SCORE VALUE                                                       *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   10
+
+     410                    *                                                                        *
+     411                    **************************************************************************
+     412 00001830           SCORE2P
+     413 00001830     098f          MMTM    SP,A0,A2
+         00001840     a000  
+     414 00001850     09e2          MOVI    P1DATA,A2
+         00001860 00000000! 
+     415 00001880     b640          MOVE    *A2(POBJ),A0,L
+         00001890     00a0  
+     416 000018a0     ca08          JRZ     SCOREP2                 ;BR = NO PLAYER ONE
+     417 000018b0     b440          MOVE    *A2(PIRQFLAG),A0,W      
+         000018c0     0080  
+     418 000018d0     0b80          ANDI    MDRIVER|MPASSEN,A0
+         000018e0 ffffe7ff  
+     419 00001900     ca02          JREQ    SCOREP2                 ;BR = NOT IN THE CAR
+     420 00001910     0d3f          CALLR   SCORE
+         00001920     0011  
+     421 00001930           SCOREP2
+     422 00001930     09e2          MOVI    P2DATA,A2
+         00001940 00000000! 
+     423 00001960     b640          MOVE    *A2(POBJ),A0,L
+         00001970     00a0  
+     424 00001980     ca08          JRZ     SCORE2PX                ;BR = NO PLAYER TWO
+     425 00001990     b440          MOVE    *A2(PIRQFLAG),A0,W      
+         000019a0     0080  
+     426 000019b0     0b80          ANDI    MDRIVER|MPASSEN,A0
+         000019c0 ffffe7ff  
+     427 000019e0     ca02          JREQ    SCORE2PX                ;BR = NOT IN THE CAR
+     428 000019f0     0d3f          CALLR   SCORE
+         00001a00     0003  
+     429 00001a10           SCORE2PX
+     430 00001a10     09af          MMFM    SP,A0,A2
+         00001a20     0005  
+     431 00001a30     0960          RETS
+     432                    *       
+     433                    *PLAYER SCORE ROUTINE
+     434                    *A1=SCORE VALUE
+     435                    *A2=PLAYER INDEX
+     436 00001a40           SCORE:
+     437 00001a40     098f          MMTM    SP,A0,A2
+         00001a50     a000  
+     438 00001a60     05a0          MOVE    @GAMSTATE,A0,W
+         00001a70 00000000! 
+     439 00001a90     0b40          CMPI    INAMODE,A0
+         00001aa0     ffcf  
+     440 00001ab0     ca08          JREQ    SCOREX                  ;NO SCORING IN ATTRACT MODE
+     441 00001ac0     b640          MOVE    *A2(PSCORE),A0,L        ;GET SCORE
+         00001ad0     01a0  
+     442 00001ae0     0d3f          CALLR   BCDADD                  ;ADD IN NEW VALUE
+         00001af0     ffb6  
+     443 00001b00     0d3f          CALLR   REPCK                   ;CHECK REPLAY
+         00001b10     001a  
+     444 00001b20     b202          MOVE    A0,*A2(PSCORE),L        ;STORE SCORE
+         00001b30     01a0  
+     445                    *       CALLR   OUTSCR                  ;OUTPUT CURRENT PLAYER SCORE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   11
+
+     446 00001b40           SCOREX
+     447 00001b40     09af          MMFM    SP,A0,A2
+         00001b50     0005  
+     448 00001b60     0960          RETS
+     449                    
+     450                    *       
+     451                    *PLAYER SCORE IMMEADIATE ROUTINE, DOESN'T WAIT FOR SCORE REFRESH
+     452                    *DO NOT USE THIS DURING HEAVY GAME ACTION PLEASE
+     453                    *A1=SCORE VALUE
+     454                    *A2=PLAYER INDEX
+     455 00001b70           SCRIMM:
+     456 00001b70     098f          MMTM    SP,A0,A2
+         00001b80     a000  
+     457 00001b90     05a0          MOVE    @GAMSTATE,A0,W
+         00001ba0 00000000! 
+     458 00001bc0     0b40          CMPI    INAMODE,A0
+         00001bd0     ffcf  
+     459 00001be0     ca0a          JREQ    SCRIMMX                 ;NO SCORING IN ATTRACT MODE
+     460 00001bf0     b640          MOVE    *A2(PSCORE),A0,L        ;GET SCORE
+         00001c00     01a0  
+     461 00001c10     0d3f          CALLR   BCDADD                  ;ADD IN NEW VALUE
+         00001c20     ffa3  
+     462 00001c30     0d3f          CALLR   REPCK                   ;CHECK REPLAY
+         00001c40     0007  
+     463 00001c50     b202          MOVE    A0,*A2(PSCORE),L        ;STORE SCORE
+         00001c60     01a0  
+     464 00001c70     0d3f          CALLR   OUTSCR                  ;OUTPUT CURRENT PLAYER SCORE
+         00001c80     0050  
+     465 00001c90           SCRIMMX
+     466 00001c90     09af          MMFM    SP,A0,A2
+         00001ca0     0005  
+     467 00001cb0     0960          RETS
+     468                    
+     469                    *
+     470                    *CHECK FOR SCORE REPLAY
+     471                    *A0 = CURRENT BCD SCORE
+     472                    *A2 = PLAYER INDEX
+     473 00001cc0           REPCK
+     474 00001cc0     098f          MMTM    SP,A0,A1
+         00001cd0     c000  
+     475 00001ce0     b641          MOVE    *A2(PNEXTREP),A1,L
+         00001cf0     0270  
+     476 00001d00     ca45          JRZ     REPCKX                  ;0 = NO EXTRA DUDES
+     477 00001d10     4820          CMP     A1,A0
+     478 00001d20     c843          JRLO    REPCKX                  ;BR = BOZO DIDN'T ACHIEVE
+     479                    
+     480                    ***     MOVE    A1,A0
+     481                    ***     MOVI    IREPLAY,A1
+     482 00001d30                   ADJUST  ADJEXTRA                ;GET EXTRA MAN EVERY ADJUSTMENT
+     483 00001d80     0d3f          CALLR   BCDADD          
+         00001d90     ff8c  
+     484 00001da0     4c01          MOVE    A0,A1
+     485 00001db0                   ADJUST  ADJLAST
+     486 00001e00     ca03          JRZ     REPCK1                  ;BR = NO EXTRA MAN LIMIT        
+     487 00001e10     4801          CMP     A0,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   12
+
+     488 00001e20     c201          JRLS    REPCK1                  ;HAVE NOT REACHED THE LIMIT
+     489 00001e30     5621          CLR     A1                      ;NO MORE REPLAYS JOE
+     490 00001e40           REPCK1
+     491 00001e40     b222          MOVE    A1,*A2(PNEXTREP),L      ;NEW REPLAY LEVEL
+         00001e50     0270  
+     492 00001e60     0d3f          CALLR   OUTNEXTR
+         00001e70     0466  
+     493                    
+     494 00001e80     b440          MOVE    *A2(PPID),A0,W
+         00001e90     0240  
+     495 00001ea0     0b00          ADDI    PMPID,A0
+         00001eb0     0020  
+     496 00001ec0     5621          CLR     A1
+     497 00001ed0     03e1          NOT     A1
+     498 00001ee0     0d5f          CALLA   EXISTP
+         00001ef0 00000000! 
+     499 00001f10     ca0b          JRZ     REPNOPC                 ;NO "PRESS CONTINUE" PROC
+     500 00001f20     b440          MOVE    *A2(PPID),A0,W
+         00001f30     0240  
+     501 00001f40     0b00          ADDI    PMPID,A0
+         00001f50     0020  
+     502 00001f60     0d5f          CALLA   KILALL                  ;KILL THE "PRESS CONTINUE" PROCESS
+         00001f70 00000000! 
+     503 00001f90     0d3f          CALLR   BLANKB1
+         00001fa0     0583  
+     504 00001fb0     0d3f          CALLR   BLANKB2                 ;CLEAR THE AREA
+         00001fc0     05b1  
+     505 00001fd0           REPNOPC
+     506 00001fd0     0d3f          CALLR   ADDLIFE                 ;ADD A LIFE
+         00001fe0     00b1  
+     507 00001ff0     0d3f          CALLR   ADDROCK                 ;GIVE A FREE ROCKET, WHAT THE HELL
+         00002000     00f8  
+     508 00002010                   SOUND1  FREESND
+     509                    *EXTRA MAN AUDITS
+     510 00002070     0b62          CMPI    P1DATA,A2
+         00002080 ffffffff! 
+     511 000020a0     cb06          JRNE    REPTAL2
+     512 000020b0                   AUDIT   AUDEXTRA
+     513 00002100     c005          JRUC    REPCKX
+     514 00002110           REPTAL2
+     515 00002110                   AUDIT   AUDEXTRA
+     516 00002160           REPCKX
+     517 00002160     09af          MMFM    SP,A0,A1
+         00002170     0003  
+     518 00002180     0960          RETS
+     519                    *
+     520                    *OUTPUT SCORE TO SCREEN
+     521                    *A0=CURRENT PLAYER SCORE
+     522                    *A2=PLINDX=PLAYER DATA AREA
+     523 00002190           OUTSCR:
+     524 00002190     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A14
+         000021a0     ff02  
+     525 000021b0     1906          MOVK    8,A6                    ;DIGIT COUNT
+     526 000021c0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS
+         000021d0     0180  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   13
+
+     527 000021e0     09c4          MOVI    SCRSPC,A4               ;SPACING BETWEEN DIGITS 
+         000021f0     000c  
+     528 00002200     56e7          CLR     A7                      ;INIT BLANKING FLAG
+     529 00002210     09e5          MOVI    9|8000H,A5              ;CONTROL REGISTER
+         00002220 00008009  
+     530                    
+     531 00002240           OUTSCL:
+     532 00002240     4c01          MOVE    A0,A1
+     533 00002250     2c81          SRL     28,A1
+     534 00002260     cb05          JRNE    OUTSC1                  ;NON-ZERO DIGIT
+     535 00002270     0b46          CMPI    2,A6
+         00002280     fffd  
+     536 00002290     c202          JRLS    OUTSC1                  ;LAST DIGITS - OUTPUT ANYWAY
+     537 000022a0     4ce7          MOVE    A7,A7                   ;BLANKING OVER?
+     538 000022b0     ca19          JREQ    OUTSC2                  ;NO
+     539 000022c0           OUTSC1: 
+     540 000022c0     1027          INC     A7                      ;BLANKING IS OVER
+     541 000022d0     24e1          SLL     7,A1                    ;MULTIPLY BY 128
+     542 000022e0     4c2e          MOVE    A1,A14
+     543 000022f0     0b2e          ADDI    RRD0,A14                ;ADDRESS OF IMAGE HEADER
+         00002300 00000000! 
+     544                    
+     545 00002320     05a1          MOVE    @GAMSTATE,A1,W
+         00002330 00000000! 
+     546 00002350     0b41          CMPI    INAMODE,A1
+         00002360     ffcf  
+     547 00002370     ca03          JREQ    OUTSC10                 ;BR = NO FLASH SCORE DURING AMODE
+     548                            
+     549 00002380     b641          MOVE    *A2(POBJ),A1,L          ;IS THE PLAYER ACTIVE
+         00002390     00a0  
+     550 000023a0     cb04          JRNE    OUTSC1A                 ;BR = YES, DO A FLASHY SCORE
+     551 000023b0           OUTSC10
+     552 000023b0     09e1          MOVI    0F9F90000H,A1           ;CONSTANT COLOR:PALETTE SELECT
+         000023c0 f9f90000  
+     553 000023e0     c003          JRUC    OUTSC1B
+     554 000023f0           OUTSC1A
+     555 000023f0     09e1          MOVI    0F5F50000H,A1           ;CONSTANT COLOR:PALETTE SELECT
+         00002400 f5f50000  
+     556 00002420           OUTSC1B
+     557 00002420     0d5f          CALLA   DTIME                   ;OUTPUT THE SUCKER
+         00002430 00000000! 
+     558 00002450           OUTSC2:
+     559 00002450     e083          ADDXY   A4,A3                   ;SPACE TO NEXT DIGIT
+     560 00002460     2480          SLL     4,A0
+     561 00002470     0d86          DSJ     A6,OUTSCL
+         00002480     ffdb  
+     562 00002490     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A14
+         000024a0     40ff  
+     563 000024b0     0960          RETS
+     564                    *
+     565                    *REFRESH SCORE PROCESS
+     566                    *
+     567 000024c0           SCRREF:
+     568 000024c0     5708          CLR     A8                      ;LAST SCORE OUTPUT FOR P1
+     569 000024d0     5729          CLR     A9                      ;LAST SCORE OUTPUT FOR P2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   14
+
+     570 000024e0           SCRREFL
+     571 000024e0     09e2          MOVI    P1DATA,A2               ;DO PLAYER 1
+         000024f0 00000000! 
+     572 00002510     b640          MOVE    *A2(PSCORE),A0,L
+         00002520     01a0  
+     573 00002530     4808          CMP     A0,A8
+     574 00002540     cb07          JRNE    SCRREF1                 ;BR = SCORE HAS CHANGED, REFRESH
+     575 00002550                   SLOOP   8,SCRREF2
+     576 000025c0           SCRREF1
+     577 000025c0     4c08          MOVE    A0,A8
+     578 000025d0                   JSRP    PSCREF
+     579 00002640           SCRREF2
+     580 00002640     09e2          MOVI    P2DATA,A2               ;DO PLAYER 2
+         00002650 00000000! 
+     581 00002670     b640          MOVE    *A2(PSCORE),A0,L
+         00002680     01a0  
+     582 00002690     4809          CMP     A0,A9
+     583 000026a0     cb07          JRNE    SCRREF3                 ;BR = SCORE HAS CHANGED, REFRESH
+     584 000026b0                   SLOOP   8,SCRREFL
+     585 00002720           SCRREF3
+     586 00002720     4c09          MOVE    A0,A9
+     587 00002730                   JSRP    PSCREF
+     588 000027a0     c0d3          JRUC    SCRREFL
+     589                    *
+     590                    *A0=CURRENT SCORE
+     591                    *A2=PLINDX=PLAYER DATA AREA
+     592 000027b0           PSCREF:
+     593 000027b0     b641          MOVE    *A2(POBJ),A1,L
+         000027c0     00a0  
+     594 000027d0     cb07          JRNZ    PSCREF1                 ;BR = PLAYER ACTIVE, DO IT
+     595 000027e0                   SLEEP   8
+     596 00002820                   RETP
+     597 00002850           PSCREF1
+     598 00002850     1906          MOVK    8,A6                    ;DIGIT COUNT
+     599 00002860     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS
+         00002870     0180  
+     600 00002880     56e7          CLR     A7                      ;INIT BLANKING FLAG
+     601 00002890           PSCRL:
+     602 00002890     4c01          MOVE    A0,A1
+     603 000028a0     2c81          SRL     28,A1
+     604 000028b0     cb05          JRNE    PSCR1                   ;NON-ZERO DIGIT
+     605 000028c0     0b46          CMPI    2,A6
+         000028d0     fffd  
+     606 000028e0     c202          JRLS    PSCR1                   ;LAST DIGITS - OUTPUT ANYWAY
+     607 000028f0     4ce7          MOVE    A7,A7                   ;BLANKING OVER?
+     608 00002900     ca0f          JREQ    PSCR2                   ;NO
+     609 00002910           PSCR1:  
+     610 00002910     1027          INC     A7                      ;BLANKING IS OVER
+     611 00002920     24e1          SLL     7,A1                    ;MULTIPLY BY 128
+     612 00002930     4c2e          MOVE    A1,A14
+     613 00002940     0b2e          ADDI    RRD0,A14                ;ADDRESS OF IMAGE HEADER
+         00002950 00000000! 
+     614                    
+     615 00002970     09e1          MOVI    0F5F50000H,A1           ;CONSTANT COLOR:PALETTE SELECT
+         00002980 f5f50000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   15
+
+     616 000029a0     09e5          MOVI    9|8000H,A5              ;CONTROL REGISTER
+         000029b0 00008009  
+     617 000029d0     0d5f          CALLA   DTIME                   ;OUTPUT THE SUCKER
+         000029e0 00000000! 
+     618 00002a00           PSCR2:
+     619 00002a00     0b03          ADDI    SCRSPC,A3
+         00002a10     000c  
+     620 00002a20     2480          SLL     4,A0
+     621 00002a30     098c          MMTM    A12,A0,A2,A3,A6,A7      ;STORE SHIT ON STACK
+         00002a40     b300  
+     622 00002a50                   SLEEP   1                       ;SLEEP
+     623 00002a90     09ac          MMFM    A12,A0,A2,A3,A6,A7      ;GET BACK YOUR STUFF
+         00002aa0     00cd  
+     624 00002ab0     0d86          DSJ     A6,PSCRL
+         00002ac0     ffdc  
+     625 00002ad0                   RETP
+     626                    **************************************************************************
+     627                    *                                                                        *
+     628                    * ADD LIFE                                                               *
+     629                    * A0 = # OF LIVES TO ADD                                                 *
+     630                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     631                    *                                                                        *
+     632                    **************************************************************************
+     633                    *
+     634                    *ADD ONE LIFE
+     635 00002b00           ADDLIFE:
+     636 00002b00     1820          MOVK    1,A0
+     637                    *
+     638                    *ADD N LIFE(VES)
+     639 00002b10           ADDNLIFE
+     640 00002b10     098f          MMTM    SP,A0,A1,A3
+         00002b20     d000  
+     641 00002b30     b441          MOVE    *A2(PLIVES),A1,W        ;CURRENT # OF LIVES
+         00002b40     02b0  
+     642 00002b50     c70a          JRGT    ADDL1
+     643 00002b60     b643          MOVE    *A2(PENERGY),A3,L
+         00002b70     01c0  
+     644 00002b80     c707          JRGT    ADDL1                   ;ENERGY IS STILL THERE
+     645 00002b90     09c3          MOVI    IENERGY,A3
+         00002ba0     0023  
+     646 00002bb0     2603          SLL     16,A3
+     647 00002bc0     b262          MOVE    A3,*A2(PENERGY),L
+         00002bd0     01c0  
+     648 00002be0     0d3f          CALLR   OUTENRGY                ;RE-INSTATE ENERGY INSTEAD OF HEAD
+         00002bf0     00a5  
+     649                    ****    DEC     A0
+     650 00002c00           ADDL1
+     651 00002c00     4001          ADD     A0,A1
+     652 00002c10     b022          MOVE    A1,*A2(PLIVES),W
+         00002c20     02b0  
+     653 00002c30     0d3f          CALLR   OUTLIVES
+         00002c40     00fb  
+     654 00002c50     09af          MMFM    SP,A0,A1,A3
+         00002c60     000b  
+     655 00002c70     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   16
+
+     656                    
+     657                    **************************************************************************
+     658                    *                                                                        *
+     659                    * ADDMRBIG - ADD MR. BIG KILL                                            *
+     660                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     661                    *                                                                        *
+     662                    **************************************************************************
+     663                    *
+     664                    *ADD ONE MR. BIG
+     665 00002c80           ADDMRBIG
+     666 00002c80     098f          MMTM    SP,A0,A1,A3
+         00002c90     d000  
+     667 00002ca0     1820          MOVK    1,A0
+     668 00002cb0     b441          MOVE    *A2(PMBIGS),A1,W        ;CURRENT # OF MR. BIGS
+         00002cc0     03c0  
+     669 00002cd0     4001          ADD     A0,A1
+     670 00002ce0     b022          MOVE    A1,*A2(PMBIGS),W
+         00002cf0     03c0  
+     671 00002d00     0d3f          CALLR   OUTMBIGS
+         00002d10     0132  
+     672 00002d20     09af          MMFM    SP,A0,A1,A3
+         00002d30     000b  
+     673 00002d40     0960          RETS
+     674                    
+     675                    **************************************************************************
+     676                    *                                                                        *
+     677                    * P_MBIGS - HOW MANY MR. BIGS HAVE BEEN KILLED IN TOTAL                  *
+     678                    * RETURNS:                                                               *
+     679                    * A1 = COUNT                                                             *
+     680                    *                                                                        *
+     681                    **************************************************************************
+     682 00002d50           P_MBIGS
+     683 00002d50                   PUSH    A0
+     684 00002d60     05a1          MOVE    @P1DATA+PMBIGS,A1,W
+         00002d70 000003c0! 
+     685 00002d90     05a0          MOVE    @P2DATA+PMBIGS,A0,W
+         00002da0 000003c0! 
+     686 00002dc0     4001          ADD     A0,A1
+     687 00002dd0                   PULL    A0
+     688 00002df0     0960          RETS
+     689                    
+     690                    **************************************************************************
+     691                    *                                                                        *
+     692                    * P_GOLD - DOES A PLAYER HAVE A GOLD CARD                                *
+     693                    * RETURNS:                                                               *
+     694                    *       Z BIT SET = NOBODY HAS ONE                                       *
+     695                    *       Z BIT CLR = SOMEBODY HAS ONE                                     *
+     696                    *                                                                        *
+     697                    **************************************************************************
+     698 00002e00           P_GOLD
+     699 00002e00                   PUSH    A0
+     700 00002e10     07e0          MOVB    @P1DATA+PGCARD,A0
+         00002e20 00000318! 
+     701 00002e40     cb03          JRNE    P_GOLDX
+     702 00002e50     07e0          MOVB    @P2DATA+PGCARD,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   17
+
+         00002e60 00000318! 
+     703 00002e80           P_GOLDX
+     704 00002e80                   PULL    A0
+     705 00002ea0     0960          RETS
+     706                    
+     707                    **************************************************************************
+     708                    *                                                                        *
+     709                    * ADD SOME ENERGY                                                        *
+     710                    * A0 = # OF UNITS TO ADD                                                 *
+     711                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     712                    *                                                                        *
+     713                    **************************************************************************
+     714                    *
+     715                    *ADD ONE ENERGY UNIT
+     716 00002eb0           ADDNRGY:
+     717 00002eb0     1820          MOVK    1,A0
+     718                    *
+     719                    *ADD N ENERGY UNIT(S)
+     720 00002ec0           ADDNNRGY
+     721 00002ec0     098f          MMTM    SP,A0,A1
+         00002ed0     c000  
+     722 00002ee0     b641          MOVE    *A2(PENERGY),A1,L       ;CURRENT # OF LIVES
+         00002ef0     01c0  
+     723 00002f00     2600          SLL     16,A0
+     724 00002f10     4001          ADD     A0,A1
+     725 00002f20     b222          MOVE    A1,*A2(PENERGY),L
+         00002f30     01c0  
+     726 00002f40     0d3f          CALLR   OUTENRGY
+         00002f50     006f  
+     727 00002f60     09af          MMFM    SP,A0,A1
+         00002f70     0003  
+     728 00002f80     0960          RETS
+     729                    
+     730                    **************************************************************************
+     731                    *                                                                        *
+     732                    * ADD A ROCKET BOMB                                                      *                              
+     733                    * A0 = # OF ROCKET BOMBS TO ADD                                          *
+     734                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     735                    *                                                                        *
+     736                    **************************************************************************
+     737                    *
+     738                    *ADD ONE ROCKET BOMB
+     739 00002f90           ADDROCK:
+     740 00002f90     1820          MOVK    1,A0
+     741                    *
+     742                    *ADD N ROCKET(S)
+     743 00002fa0           ADDNROCK
+     744 00002fa0                   PUSH    A1
+     745 00002fb0     b441          MOVE    *A2(PROCKETS),A1,W      ;CURRENT # OF ROCKETS
+         00002fc0     01e0  
+     746 00002fd0     4001          ADD     A0,A1
+     747 00002fe0     b022          MOVE    A1,*A2(PROCKETS),W
+         00002ff0     01e0  
+     748 00003000     0d3f          CALLR   OUTROCKS
+         00003010     021e  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   18
+
+     749 00003020                   PULL    A1
+     750 00003040     0960          RETS
+     751                    
+     752                    **************************************************************************
+     753                    *                                                                        *
+     754                    * ADD SOME BULLETS                                                       *                              
+     755                    * A0 = # OF BULLETS TO ADD                                               *
+     756                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     757                    *                                                                        *
+     758                    **************************************************************************
+     759                    *
+     760                    *ADD ONE BULLET
+     761 00003050           ADDBULL:
+     762 00003050     1820          MOVK    1,A0
+     763                    *
+     764                    *ADD N BULLETS
+     765 00003060           ADDNBULL
+     766 00003060                   PUSH    A1
+     767 00003070     b441          MOVE    *A2(PBULLETS),A1,W      ;CURRENT # OF ROCKETS
+         00003080     0250  
+     768 00003090     4001          ADD     A0,A1
+     769 000030a0     b022          MOVE    A1,*A2(PBULLETS),W
+         000030b0     0250  
+     770 000030c0     0d3f          CALLR   OUTBULLS
+         000030d0     01ff  
+     771 000030e0                   PULL    A1
+     772 00003100     0960          RETS
+     773                    
+     774                    **************************************************************************
+     775                    *                                                                        *
+     776                    * ADD A BUST                                                             *                              
+     777                    * A0 = # OF BULLETS TO ADD                                               *
+     778                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     779                    * DESTROYS A0                                                            *
+     780                    **************************************************************************
+     781                    *
+     782                    *ADD ONE BUST
+     783 00003110           ADDBUST:
+     784 00003110     1820          MOVK    1,A0
+     785                    *
+     786                    *ADD N BUSTS
+     787 00003120           ADDNBUST
+     788 00003120                   PUSH    A1
+     789 00003130     b441          MOVE    *A2(PBUSTS),A1,W        ;CURRENT # OF BUSTS
+         00003140     0230  
+     790 00003150     4001          ADD     A0,A1
+     791 00003160     b022          MOVE    A1,*A2(PBUSTS),W
+         00003170     0230  
+     792 00003180     0d3f          CALLR   OUTBUSTS
+         00003190     0242  
+     793 000031a0                   PULL    A1
+     794 000031c0     0960          RETS
+     795                    
+     796                    **************************************************************************
+     797                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   19
+
+     798                    * SUBxLIFE SUBTRACT LIFE(VES)                                            *
+     799                    * A0 = # OF LIVES TO SUBTRACT                                            *
+     800                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     801                    * RETURN(S):                                                             *
+     802                    * CARRY SET=NO MORE LIVES                                                *
+     803                    *                                                                        *
+     804                    **************************************************************************
+     805                    *
+     806                    *SUBTRACT ONE LIFE
+     807 000031d0           SUBLIFE:
+     808 000031d0     1820          MOVK    1,A0
+     809                    *
+     810                    *SUBTRACT N LIFE(VES)
+     811 000031e0           SUBNLIFE
+     812 000031e0     098f          MMTM    SP,A0,A1
+         000031f0     c000  
+     813 00003200     b441          MOVE    *A2(PLIVES),A1,W        ;GET REMAINING # OF LIVES
+         00003210     02b0  
+     814 00003220     c60b          JRLE    SUBLF2                  ;WE'VE HIT BOTTOM
+     815 00003230     4401          SUB     A0,A1
+     816 00003240     b022          MOVE    A1,*A2(PLIVES),W
+         00003250     02b0  
+     817 00003260     0d3f          CALLR   OUTLIVES                ;AND DISPLAY THE REST
+         00003270     0098  
+     818 00003280     4c21          MOVE    A1,A1
+     819 00003290     ca04          JREQ    SUBLF2
+     820 000032a0     0320          CLRC
+     821 000032b0     09af          MMFM    SP,A0,A1
+         000032c0     0003  
+     822 000032d0     0960          RETS
+     823 000032e0     0de0  SUBLF2  SETC
+     824 000032f0     09af          MMFM    SP,A0,A1
+         00003300     0003  
+     825 00003310     0960          RETS
+     826                    
+     827                    **************************************************************************
+     828                    *                                                                        *
+     829                    * SUBNRGY SUBTRACT ONE ENERGY UNIT                                       *
+     830                    * A0 = # OF ENERGY UNITS TO SUBTRACT                                     *
+     831                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     832                    * RETURN(S):                                                             *
+     833                    * CARRY SET=NO MORE ENERGY                                               *
+     834                    *                                                                        *
+     835                    **************************************************************************
+     836                    
+     837                    *
+     838                    *SUBTRACT ONE ENERGY UNIT
+     839 00003320           SUBNRGY:
+     840 00003320     1820          MOVK    1,A0
+     841                    *
+     842                    *SUBTRACT N ENERGY UNIT(S)
+     843 00003330           SUBNNRGY
+     844 00003330     098f          MMTM    SP,A0,A1
+         00003340     c000  
+     845 00003350     2600          SLL     16,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   20
+
+     846 00003360     c002          JRUC    SUBGNRGY
+     847                    *
+     848                    *SUBTRACT A FRACTIONAL PORTION OF ENERGY
+     849                    *A0 = INTEGER:FRACTION OF ENERGY TO SUBTRACT
+     850 00003370           SUBFNRGY
+     851 00003370     098f          MMTM    SP,A0,A1
+         00003380     c000  
+     852 00003390           SUBGNRGY
+     853 00003390     b641          MOVE    *A2(PENERGY),A1,L       ;GET REMAINING ENERGY LEVEL
+         000033a0     01c0  
+     854 000033b0     c609          JRLE    SUBEN2                  ;JUST IN CASE BOZO CALLED WITH ZERO
+     855 000033c0     4401          SUB     A0,A1
+     856 000033d0     b222          MOVE    A1,*A2(PENERGY),L
+         000033e0     01c0  
+     857 000033f0     0d3f          CALLR   OUTENRGY                ;AND DISPLAY THE REST
+         00003400     0024  
+     858 00003410     4c21          MOVE    A1,A1
+     859 00003420     c602          JRLE    SUBEN2                  ;FLAG IF WE'VE HIT ZERO ENERGY
+     860 00003430     0320          CLRC
+     861 00003440     c001          JRUC    SUBENX
+     862 00003450     0de0  SUBEN2  SETC
+     863 00003460           SUBENX
+     864 00003460     09af          MMFM    SP,A0,A1
+         00003470     0003  
+     865 00003480     0960          RETS
+     866                    
+     867                    **************************************************************************
+     868                    *                                                                        *
+     869                    * SUBTRACT A ROCKET BOMB                                                 *
+     870                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     871                    *                                                                        *
+     872                    **************************************************************************
+     873 00003490           SUBROCK
+     874 00003490                   PUSH    A0
+     875                    
+     876 000034a0     b640          MOVE    *A2(PFLAGS),A0,L
+         000034b0     0080  
+     877 000034c0     1e20          BTST    BUNLIMIT,A0
+     878 000034d0     cb08          JRNE    SUBROCKX                ;HE'S IN FREE MODE, NO SUBTRACTION
+     879                    
+     880 000034e0     b440          MOVE    *A2(PROCKETS),A0,W      ;GET REMAINING # OF ROCKETS
+         000034f0     01e0  
+     881 00003500     c605          JRLE    SUBROCKX                ;JUST IN CASE BOZO CALLED WITH ZERO
+     882                    
+     883 00003510           SUBROCK1
+     884 00003510     1420          DEC     A0                      ;KNOCK OFF A ROCKET
+     885 00003520     b002          MOVE    A0,*A2(PROCKETS),W
+         00003530     01e0  
+     886 00003540     0d3f          CALLR   OUTROCKS                ;AND DISPLAY THE REST
+         00003550     01ca  
+     887                    
+     888 00003560           SUBROCKX
+     889 00003560                   PULL    A0
+     890 00003580     0960          RETS
+     891                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   21
+
+     892                    **************************************************************************
+     893                    *                                                                        *
+     894                    * SUBTRACT A BULLET                                                      *
+     895                    * A2 = PLINDX=PLAYER DATA AREA                                           *
+     896                    *                                                                        *
+     897                    **************************************************************************
+     898 00003590           SUBBULL
+     899 00003590                   PUSH    A0
+     900 000035a0     b440          MOVE    *A2(PBULLETS),A0,W      ;GET REMAINING # OF ROCKETS
+         000035b0     0250  
+     901 000035c0     c605          JRLE    SUBBULLX                ;JUST IN CASE BOZO CALLED WITH ZERO
+     902                    
+     903 000035d0           SUBBULL1
+     904 000035d0     1420          DEC     A0                      ;KNOCK OFF A BULLET
+     905 000035e0     b002          MOVE    A0,*A2(PBULLETS),W
+         000035f0     0250  
+     906 00003600     0d3f          CALLR   OUTBULLS                ;AND DISPLAY THE REST
+         00003610     01ab  
+     907                    
+     908 00003620           SUBBULLX
+     909 00003620                   PULL    A0
+     910 00003640     0960          RETS
+     911                    
+     912                    **************************************************************************
+     913                    *                                                                        *
+     914                    * OUTPUT AMOUNT OF ENERGY                                                *
+     915                    * A2=PLINDX=PLAYER DATA AREA                                             *
+     916                    *                                                                        *
+     917                    **************************************************************************
+     918 00003650           OUTENRGY:
+     919 00003650     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00003660     fff2  
+     920                    
+     921 00003670     05a3          MOVE    @GAMSTATE,A3,W
+         00003680 00000000! 
+     922 000036a0     0b43          CMPI    INAMODE,A3
+         000036b0     ffcf  
+     923 000036c0     ca3b          JREQ    OUTENX                  ;NO ENERGY OUTPUT DURING ATTRACT MODE
+     924                    
+     925 000036d0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS
+         000036e0     0180  
+     926 000036f0     b649          MOVE    *A2(PENRGSIZ),A9,L      ;GET # OF LIFE UNITS/ENERGY UNIT
+         00003700     01f0  
+     927 00003710     4c4e          MOVE    A2,A14                  ;STORE HERE
+     928                    
+     929 00003720     09e0          MOVI    PENRGYOF,A0
+         00003730 0012004a  
+     930 00003750     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR RIGHT END OF ENERGY
+     931 00003760     4c68          MOVE    A3,A8                   ;TEMP STORAGE OF SCREEN ADDRESS
+     932 00003770     09e4          MOVI    ENRGYSPC,A4             ;SPACING BETWEEN DIGITS 
+         00003780 0000ffeb  
+     933                    
+     934                    *BLANK THE LIFE DISPLAY AREA
+     935 000037a0     5621  OUTEN   CLR     A1                      ;CONSTANT:PALETTE
+     936 000037b0     18a6          MOVK    NNRGBLKS,A6             ;MAX # OF DISPLAYABLE LIFE BLOCKS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   22
+
+     937 000037c0     09e2          MOVI    [NNRGBLKW,NNRGUNIP],A2  ;AHH THE SIZE OF A LIFE BLOCK   
+         000037d0 000a0014  
+     938                    
+     939 000037f0     0d3f  OUTEN1  CALLR   DMAENRGY                        ;BLANK OUT THE CURRENT ENERGY METER
+         00003800     002a  
+     940 00003810     e083          ADDXY   A4,A3                   ;MOVE TO NEXT PIECE OF ENERGY
+     941 00003820     3c86          DSJS    A6,OUTEN1               ;BR = CONTINUE BLANKING LIFE AREA
+     942                    
+     943                    *OUTPUT THE CURRENT # OF LIVES
+     944 00003830     4dc2          MOVE    A14,A2
+     945 00003840     b647          MOVE    *A2(PENERGY),A7,L       ;CURRENT # OF LIVES
+         00003850     01c0  
+     946 00003860     c621          JRLE    OUTENX                  ;BR = NO LIVES
+     947                    
+     948 00003870     4ceb          MOVE    A7,A11
+     949 00003880     5b2b          DIVU    A9,A11                  ;A11 = LIVES/(LIVES/UNIT) = UNITS
+     950 00003890     0b4b          CMPI    NNRGUNIP,A11            ;LAST BLOCK OF ENERGY
+         000038a0     ffeb  
+     951 000038b0     c604          JRLE    OUTEN2                  ;BR = YES, ISSUE WARNING COLOR 
+     952                    
+     953 000038c0     09e1          MOVI    0FCFC0000H,A1           ;CONSTANT COLOR:PALETTE (GREEN)
+         000038d0 fcfc0000  
+     954 000038f0     c003          JRUC    OUTEN3
+     955 00003900           OUTEN2
+     956 00003900     09e1          MOVI    0F3F30000H,A1           ;CONSTANT COLOR:PALETTE (RED)
+         00003910 f3f30000  
+     957 00003930           OUTEN3
+     958 00003930     18a6          MOVK    NNRGBLKS,A6
+     959 00003940     4d03          MOVE    A8,A3                   ;RESTORE STARTING SCREEN ADDRESS
+     960 00003950           OUTEN4
+     961 00003950     5642          CLR     A2
+     962 00003960     1a8b          MOVK    NNRGUNIP,A11            ;# OF UNITS/BLOCK
+     963 00003970           OUTEN5          
+     964 00003970     1022          INC     A2
+     965 00003980     4527          SUB     A9,A7
+     966 00003990     c609          JRLE    OUTEN6                  ;BR = LAST ONE CHUM
+     967 000039a0     3c8b          DSJS    A11,OUTEN5
+     968                    
+     969 000039b0     0b22          ADDI    [NNRGBLKW,0],A2         ;ADD WIDTH
+         000039c0 000a0000  
+     970 000039e0     0d3f          CALLR   DMAENRGY
+         000039f0     000b  
+     971 00003a00     e083          ADDXY   A4,A3                   ;ADD SPACING
+     972 00003a10     3da6          DSJ     A6,OUTEN4
+     973 00003a20     c005          JRUC    OUTENX                  ;MAX'D OUT
+     974 00003a30           OUTEN6
+     975 00003a30     0b22          ADDI    [NNRGBLKW,0],A2
+         00003a40 000a0000  
+     976 00003a60     0d3f          CALLR   DMAENRGY                        ;DMA THE LAST ONE
+         00003a70     0003  
+     977                    
+     978 00003a80           OUTENX
+     979 00003a80     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00003a90     4fff  
+     980 00003aa0     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   23
+
+     981                    
+     982                    **************************************************************************
+     983                    *                                                                        *
+     984                    * DMAENRGY - DMA'S 1 ENERGY UNIT OF CONSTANT SIZE AND COLOR              *
+     985                    *           THE LIFE BLOCK IS RIGHT JUSTIFIED HERE.                      *
+     986                    * A1 = CONSTANT:PALETTE                                                  *
+     987                    * A2 = Y:X SIZE OF LIFE UNIT                                             *
+     988                    * A3 = DAG YPOS:XPOS                                                     * 
+     989                    *                                                                        *
+     990                    **************************************************************************
+     991 00003ab0           DMAENRGY        
+     992 00003ab0     098f          MMTM    SP,A4,A5,A10
+         00003ac0     0c20  
+     993 00003ad0     4c4a          MOVE    A2,A10
+     994 00003ae0     052a          ZEXT    A10                     ;CLEAR WIDTH
+     995 00003af0     0bea          SUBI    [0,NNRGUNIP],A10
+         00003b00     ffeb  
+     996 00003b10     ca02          JREQ    DMAENRG1                ;NO JUSTIFY
+     997 00003b20     03aa          NEG     A10
+     998 00003b30     e143          ADDXY   A10,A3                  ;ADJUST THE X POSITION          
+     999 00003b40           DMAENRG1
+    1000 00003b40     09e4          MOVI    2000000H,A4             ;SOMEWHERE IN IMAGE ROM
+         00003b50 02000000  
+    1001 00003b70     09e5          MOVI    DMACAL,A5               ;WRITE CONSTANT COLOR ALWAYS
+         00003b80 0000800c  
+    1002 00003ba0     0d5f          CALLA   DMAN
+         00003bb0 00000000! 
+    1003 00003bd0     09af          MMFM    SP,A4,A5,A10
+         00003be0     0430  
+    1004 00003bf0     0960          RETS
+    1005                    
+    1006                    **************************************************************************
+    1007                    *                                                                        *
+    1008                    * OUTPUT NUMBER OF PLAYER LIVES                                          *
+    1009                    * A2=PLINDX=PLAYER DATA AREA                                             *
+    1010                    *                                                                        *
+    1011                    **************************************************************************
+    1012 00003c00           OUTLIVES:                                                                
+    1013 00003c00     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A14         
+         00003c10     9f02  
+    1014                    
+    1015 00003c20     05a3          MOVE    @GAMSTATE,A3,W
+         00003c30 00000000! 
+    1016 00003c50     0b43          CMPI    INAMODE,A3
+         00003c60     ffcf  
+    1017 00003c70     ca39          JREQ    OUTLIVEX                ;NO LIFE OUTPUT DURING ATTRACT MODE
+    1018                                                                                             
+    1019 00003c80     09ee          MOVI    P1LIFE,A14              ;DEFAULT PLAYER 1 IMAGE
+         00003c90 00000000! 
+    1020 00003cb0     0b62          CMPI    P1DATA,A2
+         00003cc0 ffffffff! 
+    1021 00003ce0     ca03          JREQ    OUTLIVE1
+    1022 00003cf0     09ee          MOVI    P2LIFE,A14              ;NOPE, WE WANT P2
+         00003d00 00000000! 
+    1023 00003d20           OUTLIVE1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   24
+
+    1024 00003d20     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS            
+         00003d30     0180  
+    1025 00003d40     09e0          MOVI    PLIFECOF,A0                                              
+         00003d50 001ffff6  
+    1026 00003d70     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR ACCOUNT CLEAR    
+    1027 00003d80     09e4          MOVI    PLIFESIZ,A4             ;SIZE OF LIFE ACCOUNTING AREA    
+         00003d90 000f0066  
+    1028 00003db0     0d5f          CALLA   BLNKAREA                ;ZAP IT                          
+         00003dc0 00000000! 
+    1029                                                                                             
+    1030                    *OUTPUT THE CURRENT # OF LIVES                                   
+    1031 00003de0     b447          MOVE    *A2(PLIVES),A7,W        ;CURRENT # OF LIVES              
+         00003df0     02b0  
+    1032 00003e00     1427          SUBK    1,A7                    ;ACCOUNT FOR CURRENT ENERGY
+    1033 00003e10     c61f          JRLE    OUTLIVEX                ;BR = NO LIVES                   
+    1034                                                                                             
+    1035 00003e20     b7c0          MOVE    *A14(ICMAP),A0,L
+         00003e30     0060  
+    1036 00003e40     0d5f          CALLA   FINDPAL                 ;MAKE SURE IT HAS A PALETTE
+         00003e50 00000000! 
+    1037 00003e70     cb05          JRNZ    OUTLIVPL                ;BR = THERE EXISTS A PALETTE
+    1038 00003e80     b7c0          MOVE    *A14(ICMAP),A0,L
+         00003e90     0060  
+    1039 00003ea0     0d5f          CALLA   GETFPAL                 ;MAKE A PALETTE EXIST   
+         00003eb0 00000000! 
+    1040 00003ed0           OUTLIVPL
+    1041 00003ed0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS            
+         00003ee0     0180  
+    1042 00003ef0     09e0          MOVI    PLIFEOF,A0                                               
+         00003f00 001f0050  
+    1043 00003f20     e003          ADDXY   A0,A3                   ;A3 = STARTING SCREEN ADDRESS OF LIVES
+    1044                    
+    1045 00003f30     09e4          MOVI    LIFESPC,A4              ;SPACING BETWEEN LIVES   
+         00003f40 0000fff2  
+    1046 00003f60     18e6          MOVK    NLIVES,A6                                                
+    1047 00003f70     09e5          MOVI    DMAWNZ,A5                                                
+         00003f80 00008002  
+    1048 00003fa0           OUTLIVE5                                                                 
+    1049 00003fa0     0d5f          CALLA   DTIME                   ;DMA THE NEW LIFE COUNT  
+         00003fb0 00000000! 
+    1050 00003fd0     e083          ADDXY   A4,A3                                                    
+    1051 00003fe0     1426          DEC     A6                      ;MAX ROCKET COUNT                
+    1052 00003ff0     0dc7          DSJNE   A7,OUTLIVE5                                              
+         00004000     fff9  
+    1053                                                                                             
+    1054 00004010           OUTLIVEX                                                                 
+    1055 00004010     09af          MMFM    SP,A0,A3,A4,A5,A6,A7,A14         
+         00004020     40f9  
+    1056 00004030     0960          RETS                                                             
+    1057                    
+    1058                    **************************************************************************
+    1059                    *                                                                        *
+    1060                    * OUTMBIGS - OUTPUT NUMBER OF PLAYER MR. BIG KILLS                       *
+    1061                    * A2=PLINDX=PLAYER DATA AREA                                             *
+    1062                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   25
+
+    1063                    **************************************************************************
+    1064 00004040           OUTMBIGS:                                                                
+    1065 00004040     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A14         
+         00004050     9f02  
+    1066                    
+    1067 00004060     05a3          MOVE    @GAMSTATE,A3,W
+         00004070 00000000! 
+    1068 00004090     0b43          CMPI    INAMODE,A3
+         000040a0     ffcf  
+    1069 000040b0     ca26          JREQ    OUTMBEX         ;NO LIFE OUTPUT DURING ATTRACT MODE
+    1070                                                                                             
+    1071 000040c0     09ee          MOVI    mbigblp1a,A14
+         000040d0 00000000! 
+    1072 000040f0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS            
+         00004100     0180  
+    1073 00004110     09e0          MOVI    PMBIGCOF,A0                                              
+         00004120 00310039  
+    1074 00004140     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR ACCOUNT CLEAR    
+    1075 00004150     09e4          MOVI    PMBIGSIZ,A4             ;SIZE OF MR. BIG ACCOUNTING AREA         
+         00004160 00080026  
+    1076 00004180     0d5f          CALLA   BLNKAREA                ;ZAP IT                          
+         00004190 00000000! 
+    1077                    *OUTPUT THE CURRENT # OF LIVES                                   
+    1078 000041b0     b447          MOVE    *A2(PMBIGS),A7,W        ;CURRENT # OF MR. BIG KILLS              
+         000041c0     03c0  
+    1079 000041d0     c614          JRLE    OUTMBEX                 ;BR = NO MR. BIGS                        
+    1080                                                                                             
+    1081 000041e0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS            
+         000041f0     0180  
+    1082 00004200     09e0          MOVI    PMBIGOF,A0                                               
+         00004210 00310057  
+    1083 00004230     e003          ADDXY   A0,A3                   ;A3 = STARTING SCREEN ADDRESS OF MR. BIGS
+    1084                    
+    1085 00004240     09e4          MOVI    MBIGSPC,A4              ;SPACING BETWEEN MR. BIG ICONS
+         00004250 0000fff6  
+    1086 00004270     1886          MOVK    MAXMBIG,A6                                               
+    1087 00004280     09e5          MOVI    DMAWNZ,A5                                                
+         00004290 00008002  
+    1088 000042b0           OUTMBE5                                                          
+    1089 000042b0     0d5f          CALLA   DTIME                   ;DMA THE NEW ICON 
+         000042c0 00000000! 
+    1090 000042e0     e083          ADDXY   A4,A3                                                    
+    1091 000042f0     1426          DEC     A6                      ;MAX ICON COUNT          
+    1092 00004300     0dc7          DSJNE   A7,OUTMBE5                                               
+         00004310     fff9  
+    1093 00004320           OUTMBEX                                                          
+    1094 00004320     09af          MMFM    SP,A0,A3,A4,A5,A6,A7,A14         
+         00004330     40f9  
+    1095 00004340     0960          RETS                                                             
+    1096                    
+    1097                    **************************************************************************
+    1098                    *                                                                        *
+    1099                    * ADDCARDS - ADD SILVER SAFE CARD                                        *
+    1100                    *                                                                        *
+    1101                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   26
+
+    1102 00004350           ADDCARDS
+    1103 00004350                   PUSH    A0
+    1104 00004360     09c1          MOVI    PSCARD,A1
+         00004370     0300  
+    1105 00004380     c010          JRUC    ADDCARD
+    1106                    
+    1107                    **************************************************************************
+    1108                    *                                                                        *
+    1109                    * ADDCARDB - ADD BLUE SAFE CARD                                          *
+    1110                    *                                                                        *
+    1111                    **************************************************************************
+    1112 00004390           ADDCARDB
+    1113 00004390                   PUSH    A0
+    1114 000043a0     09c1          MOVI    PBCARD,A1
+         000043b0     0308  
+    1115 000043c0     c00c          JRUC    ADDCARD
+    1116                    
+    1117                    **************************************************************************
+    1118                    *                                                                        *
+    1119                    * ADDCARDR - ADD RED SAFE CARD                                           *
+    1120                    *                                                                        *
+    1121                    **************************************************************************
+    1122 000043d0           ADDCARDR
+    1123 000043d0                   PUSH    A0
+    1124 000043e0     09c1          MOVI    PRCARD,A1
+         000043f0     0310  
+    1125 00004400     c008          JRUC    ADDCARD
+    1126                    
+    1127                    **************************************************************************
+    1128                    *                                                                        *
+    1129                    * ADDCARDG - ADD GOLD SAFE CARD                                          *
+    1130                    *                                                                        *
+    1131                    **************************************************************************
+    1132 00004410           ADDCARDG
+    1133 00004410                   PUSH    A0
+    1134 00004420     09c1          MOVI    PGCARD,A1
+         00004430     0318  
+    1135 00004440     c004          JRUC    ADDCARD
+    1136                    
+    1137                    **************************************************************************
+    1138                    *                                                                        *
+    1139                    * ADDCRDGR - ADD GREEN SAFE CARD                                         *
+    1140                    *                                                                        *
+    1141                    **************************************************************************
+    1142 00004450           ADDCRDGR
+    1143 00004450                   PUSH    A0
+    1144 00004460     09c1          MOVI    PGRCARD,A1
+         00004470     0320  
+    1145 00004480     0300          JRUC    ADDCARD
+    1146                    
+    1147                    **************************************************************************
+    1148                    *                                                                        *
+    1149                    * ADDCARD - GENERIC ADD CARD                                             *
+    1150                    * A1=OFFSET                                                              *
+    1151                    * A2=PLINDX                                                              *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   27
+
+    1152                    * A1 PUSHED                                                              *
+    1153                    *                                                                        *
+    1154                    **************************************************************************
+    1155 00004490           ADDCARD
+    1156 00004490     098f          MMTM    SP,A2,A3
+         000044a0     3000  
+    1157 000044b0     4041          ADD     A2,A1
+    1158 000044c0     8e23          MOVB    *A1,A3
+    1159 000044d0     1023          INC     A3
+    1160 000044e0     8c61          MOVB    A3,*A1
+    1161 000044f0     0d3f          CALLR   OUTCARDS
+         00004500     0023  
+    1162 00004510     09af          MMFM    SP,A1,A2,A3
+         00004520     000e  
+    1163 00004530     0960          RETS
+    1164                    
+    1165                    **************************************************************************
+    1166                    *                                                                        *
+    1167                    * SUBCARDS - SUB SILVER SAFE CARD                                        *
+    1168                    *                                                                        *
+    1169                    **************************************************************************
+    1170 00004540           SUBCARDS
+    1171 00004540                   PUSH    A0
+    1172 00004550     09c1          MOVI    PSCARD,A1
+         00004560     0300  
+    1173 00004570     c010          JRUC    SUBCARD
+    1174                    
+    1175                    **************************************************************************
+    1176                    *                                                                        *
+    1177                    * SUBCARDB - SUB BLUE SAFE CARD                                          *
+    1178                    *                                                                        *
+    1179                    **************************************************************************
+    1180 00004580           SUBCARDB
+    1181 00004580                   PUSH    A0
+    1182 00004590     09c1          MOVI    PBCARD,A1
+         000045a0     0308  
+    1183 000045b0     c00c          JRUC    SUBCARD
+    1184                    
+    1185                    **************************************************************************
+    1186                    *                                                                        *
+    1187                    * SUBCARDR - SUB RED SAFE CARD                                           *
+    1188                    *                                                                        *
+    1189                    **************************************************************************
+    1190 000045c0           SUBCARDR
+    1191 000045c0                   PUSH    A0
+    1192 000045d0     09c1          MOVI    PRCARD,A1
+         000045e0     0310  
+    1193 000045f0     c008          JRUC    SUBCARD
+    1194                    
+    1195                    **************************************************************************
+    1196                    *                                                                        *
+    1197                    * SUBCARDG - SUB GOLD SAFE CARD                                          *
+    1198                    *                                                                        *
+    1199                    **************************************************************************
+    1200 00004600           SUBCARDG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   28
+
+    1201 00004600                   PUSH    A0
+    1202 00004610     09c1          MOVI    PGCARD,A1
+         00004620     0318  
+    1203 00004630     c004          JRUC    SUBCARD
+    1204                    
+    1205                    **************************************************************************
+    1206                    *                                                                        *
+    1207                    * SUBCRDGR - SUB GREEN SAFE CARD                                         *
+    1208                    *                                                                        *
+    1209                    **************************************************************************
+    1210 00004640           SUBCRDGR
+    1211 00004640                   PUSH    A0
+    1212 00004650     09c1          MOVI    PGRCARD,A1
+         00004660     0320  
+    1213 00004670     0300          JRUC    SUBCARD
+    1214                    
+    1215                    **************************************************************************
+    1216                    *                                                                        *
+    1217                    * SUBCARD - GENERIC SUB CARD                                             *
+    1218                    * A1=OFFSET                                                              *
+    1219                    * A2=PLINDX                                                              *
+    1220                    * A1 PUSHED                                                              *
+    1221                    *                                                                        *
+    1222                    **************************************************************************
+    1223 00004680           SUBCARD
+    1224 00004680     098f          MMTM    SP,A2,A3
+         00004690     3000  
+    1225 000046a0     4041          ADD     A2,A1
+    1226 000046b0     8e23          MOVB    *A1,A3
+    1227 000046c0     ca04          JRZ     SUBCOUT                 ;BR = ALREADY OUT
+    1228 000046d0     1423          DEC     A3
+    1229 000046e0     8c61          MOVB    A3,*A1
+    1230 000046f0     0d3f          CALLR   OUTCARDS
+         00004700     0003  
+    1231 00004710           SUBCOUT
+    1232 00004710     09af          MMFM    SP,A1,A2,A3
+         00004720     000e  
+    1233 00004730     0960          RETS
+    1234                    
+    1235                    **************************************************************************
+    1236                    *                                                                        *
+    1237                    * OUTPUT PLAYERS SAFE CARDS                                              *
+    1238                    * A2=PLINDX=PLAYER DATA AREA                                             *
+    1239                    *                                                                        *
+    1240                    **************************************************************************
+    1241 00004740           OUTCARDS:                                                                
+    1242 00004740     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A7,A14      
+         00004750     fd02  
+    1243                    
+    1244 00004760     05a3          MOVE    @GAMSTATE,A3,W
+         00004770 00000000! 
+    1245 00004790     0b43          CMPI    INAMODE,A3
+         000047a0     ffcf  
+    1246 000047b0     ca48          JREQ    OUTCARDX1               ;NO CARD OUTPUT DURING ATTRACT MODE
+    1247                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   29
+
+    1248 000047c0     b643          MOVE    *A2(PSCRAD),A3,L        ;PLAYER SCORE ADDRESS            
+         000047d0     0180  
+    1249 000047e0     b647          MOVE    *A2(PCARDS),A7,L        ;GET THE CARD ACCOUNTING
+         000047f0     0300  
+    1250 00004800     09e0          MOVI    PCARDOF,A0                                               
+         00004810 0035fff8  
+    1251 00004830     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR ACCOUNT CLEAR    
+    1252 00004840     09e4          MOVI    PCARDSIZ,A4             ;SIZE OF SAFE CARD ACCOUNTING AREA       
+         00004850 0005003b  
+    1253 00004870     0d5f          CALLA   BLNKAREA                ;ZAP IT                  
+         00004880 00000000! 
+    1254 000048a0     09e5          MOVI    DMAWNZ,A5               ;IT DOESN'T MATTER, IT'S A CONSTANT
+         000048b0 00008002  
+    1255 000048d0     5621          CLR     A1
+    1256 000048e0     09c0          MOVI    PCARDSPC,A0             ;HOLD SPACING HERE      
+         000048f0     000c  
+    1257                    
+    1258 00004900     4ce4          MOVE    A7,A4
+    1259 00004910     2704          SLL     24,A4
+    1260 00004920     ca07          JRZ     OUTCARDB
+    1261 00004930     09ee          MOVI    SMsilvcrd,A14
+         00004940 00000000! 
+    1262 00004960     0d5f          CALLA   DTIME
+         00004970 00000000! 
+    1263 00004990     e003          ADDXY   A0,A3
+    1264 000049a0           OUTCARDB
+    1265 000049a0     4ce4          MOVE    A7,A4
+    1266 000049b0     2f04          SRL     8,A4
+    1267 000049c0     2704          SLL     24,A4
+    1268 000049d0     ca07          JRZ     OUTCARDR
+    1269 000049e0     09ee          MOVI    SMblucrd,A14
+         000049f0 00000000! 
+    1270 00004a10     0d5f          CALLA   DTIME
+         00004a20 00000000! 
+    1271 00004a40     e003          ADDXY   A0,A3
+    1272 00004a50           OUTCARDR
+    1273 00004a50     4ce4          MOVE    A7,A4
+    1274 00004a60     2e04          SRL     16,A4   
+    1275 00004a70     2704          SLL     24,A4
+    1276 00004a80     ca07          JRZ     OUTCARDG
+    1277 00004a90     09ee          MOVI    SMredcrd,A14
+         00004aa0 00000000! 
+    1278 00004ac0     0d5f          CALLA   DTIME
+         00004ad0 00000000! 
+    1279 00004af0     e003          ADDXY   A0,A3
+    1280 00004b00           OUTCARDG
+    1281 00004b00     2d07          SRL     24,A7
+    1282 00004b10     ca07          JRZ     OUTCARDX
+    1283 00004b20     09ee          MOVI    SMgldcrd,A14
+         00004b30 00000000! 
+    1284 00004b50     0d5f          CALLA   DTIME
+         00004b60 00000000! 
+    1285 00004b80     e003          ADDXY   A0,A3
+    1286 00004b90           OUTCARDX                                                                 
+    1287 00004b90     b647          MOVE    *A2(PCARDS1),A7,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   30
+
+         00004ba0     0320  
+    1288 00004bb0     2707          SLL     24,A7
+    1289 00004bc0     ca07          JRZ     OUTCARDX1
+    1290 00004bd0     09ee          MOVI    SMgrncrd,A14
+         00004be0 00000000! 
+    1291 00004c00     0d5f          CALLA   DTIME
+         00004c10 00000000! 
+    1292 00004c30     e003          ADDXY   A0,A3
+    1293 00004c40           OUTCARDX1
+    1294 00004c40     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A7,A14      
+         00004c50     40bf  
+    1295 00004c60     0960          RETS
+    1296                    
+    1297                    **************************************************************************
+    1298                    *                                                                        *
+    1299                    * OUTICONS - OUTPUT THE DRUG, BULLET AND BUCK ICONS                      *
+    1300                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1301                    *                                                                        *
+    1302                    **************************************************************************
+    1303 00004c70           OUTICONS
+    1304 00004c70     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6
+         00004c80     fe00  
+    1305 00004c90     b646          MOVE    *A2(PSCRAD),A6,L        ;PLAYER SCORE ADDRESS
+         00004ca0     0180  
+    1306                    
+    1307 00004cb0     09e5          MOVI    DMACNZ,A5
+         00004cc0 00008008  
+    1308 00004ce0     09e1          MOVI    0F9F90000H,A1
+         00004cf0 f9f90000  
+    1309 00004d10     09e0          MOVI    PBUSTOF,A0
+         00004d20 0037ffd1  
+    1310 00004d40     4cc3          MOVE    A6,A3
+    1311 00004d50     e003          ADDXY   A0,A3
+    1312 00004d60     09ee          MOVI    BUSTICON,A14
+         00004d70 00000000! 
+    1313 00004d90     0d5f          CALLA   DTIME
+         00004da0 00000000! 
+    1314                    
+    1315 00004dc0     09e5          MOVI    DMAWNZ,A5
+         00004dd0 00008002  
+    1316                    
+    1317 00004df0     09c0          MOVI    PBULLOF,A0
+         00004e00     ffd8  
+    1318 00004e10     4cc3          MOVE    A6,A3
+    1319 00004e20     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR BULLET
+    1320 00004e30     09ee          MOVI    GETCLIP,A14             ;BULLET IMAGE   
+         00004e40 00000000! 
+    1321 00004e60     0d5f          CALLA   DTIME
+         00004e70 00000000! 
+    1322                    
+    1323 00004e90     09e0          MOVI    PROCKOF,A0
+         00004ea0 0011ffd3  
+    1324 00004ec0     4cc3          MOVE    A6,A3
+    1325 00004ed0     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR BULLET
+    1326 00004ee0     09ee          MOVI    ROCKBIG,A14             ;BULLET IMAGE   
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   31
+
+         00004ef0 00000000! 
+    1327 00004f10     0d5f          CALLA   DTIME
+         00004f20 00000000! 
+    1328                    
+    1329 00004f40     09e0          MOVI    PDRUGOF,A0
+         00004f50 001fffd5  
+    1330 00004f70     4cc3          MOVE    A6,A3
+    1331 00004f80     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR DRUGS
+    1332                    ***     MOVI    GETDOPE,A14
+    1333 00004f90     07ae          MOVE    @DOPESYM,A14,L
+         00004fa0 00000000! 
+    1334 00004fc0     0d5f          CALLA   DTIME
+         00004fd0 00000000! 
+    1335                    
+    1336 00004ff0     09e0          MOVI    PBUCKOF,A0
+         00005000 002effd1  
+    1337 00005020     4cc3          MOVE    A6,A3
+    1338 00005030     e003          ADDXY   A0,A3                   ;ADD OFFSET FOR CASH-OLA
+    1339 00005040     09ee          MOVI    GETCASH1,A14
+         00005050 00000000! 
+    1340 00005070     0d5f          CALLA   DTIME
+         00005080 00000000! 
+    1341 000050a0     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6
+         000050b0     007f  
+    1342 000050c0     0960          RETS
+    1343                    
+    1344                    **************************************************************************
+    1345                    *                                                                        *
+    1346                    * OUTBULLS - OUTPUT THE # OF BULLETS                                     *
+    1347                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1348                    *                                                                        *
+    1349                    **************************************************************************
+    1350 000050d0           OUTBULLS
+    1351 000050d0     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         000050e0     9ff2  
+    1352 000050f0     b448          MOVE    *A2(PBULLETS),A8,W      ;GET THE BULLET COUNT   
+         00005100     0250  
+    1353 00005110     09e6          MOVI    0F9F9H,A6
+         00005120 0000f9f9  
+    1354 00005140     09e7          MOVI    PBULLCNT,A7
+         00005150 0003ffc2  
+    1355 00005170     09e4          MOVI    PBOOTSIZ,A4
+         00005180 0008000e  
+    1356 000051a0     09c5          MOVI    PBULLOF,A5
+         000051b0     ffd8  
+    1357 000051c0     09ee          MOVI    GETCLIP,A14             ;BULLET IMAGE   
+         000051d0 00000000! 
+    1358 000051f0     c050          JRUC    OUTPCNT
+    1359                    
+    1360                    **************************************************************************
+    1361                    *                                                                        *
+    1362                    * OUTROCKS - OUTPUT THE # OF ROCKETS                                     *
+    1363                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1364                    *                                                                        *
+    1365                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   32
+
+    1366 00005200           OUTROCKS
+    1367 00005200     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005210     9ff2  
+    1368 00005220     b448          MOVE    *A2(PROCKETS),A8,W      ;GET THE ROCKET COUNT   
+         00005230     01e0  
+    1369 00005240     09e6          MOVI    0F9F9H,A6
+         00005250 0000f9f9  
+    1370 00005270     09e7          MOVI    PROCKCNT,A7
+         00005280 000fffc2  
+    1371 000052a0     09e4          MOVI    PBOOTSIZ,A4
+         000052b0 0008000e  
+    1372 000052d0     09e5          MOVI    PROCKOF,A5      
+         000052e0 0011ffd3  
+    1373 00005300     09ee          MOVI    ROCKBIG,A14
+         00005310 00000000! 
+    1374 00005330     c03c          JRUC    OUTPCNT
+    1375                    
+    1376                    **************************************************************************
+    1377                    *                                                                        *
+    1378                    * OUTDRUGS - OUTPUT THE # OF DRUGS                                       *
+    1379                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1380                    *                                                                        *
+    1381                    **************************************************************************
+    1382 00005340           OUTDRUGS
+    1383 00005340     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005350     9ff2  
+    1384 00005360     b448          MOVE    *A2(PDRUGS),A8,W        ;GET THE BULLET COUNT   
+         00005370     0210  
+    1385 00005380     09e6          MOVI    0F9F9H,A6
+         00005390 0000f9f9  
+    1386 000053b0     09e7          MOVI    PDRUGCNT,A7
+         000053c0 0021ffc2  
+    1387 000053e0     09e4          MOVI    PBOOTSIZ,A4
+         000053f0 0008000e  
+    1388 00005410     09e5          MOVI    PDRUGOF,A5
+         00005420 001fffd5  
+    1389                    ***     MOVI    GETDOPE,A14
+    1390 00005440     07ae          MOVE    @DOPESYM,A14,L
+         00005450 00000000! 
+    1391 00005470     c028          JRUC    OUTPCNT
+    1392                    
+    1393                    **************************************************************************
+    1394                    *                                                                        *
+    1395                    * OUTBUCKS - OUTPUT THE # OF BUCKS                                       *
+    1396                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1397                    *                                                                        *
+    1398                    **************************************************************************
+    1399 00005480           OUTBUCKS
+    1400 00005480     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005490     9ff2  
+    1401 000054a0     b448          MOVE    *A2(PMONEY),A8,W        ;GET THE BULLET COUNT   
+         000054b0     0220  
+    1402 000054c0     09e6          MOVI    0F9F9H,A6
+         000054d0 0000f9f9  
+    1403 000054f0     09e7          MOVI    PBUCKCNT,A7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   33
+
+         00005500 002dffc2  
+    1404 00005520     09e4          MOVI    PBOOTSIZ,A4
+         00005530 0008000e  
+    1405 00005550     09e5          MOVI    PBUCKOF,A5
+         00005560 002effd1  
+    1406 00005580     09ee          MOVI    GETCASH1,A14
+         00005590 00000000! 
+    1407 000055b0     c014          JRUC    OUTPCNT
+    1408                    
+    1409                    **************************************************************************
+    1410                    *                                                                        *
+    1411                    * OUTBUSTS - OUTPUT THE # OF BUSTS                                       *
+    1412                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1413                    *                                                                        *
+    1414                    **************************************************************************
+    1415 000055c0           OUTBUSTS
+    1416 000055c0     098f          MMTM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         000055d0     9ff2  
+    1417 000055e0     b448          MOVE    *A2(PBUSTS),A8,W        ;GET THE BULLET COUNT   
+         000055f0     0230  
+    1418 00005600     09e6          MOVI    0F9F9H,A6
+         00005610 0000f9f9  
+    1419 00005630     09e7          MOVI    PBUSTCNT,A7
+         00005640 0039ffc2  
+    1420 00005660     09e4          MOVI    PBOOTSIZ,A4
+         00005670 0008000e  
+    1421 00005690     09e5          MOVI    PBUSTOF,A5
+         000056a0 0037ffd1  
+    1422 000056c0     09ee          MOVI    BUSTICON,A14
+         000056d0 00000000! 
+    1423 000056f0     0300          JRUC    OUTPCNT
+    1424                    
+    1425                    **************************************************************************
+    1426                    *                                                                        *
+    1427                    * OUTPCNT - OUTPUT A DECIMAL COUNT(RIGHT JUSTIFIED) UP TO 99             *
+    1428                    *         TO A PLAYER STATUS AREA                                        *
+    1429                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1430                    * A4 = [Y,X] SIZE OF AREA                                                *
+    1431                    * A5 = ICON OFFSET                                                       *
+    1432                    * A6 = COLOR                                                             *
+    1433                    * A7 = [Y,X] OFFSET TO LEFT END                                          *
+    1434                    * A8 = COUNT                                                             *
+    1435                    * A14 = PTR TO ICON                                                      *
+    1436                    *                                                                        *
+    1437                    **************************************************************************
+    1438 00005700           OUTPCNT
+    1439 00005700     b64b          MOVE    *A2(PSCRAD),A11,L       ;GET THE ADDRESS
+         00005710     0180  
+    1440 00005720     4d63          MOVE    A11,A3
+    1441 00005730     e0a3          ADDXY   A5,A3
+    1442 00005740     5621          CLR     A1
+    1443 00005750     09e5          MOVI    DMACAL,A5
+         00005760 0000800c  
+    1444 00005780     0d5f          CALLA   DTIME                   ;CLEAR ICON
+         00005790 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   34
+
+    1445 000057b0     4d08          MOVE    A8,A8
+    1446 000057c0     ca06          JREQ    OUTPCNT0                ;NO COUNT, NO ICON
+    1447 000057d0     09e5          MOVI    DMAWNZ,A5
+         000057e0 00008002  
+    1448 00005800     0d5f          CALLA   DTIME
+         00005810 00000000! 
+    1449 00005830           OUTPCNT0
+    1450 00005830     4d63          MOVE    A11,A3
+    1451 00005840     e0e3          ADDXY   A7,A3                   ;HERE IT IS
+    1452 00005850     0d5f          CALLA   BLNKAREA                ;BLANK WHAT HE'S GOT    
+         00005860 00000000! 
+    1453 00005880     4d08          MOVE    A8,A8
+    1454 00005890     ca17          JREQ    OUTPCNTX                ;BR = NO COUNT, NO OUTPUT
+    1455 000058a0           OUTPCNTA
+    1456 000058a0     0b48          CMPI    99,A8
+         000058b0     ff9c  
+    1457 000058c0     c602          JRLE    OUTPCNT1
+    1458 000058d0     09c8          MOVI    99,A8                   ;MUST SAVE REAL ESTATE
+         000058e0     0063  
+    1459 000058f0           OUTPCNT1
+    1460 000058f0     0d5f          CALLA   HEXTOASC                ;CONVERT TO ASCII
+         00005900 00000000! 
+    1461 00005920     5600          CLR     A0                      ;NO SLEEP
+    1462 00005930     4c69          MOVE    A3,A9
+    1463 00005940     0524          ZEXT    A4
+    1464 00005950     e089          ADDXY   A4,A9                   ;END FOR RIGHT JUSTIFY
+    1465 00005960     182a          MOVK    1,A10                   ;SPACING
+    1466 00005970     09eb          MOVI    RD7FONT,A11             ;FONT
+         00005980 00000000! 
+    1467 000059a0                   JSRP    STRRNRM                 ;RIGHT JUSTIFY OUTPUR
+    1468 00005a10           OUTPCNTX
+    1469 00005a10     09af          MMFM    SP,A0,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005a20     4ff9  
+    1470 00005a30     0960          RETS
+    1471                    
+    1472          004100c0  GCREDUL .EQU    [65,192]
+    1473          000a0081  GCREDSIZ .EQU   [10,129]
+    1474          00430100  GCREDPNT .EQU   [67,256]
+    1475                    
+    1476                    **************************************************************************
+    1477                    *                                                                        *
+    1478                    * G_CRED - OUTPUT "CREDITS: xx" IN THE SCANNER BOX DURING GAMEPLAY       *
+    1479                    * A8 = PTR CREDITS STRING, READY FOR STRINGER                            *
+    1480                    * NOTE: CHECK TO MAKE SURE WE ARE IN GAMEPLAY                            *
+    1481                    *                                                                        *
+    1482                    **************************************************************************
+    1483                    *ENTRY TO JUST REFRESH THE CREDIT'S NOT THE BUY-IN TIMER
+    1484 00005a40           G_CREDONLY
+    1485 00005a40     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005a50     fff2  
+    1486 00005a60     c029          JRUC    G_CREDG
+    1487                    *ENTRY CALLED EVERY TIME A COIN IS PUT IN
+    1488 00005a70           G_CRED
+    1489 00005a70     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005a80     fff2  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   35
+
+    1490 00005a90     09c0          MOVI    BUYINPID,A0
+         00005aa0     0d95  
+    1491 00005ab0     5621          CLR     A1
+    1492 00005ac0     03e1          NOT     A1
+    1493 00005ad0     0d5f          CALLA   EXISTP
+         00005ae0 00000000! 
+    1494 00005b00     ca12          JRZ     G_CRED1                 ;THERE IS NO BUY IN AT THIS TIME
+    1495 00005b10     09ce          MOVI    BUYTIME,A14
+         00005b20     000a  
+    1496 00005b30     058e          MOVE    A14,@BTIME,W            ;RESET THE BUY-IN TIME
+         00005b40 00000000! 
+    1497 00005b60     4c0e          MOVE    A0,A14
+    1498 00005b70     09c0          MOVI    BTIMEOID,A0
+         00005b80     0995  
+    1499 00005b90     0d5f          CALLA   EXISTOBJ
+         00005ba0 00000000! 
+    1500 00005bc0     ca06          JRZ     G_CRED1                 ;THERE'S NO PHYSICAL TIMER AS OF YET
+    1501 00005bd0     4dc0          MOVE    A14,A0
+    1502 00005be0     09cb          MOVI    BUYTICK,A11
+         00005bf0     000d  
+    1503 00005c00     0d5f          CALLA   PUTA11                  ;RESET THE TICK TIMER
+         00005c10 00000000! 
+    1504 00005c30           G_CRED1
+    1505 00005c30     09c0          MOVI    BUYCPID,A0
+         00005c40     0d97  
+    1506 00005c50     5621          CLR     A1
+    1507 00005c60     03e1          NOT     A1
+    1508 00005c70     0d5f          CALLA   EXISTP
+         00005c80 00000000! 
+    1509 00005ca0     ca05          JRZ     G_CREDG
+    1510 00005cb0     09c9          MOVI    BUYTICK*BUYTIME,A9      ;RESET THE WAIT TIMER
+         00005cc0     0082  
+    1511 00005cd0     0d5f          CALLA   PUTA9
+         00005ce0 00000000! 
+    1512                    *G_CREDG GENERIC ENTRY TO SKIP ALL THE BUY-IN STUFF, USE THIS TO SIMPLY
+    1513                    *       REFRESH THE CREDITS MESSAGE. MAKE SURE REGS ARE PUSHED
+    1514 00005d00           G_CREDG
+    1515 00005d00     05a3          MOVE    @GAMSTATE,A3,W
+         00005d10 00000000! 
+    1516 00005d30     0b43          CMPI    INDIAG,A3       
+         00005d40     ffbf  
+    1517 00005d50     ca0f          JREQ    G_CREDXX
+    1518 00005d60     0b43          CMPI    INAMODE,A3      
+         00005d70     ffcf  
+    1519 00005d80     cb04          JRNE    G_CREDGO
+    1520 00005d90     05a3          MOVE    @PLAYPAGE,A3,W
+         00005da0 00000000! 
+    1521 00005dc0     ca08          JREQ    G_CREDXX                ;IN ATTRACT MODE BUT NOT PLAYING
+    1522 00005dd0           G_CREDGO
+    1523 00005dd0     0d5f          CALLA   GET_CSTR                ;GET THE CREDITS STRING IN A8
+         00005de0 00000000! 
+    1524 00005e00     09e6          MOVI    0C0C0H,A6
+         00005e10 0000c0c0  
+    1525 00005e30     0d3f          CALLR   SCANMESS
+         00005e40     004c  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   36
+
+    1526 00005e50           G_CREDXX
+    1527 00005e50     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         00005e60     4fff  
+    1528 00005e70     0960          RETS
+    1529                    
+    1530                    **************************************************************************
+    1531                    *                                                                        *
+    1532                    * CRCMESS - PROCESS TO PUT "CROUCH REVERSES CAR" MESSAGE                 *
+    1533                    *                                                                        *
+    1534                    **************************************************************************
+    1535 00005e80           CRCMESS
+    1536 00005e80     09c0          MOVI    CRCPID,A0
+         00005e90     0736  
+    1537 00005ea0     5621          CLR     A1
+    1538 00005eb0     03e1          NOT     A1
+    1539 00005ec0     0d5f          CALLA   KILALL
+         00005ed0 00000000! 
+    1540 00005ef0     09e8          MOVI    CRCSTRING,A8
+         00005f00 00007e80' 
+    1541 00005f20     09e6          MOVI    0F5F5H,A6       
+         00005f30 0000f5f5  
+    1542 00005f50     0d3f          CALLR   SCANMESS
+         00005f60     003a  
+    1543 00005f70                   SLEEP   60*4
+    1544 00005fc0     0d3f          CALLR   G_CREDONLY              ;RE-OUTPUT CREDIT MESSAGE
+         00005fd0     ffa6  
+    1545 00005fe0                   DIE
+    1546                    
+    1547                    **************************************************************************
+    1548                    *                                                                        *
+    1549                    * PICKMESS - PROCESS TO PUT "PICK UP SAFE CARD" MESSAGE                  *
+    1550                    *                                                                        *
+    1551                    **************************************************************************
+    1552 00006010           PICKMESS
+    1553 00006010     09c0          MOVI    CRCPID,A0
+         00006020     0736  
+    1554 00006030     5621          CLR     A1
+    1555 00006040     03e1          NOT     A1
+    1556 00006050     0d5f          CALLA   KILALL
+         00006060 00000000! 
+    1557 00006080           PICKMLP
+    1558 00006080     09e8          MOVI    PICKSTRING,A8
+         00006090 00007f08' 
+    1559 000060b0     09e6          MOVI    0F5F5H,A6       
+         000060c0 0000f5f5  
+    1560 000060e0     0d3f          CALLR   SCANMESS
+         000060f0     0021  
+    1561 00006100                   SLEEP   30H
+    1562 00006150     09e6          MOVI    0F5F5H,A6       
+         00006160 0000f5f5  
+    1563 00006180     0d3f          CALLR   SCANMESS
+         00006190     0017  
+    1564 000061a0                   SLOOP   30H,PICKMLP
+    1565                    
+    1566                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   37
+
+    1567                    *                                                                        *
+    1568                    * CLRMESS - CURRENT MESSAGE PROCESS AND PUT THE CREDITS MESSAGE BACK     *
+    1569                    *                                                                        *
+    1570                    **************************************************************************
+    1571 00006220           CLRMESS
+    1572 00006220     098f          MMTM    SP,A0,A1
+         00006230     c000  
+    1573 00006240     09c0          MOVI    CRCPID,A0
+         00006250     0736  
+    1574 00006260     5621          CLR     A1
+    1575 00006270     03e1          NOT     A1
+    1576 00006280     0d5f          CALLA   KILALL
+         00006290 00000000! 
+    1577 000062b0     0d5f          CALLA   G_CREDONLY
+         000062c0 00005a40' 
+    1578 000062e0     09af          MMFM    SP,A0,A1
+         000062f0     0003  
+    1579 00006300     0960          RETS
+    1580                    **************************************************************************
+    1581                    *                                                                        *
+    1582                    * SCANMESS - SCANNER AREA MESSAGE.                                       *
+    1583                    * A6 = COLOR                                                             *
+    1584                    * A8 = PTR TO STRING                                                     *
+    1585                    * RETURNS:                                                               *
+    1586                    * A8 = NEXT STRING                                                       *
+    1587                    *                                                                        *
+    1588                    **************************************************************************
+    1589 00006310           SCANMESS
+    1590 00006310     098f          MMTM    SP,A0,A1,A2,A3,A4,A6,A7,A9,A10,A11
+         00006320     fb70  
+    1591 00006330     09e3          MOVI    GCREDUL,A3      
+         00006340 004100c0  
+    1592 00006360     09e4          MOVI    GCREDSIZ,A4
+         00006370 000a0081  
+    1593 00006390     0d5f          CALLA   BLNKAREA
+         000063a0 00000000! 
+    1594 000063c0     5600          CLR     A0
+    1595 000063d0     09e9          MOVI    GCREDPNT,A9
+         000063e0 00430100  
+    1596 00006400     182a          MOVK    1,A10
+    1597 00006410     09eb          MOVI    RD7FONT,A11
+         00006420 00000000! 
+    1598 00006440                   JSRP    STRCNRM
+    1599 000064b0     09af          MMFM    SP,A0,A1,A2,A3,A4,A6,A7,A9,A10,A11
+         000064c0     0edf  
+    1600 000064d0     0960          RETS
+    1601                    
+    1602                    **************************************************************************
+    1603                    *                                                                        *
+    1604                    * OUTNEXTR - OUTPUT A PLAYER'S NEXT REPLAY LEVEL                         *
+    1605                    * A2 = PLAYER DATA AREA                                                  *
+    1606                    *                                                                        *
+    1607                    **************************************************************************
+    1608 000064e0           OUTNEXTR
+    1609 000064e0     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   38
+
+         000064f0     fff2  
+    1610 00006500     05a0          MOVE    @GAMSTATE,A0,W
+         00006510 00000000! 
+    1611 00006530     0b40          CMPI    INAMODE,A0
+         00006540     ffcf  
+    1612 00006550     ca26          JREQ    OUTNRNULL
+    1613 00006560     b640          MOVE    *A2(POBJ),A0,L
+         00006570     00a0  
+    1614 00006580     ca23          JRZ     OUTNRNULL               ;GUY IS DEAD
+    1615 00006590     b640          MOVE    *A2(PNEXTREP),A0,L
+         000065a0     0270  
+    1616 000065b0     ca20          JRZ     OUTNRNULL
+    1617                    *
+    1618                    *       get an object for data
+    1619                    *
+    1620 000065c0     0d5f          CALLA   STR_OBJ                 ;ALLOCATE FOR A7
+         000065d0 00000000! 
+    1621 000065f0     c81c          JRC     OUTNRNULL               ;CAN'T...TOO BAD
+    1622                    
+    1623 00006600     09e8          MOVI    M_REPAT,A8      
+         00006610 00007e48' 
+    1624 00006630     0d5f          CALLA   STRCAT                  ;NOW A7 HAS "REPLAY AT"
+         00006640 00000000! 
+    1625                    
+    1626 00006660     0d5f          CALLA   BCDBIN
+         00006670 00000000! 
+    1627 00006690     4c08          MOVE    A0,A8
+    1628 000066a0     0d5f          CALLA   HEXTOASC
+         000066b0 00000000! 
+    1629                            
+    1630 000066d0     0d5f          CALLA   STRCAT
+         000066e0 00000000! 
+    1631 00006700     4ce8          MOVE    A7,A8                   ;FULL STRING AIN A8
+    1632                    
+    1633 00006710     09e6          MOVI    0FBFBH,A6
+         00006720 0000fbfb  
+    1634 00006740     0d3f          CALLR   PMESSAGE                ;OUTPUT THE MESSAGE
+         00006750     00c8  
+    1635                    
+    1636 00006760     0d5f          CALLA   STR_FREE                ;FREE UP STRING SPACE
+         00006770 00000000! 
+    1637 00006790           OUTNEXTX
+    1638 00006790     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A14
+         000067a0     4fff  
+    1639 000067b0     0960          RETS
+    1640                    
+    1641 000067c0           OUTNRNULL
+    1642 000067c0     09e8          MOVI    BLANKMSG,A8             ;NULL STRING FOR NEXT REPLAY
+         000067d0 00000000! 
+    1643 000067f0     0d3f          CALLR   PMESSAGE
+         00006800     00bd  
+    1644 00006810     c0f7          JRUC    OUTNEXTX
+    1645                    **************************************************************************
+    1646                    *                                                                        *
+    1647                    * PRESCONT - ALTERNATE BETWEEN "PRESS START" OR "INSERT COIN",           *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   39
+
+    1648                    *            AND "TO CONTINUE" IN A PLAYER MESSAGE AREA.                 *
+    1649                    * A11 = PTR TO PLAYER DATA STRUCTURE                                     *
+    1650                    *                                                                        *
+    1651                    **************************************************************************
+    1652 00006820           PRESCONT
+    1653 00006820     b5a0          MOVE    *A13(PROCID),A0,W
+         00006830     0020  
+    1654 00006840     5621          CLR     A1
+    1655 00006850     03e1          NOT     A1
+    1656 00006860     0d5f          CALLA   KILALL                  ;KILL OTHER GUYS
+         00006870 00000000! 
+    1657 00006890     09ea          MOVI    0F6F6H,A10
+         000068a0 0000f6f6  
+    1658 000068c0     4d62          MOVE    A11,A2
+    1659 000068d0     09e8          MOVI    BLANKMSG,A8
+         000068e0 00000000! 
+    1660 00006900     0d3f          CALLR   PMESSAGE                ;CLEAR OUT THE BOTTOM MESSAGE
+         00006910     00ac  
+    1661 00006920           PRESSLP
+    1662 00006920     b560          MOVE    *A11(PBUYINS),A0,W
+         00006930     02c0  
+    1663 00006940     cb1d          JRNZ    PRESSCGO
+    1664                    *
+    1665                    *OUTPUT PLAYER STANDBY MESSAGE
+    1666 00006950     4d62          MOVE    A11,A2
+    1667 00006960     0b6b          CMPI    P1DATA,A11
+         00006970 ffffffff! 
+    1668 00006990     cb04          JRNE    PRESP2SB
+    1669 000069a0     09e8          MOVI    PLAYER1M,A8
+         000069b0 00007d78' 
+    1670 000069d0     c003          JRUC    PRESSBM
+    1671 000069e0           PRESP2SB
+    1672 000069e0     09e8          MOVI    PLAYER2M,A8
+         000069f0 00007dc0' 
+    1673 00006a10           PRESSBM
+    1674 00006a10     09e6          MOVI    0F7F7H,A6
+         00006a20 0000f7f7  
+    1675 00006a40     0d3f          CALLR   PMESSB1
+         00006a50     00b8  
+    1676 00006a60     09e8          MOVI    STANDBYM,A8
+         00006a70 00007e08' 
+    1677 00006a90     0d3f          CALLR   PMESSB2
+         00006aa0     00e3  
+    1678 00006ab0                   SLOOP   16,PRESSLP
+    1679                    
+    1680 00006b20           PRESSCGO
+    1681 00006b20     b760          MOVE    *A11(PSCORE),A0,L
+         00006b30     01a0  
+    1682 00006b40     ca0e          JRZ     PRESSTRT                ;NO SCORE, THIS IS A VIRGIN START
+    1683 00006b50     05a0          MOVE    @GAMSTATE,A0,W
+         00006b60 00000000! 
+    1684 00006b80     0b40          CMPI    INGAMEOV,A0
+         00006b90     ffaf  
+    1685 00006ba0     ca08          JREQ    PRESSTRT
+    1686 00006bb0     0b40          CMPI    INAMODE,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   40
+
+         00006bc0     ffcf  
+    1687 00006bd0     ca05          JREQ    PRESSTRT
+    1688                    
+    1689 00006be0     0d5f          CALLA   CR_CONTP        ;CONTINUATION, UGH, CALL/CC
+         00006bf0 00000000! 
+    1690 00006c10     c81b          JRLO    INSCONT         ;NOT ENUFF FOR THE CONTINUE
+    1691 00006c20     c005          JRUC    PRESSTOC
+    1692 00006c30           PRESSTRT
+    1693 00006c30     0d5f          CALLA   CR_STRTP
+         00006c40 00000000! 
+    1694 00006c60     c816          JRLO    INSCONT         ;NOT ENUFF TO START THIS GUY
+    1695 00006c70     0300          JRUC    PRESSTOC
+    1696                    
+    1697                    *OUTPUT "PRESS" ON TOP EITHER "START 1" OR "START 2" ON BOTTOM
+    1698 00006c80           PRESSTOC
+    1699 00006c80     4d46          MOVE    A10,A6
+    1700 00006c90     4d62          MOVE    A11,A2
+    1701 00006ca0     09e8          MOVI    PRESSMSG,A8
+         00006cb0 00007c40' 
+    1702 00006cd0     0d3f          CALLR   PMESSB1
+         00006ce0     008f  
+    1703                    
+    1704 00006cf0     0b6b          CMPI    P1DATA,A11
+         00006d00 ffffffff! 
+    1705 00006d20     cb04          JRNE    PRESCONA                ;BR = PLAYER 2
+    1706 00006d30     09e8          MOVI    STRT1MSG,A8             ;SELECT "START 1"
+         00006d40 00007c70' 
+    1707 00006d60     c003          JRUC    PRESCON1
+    1708 00006d70           PRESCONA
+    1709 00006d70     09e8          MOVI    STRT2MSG,A8             ;SELECT "START 2"
+         00006d80 00007cb0' 
+    1710 00006da0           PRESCON1
+    1711 00006da0     0d3f          CALLR   PMESSB2                 ;OUPUT WHAT TO DO
+         00006db0     00b2  
+    1712 00006dc0     c00d          JRUC    NEXT1
+    1713                    
+    1714                    *OUTPUT "INSERT" ON TOP, "COIN" ON BOTTOM
+    1715 00006dd0           INSCONT
+    1716 00006dd0     4d46          MOVE    A10,A6
+    1717 00006de0     4d62          MOVE    A11,A2
+    1718 00006df0     09e8          MOVI    INSRTMSG,A8
+         00006e00 00007be0' 
+    1719 00006e20     0d3f          CALLR   PMESSB1
+         00006e30     007a  
+    1720 00006e40     09e8          MOVI    COINMSG,A8
+         00006e50 00007c18' 
+    1721 00006e70     0d3f          CALLR   PMESSB2
+         00006e80     00a5  
+    1722 00006e90     0300          JRUC    NEXT1
+    1723                    *START OF NEXT MESSAGE
+    1724 00006ea0           NEXT1
+    1725 00006ea0                   SLEEP   1FH                     ;READABILITY FACTOR
+    1726                    *OUPUT "TO" ON THE TOP, AND EITHER "CONTINUE" OR "PLAY" ON THE BOTTOM
+    1727 00006ee0     4d46          MOVE    A10,A6
+    1728 00006ef0     4d62          MOVE    A11,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   41
+
+    1729 00006f00     09e8          MOVI    TOMSG,A8
+         00006f10 00007cf0' 
+    1730 00006f30     0d3f          CALLR   PMESSB1
+         00006f40     0069  
+    1731                    
+    1732 00006f50     b760          MOVE    *A11(PSCORE),A0,L
+         00006f60     01a0  
+    1733 00006f70     ca0f          JRZ     TOPLAY                  ;NO SCORE, THIS IS A VIRGIN START
+    1734 00006f80     05a0          MOVE    @GAMSTATE,A0,W
+         00006f90 00000000! 
+    1735 00006fb0     0b40          CMPI    INGAMEOV,A0
+         00006fc0     ffaf  
+    1736 00006fd0     ca09          JREQ    TOPLAY
+    1737 00006fe0     0b40          CMPI    INAMODE,A0
+         00006ff0     ffcf  
+    1738 00007000     ca06          JREQ    TOPLAY
+    1739                    
+    1740 00007010     09e8          MOVI    CONTMSG,A8
+         00007020 00007d08' 
+    1741 00007040     0d3f          CALLR   PMESSB2
+         00007050     0088  
+    1742 00007060     c006          JRUC    NEXT2
+    1743 00007070           TOPLAY
+    1744 00007070     09e8          MOVI    PLAYMSG,A8
+         00007080 00007d50' 
+    1745 000070a0     0d3f          CALLR   PMESSB2
+         000070b0     0082  
+    1746 000070c0     0300          JRUC    NEXT2
+    1747 000070d0           NEXT2
+    1748 000070d0                   SLOOP   1FH,PRESSLP
+    1749                    
+    1750                    **************************************************************************
+    1751                    *                                                                        *
+    1752                    * PLAYMESS - PLAYER AREA MESSAGE HANDLER                                 *
+    1753                    *                                                                        *
+    1754                    **************************************************************************
+    1755                    *
+    1756                    *DO THE CLOSE CALL MESSAGE
+    1757                    *A11 = PTR TO PLAYER DATA STRUCTURE
+    1758 00007140           CLOSCALL
+    1759 00007140     09e6          MOVI    0F5F5H,A6
+         00007150 0000f5f5  
+    1760                    
+    1761 00007170     0b6b          CMPI    P1DATA,A11
+         00007180 ffffffff! 
+    1762 000071a0     cb04          JRNE    CLOSCALA                ;BR = PLAYER 2
+    1763 000071b0     09e8          MOVI    CLOS1MSG,A8             ;SELECT "CLOSE CALL PLAYER 1"
+         000071c0 00000000! 
+    1764 000071e0     c003          JRUC    CLOSCAL1
+    1765 000071f0           CLOSCALA
+    1766 000071f0     09e8          MOVI    CLOS2MSG,A8             ;SELECT "CLOSE CALL PLAYER 2"
+         00007200 00000000! 
+    1767 00007220           CLOSCAL1
+    1768 00007220     b5a0          MOVE    *A13(PROCID),A0,W
+         00007230     0020  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   42
+
+    1769 00007240     5621          CLR     A1
+    1770 00007250     03e1          NOT     A1
+    1771 00007260     0d5f          CALLA   KILALL                  ;KILL OTHER GUYS
+         00007270 00000000! 
+    1772 00007290     4d62          MOVE    A11,A2
+    1773 000072a0     0d3f          CALLR   PMESSAGE
+         000072b0     0012  
+    1774 000072c0                   SLEEP   7FH
+    1775 00007310     4d62          MOVE    A11,A2
+    1776 00007320     0d3f          CALLR   OUTNEXTR
+         00007330     ff1a  
+    1777 00007340                   DIE
+    1778                    
+    1779                    *
+    1780                    *OUTPUT A PLAYER ONE MESSAGE
+    1781 00007370           P1MESSAG
+    1782 00007370     09e2          MOVI    P1DATA,A2
+         00007380 00000000! 
+    1783 000073a0     c003          JRUC    PMESSAGE
+    1784                    *
+    1785                    *OUTPUT A PLAYER TWO MESSAGE
+    1786 000073b0           P2MESSAG
+    1787 000073b0     09e2          MOVI    P2DATA,A2
+         000073c0 00000000! 
+    1788                    **************************************************************************
+    1789                    *                                                                        *
+    1790                    * PMESSAGE - OUTPUT A MESSAGE IN THE PLAYERS MESSAGE AREA                *
+    1791                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1792                    * A6 = COLOR                                                             *
+    1793                    * A8 = PTR TO STRING                                                     *
+    1794                    * NOTE: CALL THIS ONLY FROM A PROCESS                                    *
+    1795                    *                                                                        *
+    1796                    **************************************************************************
+    1797 000073e0           PMESSAGE
+    1798 000073e0     098f          MMTM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         000073f0     fbf0  
+    1799 00007400     b649          MOVE    *A2(PSCRAD),A9,L
+         00007410     0180  
+    1800 00007420     0b29          ADDI    PMSGOF,A9               ;GET DAG
+         00007430 003afff9  
+    1801 00007450     4d23          MOVE    A9,A3                   ;HERE FOR MESSAGE BLNK
+    1802 00007460     09e4          MOVI    PMSGSIZ,A4
+         00007470 000a0067  
+    1803 00007490     0d5f          CALLA   BLNKAREA                ;BLANK US FIRST
+         000074a0 00000000! 
+    1804 000074c0     0524          ZEXT    A4
+    1805 000074d0     2fe4          SRL     1,A4                    ;X SIZE/2
+    1806 000074e0     e089          ADDXY   A4,A9                   ;CENTER THIS GUY
+    1807 000074f0     5600          CLR     A0
+    1808 00007500     182a          MOVK    1,A10
+    1809 00007510     09eb          MOVI    RD7FONT,A11
+         00007520 00000000! 
+    1810 00007540                   JSRP    STRCNRM
+    1811 000075b0     09af          MMFM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         000075c0     0fdf  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   43
+
+    1812 000075d0     0960          RETS
+    1813                    
+    1814                    **************************************************************************
+    1815                    *                                                                        *
+    1816                    * PMESSB1 - OUTPUT A BIG MESSAGE IN THE STATUS AREA, TOP HALF            *
+    1817                    *               BIG MESSAGES CONSUME AN AREA THE SAME WIDTH AS A         *
+    1818                    *               NORMAL MESSAGE, BUT THE HEIGHT IS FROM THE BOTTOM OF     *
+    1819                    *               THE SCORE TO THE BOTTOM OF THE STATUS AREA.              *
+    1820                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1821                    * A6 = COLOR                                                             *
+    1822                    * A8 = PTR TO STRING                                                     *
+    1823                    * NOTE: CALL THIS ONLY FROM A PROCESS                                    *
+    1824                    *                                                                        *
+    1825                    **************************************************************************
+    1826 000075e0           PMESSB1
+    1827 000075e0     098f          MMTM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         000075f0     fbf0  
+    1828 00007600     b649          MOVE    *A2(PSCRAD),A9,L
+         00007610     0180  
+    1829 00007620     0b29          ADDI    PB1MSGOF,A9             ;GET DAG
+         00007630 000ffff6  
+    1830 00007650     4d23          MOVE    A9,A3                   ;HERE FOR MESSAGE BLNK
+    1831 00007660     09e4          MOVI    PB1MGSIZ,A4
+         00007670 00130069  
+    1832 00007690     0d5f          CALLA   BLNKAREA                ;BLANK US FIRST
+         000076a0 00000000! 
+    1833 000076c0     0524          ZEXT    A4
+    1834 000076d0     2fe4          SRL     1,A4                    ;X SIZE/2
+    1835 000076e0     e089          ADDXY   A4,A9                   ;CENTER THIS GUY
+    1836 000076f0     5600          CLR     A0
+    1837 00007700     182a          MOVK    1,A10
+    1838 00007710     09eb          MOVI    RD15FONT,A11
+         00007720 00000000! 
+    1839 00007740                   JSRP    STRCNRM
+    1840 000077b0     09af          MMFM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         000077c0     0fdf  
+    1841 000077d0     0960          RETS
+    1842                    **************************************************************************
+    1843                    *                                                                        *
+    1844                    * BLANKB1 - BLANK THE B1 MESSAGE AREA                                    *
+    1845                    * A2 = PLINDX                                                            *
+    1846                    *                                                                        *
+    1847                    **************************************************************************
+    1848 000077e0           BLANKB1
+    1849 000077e0     098f          MMTM    SP,A3,A4
+         000077f0     1800  
+    1850 00007800     b643          MOVE    *A2(PSCRAD),A3,L
+         00007810     0180  
+    1851 00007820     0b23          ADDI    PB1MSGOF,A3             ;GET DAG
+         00007830 000ffff6  
+    1852 00007850     09e4          MOVI    PB1MGSIZ,A4
+         00007860 00130069  
+    1853 00007880     0d5f          CALLA   BLNKAREA                ;BLANK US FIRST
+         00007890 00000000! 
+    1854 000078b0     09af          MMFM    SP,A3,A4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   44
+
+         000078c0     0018  
+    1855 000078d0     0960          RETS
+    1856                    **************************************************************************
+    1857                    *                                                                        *
+    1858                    * PMESSB2 - OUTPUT A BIG MESSAGE IN THE STATUS AREA, BOTTOM HALF.        *
+    1859                    * A2 = PTR TO PLAYER DATA STRUCTURE                                      *
+    1860                    * A6 = COLOR                                                             *
+    1861                    * A8 = PTR TO STRING                                                     *
+    1862                    * NOTE: CALL THIS ONLY FROM A PROCESS                                    *
+    1863                    *                                                                        *
+    1864                    **************************************************************************
+    1865 000078e0           PMESSB2
+    1866 000078e0     098f          MMTM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         000078f0     fbf0  
+    1867 00007900     b649          MOVE    *A2(PSCRAD),A9,L
+         00007910     0180  
+    1868 00007920     0b29          ADDI    PB2MSGOF,A9             ;GET DAG
+         00007930 0020fff6  
+    1869 00007950     4d23          MOVE    A9,A3                   ;HERE FOR MESSAGE BLNK
+    1870 00007960     09e4          MOVI    PB2MGSIZ,A4
+         00007970 000f0069  
+    1871 00007990     0d5f          CALLA   BLNKAREA                ;BLANK US FIRST
+         000079a0 00000000! 
+    1872 000079c0     0524          ZEXT    A4
+    1873 000079d0     2fe4          SRL     1,A4                    ;X SIZE/2
+    1874 000079e0     e089          ADDXY   A4,A9                   ;CENTER THIS GUY
+    1875 000079f0     5600          CLR     A0
+    1876 00007a00     182a          MOVK    1,A10
+    1877 00007a10     09eb          MOVI    RD15FONT,A11
+         00007a20 00000000! 
+    1878 00007a40                   JSRP    STRCNRM
+    1879 00007ab0     09af          MMFM    SP,A0,A1,A2,A3,A4,A6,A7,A8,A9,A10,A11
+         00007ac0     0fdf  
+    1880 00007ad0     0960          RETS
+    1881                    
+    1882                    **************************************************************************
+    1883                    *                                                                        *
+    1884                    * BLANKB2 - BLANK THE B2 MESSAGE AREA                                    *
+    1885                    * A2 = PLINDX                                                            *
+    1886                    *                                                                        *
+    1887                    **************************************************************************
+    1888 00007ae0           BLANKB2
+    1889 00007ae0     098f          MMTM    SP,A3,A4
+         00007af0     1800  
+    1890 00007b00     b643          MOVE    *A2(PSCRAD),A3,L
+         00007b10     0180  
+    1891 00007b20     0b23          ADDI    PB2MSGOF,A3             ;GET DAG
+         00007b30 0020fff6  
+    1892 00007b50     09e4          MOVI    PB2MGSIZ,A4
+         00007b60 000f0069  
+    1893 00007b80     0d5f          CALLA   BLNKAREA                ;BLANK US FIRST
+         00007b90 00000000! 
+    1894 00007bb0     09af          MMFM    SP,A3,A4
+         00007bc0     0018  
+    1895 00007bd0     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:25 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>                       PAGE   45
+
+    1896                    
+    1897 00007be0           INSRTMSG
+    1898 00007be0       49          .STRING "INSERT"
+    1899 00007c10       00          .BYTE   0
+    1900 00007c18           COINMSG
+    1901 00007c18       43          .STRING "COIN"
+    1902 00007c38       00          .BYTE   0
+    1903 00007c40           PRESSMSG
+    1904 00007c40       50          .STRING "PRESS"
+    1905 00007c68       00          .BYTE   0
+    1906 00007c70           STRT1MSG
+    1907 00007c70       53          .STRING "START 1"
+    1908 00007ca8       00          .BYTE   0
+    1909 00007cb0           STRT2MSG
+    1910 00007cb0       53          .STRING "START 2"
+    1911 00007ce8       00          .BYTE   0
+    1912 00007cf0           TOMSG
+    1913 00007cf0       54          .STRING "TO"
+    1914 00007d00       00          .BYTE   0
+    1915 00007d08           CONTMSG
+    1916 00007d08       43          .STRING "CONTINUE"
+    1917 00007d48       00          .BYTE   0
+    1918 00007d50           PLAYMSG
+    1919 00007d50       50          .STRING "PLAY"
+    1920 00007d70       00          .BYTE   0
+    1921                    
+    1922 00007d78           PLAYER1M
+    1923 00007d78       50          .STRING "PLAYER 1"
+    1924 00007db8       00          .BYTE   0
+    1925 00007dc0           PLAYER2M
+    1926 00007dc0       50          .STRING "PLAYER 2"
+    1927 00007e00       00          .BYTE   0
+    1928 00007e08           STANDBYM
+    1929 00007e08       53          .STRING "STANDBY"
+    1930 00007e40       00          .BYTE   0
+    1931 00007e48           M_REPAT
+    1932 00007e48       46          .STRING "FREE: "
+    1933 00007e78       00          .BYTE   0
+    1934                    
+    1935 00007e80           CRCSTRING
+    1936 00007e80       43          .STRING "CROUCH SPINS CAR"
+    1937 00007f00       00          .BYTE   0
+    1938                    
+    1939 00007f08           PICKSTRING
+    1940 00007f08       50          .STRING "PICK UP SAFE CARD"
+    1941 00007f90       00          .BYTE   0
+    1942 00007f98       54          .STRING "TO EXIT"
+    1943 00007fd0       00          .BYTE   0
+    1944 00007fe0                   .EVEN
+    1945                    
+    1946                            .END
+
+ No Errors,  No Warnings

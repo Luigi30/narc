@@ -1,4 +1,4 @@
-	.FILE	'NARCBLIP.ASM'
+	.FILE	"NARCBLIP.ASM"
 	.TITLE	" <<< N  A  R  C  -- SCANNER BLIPS >>>"
 
 **************************************************************************
@@ -30,48 +30,48 @@ CADBLIP:
 *	.WORD	WIDTH,HEIGHT
 *	.BYTE	DATA
 CADBLP1:
-   .word    >F,>6
-   .byte    >00,>00,>00,>00,>00,>00,>00,>00,>00,>1D,>00,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>00,>00,>00,>00,>00,>26,>1D,>00,>00,>00,>00
-   .byte    >00,>A4,>B5,>B5,>4A,>A4,>A4,>A4,>A4,>26,>3E,>3D,>3D,>3D,>A8
-   .byte    >B6,>3E,>3E,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>B6,>B6,>A8
-   .byte    >A8,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>AB,>AB,>3D,>3D,>00
-   .byte    >00,>00,>00,>AB,>BB,>00,>00,>00,>00,>00,>AB,>BB,>00,>00,>00
+   .word    0FH,06H
+   .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,01DH,000H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,026H,01DH,000H,000H,000H,000H
+   .byte    000H,0A4H,0B5H,0B5H,04AH,0A4H,0A4H,0A4H,0A4H,026H,03EH,03DH,03DH,03DH,0A8H
+   .byte    0B6H,03EH,03EH,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B6H,0B6H,0A8H
+   .byte    0A8H,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,0ABH,0ABH,03DH,03DH,000H
+   .byte    000H,000H,000H,0ABH,0BBH,000H,000H,000H,000H,000H,0ABH,0BBH,000H,000H,000H
 	.EVEN
 CADBLP2:
-   .word    >F,>6
-   .byte    >00,>00,>00,>00,>00,>1D,>00,>00,>00,>00,>00,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>1D,>26,>00,>00,>00,>00,>00,>00,>00,>00,>00
-   .byte    >A8,>3D,>3D,>3D,>3E,>26,>A4,>A4,>A4,>A4,>4A,>B5,>B5,>A4,>00
-   .byte    >A8,>B6,>B6,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>B5,>3E,>3E,>B6
-   .byte    >00,>3D,>3D,>AB,>AB,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>3D,>A8
-   .byte    >00,>00,>00,>BB,>AB,>00,>00,>00,>00,>00,>BB,>AB,>00,>00,>00
+   .word    0FH,06H
+   .byte    000H,000H,000H,000H,000H,01DH,000H,000H,000H,000H,000H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,01DH,026H,000H,000H,000H,000H,000H,000H,000H,000H,000H
+   .byte    0A8H,03DH,03DH,03DH,03EH,026H,0A4H,0A4H,0A4H,0A4H,04AH,0B5H,0B5H,0A4H,000H
+   .byte    0A8H,0B6H,0B6H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,03EH,03EH,0B6H
+   .byte    000H,03DH,03DH,0ABH,0ABH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,0A8H
+   .byte    000H,000H,000H,0BBH,0ABH,000H,000H,000H,000H,000H,0BBH,0ABH,000H,000H,000H
 	.EVEN
 DUMPBLIP:
 	.LONG	DUMPBLP1,DUMPBLP1
 DUMPBLP1
-   .word    >4,>8
-   .byte    >B6,>1E,>82,>B6
-   .byte    >22,>00,>00,>22
-   .byte    >22,>45,>B6,>22
-   .byte    >8B,>22,>22,>8B
-   .byte    >00,>22,>22,>00
-   .byte    >1A,>1C,>1C,>1A
-   .byte    >22,>00,>00,>22
-   .byte    >22,>00,>00,>22
+   .word    04H,08H
+   .byte    0B6H,01EH,082H,0B6H
+   .byte    022H,000H,000H,022H
+   .byte    022H,045H,0B6H,022H
+   .byte    08BH,022H,022H,08BH
+   .byte    000H,022H,022H,000H
+   .byte    01AH,01CH,01CH,01AH
+   .byte    022H,000H,000H,022H
+   .byte    022H,000H,000H,022H
 	.EVEN
 EXITBLIP:
 	.LONG	EXITBLP1,EXITBLP1
 EXITBLP1
-   .word    >5,>8
-   .byte    >D6,>D6,>D6,>D6,>D6
-   .byte    >D6,>D6,>D6,>D6,>D6
-   .byte    >D6,>D6,>00,>00,>00
-   .byte    >D6,>D6,>D6,>D6,>00
-   .byte    >D6,>D6,>D6,>D6,>00
-   .byte    >D6,>D6,>00,>00,>00
-   .byte    >D6,>D6,>D6,>D6,>D6
-   .byte    >D6,>D6,>D6,>D6,>D6
+   .word    05H,08H
+   .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+   .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+   .byte    0D6H,0D6H,000H,000H,000H
+   .byte    0D6H,0D6H,0D6H,0D6H,000H
+   .byte    0D6H,0D6H,0D6H,0D6H,000H
+   .byte    0D6H,0D6H,000H,000H,000H
+   .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+   .byte    0D6H,0D6H,0D6H,0D6H,0D6H
 	.EVEN
 
   .IF BLUEP1
@@ -82,16 +82,16 @@ P1BLIP:
 	.LONG	P2BLP1,P2BLP1
   .ENDIF
 P1BLP1
-   .word    >6,>9
-   .byte    >00,>00,>DF,>DF,>00,>00
-   .byte    >00,>DF,>00,>00,>DF,>00
-   .byte    >DF,>DF,>DF,>DF,>DF,>DD
-   .byte    >63,>DD,>DF,>DF,>DD,>B5
-   .byte    >63,>00,>DD,>DD,>00,>B6
-   .byte    >63,>DE,>DF,>DF,>DE,>B6
-   .byte    >00,>DF,>DD,>DD,>DF,>00
-   .byte    >00,>DF,>00,>00,>DF,>00
-   .byte    >00,>DF,>00,>00,>DF,>00
+   .word    06H,09H
+   .byte    000H,000H,0DFH,0DFH,000H,000H
+   .byte    000H,0DFH,000H,000H,0DFH,000H
+   .byte    0DFH,0DFH,0DFH,0DFH,0DFH,0DDH
+   .byte    063H,0DDH,0DFH,0DFH,0DDH,0B5H
+   .byte    063H,000H,0DDH,0DDH,000H,0B6H
+   .byte    063H,0DEH,0DFH,0DFH,0DEH,0B6H
+   .byte    000H,0DFH,0DDH,0DDH,0DFH,000H
+   .byte    000H,0DFH,000H,000H,0DFH,000H
+   .byte    000H,0DFH,000H,000H,0DFH,000H
 	.EVEN
   .IF BLUEP1
 P2BLIP:
@@ -101,392 +101,392 @@ P2BLIP:
 	.LONG	P1BLP1,P1BLP1
   .ENDIF
 P2BLP1
-   .word    >6,>9
-   .byte    >00,>00,>D6,>D6,>00,>00
-   .byte    >00,>D6,>00,>00,>D6,>00
-   .byte    >D6,>D6,>D6,>D6,>D6,>9D
-   .byte    >63,>9D,>D6,>D6,>9D,>B6
-   .byte    >63,>00,>CE,>CE,>00,>B6
-   .byte    >63,>CE,>D6,>D6,>CE,>B6
-   .byte    >00,>D6,>9D,>9D,>D6,>00
-   .byte    >00,>D6,>00,>00,>D6,>00
-   .byte    >00,>D6,>00,>00,>D6,>00
+   .word    06H,09H
+   .byte    000H,000H,0D6H,0D6H,000H,000H
+   .byte    000H,0D6H,000H,000H,0D6H,000H
+   .byte    0D6H,0D6H,0D6H,0D6H,0D6H,09DH
+   .byte    063H,09DH,0D6H,0D6H,09DH,0B6H
+   .byte    063H,000H,0CEH,0CEH,000H,0B6H
+   .byte    063H,0CEH,0D6H,0D6H,0CEH,0B6H
+   .byte    000H,0D6H,09DH,09DH,0D6H,000H
+   .byte    000H,0D6H,000H,000H,0D6H,000H
+   .byte    000H,0D6H,000H,000H,0D6H,000H
 	.EVEN
 PORSBLIP:
 	.LONG	PORSBLP1,PORSBLP2
 PORSBLP1
-   .word    >10,>6
-   .byte    >00,>00,>D6,>CE,>00,>00,>00,>00,>00,>00,>00,>00,>00,>00,>00,>00
-   .byte    >00,>D6,>D6,>D6,>D6,>CE,>CE,>9D,>9D,>9D,>1D,>AB,>CE,>00,>00,>00
-   .byte    >D6,>D6,>D6,>CE,>D6,>1D,>9D,>9D,>9A,>1D,>26,>3E,>D6,>D6,>CE,>9D
-   .byte    >00,>9D,>CE,>CE,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>CE
-   .byte    >00,>00,>D6,>82,>82,>A2,>D6,>A2,>D6,>D6,>A2,>82,>82,>D6,>CE,>00
-   .byte    >00,>00,>00,>82,>82,>00,>00,>00,>00,>00,>00,>82,>82,>00,>00,>00
+   .word    010H,06H
+   .byte    000H,000H,0D6H,0CEH,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H
+   .byte    000H,0D6H,0D6H,0D6H,0D6H,0CEH,0CEH,09DH,09DH,09DH,01DH,0ABH,0CEH,000H,000H,000H
+   .byte    0D6H,0D6H,0D6H,0CEH,0D6H,01DH,09DH,09DH,09AH,01DH,026H,03EH,0D6H,0D6H,0CEH,09DH
+   .byte    000H,09DH,0CEH,0CEH,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0CEH
+   .byte    000H,000H,0D6H,082H,082H,0A2H,0D6H,0A2H,0D6H,0D6H,0A2H,082H,082H,0D6H,0CEH,000H
+   .byte    000H,000H,000H,082H,082H,000H,000H,000H,000H,000H,000H,082H,082H,000H,000H,000H
 	.EVEN
 PORSBLP2
-   .word    >10,>6
-   .byte    >00,>00,>00,>00,>00,>00,>00,>00,>00,>00,>00,>00,>CE,>D6,>00,>00
-   .byte    >00,>00,>00,>CE,>AB,>1D,>9D,>9D,>9D,>CE,>CE,>D6,>D6,>D6,>D6,>00
-   .byte    >9D,>CE,>D6,>D6,>3E,>26,>1D,>9A,>9D,>9D,>1D,>D6,>CE,>D6,>D6,>D6
-   .byte    >CE,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>D6,>CE,>CE,>9D,>00
-   .byte    >00,>CE,>D6,>82,>82,>A2,>D6,>D6,>A2,>D6,>A2,>82,>82,>D6,>00,>00
-   .byte    >00,>00,>00,>82,>82,>00,>00,>00,>00,>00,>00,>82,>82,>00,>00,>00
+   .word    010H,06H
+   .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,0CEH,0D6H,000H,000H
+   .byte    000H,000H,000H,0CEH,0ABH,01DH,09DH,09DH,09DH,0CEH,0CEH,0D6H,0D6H,0D6H,0D6H,000H
+   .byte    09DH,0CEH,0D6H,0D6H,03EH,026H,01DH,09AH,09DH,09DH,01DH,0D6H,0CEH,0D6H,0D6H,0D6H
+   .byte    0CEH,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0CEH,0CEH,09DH,000H
+   .byte    000H,0CEH,0D6H,082H,082H,0A2H,0D6H,0D6H,0A2H,0D6H,0A2H,082H,082H,0D6H,000H,000H
+   .byte    000H,000H,000H,082H,082H,000H,000H,000H,000H,000H,000H,082H,082H,000H,000H,000H
 	.EVEN
 BUCKBLIP:
 	.LONG	BUCKBLP1,BUCKBLP1
 BUCKBLP1
-   .word    >4,>1
-   .byte    >DB,>1C,>1C,>DB
+   .word    04H,01H
+   .byte    0DBH,01CH,01CH,0DBH
 	.EVEN
 CLIPBLIP:
 	.LONG	CLIPBLP1,CLIPBLP1
 CLIPBLP1
-   .word    >3,>3
-   .byte    >A8,>00,>A8
-   .byte    >B2,>0F,>B1
-   .byte    >B1,>12,>B1
+   .word    03H,03H
+   .byte    0A8H,000H,0A8H
+   .byte    0B2H,00FH,0B1H
+   .byte    0B1H,012H,0B1H
 	.EVEN
 CLWNBLIP:
 	.LONG	CLWNBLP1,CLWNBLP2
 CLWNBLP1:
-   .word    >4,>8
-   .byte    >00,>D6,>B6,>00
-   .byte    >D6,>D6,>B6,>3D
-   .byte    >00,>B6,>B4,>00
-   .byte    >CC,>53,>CC,>B4
-   .byte    >B4,>CC,>CC,>00
-   .byte    >00,>CC,>53,>4B
-   .byte    >00,>CC,>00,>53
-   .byte    >00,>CC,>00,>CC
+   .word    04H,08H
+   .byte    000H,0D6H,0B6H,000H
+   .byte    0D6H,0D6H,0B6H,03DH
+   .byte    000H,0B6H,0B4H,000H
+   .byte    0CCH,053H,0CCH,0B4H
+   .byte    0B4H,0CCH,0CCH,000H
+   .byte    000H,0CCH,053H,04BH
+   .byte    000H,0CCH,000H,053H
+   .byte    000H,0CCH,000H,0CCH
 	.EVEN
 CLWNBLP2:
-   .word    >4,>8
-   .byte    >00,>B6,>D6,>00
-   .byte    >3D,>B6,>D6,>D6
-   .byte    >00,>B4,>B6,>00
-   .byte    >B4,>CC,>53,>CC
-   .byte    >00,>CC,>CC,>B4
-   .byte    >4B,>53,>CC,>00
-   .byte    >53,>00,>CC,>00
-   .byte    >CC,>00,>CC,>00
+   .word    04H,08H
+   .byte    000H,0B6H,0D6H,000H
+   .byte    03DH,0B6H,0D6H,0D6H
+   .byte    000H,0B4H,0B6H,000H
+   .byte    0B4H,0CCH,053H,0CCH
+   .byte    000H,0CCH,0CCH,0B4H
+   .byte    04BH,053H,0CCH,000H
+   .byte    053H,000H,0CCH,000H
+   .byte    0CCH,000H,0CCH,000H
 	.EVEN
 DRUGBLIP:
 	.LONG	DRUGBLP1,DRUGBLP1
 DRUGBLP1
-   .word    >2,>2
-   .byte    >26,>26
-   .byte    >31,>31
+   .word    02H,02H
+   .byte    026H,026H
+   .byte    031H,031H
 	.EVEN
 GOALBLIP:
 	.LONG	GOALBLP1,GOALBLP1
 GOALBLP1
-   .word    >B,>B
-   .byte    >00,>00,>00,>00,>00,>F5,>00,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>00,>F5,>00,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>F5,>F5,>F5,>00,>00,>00,>00
-   .byte    >00,>00,>00,>F5,>00,>F5,>00,>F5,>00,>00,>00
-   .byte    >00,>00,>F5,>00,>00,>F5,>00,>00,>F5,>00,>00
-   .byte    >F5,>F5,>F5,>F5,>F5,>F5,>F5,>F5,>F5,>F5,>F5
-   .byte    >00,>00,>F5,>00,>00,>F5,>00,>00,>F5,>00,>00
-   .byte    >00,>00,>00,>F5,>00,>F5,>00,>F5,>00,>00,>00
-   .byte    >00,>00,>00,>00,>F5,>F5,>F5,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>00,>F5,>00,>00,>00,>00,>00
-   .byte    >00,>00,>00,>00,>00,>F5,>00,>00,>00,>00,>00
+   .word    0BH,0BH
+   .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,0F5H,0F5H,0F5H,000H,000H,000H,000H
+   .byte    000H,000H,000H,0F5H,000H,0F5H,000H,0F5H,000H,000H,000H
+   .byte    000H,000H,0F5H,000H,000H,0F5H,000H,000H,0F5H,000H,000H
+   .byte    0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H
+   .byte    000H,000H,0F5H,000H,000H,0F5H,000H,000H,0F5H,000H,000H
+   .byte    000H,000H,000H,0F5H,000H,0F5H,000H,0F5H,000H,000H,000H
+   .byte    000H,000H,000H,000H,0F5H,0F5H,0F5H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+   .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
 	.EVEN
 HOOKBLIP:
 	.LONG	HOOKBLP1,HOOKBLP2
 HOOKBLP1
-   .word    >3,>A
-   .byte    >B1,>DA,>00
-   .byte    >DA,>CA,>00
-   .byte    >00,>CA,>00
-   .byte    >00,>CC,>CC
-   .byte    >00,>D6,>00
-   .byte    >D6,>D6,>00
-   .byte    >D6,>CE,>00
-   .byte    >CA,>00,>00
-   .byte    >CA,>00,>00
-   .byte    >B4,>00,>00
+   .word    03H,0AH
+   .byte    0B1H,0DAH,000H
+   .byte    0DAH,0CAH,000H
+   .byte    000H,0CAH,000H
+   .byte    000H,0CCH,0CCH
+   .byte    000H,0D6H,000H
+   .byte    0D6H,0D6H,000H
+   .byte    0D6H,0CEH,000H
+   .byte    0CAH,000H,000H
+   .byte    0CAH,000H,000H
+   .byte    0B4H,000H,000H
 	.EVEN
 HOOKBLP2
-   .word    >3,>A
-   .byte    >00,>DA,>B1
-   .byte    >00,>CA,>DA
-   .byte    >00,>CA,>00
-   .byte    >CC,>CC,>00
-   .byte    >00,>D6,>00
-   .byte    >00,>D6,>D6
-   .byte    >00,>CE,>D6
-   .byte    >00,>00,>CA
-   .byte    >00,>00,>CA
-   .byte    >00,>00,>B4
+   .word    03H,0AH
+   .byte    000H,0DAH,0B1H
+   .byte    000H,0CAH,0DAH
+   .byte    000H,0CAH,000H
+   .byte    0CCH,0CCH,000H
+   .byte    000H,0D6H,000H
+   .byte    000H,0D6H,0D6H
+   .byte    000H,0CEH,0D6H
+   .byte    000H,000H,0CAH
+   .byte    000H,000H,0CAH
+   .byte    000H,000H,0B4H
 	.EVEN
 
 HYPOBLIP
 	.LONG	HYPOBLP1,HYPOBLP2
 HYPOBLP1:
-   .word    >5,>A
-   .byte    >45,>D8,>00,>00,>00
-   .byte    >45,>B6,>00,>00,>00
-   .byte    >45,>85,>00,>00,>00
-   .byte    >D8,>85,>85,>00,>00
-   .byte    >B7,>B6,>27,>26,>91
-   .byte    >85,>85,>83,>00,>00
-   .byte    >85,>85,>83,>00,>00
-   .byte    >85,>00,>85,>00,>00
-   .byte    >85,>00,>85,>00,>00
-   .byte    >B7,>00,>B7,>00,>00
+   .word    05H,0AH
+   .byte    045H,0D8H,000H,000H,000H
+   .byte    045H,0B6H,000H,000H,000H
+   .byte    045H,085H,000H,000H,000H
+   .byte    0D8H,085H,085H,000H,000H
+   .byte    0B7H,0B6H,027H,026H,091H
+   .byte    085H,085H,083H,000H,000H
+   .byte    085H,085H,083H,000H,000H
+   .byte    085H,000H,085H,000H,000H
+   .byte    085H,000H,085H,000H,000H
+   .byte    0B7H,000H,0B7H,000H,000H
 	.EVEN
 HYPOBLP2:
-   .word    >5,>A
-   .byte    >00,>00,>00,>D8,>45
-   .byte    >00,>00,>00,>B6,>45
-   .byte    >00,>00,>00,>85,>45
-   .byte    >00,>00,>85,>85,>D8
-   .byte    >91,>26,>27,>B6,>B7
-   .byte    >00,>00,>83,>85,>85
-   .byte    >00,>00,>83,>85,>85
-   .byte    >00,>00,>85,>00,>85
-   .byte    >00,>00,>85,>00,>85
-   .byte    >00,>00,>B7,>00,>B7
+   .word    05H,0AH
+   .byte    000H,000H,000H,0D8H,045H
+   .byte    000H,000H,000H,0B6H,045H
+   .byte    000H,000H,000H,085H,045H
+   .byte    000H,000H,085H,085H,0D8H
+   .byte    091H,026H,027H,0B6H,0B7H
+   .byte    000H,000H,083H,085H,085H
+   .byte    000H,000H,083H,085H,085H
+   .byte    000H,000H,085H,000H,085H
+   .byte    000H,000H,085H,000H,085H
+   .byte    000H,000H,0B7H,000H,0B7H
 	.EVEN
 LOFBLIP:
 	.LONG	LOFBLP1,LOFBLP2
 LOFBLP1
-   .word    >4,>7
-   .byte    >00,>9F,>9F,>CA
-   .byte    >9F,>A8,>A8,>C5
-   .byte    >A8,>A8,>34,>00
-   .byte    >A8,>A8,>47,>00
-   .byte    >A8,>A8,>9F,>00
-   .byte    >BB,>00,>BB,>00
-   .byte    >BB,>00,>BB,>00
+   .word    04H,07H
+   .byte    000H,09FH,09FH,0CAH
+   .byte    09FH,0A8H,0A8H,0C5H
+   .byte    0A8H,0A8H,034H,000H
+   .byte    0A8H,0A8H,047H,000H
+   .byte    0A8H,0A8H,09FH,000H
+   .byte    0BBH,000H,0BBH,000H
+   .byte    0BBH,000H,0BBH,000H
 	.EVEN
 LOFBLP2
-   .word    >4,>7
-   .byte    >CA,>9F,>9F,>00
-   .byte    >C5,>A8,>A8,>9F
-   .byte    >00,>34,>A8,>A8
-   .byte    >00,>47,>A8,>A8
-   .byte    >00,>9F,>A8,>A8
-   .byte    >00,>BB,>00,>BB
-   .byte    >00,>BB,>00,>BB
+   .word    04H,07H
+   .byte    0CAH,09FH,09FH,000H
+   .byte    0C5H,0A8H,0A8H,09FH
+   .byte    000H,034H,0A8H,0A8H
+   .byte    000H,047H,0A8H,0A8H
+   .byte    000H,09FH,0A8H,0A8H
+   .byte    000H,0BBH,000H,0BBH
+   .byte    000H,0BBH,000H,0BBH
 	.EVEN
 MBIGBLIP:
 	.LONG	MBIGBLP1,MBIGBLP2
 MBIGBLP1:
-   .word    >7,>8
-   .byte    >00,>00,>63,>63,>00,>00,>00
-   .byte    >00,>63,>B6,>B6,>63,>00,>00
-   .byte    >B9,>63,>63,>B6,>00,>00,>00
-   .byte    >00,>63,>CC,>CC,>B6,>00,>00
-   .byte    >4E,>C3,>4E,>4E,>63,>C3,>1E
-   .byte    >63,>00,>00,>8D,>63,>63,>00
-   .byte    >63,>B9,>00,>00,>63,>63,>00
-   .byte    >8D,>63,>63,>4E,>8D,>C3,>63
+   .word    07H,08H
+   .byte    000H,000H,063H,063H,000H,000H,000H
+   .byte    000H,063H,0B6H,0B6H,063H,000H,000H
+   .byte    0B9H,063H,063H,0B6H,000H,000H,000H
+   .byte    000H,063H,0CCH,0CCH,0B6H,000H,000H
+   .byte    04EH,0C3H,04EH,04EH,063H,0C3H,01EH
+   .byte    063H,000H,000H,08DH,063H,063H,000H
+   .byte    063H,0B9H,000H,000H,063H,063H,000H
+   .byte    08DH,063H,063H,04EH,08DH,0C3H,063H
 	.EVEN
 MBIGBLP2:
-   .word    >7,>8
-   .byte    >00,>00,>00,>63,>63,>00,>00
-   .byte    >00,>00,>63,>B6,>B6,>63,>00
-   .byte    >00,>00,>00,>B6,>63,>63,>B9
-   .byte    >00,>00,>B6,>CC,>CC,>63,>00
-   .byte    >1E,>C3,>63,>4E,>4E,>C3,>4E
-   .byte    >00,>63,>63,>8D,>00,>00,>63
-   .byte    >00,>63,>63,>00,>00,>B9,>63
-   .byte    >63,>C3,>8D,>4E,>63,>63,>8D
+   .word    07H,08H
+   .byte    000H,000H,000H,063H,063H,000H,000H
+   .byte    000H,000H,063H,0B6H,0B6H,063H,000H
+   .byte    000H,000H,000H,0B6H,063H,063H,0B9H
+   .byte    000H,000H,0B6H,0CCH,0CCH,063H,000H
+   .byte    01EH,0C3H,063H,04EH,04EH,0C3H,04EH
+   .byte    000H,063H,063H,08DH,000H,000H,063H
+   .byte    000H,063H,063H,000H,000H,0B9H,063H
+   .byte    063H,0C3H,08DH,04EH,063H,063H,08DH
 	.EVEN
 ROCKBLIP:
 	.LONG	ROCKBLP1,ROCKBLP2
 ROCKBLP1:
-   .word    >6,>1
-   .byte    >CC,>AB,>CC,>CC,>D6,>D6
+   .word    06H,01H
+   .byte    0CCH,0ABH,0CCH,0CCH,0D6H,0D6H
 	.EVEN
 ROCKBLP2:
-   .word    >6,>1
-   .byte    >D6,>D6,>CC,>CC,>AB,>CC
+   .word    06H,01H
+   .byte    0D6H,0D6H,0CCH,0CCH,0ABH,0CCH
 	.EVEN
 DOGBLIP:
 	.LONG	DOGBLP1,DOGBLP2
 DOGBLP1:
-   .word    >5,>3
-   .byte    >32,>00,>00,>32,>A8
-   .byte    >A8,>A8,>A8,>A8,>00
-   .byte    >A8,>00,>00,>A8,>00
+   .word    05H,03H
+   .byte    032H,000H,000H,032H,0A8H
+   .byte    0A8H,0A8H,0A8H,0A8H,000H
+   .byte    0A8H,000H,000H,0A8H,000H
 	.EVEN
 DOGBLP2:
-   .word    >5,>3
-   .byte    >A8,>32,>00,>00,>32
-   .byte    >00,>A8,>A8,>A8,>A8
-   .byte    >00,>A8,>00,>00,>A8
+   .word    05H,03H
+   .byte    0A8H,032H,000H,000H,032H
+   .byte    000H,0A8H,0A8H,0A8H,0A8H
+   .byte    000H,0A8H,000H,000H,0A8H
 	.EVEN
 BUGBLIP:
 	.LONG	BUGBLP1,BUGBLP1
 BUGBLP1
-   .word    >5,>3
-   .byte    >75,>33,>A7,>33,>94
-   .byte    >A5,>39,>39,>A5,>39
-   .byte    >A2,>00,>A5,>00,>A5
+   .word    05H,03H
+   .byte    075H,033H,0A7H,033H,094H
+   .byte    0A5H,039H,039H,0A5H,039H
+   .byte    0A2H,000H,0A5H,000H,0A5H
 	.EVEN
 PIMPBLIP
 	.LONG	PIMPBLP1,PIMPBLP2
 PIMPBLP1:
-   .word    >3,>9
-   .byte    >00,>A6,>A6
-   .byte    >7D,>B9,>A6
-   .byte    >B9,>BD,>00
-   .byte    >BD,>BD,>D6
-   .byte    >BD,>BD,>D6
-   .byte    >BD,>B9,>CE
-   .byte    >B9,>CE,>D6
-   .byte    >B9,>00,>D6
-   .byte    >D6,>00,>D6
+   .word    03H,09H
+   .byte    000H,0A6H,0A6H
+   .byte    07DH,0B9H,0A6H
+   .byte    0B9H,0BDH,000H
+   .byte    0BDH,0BDH,0D6H
+   .byte    0BDH,0BDH,0D6H
+   .byte    0BDH,0B9H,0CEH
+   .byte    0B9H,0CEH,0D6H
+   .byte    0B9H,000H,0D6H
+   .byte    0D6H,000H,0D6H
 	.EVEN
 PIMPBLP2:
-   .word    >3,>9
-   .byte    >A6,>A6,>00
-   .byte    >A6,>B9,>7D
-   .byte    >00,>BD,>B9
-   .byte    >D6,>BD,>BD
-   .byte    >D6,>BD,>BD
-   .byte    >CE,>B9,>BD
-   .byte    >D6,>CE,>B9
-   .byte    >D6,>00,>B9
-   .byte    >D6,>00,>D6
+   .word    03H,09H
+   .byte    0A6H,0A6H,000H
+   .byte    0A6H,0B9H,07DH
+   .byte    000H,0BDH,0B9H
+   .byte    0D6H,0BDH,0BDH
+   .byte    0D6H,0BDH,0BDH
+   .byte    0CEH,0B9H,0BDH
+   .byte    0D6H,0CEH,0B9H
+   .byte    0D6H,000H,0B9H
+   .byte    0D6H,000H,0D6H
 	.EVEN
 
 CHOPBLIP
 	.LONG	CHOPBLP1,CHOPBLP2
 CHOPBLP1:
-   .word    >C,>6
-   .byte    >00,>00,>00,>4E,>4E,>5E,>5E,>CC,>5E,>5E,>4E,>4E
-   .byte    >CC,>00,>00,>00,>00,>00,>00,>CC,>00,>00,>00,>00
-   .byte    >5E,>4E,>00,>00,>00,>CC,>CC,>CC,>CC,>4E,>00,>00
-   .byte    >B7,>CC,>CC,>CC,>CC,>CC,>4E,>00,>00,>B7,>4E,>00
-   .byte    >00,>00,>00,>00,>00,>CC,>5E,>00,>00,>00,>5E,>4E
-   .byte    >00,>00,>00,>00,>00,>00,>5E,>CC,>CC,>CC,>5E,>4E
+   .word    0CH,06H
+   .byte    000H,000H,000H,04EH,04EH,05EH,05EH,0CCH,05EH,05EH,04EH,04EH
+   .byte    0CCH,000H,000H,000H,000H,000H,000H,0CCH,000H,000H,000H,000H
+   .byte    05EH,04EH,000H,000H,000H,0CCH,0CCH,0CCH,0CCH,04EH,000H,000H
+   .byte    0B7H,0CCH,0CCH,0CCH,0CCH,0CCH,04EH,000H,000H,0B7H,04EH,000H
+   .byte    000H,000H,000H,000H,000H,0CCH,05EH,000H,000H,000H,05EH,04EH
+   .byte    000H,000H,000H,000H,000H,000H,05EH,0CCH,0CCH,0CCH,05EH,04EH
 	.EVEN
 CHOPBLP2:
-   .word    >C,>6
-   .byte    >4E,>4E,>5E,>5E,>CC,>5E,>5E,>4E,>4E,>00,>00,>00
-   .byte    >00,>00,>00,>00,>CC,>00,>00,>00,>00,>00,>00,>CC
-   .byte    >00,>00,>4E,>CC,>CC,>CC,>CC,>00,>00,>00,>4E,>5E
-   .byte    >00,>4E,>B7,>00,>00,>4E,>CC,>CC,>CC,>CC,>CC,>B7
-   .byte    >4E,>5E,>00,>00,>00,>5E,>CC,>00,>00,>00,>00,>00
-   .byte    >4E,>5E,>CC,>CC,>CC,>5E,>00,>00,>00,>00,>00,>00
+   .word    0CH,06H
+   .byte    04EH,04EH,05EH,05EH,0CCH,05EH,05EH,04EH,04EH,000H,000H,000H
+   .byte    000H,000H,000H,000H,0CCH,000H,000H,000H,000H,000H,000H,0CCH
+   .byte    000H,000H,04EH,0CCH,0CCH,0CCH,0CCH,000H,000H,000H,04EH,05EH
+   .byte    000H,04EH,0B7H,000H,000H,04EH,0CCH,0CCH,0CCH,0CCH,0CCH,0B7H
+   .byte    04EH,05EH,000H,000H,000H,05EH,0CCH,000H,000H,000H,000H,000H
+   .byte    04EH,05EH,0CCH,0CCH,0CCH,05EH,000H,000H,000H,000H,000H,000H
 	.EVEN
 
 GANGBLIP
 	.LONG	GANGBLP1,GANGBLP2
 GANGBLP1:
-   .word    >3,>9
-   .byte    >8A,>57,>40
-   .byte    >7D,>A6,>A6
-   .byte    >B9,>BD,>A6
-   .byte    >BD,>BD,>40
-   .byte    >BD,>B9,>8A
-   .byte    >B9,>B9,>8A
-   .byte    >B9,>8A,>40
-   .byte    >B9,>00,>57
-   .byte    >57,>00,>57
+   .word    03H,09H
+   .byte    08AH,057H,040H
+   .byte    07DH,0A6H,0A6H
+   .byte    0B9H,0BDH,0A6H
+   .byte    0BDH,0BDH,040H
+   .byte    0BDH,0B9H,08AH
+   .byte    0B9H,0B9H,08AH
+   .byte    0B9H,08AH,040H
+   .byte    0B9H,000H,057H
+   .byte    057H,000H,057H
 	.EVEN
 GANGBLP2:
-   .word    >3,>9
-   .byte    >40,>57,>8A
-   .byte    >A6,>A6,>7D
-   .byte    >A6,>BD,>B9
-   .byte    >40,>BD,>BD
-   .byte    >8A,>B9,>BD
-   .byte    >8A,>B9,>B9
-   .byte    >40,>8A,>B9
-   .byte    >57,>00,>B9
-   .byte    >57,>00,>57
+   .word    03H,09H
+   .byte    040H,057H,08AH
+   .byte    0A6H,0A6H,07DH
+   .byte    0A6H,0BDH,0B9H
+   .byte    040H,0BDH,0BDH
+   .byte    08AH,0B9H,0BDH
+   .byte    08AH,0B9H,0B9H
+   .byte    040H,08AH,0B9H
+   .byte    057H,000H,0B9H
+   .byte    057H,000H,057H
 	.EVEN
 
 RAMBBLIP
 	.LONG	RAMBBLP1,RAMBBLP2
 RAMBBLP1:
-   .word    >7,>10
-   .byte    >00,>00,>00,>A4,>A1,>00,>00
-   .byte    >00,>00,>00,>B1,>B1,>00,>00
-   .byte    >00,>00,>B1,>3D,>B4,>00,>00
-   .byte    >00,>B1,>B4,>F4,>B4,>00,>00
-   .byte    >00,>47,>3A,>B3,>C1,>88,>00
-   .byte    >00,>47,>C6,>60,>CC,>5B,>00
-   .byte    >00,>B6,>B4,>34,>18,>34,>18
-   .byte    >00,>47,>CA,>34,>14,>00,>00
-   .byte    >00,>15,>3C,>C7,>39,>00,>00
-   .byte    >00,>0D,>34,>33,>3A,>B1,>00
-   .byte    >00,>16,>C7,>00,>03,>34,>00
-   .byte    >00,>35,>C4,>00,>B1,>34,>00
-   .byte    >B1,>35,>00,>00,>B1,>C4,>00
-   .byte    >B1,>35,>00,>00,>B1,>65,>00
-   .byte    >15,>B1,>00,>00,>00,>66,>00
-   .byte    >65,>B1,>00,>00,>00,>00,>00
+   .word    07H,010H
+   .byte    000H,000H,000H,0A4H,0A1H,000H,000H
+   .byte    000H,000H,000H,0B1H,0B1H,000H,000H
+   .byte    000H,000H,0B1H,03DH,0B4H,000H,000H
+   .byte    000H,0B1H,0B4H,0F4H,0B4H,000H,000H
+   .byte    000H,047H,03AH,0B3H,0C1H,088H,000H
+   .byte    000H,047H,0C6H,060H,0CCH,05BH,000H
+   .byte    000H,0B6H,0B4H,034H,018H,034H,018H
+   .byte    000H,047H,0CAH,034H,014H,000H,000H
+   .byte    000H,015H,03CH,0C7H,039H,000H,000H
+   .byte    000H,00DH,034H,033H,03AH,0B1H,000H
+   .byte    000H,016H,0C7H,000H,003H,034H,000H
+   .byte    000H,035H,0C4H,000H,0B1H,034H,000H
+   .byte    0B1H,035H,000H,000H,0B1H,0C4H,000H
+   .byte    0B1H,035H,000H,000H,0B1H,065H,000H
+   .byte    015H,0B1H,000H,000H,000H,066H,000H
+   .byte    065H,0B1H,000H,000H,000H,000H,000H
 	.EVEN
 RAMBBLP2:
-   .word    >7,>10
-   .byte    >00,>00,>A1,>A4,>00,>00,>00
-   .byte    >00,>00,>B1,>B1,>00,>00,>00
-   .byte    >00,>00,>B4,>3D,>B1,>00,>00
-   .byte    >00,>00,>B4,>F4,>B4,>B1,>00
-   .byte    >00,>88,>C1,>B3,>3A,>47,>00
-   .byte    >00,>5B,>CC,>60,>C6,>47,>00
-   .byte    >18,>34,>18,>34,>B4,>B6,>00
-   .byte    >00,>00,>14,>34,>CA,>47,>00
-   .byte    >00,>00,>39,>C7,>3C,>15,>00
-   .byte    >00,>B1,>3A,>33,>34,>0D,>00
-   .byte    >00,>34,>03,>00,>C7,>16,>00
-   .byte    >00,>34,>B1,>00,>C4,>35,>00
-   .byte    >00,>C4,>B1,>00,>00,>35,>B1
-   .byte    >00,>65,>B1,>00,>00,>35,>B1
-   .byte    >00,>66,>00,>00,>00,>B1,>15
-   .byte    >00,>00,>00,>00,>00,>B1,>65
+   .word    07H,010H
+   .byte    000H,000H,0A1H,0A4H,000H,000H,000H
+   .byte    000H,000H,0B1H,0B1H,000H,000H,000H
+   .byte    000H,000H,0B4H,03DH,0B1H,000H,000H
+   .byte    000H,000H,0B4H,0F4H,0B4H,0B1H,000H
+   .byte    000H,088H,0C1H,0B3H,03AH,047H,000H
+   .byte    000H,05BH,0CCH,060H,0C6H,047H,000H
+   .byte    018H,034H,018H,034H,0B4H,0B6H,000H
+   .byte    000H,000H,014H,034H,0CAH,047H,000H
+   .byte    000H,000H,039H,0C7H,03CH,015H,000H
+   .byte    000H,0B1H,03AH,033H,034H,00DH,000H
+   .byte    000H,034H,003H,000H,0C7H,016H,000H
+   .byte    000H,034H,0B1H,000H,0C4H,035H,000H
+   .byte    000H,0C4H,0B1H,000H,000H,035H,0B1H
+   .byte    000H,065H,0B1H,000H,000H,035H,0B1H
+   .byte    000H,066H,000H,000H,000H,0B1H,015H
+   .byte    000H,000H,000H,000H,000H,0B1H,065H
 	.EVEN
 
 HEADBLIP
 	.LONG	HEADBLP,HEADBLP
 HEADBLP:
-   .word    >C,>12
-   .byte    >00,>00,>00,>40,>57,>57,>40,>4C,>00,>00,>00,>00
-   .byte    >00,>00,>CC,>CB,>48,>40,>48,>48,>38,>00,>00,>00
-   .byte    >00,>00,>64,>64,>5A,>4C,>48,>40,>38,>0B,>00,>00
-   .byte    >00,>00,>CC,>CC,>5A,>38,>98,>98,>98,>98,>98,>40
-   .byte    >00,>00,>64,>CC,>38,>17,>98,>37,>46,>AF,>C1,>48
-   .byte    >00,>00,>4C,>98,>4C,>CC,>60,>C1,>47,>3D,>B4,>00
-   .byte    >00,>00,>1C,>CC,>CC,>AF,>AE,>3D,>3E,>3D,>3C,>00
-   .byte    >00,>42,>57,>AE,>1B,>A0,>34,>A6,>3D,>3D,>3C,>00
-   .byte    >37,>CA,>AE,>3D,>A4,>34,>A5,>34,>3D,>3D,>3C,>00
-   .byte    >3C,>00,>3D,>3D,>A4,>16,>16,>A6,>47,>3D,>3C,>00
-   .byte    >00,>00,>B4,>D3,>16,>14,>C7,>3D,>47,>3D,>18,>00
-   .byte    >00,>00,>A1,>AE,>98,>15,>35,>3C,>C8,>3D,>A1,>00
-   .byte    >00,>00,>00,>40,>AF,>37,>36,>A4,>C8,>3D,>3D,>00
-   .byte    >00,>00,>00,>B4,>3C,>C7,>C7,>D3,>B0,>47,>B5,>00
-   .byte    >00,>00,>00,>B6,>C8,>C7,>A4,>A6,>D3,>3E,>47,>AE
-   .byte    >00,>00,>00,>B6,>3C,>18,>A0,>39,>3D,>47,>B6,>B4
-   .byte    >00,>00,>00,>47,>C8,>A4,>A1,>39,>C6,>47,>B6,>B1
-   .byte    >00,>00,>00,>00,>B1,>34,>A0,>A4,>D3,>D3,>00,>00
+   .word    0CH,012H
+   .byte    000H,000H,000H,040H,057H,057H,040H,04CH,000H,000H,000H,000H
+   .byte    000H,000H,0CCH,0CBH,048H,040H,048H,048H,038H,000H,000H,000H
+   .byte    000H,000H,064H,064H,05AH,04CH,048H,040H,038H,00BH,000H,000H
+   .byte    000H,000H,0CCH,0CCH,05AH,038H,098H,098H,098H,098H,098H,040H
+   .byte    000H,000H,064H,0CCH,038H,017H,098H,037H,046H,0AFH,0C1H,048H
+   .byte    000H,000H,04CH,098H,04CH,0CCH,060H,0C1H,047H,03DH,0B4H,000H
+   .byte    000H,000H,01CH,0CCH,0CCH,0AFH,0AEH,03DH,03EH,03DH,03CH,000H
+   .byte    000H,042H,057H,0AEH,01BH,0A0H,034H,0A6H,03DH,03DH,03CH,000H
+   .byte    037H,0CAH,0AEH,03DH,0A4H,034H,0A5H,034H,03DH,03DH,03CH,000H
+   .byte    03CH,000H,03DH,03DH,0A4H,016H,016H,0A6H,047H,03DH,03CH,000H
+   .byte    000H,000H,0B4H,0D3H,016H,014H,0C7H,03DH,047H,03DH,018H,000H
+   .byte    000H,000H,0A1H,0AEH,098H,015H,035H,03CH,0C8H,03DH,0A1H,000H
+   .byte    000H,000H,000H,040H,0AFH,037H,036H,0A4H,0C8H,03DH,03DH,000H
+   .byte    000H,000H,000H,0B4H,03CH,0C7H,0C7H,0D3H,0B0H,047H,0B5H,000H
+   .byte    000H,000H,000H,0B6H,0C8H,0C7H,0A4H,0A6H,0D3H,03EH,047H,0AEH
+   .byte    000H,000H,000H,0B6H,03CH,018H,0A0H,039H,03DH,047H,0B6H,0B4H
+   .byte    000H,000H,000H,047H,0C8H,0A4H,0A1H,039H,0C6H,047H,0B6H,0B1H
+   .byte    000H,000H,000H,000H,0B1H,034H,0A0H,0A4H,0D3H,0D3H,000H,000H
 	.EVEN
 
 SKULBLIP
 	.LONG	SKULBLP,SKULBLP
 SKULBLP:
-   .word    >A,>F
-   .byte    >00,>00,>00,>87,>87,>79,>68,>00,>00,>00
-   .byte    >00,>B8,>BB,>B8,>87,>85,>0C,>0B,>00,>00
-   .byte    >00,>C0,>BD,>90,>87,>7F,>7A,>0C,>0C,>00
-   .byte    >BB,>C0,>BD,>B8,>1E,>87,>1E,>90,>90,>00
-   .byte    >BD,>C0,>BD,>BA,>1E,>1E,>BA,>4B,>4E,>90
-   .byte    >BD,>4B,>4E,>4E,>4B,>54,>50,>4B,>53,>B8
-   .byte    >BB,>4B,>AA,>AE,>BA,>50,>A2,>37,>54,>4B
-   .byte    >BD,>4B,>34,>A4,>4B,>38,>A5,>98,>4E,>BA
-   .byte    >BB,>C0,>4E,>53,>42,>4E,>C3,>C3,>53,>00
-   .byte    >00,>5E,>62,>5E,>4B,>53,>64,>64,>5E,>00
-   .byte    >00,>C0,>4B,>C0,>C0,>4B,>53,>C0,>84,>00
-   .byte    >00,>BD,>4B,>54,>53,>4B,>54,>4E,>00,>00
-   .byte    >00,>4B,>C0,>62,>64,>64,>63,>C0,>00,>00
-   .byte    >00,>00,>53,>62,>61,>63,>63,>BA,>00,>00
-   .byte    >00,>00,>00,>C0,>5E,>5E,>BA,>00,>00,>00
+   .word    0AH,0FH
+   .byte    000H,000H,000H,087H,087H,079H,068H,000H,000H,000H
+   .byte    000H,0B8H,0BBH,0B8H,087H,085H,00CH,00BH,000H,000H
+   .byte    000H,0C0H,0BDH,090H,087H,07FH,07AH,00CH,00CH,000H
+   .byte    0BBH,0C0H,0BDH,0B8H,01EH,087H,01EH,090H,090H,000H
+   .byte    0BDH,0C0H,0BDH,0BAH,01EH,01EH,0BAH,04BH,04EH,090H
+   .byte    0BDH,04BH,04EH,04EH,04BH,054H,050H,04BH,053H,0B8H
+   .byte    0BBH,04BH,0AAH,0AEH,0BAH,050H,0A2H,037H,054H,04BH
+   .byte    0BDH,04BH,034H,0A4H,04BH,038H,0A5H,098H,04EH,0BAH
+   .byte    0BBH,0C0H,04EH,053H,042H,04EH,0C3H,0C3H,053H,000H
+   .byte    000H,05EH,062H,05EH,04BH,053H,064H,064H,05EH,000H
+   .byte    000H,0C0H,04BH,0C0H,0C0H,04BH,053H,0C0H,084H,000H
+   .byte    000H,0BDH,04BH,054H,053H,04BH,054H,04EH,000H,000H
+   .byte    000H,04BH,0C0H,062H,064H,064H,063H,0C0H,000H,000H
+   .byte    000H,000H,053H,062H,061H,063H,063H,0BAH,000H,000H
+   .byte    000H,000H,000H,0C0H,05EH,05EH,0BAH,000H,000H,000H
 	.EVEN
 
 	.END

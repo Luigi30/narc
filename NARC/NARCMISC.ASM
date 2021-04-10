@@ -1,4 +1,4 @@
-	.FILE	'NARCMISC.ASM'
+	.FILE	"NARCMISC.ASM"
 	.TITLE	" <<< NARC MISCELLANEOUS GARBAGE >>>"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -234,18 +234,18 @@ bneg_aneg:
 bneg_apos:
 	SUBXY	B10,B7
 	MOVX	B10,B7			; B7 = (|b|,|a|)
-	MOVI	>FFFF0001,B11		; B11 = (-1,1)
+	MOVI	0FFFF0001H,B11		; B11 = (-1,1)
 	JRUC	cmp_b_a
 bpos:	
 	JRXGE	bpos_apos
 bpos_aneg:
 	SUBXY	B10,B7
 	MOVY	B10,B7			; B7 = (|b|,|a|)
-	MOVI	>0001FFFF,B11		; B11 = (1,-1)
+	MOVI	00001FFFFH,B11		; B11 = (1,-1)
 	JRUC	cmp_b_a
 bpos_apos:  
 	MOVE	B10,B7			; B7 = (|b|,|a|)
-	MOVI	>00010001,B11		; B11 = (1,1)
+	MOVI	000010001H,B11		; B11 = (1,1)
 cmp_b_a:  
 	CLR	B12
 	MOVI	-1,B13			; B13 = FFFFFFFF (set pattern to all 1's)
@@ -295,7 +295,7 @@ vert:
 * Draw horizontal or vertical line.
 do_fill:
 	MOVE	B10,B7
-	ADDI	>10001,B7		; no check for dx or dy overflow
+	ADDI	010001H,B7		; no check for dx or dy overflow
 	FILL	XY
 	JRUC	done
 * Draw dot if start and end points are the same.
@@ -328,7 +328,7 @@ CIRCLE:
 
 	SETF	16,0,0
 	MOVI	SCRN_PTCH,B3		; Restore screen pitch and convdp
-	MOVI	>13,B10			; THIS IS FASTER
+	MOVI	013H,B10			; THIS IS FASTER
 	MOVE	B10,@CONVDP
 	MOVE	A6,B9
 	MOVI	Y,B7			; Y width always 1

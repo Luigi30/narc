@@ -1,4 +1,4 @@
-	.FILE	'NARCFLAM.ASM'
+	.FILE	"NARCFLAM.ASM"
 	.TITLE	" <<< N  A  R  C  -- FLAME THROWER >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -17,13 +17,13 @@
 
 	.GLOBL	MAKEFLAM,GROWFLAM
 
-FLAMESND	.WORD	>F310,>3,>80cf,0 ;flame thrower snd
-;FLAMESND	.WORD	>F310,>3,>8094,0 ;flame thrower snd
-FRYSND		.WORD	>F315,>13,>8088,0 ;burning sound
+FLAMESND	.WORD	0F310H,03H,080cfH,0 ;flame thrower snd
+;FLAMESND	.WORD	0F310H,03H,08094H,0 ;flame thrower snd
+FRYSND		.WORD	0F315H,013H,08088H,0 ;burning sound
 
-FTHRWPID	.set	>0FF5
-FLOUTPID	.set	>0FF6
-FLAMZSIZ	.set	>00120012
+FTHRWPID	.set	00FF5H
+FLOUTPID	.set	00FF6H
+FLAMZSIZ	.set	000120012H
 FLAMEOID	.set	BEOID|FLAMEID
 
 ANIWAIT		.set	2	;tiks between flame animations
@@ -85,7 +85,7 @@ MAKEFLAM:
 ; A3 - X coor of beginning animation pt (tip of gun barrel)
 ; A4 - Y coor
 ; A5 - Z coor
-; A6 - 0->flame shooting to the right, 1->flame to left
+; A6 - 0-0fHlame shooting to the right, 1-0fHlame to left
 ;RETS
 ; A0 - ptr to Flame Thrower Process, Z-flag set if failure
 ;FUNCTION
@@ -603,7 +603,7 @@ XFlipped:
 
 StfAni:
 	move	A8,A0  		;GET PUSH ADDRESS OF OFLAGS,OSAG,OSIZE
-	ADDI	OFLAGS+>60,A0
+	ADDI	OFLAGS+060H,A0
 	MOVE	A7,*A8(OXCLIP),W
 	;A4 - OFLAGS:OFFSET, A3 - OSAG, A2 - OSIZE
 	MMTM	A0,A2,A3,A4	;BLOW STUFF OUT without interruption
@@ -692,7 +692,7 @@ FlamColl:
 	calla	GetPData
 	move	A0,A2
 	jrz	SkBurnPl
-	movi	>6000,A0
+	movi	06000H,A0
 	calla	BUGBITE
 SkBurnPl
 

@@ -1,4 +1,4 @@
-	.FILE	'NARCMATH.ASM'
+	.FILE	"NARCMATH.ASM"
 	.TITLE	" <<< N  A  R  C    M  A  T  H >>>"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -15,26 +15,26 @@
 	.EVEN
 	.TEXT
 TEST:
-	movi	>0001000A,A0	;Y1=1, X1=10 
+	movi	00001000AH,A0	;Y1=1, X1=10 
 	clr	A1		;Y0=0, X0=0
-	movi	>00018000,A2	;XVEL = 2^-9
-	movi	>00008000,A3	;YVEL = 1.0
+	movi	000018000H,A2	;XVEL = 2^-9
+	movi	000008000H,A3	;YVEL = 1.0
 	callr	LINEPT
 	jruc	$
 
 testpreinf:
-	movi	>0001000A,A0	;Y1=1, X1=10 
+	movi	00001000AH,A0	;Y1=1, X1=10 
 	clr	A1		;Y0=0, X0=0
-	movi	>00000080,A2	;XVEL = 2^-9
-	movi	>00010000,A3	;YVEL = 1.0
+	movi	000000080H,A2	;XVEL = 2^-9
+	movi	000010000H,A3	;YVEL = 1.0
 	callr	LINEPT
 	jruc	$
 
 testprezero:
-	movi	>0001000A,A0	;Y1=1, X1=10 
+	movi	00001000AH,A0	;Y1=1, X1=10 
 	clr	A1		;Y0=0, X0=0
-	movi	>00010000,A2	;XVEL = 1.0
-	movi	>00000080,A3	;YVEL = 2^-9
+	movi	000010000H,A2	;XVEL = 1.0
+	movi	000000080H,A3	;YVEL = 2^-9
 	callr	LINEPT
 	jruc	$
 
@@ -132,10 +132,10 @@ LINEPT:
 	mpys	A5,A7	;A7 = (M^2)X0 << 8
 	add	A2,A7
 	sll	8,A7	;A7 << 16
-	addi	>100,A5	;A5 = M^2 + 1 << 8
+	addi	0100H,A5	;A5 = M^2 + 1 << 8
 	divs	A5,A7	;A7 = Xf << 8
 	move	A7,A2
-	addi	>80,A2	;round by adding .5
+	addi	080H,A2	;round by adding .5
 	sra	8,A2
 	movx	A2,A0
 
@@ -144,7 +144,7 @@ LINEPT:
 	sll	8,A6
 	sub	A6,A7	;A7 = Xf-X0 << 8
 	mpys	A3,A7	;A7 = M*(Xf-X0) << 16
-	addi	>8000,A7  ;round
+	addi	08000H,A7  ;round
 	addxy	A1,A7
 	movy	A7,A0
 
@@ -169,7 +169,7 @@ MPreZero:
 	movx	A0,A7	
 	sll	16,A7	;A7 = X1 << 16
 	add	A3,A7	;A7 = Xf << 16
-	addi	>8000,A3	;A3 = (Xf-X1) << 16 + (.5 << 16)
+	addi	08000H,A3	;A3 = (Xf-X1) << 16 + (.5 << 16)
 	sra	16,A3	;A3 = Xf-X1
 	addxy	A3,A0	;add in to X1 to give Xf, Y1 could get clobbered
 
@@ -179,7 +179,7 @@ MPreZero:
 	sra	8,A7	;A7 = (Xf-X0) << 8
 	sra	8,A5	;A5 = M << 8	
 	mpys	A5,A7	;A5 = M*(Xf-X0)
-	addi	>8000,A7	;A7 = M(Xf-X0) << 16 + (.5 << 16)
+	addi	08000H,A7	;A7 = M(Xf-X0) << 16 + (.5 << 16)
 	addxy	A7,A1	;result already << 16
 	movy	A1,A0
 	jruc	GotPt
@@ -199,7 +199,7 @@ MPreInf:
 	add	A5,A7	;A7 = Xf << 16
 
 	move	A7,A5
-	addi	>8000,A5 ;add in round adj .5
+	addi	08000H,A5 ;add in round adj .5
 	sra	16,A5	;A5 = Xf
 	
 	;* Yf = (X1 - Xf)/M + Y1
@@ -208,7 +208,7 @@ MPreInf:
 	sub	A7,A2
 	move	A2,A7
 	divs	A3,A7	;A7 = (X1 - Xf)/M << 16
-	addi	>8000,A7 ;add in round adj .5
+	addi	08000H,A7 ;add in round adj .5
 	addxy	A7,A0
 	movx	A5,A0
 	jruc	GotPt

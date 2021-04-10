@@ -1,4 +1,4 @@
-	.FILE	'NARCADJ.ASM'
+	.FILE	"NARCADJ.ASM"
 
 	.TITLE	"ADJUSTMENTS HANDLER"
 	.WIDTH	132
@@ -397,8 +397,8 @@ BCD_IF_NEC
 BINX     MMFM    SP,A2
 	RETS
 
-ADJ_BEEP   .WORD 	>F3DF,>10,>80A2,0		;LOW BEEP 
-ADJ_CASH   .WORD   	>F3DF,>10,>8098,0		;CASH REGGIE
+ADJ_BEEP   .WORD 	0F3DFH,010H,080A2H,0		;LOW BEEP 
+ADJ_CASH   .WORD   	0F3DFH,010H,08098H,0		;CASH REGGIE
 
 **************************************************************************
 *                                                                        *
@@ -499,7 +499,7 @@ DORET    CLR     A0
 *                                                                        *
 **************************************************************************
 
-ADJ_LBEEP   .WORD	>F3DF,>10,>80A2,0		;LOW BEEP 
+ADJ_LBEEP   .WORD	0F3DFH,010H,080A2H,0		;LOW BEEP 
 *         
 **************************************************************************
 *                                                                        *

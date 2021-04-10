@@ -1,428 +1,428 @@
 	.DATA
 jlsw1:
 	.word	21,52,12,-86
-	.long	>3158620,bluenc
+	.long	03158620H,bluenc
 jlsw2:
 	.word	18,51,7,-86
-	.long	>315AD20,bluenc
+	.long	0315AD20H,bluenc
 jlsw3:
 	.word	24,51,8,-87
-	.long	>315CD00,bluenc
+	.long	0315CD00H,bluenc
 jlsw5:
 	.word	29,51,18,-86
-	.long	>315F340,bluenc
+	.long	0315F340H,bluenc
 jlsw6:
 	.word	22,51,13,-87
-	.long	>3162640,bluenc
+	.long	03162640H,bluenc
 jlsw7:
 	.word	18,52,7,-88
-	.long	>3164C80,bluenc
+	.long	03164C80H,bluenc
 jlsw8:
 	.word	21,53,8,-86
-	.long	>3166D00,bluenc
+	.long	03166D00H,bluenc
 jlsw9:
 	.word	34,53,10,-85
-	.long	>31694C0,bluenc
+	.long	031694C0H,bluenc
 jlsw10:
 	.word	35,51,19,-87
-	.long	>316D060,bluenc
+	.long	0316D060H,bluenc
 jlsw11:
 	.word	30,54,18,-86
-	.long	>31709C0,bluenc
+	.long	031709C0H,bluenc
 jlqfw1:
 	.word	25,54,7,-85
-	.long	>3173FC0,bluenc
+	.long	03173FC0H,bluenc
 jlqfw2:
 	.word	18,55,2,-84
-	.long	>3176F00,bluenc
+	.long	03176F00H,bluenc
 jlqfw3:
 	.word	16,56,0,-82
-	.long	>3179160,bluenc
+	.long	03179160H,bluenc
 jlqfw4:
 	.word	18,54,1,-84
-	.long	>317AD60,bluenc
+	.long	0317AD60H,bluenc
 jlqfw5:
 	.word	17,53,2,-85
-	.long	>317CF20,bluenc
+	.long	0317CF20H,bluenc
 jlqfw6:
 	.word	19,53,1,-85
-	.long	>317F040,bluenc
+	.long	0317F040H,bluenc
 jlqfw7:
 	.word	31,53,5,-85
-	.long	>3181160,bluenc
+	.long	03181160H,bluenc
 jlfw1:
 	.word	16,52,6,-88
-	.long	>3184660,bluenc
+	.long	03184660H,bluenc
 jlfw2:
 	.word	17,51,7,-88
-	.long	>3186060,bluenc
+	.long	03186060H,bluenc
 jlfw3:
 	.word	18,52,7,-88
-	.long	>3188040,bluenc
+	.long	03188040H,bluenc
 jlfw4:
 	.word	17,53,6,-89
-	.long	>318A0C0,bluenc
+	.long	0318A0C0H,bluenc
 jlfw5:
 	.word	17,54,6,-87
-	.long	>318C1E0,bluenc
+	.long	0318C1E0H,bluenc
 jlqbw1:
 	.word	14,54,0,-82
-	.long	>318E3A0,bluenc
+	.long	0318E3A0H,bluenc
 jlqbw2:
 	.word	22,55,2,-82
-	.long	>318FEA0,bluenc
+	.long	0318FEA0H,bluenc
 jlqbw3:
 	.word	24,54,9,-82
-	.long	>31927E0,bluenc
+	.long	031927E0H,bluenc
 jlqbw4:
 	.word	20,51,4,-83
-	.long	>3195060,bluenc
+	.long	03195060H,bluenc
 jlqbw5:
 	.word	21,51,2,-83
-	.long	>3197040,bluenc
+	.long	03197040H,bluenc
 jlqbw6:
 	.word	35,52,10,-83
-	.long	>3199680,bluenc
+	.long	03199680H,bluenc
 jlqbw7:
 	.word	23,53,9,-83
-	.long	>319D100,bluenc
+	.long	0319D100H,bluenc
 jlbw1:
 	.word	15,52,8,-83
-	.long	>319F8C0,bluenc
+	.long	0319F8C0H,bluenc
 jlbw2:
 	.word	15,53,6,-85
-	.long	>31A12C0,bluenc
+	.long	031A12C0H,bluenc
 jlbw3:
 	.word	17,52,8,-85
-	.long	>31A2D40,bluenc
+	.long	031A2D40H,bluenc
 jlbw4:
 	.word	16,53,8,-85
-	.long	>31A4DC0,bluenc
+	.long	031A4DC0H,bluenc
 jlbw5:
 	.word	16,53,8,-84
-	.long	>31A6840,bluenc
+	.long	031A6840H,bluenc
 jlju1:
 	.word	26,33,8,-104
-	.long	>31CF2A0,bluenc
+	.long	031CF2A0H,bluenc
 jlju2:
 	.word	27,47,6,-79
-	.long	>31D0F80,bluenc
+	.long	031D0F80H,bluenc
 jlju3:
 	.word	28,34,6,-74
-	.long	>31D38A0,bluenc
+	.long	031D38A0H,bluenc
 jlju4:
 	.word	31,39,7,-79
-	.long	>31D5660,bluenc
+	.long	031D5660H,bluenc
 jlju5:
 	.word	27,32,9,-106
-	.long	>31D7D60,bluenc
+	.long	031D7D60H,bluenc
 jlssqrst:
 	.word	55,31,31,-111
-	.long	>31D9960,bluenc
+	.long	031D9960H,bluenc
 jlssqw1:
 	.word	35,32,10,-106
-	.long	>31DCFA0,bluenc
+	.long	031DCFA0H,bluenc
 jljuhel3:
 	.word	28,34,-29,-162
-	.long	>31D38A0,bluenc
+	.long	031D38A0H,bluenc
 jljuhel4:
 	.word	31,39,-28,-153
-	.long	>31D5660,bluenc
+	.long	031D5660H,bluenc
 jljucar3:
 	.word	28,34,22,-100
-	.long	>31D38A0,bluenc
+	.long	031D38A0H,bluenc
 jljucar4:
 	.word	31,39,16,-108
-	.long	>31D5660,bluenc
+	.long	031D5660H,bluenc
 jlssqw2:
 	.word	29,35,10,-105
-	.long	>31DF3A0,bluenc
+	.long	031DF3A0H,bluenc
 jlssqw3:
 	.word	25,36,8,-104
-	.long	>31E16A0,bluenc
+	.long	031E16A0H,bluenc
 jlssqw4:
 	.word	32,33,7,-105
-	.long	>31E3620,bluenc
+	.long	031E3620H,bluenc
 jlssqw5:
 	.word	31,38,15,-102
-	.long	>31E5720,bluenc
+	.long	031E5720H,bluenc
 jlssqw6:
 	.word	24,37,8,-104
-	.long	>31E7D20,bluenc
+	.long	031E7D20H,bluenc
 jlssqw7:
 	.word	25,37,7,-104
-	.long	>31E98E0,bluenc
+	.long	031E98E0H,bluenc
 jlssqw8:
 	.word	36,35,7,-105
-	.long	>31EB940,bluenc
+	.long	031EB940H,bluenc
 jlsstd:
 	.word	39,50,15,-90
-	.long	>31EE0A0,bluenc
+	.long	031EE0A0H,bluenc
 jtqfwshgs1:
 	.word	63,40,10,-52
-	.long	>31F1F20,bluenc
+	.long	031F1F20H,bluenc
 jtqfwshgs2:
 	.word	55,42,11,-51
-	.long	>31F6F20,bluenc
+	.long	031F6F20H,bluenc
 jtqfwshms1:
 	.word	60,40,4,-53
-	.long	>31FB8A0,bluenc
+	.long	031FB8A0H,bluenc
 jtqfwshms2:
 	.word	43,37,2,-54
-	.long	>32003A0,bluenc
+	.long	032003A0H,bluenc
 jtfwshgs1:
 	.word	58,41,12,-56
-	.long	>3203680,bluenc
+	.long	03203680H,bluenc
 jtfwshgs2:
 	.word	55,41,14,-57
-	.long	>3208360,bluenc
+	.long	03208360H,bluenc
 jtfwshms1:
 	.word	56,37,10,-56
-	.long	>320CB20,bluenc
+	.long	0320CB20H,bluenc
 jtfwshms2:
 	.word	42,40,14,-55
-	.long	>3210BE0,bluenc
+	.long	03210BE0H,bluenc
 jtqbwshgs1:
 	.word	50,41,3,-51
-	.long	>32142E0,bluenc
+	.long	032142E0H,bluenc
 jtqbwshgs2:
 	.word	40,42,0,-51
-	.long	>3218580,bluenc
+	.long	03218580H,bluenc
 jtqbwshms1:
 	.word	76,40,13,-52
-	.long	>321BA00,bluenc
+	.long	0321BA00H,bluenc
 jtqbwshms2:
 	.word	59,41,10,-52
-	.long	>3221900,bluenc
+	.long	03221900H,bluenc
 jtbwshgs1:
 	.word	47,37,9,-54
-	.long	>32265E0,bluenc
+	.long	032265E0H,bluenc
 jtbwshgs2:
 	.word	40,40,8,-54
-	.long	>3229D60,bluenc
+	.long	03229D60H,bluenc
 jtbwshms1:
 	.word	68,34,17,-55
-	.long	>322CF60,bluenc
+	.long	0322CF60H,bluenc
 jtbwshms2:
 	.word	56,38,13,-54
-	.long	>32317A0,bluenc
+	.long	032317A0H,bluenc
 jtjushg1:
 	.word	63,36,6,-45
-	.long	>3235A20,bluenc
+	.long	03235A20H,bluenc
 jtjushg2:
 	.word	54,36,7,-47
-	.long	>323A220,bluenc
+	.long	0323A220H,bluenc
 jtjushm1:
 	.word	70,37,6,-43
-	.long	>323E120,bluenc
+	.long	0323E120H,bluenc
 jtjushm2:
 	.word	42,37,5,-43
-	.long	>3243460,bluenc
+	.long	03243460H,bluenc
 comdb1:
 	.word	48,89,28,-49
-	.long	>3246740,bluenc
+	.long	03246740H,bluenc
 comdb2:
 	.word	61,73,33,-65
-	.long	>324ECC0,bluenc
+	.long	0324ECC0H,bluenc
 comdb3:
 	.word	64,71,37,-66
-	.long	>3257EC0,bluenc
+	.long	03257EC0H,bluenc
 comdb4:
 	.word	63,79,38,-59
-	.long	>3260CC0,bluenc
+	.long	03260CC0H,bluenc
 comdb5:
 	.word	78,51,49,-87
-	.long	>326AAC0,bluenc
+	.long	0326AAC0H,bluenc
 comdb6:
 	.word	79,42,54,-97
-	.long	>3272A40,bluenc
+	.long	03272A40H,bluenc
 comdb7:
 	.word	96,31,72,-114
-	.long	>3279340,bluenc
+	.long	03279340H,bluenc
 jtswrst1:
 	.word	45,41,7,-52
-	.long	>327F040,bluenc
+	.long	0327F040H,bluenc
 jtswrst2:
 	.word	51,40,8,-52
-	.long	>3282DC0,bluenc
+	.long	03282DC0H,bluenc
 jtswrst3:
 	.word	56,41,9,-54
-	.long	>3286EC0,bluenc
+	.long	03286EC0H,bluenc
 jtswrst4:
 	.word	58,40,8,-54
-	.long	>328B680,bluenc
+	.long	0328B680H,bluenc
 jtswrst5:
 	.word	53,38,7,-54
-	.long	>3290180,bluenc
+	.long	03290180H,bluenc
 jtswrst6:
 	.word	45,41,7,-54
-	.long	>3294400,bluenc
+	.long	03294400H,bluenc
 jtswrst7:
 	.word	40,42,7,-56
-	.long	>3298180,bluenc
+	.long	03298180H,bluenc
 jtswrst8:
 	.word	39,41,10,-55
-	.long	>329B600,bluenc
+	.long	0329B600H,bluenc
 jtswrst9:
 	.word	38,45,13,-53
-	.long	>329E940,bluenc
+	.long	0329E940H,bluenc
 jtswrst10:
 	.word	43,41,15,-54
-	.long	>32A2180,bluenc
+	.long	032A2180H,bluenc
 jtswrst11:
 	.word	44,41,11,-54
-	.long	>32A59E0,bluenc
+	.long	032A59E0H,bluenc
 jtqfwrst1:
 	.word	36,38,7,-54
-	.long	>32A9240,bluenc
+	.long	032A9240H,bluenc
 jtqfwrst2:
 	.word	36,41,8,-53
-	.long	>32ABD00,bluenc
+	.long	032ABD00H,bluenc
 jtqfwrst3:
 	.word	36,40,10,-52
-	.long	>32AEB20,bluenc
+	.long	032AEB20H,bluenc
 jtqfwrst4:
 	.word	37,39,11,-53
-	.long	>32B1820,bluenc
+	.long	032B1820H,bluenc
 jtqfwrst5:
 	.word	37,39,10,-54
-	.long	>32B48E0,bluenc
+	.long	032B48E0H,bluenc
 jtqfwrst6:
 	.word	37,39,9,-53
-	.long	>32B79A0,bluenc
+	.long	032B79A0H,bluenc
 jtqfwrst7:
 	.word	35,39,6,-53
-	.long	>32BAA60,bluenc
+	.long	032BAA60H,bluenc
 jtfwrst1:
 	.word	40,40,14,-54
-	.long	>32BD640,bluenc
+	.long	032BD640H,bluenc
 jtfwrst2:
 	.word	39,39,14,-54
-	.long	>32C0840,bluenc
+	.long	032C0840H,bluenc
 jtfwrst3:
 	.word	35,39,11,-55
-	.long	>32C3900,bluenc
+	.long	032C3900H,bluenc
 jtfwrst4:
 	.word	38,43,15,-54
-	.long	>32C64E0,bluenc
+	.long	032C64E0H,bluenc
 jtfwrst5:
 	.word	37,40,14,-53
-	.long	>32C9AA0,bluenc
+	.long	032C9AA0H,bluenc
 jtqbwrst1:
 	.word	37,40,6,-49
-	.long	>32CCCA0,bluenc
+	.long	032CCCA0H,bluenc
 jtqbwrst2:
 	.word	36,39,8,-50
-	.long	>32CFEA0,bluenc
+	.long	032CFEA0H,bluenc
 jtqbwrst3:
 	.word	34,39,8,-50
-	.long	>32D2A80,bluenc
+	.long	032D2A80H,bluenc
 jtqbwrst4:
 	.word	36,39,7,-51
-	.long	>32D5660,bluenc
+	.long	032D5660H,bluenc
 jtqbwrst5:
 	.word	36,40,4,-51
-	.long	>32D8240,bluenc
+	.long	032D8240H,bluenc
 jtqbwrst6:
 	.word	39,43,2,-49
-	.long	>32DAF40,bluenc
+	.long	032DAF40H,bluenc
 jtqbwrst7:
 	.word	37,41,4,-50
-	.long	>32DE500,bluenc
+	.long	032DE500H,bluenc
 jtbwrst1:
 	.word	38,39,19,-51
-	.long	>32E1840,bluenc
+	.long	032E1840H,bluenc
 jtbwrst2:
 	.word	37,39,17,-53
-	.long	>32E4900,bluenc
+	.long	032E4900H,bluenc
 jtbwrst3:
 	.word	34,39,18,-52
-	.long	>32E79C0,bluenc
+	.long	032E79C0H,bluenc
 jtbwrst4:
 	.word	39,37,24,-54
-	.long	>32EA5A0,bluenc
+	.long	032EA5A0H,bluenc
 jtbwrst5:
 	.word	34,39,21,-52
-	.long	>32ED3E0,bluenc
+	.long	032ED3E0H,bluenc
 jtju1:
 	.word	42,40,9,-72
-	.long	>32EFFC0,bluenc
+	.long	032EFFC0H,bluenc
 jtju2:
 	.word	47,45,2,-39
-	.long	>32F36C0,bluenc
+	.long	032F36C0H,bluenc
 jtju3:
 	.word	50,42,6,-40
-	.long	>32F7A40,bluenc
+	.long	032F7A40H,bluenc
 jtju4:
 	.word	49,38,7,-48
-	.long	>32FBE80,bluenc
+	.long	032FBE80H,bluenc
 jtju5:
 	.word	51,39,9,-72
-	.long	>32FFC40,bluenc
+	.long	032FFC40H,bluenc
 jtjuhel3:
 	.word	50,42,-29,-128
-	.long	>32F7A40,bluenc
+	.long	032F7A40H,bluenc
 jtjuhel4:
 	.word	49,38,-28,-122
-	.long	>32FBE80,bluenc
+	.long	032FBE80H,bluenc
 jtjucar3:
 	.word	50,42,22,-66
-	.long	>32F7A40,bluenc
+	.long	032F7A40H,bluenc
 jtjucar4:
 	.word	49,38,16,-77
-	.long	>32FBE80,bluenc
+	.long	032FBE80H,bluenc
 jtswshgs1:
 	.word	67,40,17,-54
-	.long	>3303BA0,bluenc
+	.long	03303BA0H,bluenc
 jtswshgs2:
 	.word	62,40,17,-53
-	.long	>33090A0,bluenc
+	.long	033090A0H,bluenc
 jtswshgs1c:
 	.word	67,40,17,-58
-	.long	>3303BA0,bluenc
+	.long	03303BA0H,bluenc
 jtswshgs2c:
 	.word	62,40,17,-57
-	.long	>33090A0,bluenc
+	.long	033090A0H,bluenc
 jtswshms1:
 	.word	71,39,15,-54
-	.long	>330E0A0,bluenc
+	.long	0330E0A0H,bluenc
 jtswshms2:
 	.word	56,38,15,-55
-	.long	>3313860,bluenc
+	.long	03313860H,bluenc
 jtswshms1c:
 	.word	71,39,15,-56
-	.long	>330E0A0,bluenc
+	.long	0330E0A0H,bluenc
 jtswshms2c:
 	.word	56,38,15,-57
-	.long	>3313860,bluenc
+	.long	03313860H,bluenc
 jtssqshg1:
 	.word	61,35,6,-84
-	.long	>3317AE0,bluenc
+	.long	03317AE0H,bluenc
 jtssqshg2:
 	.word	51,35,6,-83
-	.long	>331C0E0,bluenc
+	.long	0331C0E0H,bluenc
 jtssqshg1c:
 	.word	61,35,6,-87
-	.long	>3317AE0,bluenc
+	.long	03317AE0H,bluenc
 jtssqshg2c:
 	.word	51,35,6,-87
-	.long	>331C0E0,bluenc
+	.long	0331C0E0H,bluenc
 jtssqshm1:
 	.word	64,38,8,-77
-	.long	>331F9C0,bluenc
+	.long	0331F9C0H,bluenc
 jtssqshm2:
 	.word	46,38,9,-78
-	.long	>33245C0,bluenc
+	.long	033245C0H,bluenc
 jtssqshm1c:
 	.word	64,38,6,-84
-	.long	>331F9C0,bluenc
+	.long	0331F9C0H,bluenc
 jtssqshm2c:
 	.word	46,38,6,-85
-	.long	>3327EC0,bluenc
+	.long	03327EC0H,bluenc
 jtssqrst:
 	.word	39,33,6,-85
-	.long	>332B7C0,bluenc
+	.long	0332B7C0H,bluenc
 jtssqrstc:
 	.word	39,33,5,-89
-	.long	>332B7C0,bluenc
+	.long	0332B7C0H,bluenc
 	.TEXT

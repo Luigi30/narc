@@ -1,4 +1,4 @@
- 	.FILE	'NARCMUGS.ASM'
+ 	.FILE	"NARCMUGS.ASM"
 	.TITLE	" <<< N  A  R  C  -- Mug Plotter >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -49,60 +49,60 @@
 	.BSS	palslots,16*20
 	.BSS	CRIMEPAL,16,1
 	
-narc1S		.WORD	>F010,>1,>805a,0 ;narc one
-readmeS		.WORD	>F000,>1,>805b,0 ;do you read me
-whereruS	.WORD	>F010,>1,>805c,0 ;where are you
-getonitS	.WORD	>F010,>1,>805d,0 ;get on it
-nicejobS	.WORD	>F000,>1,>805e,0 ;nice job
-backupS		.WORD	>F010,>1,>805f,0 ;we need backup
-sarmedS		.WORD	>F010,>1,>8060,0 ;suspect armed
-armedS		.WORD	>F000,>1,>8061,0 ;armed
-attnS		.WORD	>F010,>1,>806a,0 ;attn all units
-apbS		.WORD	>F010,>1,>806b,0 ;APB
-atlargeS	.WORD	>F010,>1,>806c,0 ;At Large
-apprS		.WORD	>F010,>1,>806d,0 ;apprehend
-prgrssS		.WORD	>F010,>1,>806e,0 ;in progress
-possiblS	.WORD	>F010,>1,>806f,0 ;possible
-watchS		.WORD	>F010,>1,>8074,0 ;watch it
-allunitsS	.WORD	>F010,>1,>8078,0 ;all units
-pickupS		.WORD	>F010,>1,>8071,0 ;pickem up
-coderedS	.WORD	>F010,>1,>8072,0 ;code red
-sightedS	.WORD	>F010,>1,>8076,0 ;sighted
-bustemS		.WORD	>F010,>1,>8073,0 ;bust em
+narc1S		.WORD	0F010H,01H,0805aH,0 ;narc one
+readmeS		.WORD	0F000H,01H,0805bH,0 ;do you read me
+whereruS	.WORD	0F010H,01H,0805cH,0 ;where are you
+getonitS	.WORD	0F010H,01H,0805dH,0 ;get on it
+nicejobS	.WORD	0F000H,01H,0805eH,0 ;nice job
+backupS		.WORD	0F010H,01H,0805fH,0 ;we need backup
+sarmedS		.WORD	0F010H,01H,08060H,0 ;suspect armed
+armedS		.WORD	0F000H,01H,08061H,0 ;armed
+attnS		.WORD	0F010H,01H,0806aH,0 ;attn all units
+apbS		.WORD	0F010H,01H,0806bH,0 ;APB
+atlargeS	.WORD	0F010H,01H,0806cH,0 ;At Large
+apprS		.WORD	0F010H,01H,0806dH,0 ;apprehend
+prgrssS		.WORD	0F010H,01H,0806eH,0 ;in progress
+possiblS	.WORD	0F010H,01H,0806fH,0 ;possible
+watchS		.WORD	0F010H,01H,08074H,0 ;watch it
+allunitsS	.WORD	0F010H,01H,08078H,0 ;all units
+pickupS		.WORD	0F010H,01H,08071H,0 ;pickem up
+coderedS	.WORD	0F010H,01H,08072H,0 ;code red
+sightedS	.WORD	0F010H,01H,08076H,0 ;sighted
+bustemS		.WORD	0F010H,01H,08073H,0 ;bust em
 
-letsgoS		.WORD	>F011,>1,>8027,0 ;lets go
-rogerS		.WORD	>F011,>1,>8028,0 ;roger chief
-onrwayS		.WORD	>F011,>1,>802b,0 ;were on our way
-wegotitS	.WORD	>F011,>1,>802d,0 ;we got it
+letsgoS		.WORD	0F011H,01H,08027H,0 ;lets go
+rogerS		.WORD	0F011H,01H,08028H,0 ;roger chief
+onrwayS		.WORD	0F011H,01H,0802bH,0 ;were on our way
+wegotitS	.WORD	0F011H,01H,0802dH,0 ;we got it
 
-cdclozS		.WORD	>F000,>1,>8019,0 ;car door close
-revS		.WORD	>F000,>1,>800e,0 ;rev
-squealS		.WORD	>F000,>1,>800f,0 ;squeal
+cdclozS		.WORD	0F000H,01H,08019H,0 ;car door close
+revS		.WORD	0F000H,01H,0800eH,0 ;rev
+squealS		.WORD	0F000H,01H,0800fH,0 ;squeal
 
-UDIE1SND	.WORD	>F040,>40,>80b8,0 ;13.3Khz You Die
-SLOWLAFF	.WORD	>F040,>40,>80B5,0 ;13.3Khz Laugh
+UDIE1SND	.WORD	0F040H,040H,080b8H,0 ;13.3Khz You Die
+SLOWLAFF	.WORD	0F040H,040H,080B5H,0 ;13.3Khz Laugh
 
-SND2b		.WORD	>F000,>1,>8062,0 ;two
-SND3c		.WORD	>F010,>1,>8063,0 ;three
-SND4b		.WORD	>F010,>1,>8064,0 ;four
-SND5a		.WORD	>F010,>1,>8065,0 ;five
-SND6a		.WORD	>F010,>1,>8066,0 ;six
-SND7a		.WORD	>F010,>1,>8067,0 ;seven
-SND1b		.WORD	>F010,>1,>8068,0 ;2nd one
-SND1c		.WORD	>F010,>1,>8069,0 ;3rd one
-SND2c		.WORD	>F010,>1,>8077,0 ;3rd two
-SND511		.WORD	>F010,>1,>8090,0
-SND773		.WORD	>F010,>1,>809a,0
-SND742		.WORD	>F010,>1,>80A0,0
-SND613		.WORD	>F010,>1,>8098,0
-SND712		.WORD	>F010,>1,>809d,0
+SND2b		.WORD	0F000H,01H,08062H,0 ;two
+SND3c		.WORD	0F010H,01H,08063H,0 ;three
+SND4b		.WORD	0F010H,01H,08064H,0 ;four
+SND5a		.WORD	0F010H,01H,08065H,0 ;five
+SND6a		.WORD	0F010H,01H,08066H,0 ;six
+SND7a		.WORD	0F010H,01H,08067H,0 ;seven
+SND1b		.WORD	0F010H,01H,08068H,0 ;2nd one
+SND1c		.WORD	0F010H,01H,08069H,0 ;3rd one
+SND2c		.WORD	0F010H,01H,08077H,0 ;3rd two
+SND511		.WORD	0F010H,01H,08090H,0
+SND773		.WORD	0F010H,01H,0809aH,0
+SND742		.WORD	0F010H,01H,080A0H,0
+SND613		.WORD	0F010H,01H,08098H,0
+SND712		.WORD	0F010H,01H,0809dH,0
 
-BEEPSND		.WORD	>F300,>1,>80A4,0
-KLIKSND		.WORD	>F000,>1,>800C,0	;text click
-KLIK1SND	.WORD	>F000,>1,>8053,0	;text click
-KLIK2SND	.WORD	>F000,>1,>8054,0	;text click
-BOOMSND		.WORD	>F001,>1,>8049,0	;Bust Boom
-FOCUSSND	.WORD	>F300,>1,>80A3,0
+BEEPSND		.WORD	0F300H,01H,080A4H,0
+KLIKSND		.WORD	0F000H,01H,0800CH,0	;text click
+KLIK1SND	.WORD	0F000H,01H,08053H,0	;text click
+KLIK2SND	.WORD	0F000H,01H,08054H,0	;text click
+BOOMSND		.WORD	0F001H,01H,08049H,0	;Bust Boom
+FOCUSSND	.WORD	0F300H,01H,080A3H,0
 
 MSUX	.set	-1
 
@@ -115,7 +115,7 @@ SCANMAIN:
 	.WORD	MSUX+13,44+SKYTOPOF		;x,y start pos.
 	.long	handBMOD
 	.WORD	MSUX+201,311+SKYTOPOF	;x,y start pos.
-	.LONG	>FFFFFFFF
+	.LONG	0FFFFFFFFH
 
 SCANHAND:
 	.long	dashBMOD
@@ -124,7 +124,7 @@ SCANHAND:
 	.WORD	MSUX+13,44+SKYTOPOF		;x,y start pos.
 	.long	handBMOD
 	.WORD	MSUX+201,311+SKYTOPOF	;x,y start pos.
-	.LONG	>FFFFFFFF
+	.LONG	0FFFFFFFFH
 
 
 DASHLED_Z	.set	75
@@ -138,9 +138,9 @@ NumLed	.set	5	;# of LEDS
 NumSpkr	.set	6	;# speaker parts
 NumHand	.set	2	;# num hand parts
 
-SpkrOff	.set	(NumLed+1)*>20
-BoxOff	.set	(NumSpkr+NumLed+1)*>20
-HandOff	.set	(NumSpkr+NumLed+1+1)*>20
+SpkrOff	.set	(NumLed+1)*020H
+BoxOff	.set	(NumSpkr+NumLed+1)*020H
+HandOff	.set	(NumSpkr+NumLed+1+1)*020H
 
 ;* must load ptrs to objects in the following order
 ; LEDS, ALERT, SPEAKER PIECES
@@ -155,7 +155,7 @@ TITLSCR1:
 	.WORD	56,120		;x,y start pos.
 	.long	porsBMOD
 	.WORD	70,200		;x,y start pos.
-	.LONG	>FFFFFFFF
+	.LONG	0FFFFFFFFH
 TITLSCR2:
 	.long	rmanBMOD
 	.WORD	56,120		;x,y start pos.
@@ -163,7 +163,7 @@ TITLSCR2:
 	.WORD	70,200		;x,y start pos.
 	.long	bmanBMOD
 	.WORD	260,100		;x,y start pos.
-	.LONG	>FFFFFFFF
+	.LONG	0FFFFFFFFH
 
 ;* STRUCTURE OF ROUNTINES
 ;
@@ -266,7 +266,7 @@ PRECRIME:
 	clr	A0
 DoPreCrm:
 	;delete this after debuggery
-;	movi	>FFFC,A0
+;	movi	0FFFCH,A0
 ;	MOVE	A0,@DPYSTRT,W		;HIDE THE SCORE AREA
 ;	jsrp	FBIBADGE
 ;	jsrp	TITLPAGE
@@ -392,7 +392,7 @@ KilBlnk:
 ;* function to kill blink procs
 	mmtm	SP,A0,A1
 KillBPID:
-	NOMATCHP	BLINKPID,>FFFF,SkBKill
+	NOMATCHP	BLINKPID,0FFFFH,SkBKill
 	calla	KILL
 	jruc	KillBPID
 SkBKill:
@@ -403,7 +403,7 @@ SkBKill:
 **************************************************************************
 CkHand:
 ;* function to wait for hand to go away
-	NOMATCHP	HANDPID,>FFFF,SkHKill
+	NOMATCHP	HANDPID,0FFFFH,SkHKill
 	sleep	1
 	jruc	CkHand
 SkHKill:
@@ -856,9 +856,9 @@ until:
 	.BYTE	0
 	.long	0
 cpyrgt:
-	.BYTE	>22	;quote
+	.BYTE	022H	;quote
 	.STRING	"NARC"
-	.BYTE	>22	;quote
+	.BYTE	022H	;quote
 	.STRING	" COPYRIGHT 1988  WILLIAMS ELECTRONICS GAMES, INC."
 	.BYTE	0
 	.EVEN
@@ -1030,11 +1030,11 @@ ClrPLp:
 
 	;* clear screen to light Green Color
 	move	A8,@DMACMAP,W
-	movi	(>1000*(28+SKYTOPOF))+(8*(127+MSUX)),A0	;Dest Addr
-	movi	>800,A1	;Dest Addr Vertical Adj
+	movi	(01000H*(28+SKYTOPOF))+(8*(127+MSUX)),A0	;Dest Addr
+	movi	0800H,A1	;Dest Addr Vertical Adj
 	movi	16,A2	;Doing 16 pixels per loop
 	movi	200,A3	;height
-	movi	>01010101,A5
+	movi	001010101H,A5
 NxtRow:
 	move	A2,A4
 PltRow:
@@ -1074,8 +1074,8 @@ ClrMsuScr:
 	movi	NARCS,A0
 	calla	FINDPAL
 	move	A0,@DMACMAP,W
-	movi	(>1000*(28+SKYTOPOF))+(8*(127+MSUX)),A0	;Dest Addr
-	movi	>800,A1	;Dest Addr Vertical Adj
+	movi	(01000H*(28+SKYTOPOF))+(8*(127+MSUX)),A0	;Dest Addr
+	movi	0800H,A1	;Dest Addr Vertical Adj
 	movi	16,A2	;Doing 16 pixels per loop
 	movi	200,A3	;height
 	clr	A5
@@ -1113,7 +1113,7 @@ UnFbiText:
 
 *************************************************************************
 UnpckPl2:
-	subi	SKYTOPOF*>10000,A3
+	subi	SKYTOPOF*010000H,A3
 UnpckPlt:
 ;*****  This function unpacks and plots a packed image.
 ;PARMS:
@@ -1313,9 +1313,9 @@ FadePal:
 	sll	23,A14		;top bits of field are flags
 	srl	23,A14		;	only 9 bits needed for # colors
 
-	movi	>7C00,A4	;A4 - Pre Mult Mask for 5 bits of red
-	movi	>03E0,A6	;A6 - Pre Mult Mask for 5 bits of green
-	movi	>001F,A8	;A8 - Pre Mult Mask for 5 bits of blue
+	movi	07C00H,A4	;A4 - Pre Mult Mask for 5 bits of red
+	movi	003E0H,A6	;A6 - Pre Mult Mask for 5 bits of green
+	movi	0001FH,A8	;A8 - Pre Mult Mask for 5 bits of blue
 	move	A4,A9
 	move	A6,A10
 	move	A8,A11
@@ -1586,7 +1586,7 @@ AlertBlink:
 ;	--- the data object will have ptrs to led objs in slots 0-4
 	move	A10,A10
 	jrz	BAlertX
-	addi	NumLed*>20,A10	;skip LEDS
+	addi	NumLed*020H,A10	;skip LEDS
 
 AlertLp:
 	movi	SCANPAL1,A0
@@ -1633,7 +1633,7 @@ FlipLp:
 	move	*A0(OFLAGS),A4,W
 	XORI	M_FLIPH,A4
 	calla	GSAGOF
-	addi	OSIZE+>20,A0
+	addi	OSIZE+020H,A0
 	mmtm	A0,A2,A3,A4	;stuff OSIZE,OSAG,OFFSET:OFLAGS
 
 	move	A11,A11
@@ -1677,7 +1677,7 @@ HndClr:
 	move	A1,*A2(OSIZEX),W
 	movi	85,A1
 	move	A1,*A2(OSIZEY),W
-	movi	>2000000,A1
+	movi	02000000H,A1
 	move	A1,*A2(OSAG),L
 	movi	DMACAL,A1
 	zext	A1,W
@@ -1702,7 +1702,7 @@ HndClr:
 	move	A1,*A2(OSIZEX),W
 	movi	85,A1
 	move	A1,*A2(OSIZEY),W
-	movi	>2000000,A1
+	movi	02000000H,A1
 	move	A1,*A2(OSAG),L
 	movi	DMACAL,A1
 	zext	A1,W
@@ -1771,7 +1771,7 @@ Hand1:
 	movi	[700,0],A0		;Y off bottom of screen
 	move	A0,*A8(OYVAL),L
 	clr	A1
-	movi	>640000,A2
+	movi	0640000H,A2
 	callr	MoveHand
 
 	;* Do Initial Sleep
@@ -1831,7 +1831,7 @@ MvH1Lp:
 H1Dst:
 	;* Do Button Press Action
 	clr	A1
-	movi	->50000,A2
+	movi	-050000H,A2
 	callr	MoveHand
 	SLEEP	1
 
@@ -1854,21 +1854,21 @@ H1Dst:
 SkMsg:
 
 	clr	A1
-	movi	->50000,A2
+	movi	-050000H,A2
 	callr	MoveHand
 	SLEEP	1
 	clr	A1
-	movi	->40000,A2
+	movi	-040000H,A2
 	callr	MoveHand
 	SLEEP	1
 	clr	A1
-	movi	>70000,A2
+	movi	070000H,A2
 	callr	MoveHand
 	SLEEP	1
 
 	;* Get Red Box off Screen
 	;set Y to 450+SKYOFFSET, off bottom of screen
-	movi	((450+SKYTOPOF)*>10000),A0
+	movi	((450+SKYTOPOF)*010000H),A0
 	move	A0,*A8(OYVAL),L
 
 	movi	12,A0
@@ -1893,7 +1893,7 @@ Hand1Bye:
 Bye1Lp:
 	PULLP	A14	;TIKS
 
-	movi	>110000,A2	;Yvel
+	movi	0110000H,A2	;Yvel
 	clr	A1		;Xvel
 	callr	MoveHand
 
@@ -2049,7 +2049,7 @@ Zoomer:
 ;	A14 gets clobbered
 
 	move	A13,A14
-	addi	SCANSTCK+(7*>20),A14
+	addi	SCANSTCK+(7*020H),A14
 	mmtm	A14,A1,A2,A3,A4,A5,A6,A11
 
 	move	A11,A2		;A11 contains address to unpack to..
@@ -2119,7 +2119,7 @@ Spreader:
 ;Parms	A0-ptr to image
 ;		A1 - palette
 	mmtm	SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11
-	movi	OBJSTR+>3000,A2,L
+	movi	OBJSTR+03000H,A2,L
 	calla	UnpackRLC
 	move	A2,A6		;A6 is src addr
 	movk	2,A2			;* number of bits per pixel
@@ -2453,7 +2453,7 @@ PlotPack:
 	mmtm	SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9
 	pushst
 
-	addi	SKYTOPOF*>10000,A3
+	addi	SKYTOPOF*010000H,A3
 
 	move	@DISPLAYON,A5,W
 	PUSH	A5
@@ -2588,7 +2588,7 @@ Plt3Pack:
 	mmtm	SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11
 	pushst
 
-	addi	SKYTOPOF*>10000,A3
+	addi	SKYTOPOF*010000H,A3
 
 	move	@DISPLAYON,A5,W
 	PUSH	A5
@@ -2709,7 +2709,7 @@ Plt4Pack:
 	sub	A5,A11			;sub left pad
 	sub	A5,A11			;sub right pad
 
-	movi	>10000,A10		;CONST Decr for X Src Ctr
+	movi	010000H,A10		;CONST Decr for X Src Ctr
 	move	A4,A1			;XSrcInc
 	move	*A0(ISIZEY),A4,W	;set Y count
 
@@ -2736,7 +2736,7 @@ LftPad:
 	dsjs	A3,LftPad
 SkLftPad:
 
-	movi	->10000,A0		;XSrcCt
+	movi	-010000H,A0		;XSrcCt
 	move	A11,A3			;reset X count
 XLp4:
 	move	*A6,*A7,1
@@ -2866,7 +2866,7 @@ PlotVBox:
 	mmtm	SP,A1,A2,A3,A4,A5
 
 	;bottom left of Vox Scan at 154:11 - add in offset of -4:6
-	movi	>00960012+MSUX+(SKYTOPOF*>10000),A3
+	movi	000960012H+MSUX+(SKYTOPOF*010000H),A3
 	movi	3,A1
 	mpyu	A2,A1
 	sll	16,A1
@@ -2884,8 +2884,8 @@ PlotVBox:
 	sll	16,A1
 	movx	A11,A1
 GotCP:
-	movi	>00020008,A2	;A2 - VSIZE:HSIZE
-	movi	>2000000,A4	;A4 - SAG
+	movi	000020008H,A2	;A2 - VSIZE:HSIZE
+	movi	02000000H,A4	;A4 - SAG
 	movi	DMACAL,A5	;A5 - offset:control
 	zext	A5,W
 
@@ -3323,9 +3323,9 @@ MSHEAD:
 	.BYTE	0
 	.even
 ATNHEAD:
-	.LONG	>24,UDIE1SND,0,0
+	.LONG	024H,UDIE1SND,0,0
 SNDHEAD:
-	.LONG	>30,SLOWLAFF,0,0
+	.LONG	030H,SLOWLAFF,0,0
 
 VMQUEEN:
 ;	.STRING	"VOICE MATCH:  SNOWQUEEN"
@@ -3376,18 +3376,18 @@ ClrMsg:
 	
 	mmtm	SP,A1,A2,A3,A4,A5
 
-	movi	>01010000,A1	;A1 - Color:Pal
-	movi	>000B00FC,A2	;A2 - VSIZE:HSIZE
+	movi	001010000H,A1	;A1 - Color:Pal
+	movi	0000B00FCH,A2	;A2 - VSIZE:HSIZE
 	movi	[267+SKYTOPOF,105+MSUX],A3	;A3 - Y:X plot location
-	movi	>2000000,A4	;A4 - SAG
+	movi	02000000H,A4	;A4 - SAG
 	movi	DMACAL,A5	;A5 - offset:control
 	zext	A5,W
 	calla	QDMAN
 
-	movi	>01010000,A1	;A1 - Color:Pal
-	movi	>000B0030,A2	;A2 - VSIZE:HSIZE
+	movi	001010000H,A1	;A1 - Color:Pal
+	movi	0000B0030H,A2	;A2 - VSIZE:HSIZE
 	movi	[267+SKYTOPOF,357+MSUX],A3	;A3 - Y:X plot location
-	movi	>2000000,A4	;A4 - SAG
+	movi	02000000H,A4	;A4 - SAG
 	movi	DMACAL,A5	;A5 - offset:control
 	zext	A5,W
 	calla	QDMAN

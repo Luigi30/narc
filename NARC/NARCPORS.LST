@@ -1,0 +1,2860 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCPORS.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      21                    *       LOCAL STUFF
+      22                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      23                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      24                            .INCLUDE        "NARCFRAG.GLO"
+      25                            .INCLUDE        "NARCDRIV.GLO"
+      26                    
+      27 00000000                   .TEXT
+      28                            .INCLUDE        "NARCPORS.TBL"          ;Image Label Equates
+      29                    
+      30                    *
+      31                    *GLOBALS IN THIS FILE
+      32                            .GLOBAL         PCDRIVRC,PORSCHE1,P1IJDECL,P2IJDECL,PDRIVXWW
+      33                    *
+      34                    *EXTERNALS
+      35                            .GLOBAL         STARTINVL,CFSHRAPB,CFSHRAPA
+      36                    
+      37          fff60060  PORDRVXY EQU    [-10,96]        ;PORSCHE PLAYER DRIVER FIRING OFFSET
+      38          00020051  PORPASXY EQU    [2,81]          ;PORSCHE PLAYER PASSENGER FIRING OFFSET
+      39          fffe0068  PORDRVRB EQU    [-2,104]        ;PORSCHE PLAYER PASSENGER ROCKET BOMB OFFSET
+      40          00090063  PORPASRB EQU    [9,99]          ;PORSCHE PLAYER DRIVER ROCKET BOMB OFFSET
+      41          00110000  PORFULL EQU     [17,0]          ;PORSCHE FULL SPEED
+      42              4000  PORACCEL EQU    [0,4000H]       ;PORSCHE ACCELERATION
+      43              8000  PORBRAKE EQU    [0,8000H]       ;PORSCHE BRAKING DECEL FACTOR
+      44              0006  PORZERO EQU     6               ;# OF TICKS TO WAIT AT ZERO VELOCITY
+      45              0010  PORSPIN EQU     16              ;# OF "INCREMENTS" FOR A SPINOUT
+      46                    
+      47                    **************************************************************************
+      48                    *                                                                        *
+      49                    * PORSCHE - THE DRIVEABLE PORSCHE PROCESS!!!                             *
+      50                    *                                                                        *
+      51                    **************************************************************************
+      52 00000000           PORSCHE
+      53 00000000     09ee          MOVI    PORDINIT,A14
+         00000010 00004ca0" 
+      54 00000030     09e6          MOVI    PORP1P2,A6                                               
+         00000040 00001200" 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    2
+
+      55 00000060     0d5f          CALLA   CARINIT                 ;INITIALIZE THE CAR
+         00000070 00000000! 
+      56 00000090     ca80          JAZ     DUMDIE                  ;BR = INITIALIZATION FAILURE
+         000000a0 00000000! 
+      57 000000c0     0d5f          CALLA   CARSETZ
+         000000d0 00000000! 
+      58 000000f0     0d5f          CALLA   CSHADST
+         00000100 00000000! 
+      59 00000120     0d5f          CALLA   CRESET                  ;RESET THE PARTS AGAIN FOR GOOD MEASURE
+         00000130 00000000! 
+      60                    
+      61 00000150     05a6          MOVE    @PORCNT,A6,W
+         00000160 00000000! 
+      62 00000180     1026          INC     A6                      ;INITIALIZATION COMPLETE, KNOCK IT UP
+      63 00000190     0586          MOVE    A6,@PORCNT,W
+         000001a0 00000000! 
+      64                    
+      65 000001c0     09e6          MOVI    PORDRVXY,A6
+         000001d0 fff60060  
+      66 000001f0     b2cd          MOVE    A6,*A13(EDRIVXY),L
+         00000200     00a0  
+      67 00000210     09e6          MOVI    PORPASXY,A6
+         00000220 00020051  
+      68 00000240     b2cd          MOVE    A6,*A13(EPASSXY),L
+         00000250     00c0  
+      69 00000260     09e6          MOVI    PORDRVRB,A6
+         00000270 fffe0068  
+      70 00000290     b2cd          MOVE    A6,*A13(EDRIVRB),L
+         000002a0     0140  
+      71 000002b0     09e6          MOVI    PORPASRB,A6
+         000002c0 00090063  
+      72 000002e0     b2cd          MOVE    A6,*A13(EPASSRB),L
+         000002f0     0160  
+      73 00000300     56c6          CLR     A6
+      74 00000310     0586          MOVE    A6,@PCBSNDF,W
+         00000320 00000000! 
+      75 00000340     0586          MOVE    A6,@PCSPINH,W
+         00000350 00000000! 
+      76 00000370     18c6          MOVK    PORZERO,A6
+      77 00000380     0586          MOVE    A6,@PCZEROCT,W
+         00000390 00000000! 
+      78 000003b0           PORSCHEL
+      79 000003b0     4d08          MOVE    A8,A8
+      80 000003c0     ca3f          JRZ     PORSCHED                        ;BR = NO DRIVER, STOP US NOW!
+      81 000003d0     b500          MOVE    *A8(OID),A0,W
+         000003e0     01a0  
+      82 000003f0     0b40          CMPI    P1OID,A0
+         00000400     efff  
+      83 00000410     cb04          JRNE    PORSCHN1
+      84 00000420     07a2          MOVE    @P1DATA+PFLAGS,A2,L
+         00000430 00000080! 
+      85 00000450     c006          JRUC    PORSCHCS
+      86 00000460           PORSCHN1
+      87 00000460     0b40          CMPI    P2OID,A0
+         00000470     dfff  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    3
+
+      88 00000480     cb33          JRNE    PORSCHED                        ;BR = WHO IS THIS GUY?
+      89 00000490     07a2          MOVE    @P2DATA+PFLAGS,A2,L
+         000004a0 00000080! 
+      90 000004c0           PORSCHCS
+      91 000004c0     1e42          BTST    BSITIN,A2
+      92 000004d0     cb2e          JRNE    PORSCHED                        ;BR = DRIVER NOT SEATED YET
+      93 000004e0     1d22          BTST    BDHOLD,A2
+      94 000004f0     cb2c          JRNE    PORSCHED                        ;BR = DRIVER IS HIT
+      95 00000500     1da2          BTST    BDEAD,A2
+      96 00000510     cb2a          JRNE    PORSCHED                        ;BR = DRIVER IS DEAD
+      97 00000520     0b40          CMPI    P1OID,A0
+         00000530     efff  
+      98 00000540     cb04          JRNE    PORDP2
+      99 00000550     09e6          MOVI    PORP1P2,A6
+         00000560 00001200" 
+     100 00000580     c003          JRUC    PORDTAB
+     101 00000590           PORDP2
+     102 00000590     09e6          MOVI    PORP2P1,A6
+         000005a0 00001980" 
+     103 000005c0           PORDTAB
+     104 000005c0     b2cd          MOVE    A6,*A13(EMAINT),L       ;STUFF THE CORRECT ANIMATION TABLE
+         000005d0     0100  
+     105 000005e0     b7a7          MOVE    *A13(ESWTCH),A7,L       ;GET THE SWITCH BITS
+         000005f0     00e0  
+     106 00000600     4ce0          MOVE    A7,A0
+     107 00000610     2780          SLL     28,A0
+     108 00000620     c855          JRC     PSPINOUT
+     109 00000630     5621          CLR     A1
+     110 00000640     0581          MOVE    A1,@PCSPINH,W           ;CLEAR SPIN ONE SHOT FLAG
+         00000650 00000000! 
+     111 00000670           PORSCHEC
+     112 00000670     2d20          SRL     23,A0
+     113 00000680     09e1          MOVI    STEERTAB,A1
+         00000690 00001130' 
+     114 000006b0     4001          ADD     A0,A1
+     115 000006c0     8621          MOVE    *A1,A1,L
+     116 000006d0                   JSRPR   A1
+     117 00000720           PORSCHEJ
+     118 00000720     0d5f          CALLA   CKCRESET                ;CHECK IF IT'S TIME TO DO A RESET
+         00000730 00000000! 
+     119 00000750                   SLOOP   2,PORSCHEL              ;HANG OUT DUDE
+     120 000007c0           PORSCHED
+     121 000007c0     09cb          MOVI    0,A11
+         000007d0     0000  
+     122 000007e0     b740          MOVE    *A10(OXVEL),A0,L
+         000007f0     0040  
+     123 00000800     ca09          JREQ    PORSCHES
+     124 00000810     c703          JRGT    PORSCHD1
+     125 00000820     09c9          MOVI    4300H,A9
+         00000830     4300  
+     126 00000840     c002          JRUC    PORSCHD2
+     127 00000850           PORSCHD1
+     128 00000850     09c9          MOVI    -4300H,A9
+         00000860     bd00  
+     129 00000870           PORSCHD2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    4
+
+     130 00000870     0d5f          CALLA   CXACCELA
+         00000880 00000000! 
+     131 000008a0           PORSCHES
+     132 000008a0     b740          MOVE    *A10(OYVEL),A0,L
+         000008b0     0060  
+     133 000008c0     ca04          JREQ    PORSCH0Y
+     134 000008d0     5621          CLR     A1
+     135 000008e0     0d5f          CALLA   CARYZVEL                                                 
+         000008f0 00000000! 
+     136 00000910           PORSCH0Y
+     137 00000910     b541          MOVE    *A10(OXPOS),A1,W
+         00000920     0090  
+     138 00000930     05a2          MOVE    @WORLDTLX+16,A2,W
+         00000940 00000010! 
+     139 00000960     4422          SUB     A1,A2
+     140 00000970     ce03          JRN     PORSCHIF                ;BR = PORSCHE IS IN FRONT OF PLAYERS
+     141 00000980     0b42          CMPI    3*512,A2
+         00000990     f9ff  
+     142 000009a0     c90a          JRHS    PORSCHEX                ;BR = PORSCHE TOO FAR BACK, DELETE.
+     143 000009b0           PORSCHIF
+     144 000009b0     0d5f          CALLA   CKCRESET                ;CHECK IF IT'S TIME TO DO A RESET
+         000009c0 00000000! 
+     145 000009e0                   SLOOP   5,PORSCHEL
+     146                    
+     147 00000a50           PORSCHEX
+     148 00000a50     0d5f          CALLA   KILLCARP
+         00000a60 00000000! 
+     149 00000a80     0d5f          CALLA   DELCBODY
+         00000a90 00000000! 
+     150 00000ab0     0d5f          CALLA   CDELALL                 ;DELETE THE COMPANY
+         00000ac0 00000000! 
+     151 00000ae0     05a6          MOVE    @PORCNT,A6,W
+         00000af0 00000000! 
+     152 00000b10     1426          DEC     A6
+     153 00000b20     0586          MOVE    A6,@PORCNT,W
+         00000b30 00000000! 
+     154 00000b50                   DIE
+     155                    
+     156                    *PORSCHE SPINOUT, A0 = JOYSTICK BITS SLL'D 28
+     157 00000b80           PSPINOUT
+     158 00000b80     05a1          MOVE    @PCSPINH,A1,W
+         00000b90 00000000! 
+     159 00000bb0     cbab          JRNZ    PORSCHEC                ;RETURN, ONE SHOT IS ON
+     160 00000bc0     1821          MOVK    1,A1
+     161 00000bd0     0581          MOVE    A1,@PCSPINH,W           ;SET THE SPIN HOLD
+         00000be0 00000000! 
+     162 00000c00     4c01          MOVE    A0,A1
+     163 00000c10     576b          CLR     A11
+     164 00000c20     09c9          MOVI    FRICTION*2,A9
+         00000c30     4000  
+     165 00000c40     b740          MOVE    *A10(OXVEL),A0,L
+         00000c50     0040  
+     166 00000c60     ca05          JRZ     PSPINJ
+     167 00000c70     ce01          JRN     PSPIND
+     168 00000c80     03a9          NEG     A9
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    5
+
+     169 00000c90           PSPIND
+     170 00000c90     0d5f          CALLA   CXACCELA
+         00000ca0 00000000! 
+     171 00000cc0           PSPINJ
+     172 00000cc0                   SOUND1  PCSPINSD
+     173 00000d20     0580          MOVE    A0,@PCBSNDF,W           ;SET SOUND FLAG
+         00000d30 00000000! 
+     174 00000d50     2461          SLL     3,A1                    ;CHECK DOWN STICK
+     175 00000d60     c821          JRC     PSPINR  
+     176 00000d70     2421          SLL     1,A1                    ;STICK UP CHECK
+     177 00000d80     c804          JRC     PSPINL
+     178 00000d90     b541          MOVE    *A10(OFLAGS),A1,W
+         00000da0     0100  
+     179 00000db0     1f61          BTST    B_FLIPH,A1      
+     180 00000dc0     cb1b          JRNE    PSPINR
+     181 00000dd0           PSPINL
+     182 00000dd0     0d5f          CALLA   ISREVERS
+         00000de0 00000000! 
+     183 00000e00     c81b          JRC     PSPINR1                 ;BR = REVERSED, DO THE OPPOSITE
+     184 00000e10           PSPINL1
+     185 00000e10     b741          MOVE    *A10(OYVEL),A1,L
+         00000e20     0060  
+     186 00000e30     0be1          SUBI    4000H,A1
+         00000e40     bfff  
+     187 00000e50     0d5f          CALLA   CARYZVEL
+         00000e60 00000000! 
+     188 00000e80                   JSRP    CLTURN
+     189 00000ef0                   JSRP    CLEFT180
+     190 00000f60     c000          JRUC    PORSCHEJ
+         00000f70     ff7a  
+     191 00000f80           PSPINR
+     192 00000f80     0d5f          CALLA   ISREVERS
+         00000f90 00000000! 
+     193 00000fb0     c8e5          JRC     PSPINL1                 
+     194 00000fc0           PSPINR1
+     195 00000fc0     b741          MOVE    *A10(OYVEL),A1,L
+         00000fd0     0060  
+     196 00000fe0     0b01          ADDI    4000H,A1
+         00000ff0     4000  
+     197 00001000     0d5f          CALLA   CARYZVEL
+         00001010 00000000! 
+     198 00001030                   JSRP    CRTURN
+     199 000010a0                   JSRP    CRYTE180
+     200 00001110     c000          JRUC    PORSCHEJ
+         00001120     ff5f  
+     201                    
+     202 00001130           STEERTAB
+     203 00001130 00001330'         .LONG   STRAIGHT,TURNLEFT,TURNRYTE,DUMRETP,REVERSE,REVLEFT
+     204 000011f0 00001b80'         .LONG   REVRYTE,DUMRETP,FORWARD,FORLEFT,FORRYTE,DUMRETP
+     205 000012b0 00000000!         .LONG   DUMRETP,DUMRETP,DUMRETP,DUMRETP
+     206                    
+     207                    *NOTE: ALL OF THESE DIRECTIONAL ROUTINES MUST BE CALLED WITH JSRP
+     208                    *MAKE THE CAR GO STRAIGHT AHEAD
+     209 00001330           STRAIGHT
+     210 00001330     5621          CLR     A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    6
+
+     211 00001340     0d5f          CALLA   CARYZVEL
+         00001350 00000000! 
+     212 00001370     18c9          MOVK    PORZERO,A9
+     213 00001380     0589          MOVE    A9,@PCZEROCT,W          ;RE-INITIALIZE THE COUNT
+         00001390 00000000! 
+     214 000013b0     09c9          MOVI    FRICTION,A9
+         000013c0     2000  
+     215 000013d0     576b          CLR     A11
+     216 000013e0     b740          MOVE    *A10(OXVEL),A0,L
+         000013f0     0040  
+     217 00001400     ce01          JRN     STRAIG3
+     218 00001410     03a9          NEG     A9
+     219 00001420           STRAIG3
+     220 00001420     0d5f          CALLA   CXACCELA                ;DECELERATE DUE TO FRICTION
+         00001430 00000000! 
+     221 00001450           STRAYTEX
+     222 00001450     5729          CLR     A9
+     223 00001460     05a1          MOVE    @PCBSNDF,A1,W
+         00001470 00000000! 
+     224 00001490     ca80          JAZ     CSTRAYTE                ;NO BRAKING SOUND GOING DOWN
+         000014a0 00000000! 
+     225 000014c0                   SOUND1  PCALLOFF                ;SHUT DOWN BRAKE SOUND
+     226 00001520     0589          MOVE    A9,@PCBSNDF,W           ;DOWN THE FLAG
+         00001530 00000000! 
+     227 00001550     c080          JAUC    CSTRAYTE
+         00001560 00000000! 
+     228                    
+     229                    *REVERSE VELOCITY       
+     230 00001580           REVERSE
+     231 00001580     5621          CLR     A1
+     232 00001590     0d5f          CALLA   CARYZVEL                                                 
+         000015a0 00000000! 
+     233 000015c0     09c1          MOVI    -PORACCEL,A1
+         000015d0     c000  
+     234 000015e0     09c2          MOVI    -PORBRAKE,A2
+         000015f0     8000  
+     235 00001600     09e3          MOVI    -PORFULL,A3
+         00001610 ffef0000  
+     236 00001630     0d3f          CALLR   SETRVEL
+         00001640     00e0  
+     237 00001650     c9df          JRNC    STRAYTEX
+     238 00001660     5729          CLR     A9
+     239 00001670     c080          JAUC    CSTRAYTE
+         00001680 00000000! 
+     240                    *FORWARD VELOCITY       
+     241 000016a0           FORWARD
+     242 000016a0     5621          CLR     A1
+     243 000016b0     0d5f          CALLA   CARYZVEL                                                 
+         000016c0 00000000! 
+     244 000016e0     09c1          MOVI    PORACCEL,A1
+         000016f0     4000  
+     245 00001700     09e2          MOVI    PORBRAKE,A2
+         00001710 00008000  
+     246 00001730     09e3          MOVI    PORFULL,A3
+         00001740 00110000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    7
+
+     247 00001760     0d3f          CALLR   SETFVEL
+         00001770     0085  
+     248 00001780     c9cc          JRNC    STRAYTEX
+     249 00001790     5729          CLR     A9
+     250 000017a0     c080          JAUC    CSTRAYTE
+         000017b0 00000000! 
+     251                    *FORWARD VELOCITY,LEFT TURN     
+     252 000017d0           FORLEFT
+     253 000017d0     b741          MOVE    *A10(OXVEL),A1,L
+         000017e0     0040  
+     254 000017f0     2ba1          SRA     3,A1
+     255 00001800     ce01          JRN     FORL1
+     256 00001810     03a1          NEG     A1
+     257 00001820           FORL1
+     258 00001820     0d5f          CALLA   CARYZVEL                                                 
+         00001830 00000000! 
+     259 00001850     09c1          MOVI    PORACCEL/2,A1
+         00001860     2000  
+     260 00001870     09e2          MOVI    PORBRAKE,A2
+         00001880 00008000  
+     261 000018a0     09e3          MOVI    PORFULL,A3
+         000018b0 00110000  
+     262 000018d0     0d3f          CALLR   SETFVEL
+         000018e0     006e  
+     263 000018f0     c85b          JRC     CLEFTBA9                ;BRAKING, TRY TO SPIN
+     264 00001900     c04e          JRUC    CLEFTA9
+     265                    *FORWARD VELOCITY,RIGHT TURN    
+     266 00001910           FORRYTE
+     267 00001910     b741          MOVE    *A10(OXVEL),A1,L
+         00001920     0040  
+     268 00001930     2ba1          SRA     3,A1
+     269 00001940     cf01          JRNN    FORR1
+     270 00001950     03a1          NEG     A1
+     271 00001960           FORR1
+     272 00001960     0d5f          CALLA   CARYZVEL                                                 
+         00001970 00000000! 
+     273 00001990     09c1          MOVI    PORACCEL/2,A1
+         000019a0     2000  
+     274 000019b0     09e2          MOVI    PORBRAKE,A2
+         000019c0 00008000  
+     275 000019e0     09e3          MOVI    PORFULL,A3
+         000019f0 00110000  
+     276 00001a10     0d3f          CALLR   SETFVEL
+         00001a20     005a  
+     277 00001a30     c856          JRC     CRYTEBA9                ;BRAKING, TRY TO SPIN
+     278 00001a40     c049          JRUC    CRYTEA9
+     279                    *REVERSE VELOCITY,LEFT TURN     
+     280 00001a50           REVLEFT
+     281 00001a50     b741          MOVE    *A10(OXVEL),A1,L
+         00001a60     0040  
+     282 00001a70     2ba1          SRA     3,A1
+     283 00001a80     ce01          JRN     REVL1
+     284 00001a90     03a1          NEG     A1
+     285 00001aa0           REVL1
+     286 00001aa0     0d5f          CALLA   CARYZVEL                                                 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    8
+
+         00001ab0 00000000! 
+     287 00001ad0     09c1          MOVI    -(PORACCEL/2),A1
+         00001ae0     e000  
+     288 00001af0     09c2          MOVI    -PORBRAKE,A2
+         00001b00     8000  
+     289 00001b10     09e3          MOVI    -PORFULL,A3
+         00001b20 ffef0000  
+     290 00001b40     0d3f          CALLR   SETRVEL
+         00001b50     008f  
+     291 00001b60     c834          JRC     CLEFTBA9                ;BRAKING, MUST TO MAKE NOISES
+     292 00001b70     c027          JRUC    CLEFTA9
+     293                    *REVERSE VELOCITY,RIGHT TURN    
+     294 00001b80           REVRYTE
+     295 00001b80     b741          MOVE    *A10(OXVEL),A1,L
+         00001b90     0040  
+     296 00001ba0     2ba1          SRA     3,A1
+     297 00001bb0     cf01          JRNN    REVR1
+     298 00001bc0     03a1          NEG     A1
+     299 00001bd0           REVR1
+     300 00001bd0     0d5f          CALLA   CARYZVEL                                                 
+         00001be0 00000000! 
+     301 00001c00     09c1          MOVI    -(PORACCEL/2),A1
+         00001c10     e000  
+     302 00001c20     09c2          MOVI    -PORBRAKE,A2
+         00001c30     8000  
+     303 00001c40     09e3          MOVI    -PORFULL,A3
+         00001c50 ffef0000  
+     304 00001c70     0d3f          CALLR   SETRVEL
+         00001c80     007c  
+     305 00001c90     c830          JRC     CRYTEBA9                ;BRAKING, SOUND OFF
+     306 00001ca0     c023          JRUC    CRYTEA9
+     307                    
+     308                    *TURN THE CAR LEFT
+     309 00001cb0           TURNLEFT
+     310 00001cb0     b741          MOVE    *A10(OXVEL),A1,L
+         00001cc0     0040  
+     311 00001cd0     4c29          MOVE    A1,A9
+     312 00001ce0     2ba1          SRA     3,A1
+     313 00001cf0     ce01          JRN     TURNL3
+     314 00001d00     03a1          NEG     A1
+     315 00001d10           TURNL3
+     316 00001d10     0d5f          CALLA   CARYZVEL                                                 
+         00001d20 00000000! 
+     317 00001d40     c00a          JRUC    CLEFTA9                                                  
+     318                    
+     319                    *TURN THE CAR RIGHT
+     320 00001d50           TURNRYTE
+     321 00001d50     b741          MOVE    *A10(OXVEL),A1,L
+         00001d60     0040  
+     322 00001d70     4c29          MOVE    A1,A9
+     323 00001d80     2ba1          SRA     3,A1
+     324 00001d90     cf01          JRNN    TURNR3
+     325 00001da0     03a1          NEG     A1
+     326 00001db0           TURNR3
+     327 00001db0     0d5f          CALLA   CARYZVEL                                                 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE    9
+
+         00001dc0 00000000! 
+     328 00001de0     c00f          JRUC    CRYTEA9                                                  
+     329                    *
+     330                    *EXIT FOR LEFT TURN, NO BRAKING
+     331 00001df0           CLEFTA9
+     332 00001df0     05a1          MOVE    @PCBSNDF,A1,W
+         00001e00 00000000! 
+     333 00001e20     ca80          JAZ     CLTURN          ;NO BRAKING SOUND GOING DOWN
+         00001e30 00000000! 
+     334 00001e50                   SOUND1  PCALLOFF
+     335                    *EXIT POINT FOR ANY LEFT TURN
+     336 00001eb0           CLEFTBA9
+     337 00001eb0     c080          JAUC    CLTURN
+         00001ec0 00000000! 
+     338                    *
+     339                    *EXIT FOR RIGHT TURN, NO BRAKING
+     340 00001ee0           CRYTEA9
+     341 00001ee0     05a1          MOVE    @PCBSNDF,A1,W
+         00001ef0 00000000! 
+     342 00001f10     ca80          JAZ     CRTURN          ;NO BRAKING SOUND GOING DOWN
+         00001f20 00000000! 
+     343 00001f40                   SOUND1  PCALLOFF
+     344                    *EXIT POINT FOR ANY RIGHT TURN
+     345 00001fa0           CRYTEBA9
+     346 00001fa0     c080          JAUC    CRTURN
+         00001fb0 00000000! 
+     347                    
+     348                    **************************************************************************
+     349                    *                                                                        *
+     350                    * SETFVEL - SET PLAYER CAR FORWARD VELOCITY                              *
+     351                    * A1 = ACCELERATION FACTOR                                               *
+     352                    * A2 = BRAKING FACTOR                                                    *
+     353                    * A3 = TOP SPEED                                                         *
+     354                    * A8 = PTR TO DRIVER                                                     *
+     355                    * A10 = PTR TO CAR                                                       *
+     356                    * A13 = PTR TO CAR PROCESS                                               *
+     357                    * RETURNS:                                                               *
+     358                    * Z BIT SET = STOPPED                                                    *
+     359                    * Z BIT CLR = IGNORE                                                     *
+     360                    * C BIT SET = BRAKING                                                    *
+     361                    * C BIT CLR = ACCELERATING                                               *
+     362                    *                                                                        *
+     363                    **************************************************************************
+     364 00001fd0           SETFVEL
+     365 00001fd0     098f          MMTM    SP,A0,A9,A11
+         00001fe0     8050  
+     366 00001ff0     b74b          MOVE    *A10(OXVEL),A11,L
+         00002000     0040  
+     367 00002010     c723          JRGT    SETFVEL1
+     368 00002020     cb0b          JRNZ    SETFVEL0
+     369 00002030     05a9          MOVE    @PCZEROCT,A9,W
+         00002040 00000000! 
+     370 00002060     0b49          CMPI    PORZERO,A9
+         00002070     fff9  
+     371 00002080     c51c          JRGE    SETFVEL1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   10
+
+     372 00002090     1029          INC     A9
+     373 000020a0     0589          MOVE    A9,@PCZEROCT,W
+         000020b0 00000000! 
+     374 000020d0     c034          JRUC    SETFVELX        
+     375 000020e0           SETFVEL0
+     376 000020e0     576b          CLR     A11
+     377 000020f0     4c49          MOVE    A2,A9                   ;SKID BRAKE
+     378 00002100     0d5f          CALLA   CXACCELB
+         00002110 00000000! 
+     379 00002130     0d5f          CALLA   CWHLSTOP
+         00002140 00000000! 
+     380 00002160     05a0          MOVE    @PCBSNDF,A0,W
+         00002170 00000000! 
+     381 00002190     cb09          JRNZ    SETFVELN
+     382 000021a0                   SOUND1  PCBRAKSD
+     383 00002200     0580          MOVE    A0,@PCBSNDF,W           ;FLAG BRAKE SOUND
+         00002210 00000000! 
+     384 00002230           SETFVELN
+     385 00002230     0de0          SETC                            ;FLAG BRAKE
+     386 00002240     c017          JRUC    SETFVEL2
+     387 00002250           SETFVEL1
+     388 00002250     05ab          MOVE    @UNIVENDX,A11,W
+         00002260 00000000! 
+     389 00002280     0beb          SUBI    512,A11
+         00002290     fdff  
+     390 000022a0     b549          MOVE    *A10(OXPOS),A9,W
+         000022b0     0090  
+     391 000022c0     4969          CMP     A11,A9
+     392 000022d0     c408          JRLT    SETFVELOK
+     393 000022e0     09eb          MOVI    [5,0],A11
+         000022f0 00050000  
+     394 00002310     0d5f          CALLA   XVEL2XA
+         00002320 00002920' 
+     395 00002340     0320          CLRC
+     396 00002350     c006          JRUC    SETFVEL2
+     397 00002360           SETFVELOK
+     398 00002360     4c6b          MOVE    A3,A11
+     399 00002370     4c29          MOVE    A1,A9                   ;ACCELERATE
+     400 00002380     0d5f          CALLA   CXACCELA
+         00002390 00000000! 
+     401 000023b0     0320          CLRC                            ;FLAG ACCELERATE
+     402 000023c0           SETFVEL2
+     403 000023c0     5729          CLR     A9
+     404 000023d0     0589          MOVE    A9,@PCZEROCT,W
+         000023e0 00000000! 
+     405 00002400     1829          MOVK    1,A9
+     406 00002410     4d29          MOVE    A9,A9                   ;CLR Z BIT WITHOUT CLRING C
+     407 00002420           SETFVELX
+     408 00002420     09af          MMFM    SP,A0,A9,A11
+         00002430     0a01  
+     409 00002440     0960          RETS
+     410                            
+     411                    **************************************************************************
+     412                    *                                                                        *
+     413                    * SETRVEL - SET PLAYER CAR FORWARD VELOCITY                              *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   11
+
+     414                    * A1 = ACCELERATION FACTOR                                               *
+     415                    * A2 = BRAKING FACTOR                                                    *
+     416                    * A3 = TOP SPEED                                                         *
+     417                    * A8 = PTR TO DRIVER                                                     *
+     418                    * A10 = PTR TO CAR                                                       *
+     419                    * A13 = PTR TO CAR PROCESS                                               *
+     420                    * RETURNS:                                                               *
+     421                    * Z BIT SET = STOPPED                                                    *
+     422                    * Z BIT CLR = IGNORE                                                     *
+     423                    * C BIT SET = BRAKING                                                    *
+     424                    * C BIT CLR = ACCELERATING                                               *
+     425                    *                                                                        *
+     426                    **************************************************************************
+     427 00002450           SETRVEL
+     428 00002450     098f          MMTM    SP,A0,A9,A11
+         00002460     8050  
+     429 00002470     b74b          MOVE    *A10(OXVEL),A11,L
+         00002480     0040  
+     430 00002490     c724          JRGT    SETRVEL1
+     431 000024a0     cb0b          JRNZ    SETRVEL0
+     432 000024b0     05a9          MOVE    @PCZEROCT,A9,W
+         000024c0 00000000! 
+     433 000024e0     0b49          CMPI    PORZERO,A9
+         000024f0     fff9  
+     434 00002500     c505          JRGE    SETRVEL0
+     435 00002510     1029          INC     A9
+     436 00002520     0589          MOVE    A9,@PCZEROCT,W
+         00002530 00000000! 
+     437 00002550     c034          JRUC    SETRVELX        
+     438 00002560           SETRVEL0
+     439 00002560     05ab          MOVE    @UNIVSTX,A11,W
+         00002570 00000000! 
+     440 00002590     0b0b          ADDI    512,A11
+         000025a0     0200  
+     441 000025b0     b549          MOVE    *A10(OXPOS),A9,W
+         000025c0     0090  
+     442 000025d0     4969          CMP     A11,A9
+     443 000025e0     c708          JRGT    SETRVELOK
+     444 000025f0     09eb          MOVI    [-5,0],A11
+         00002600 fffb0000  
+     445 00002620     0d5f          CALLA   XVEL2XA
+         00002630 00002920' 
+     446 00002650     0320          CLRC
+     447 00002660     c01d          JRUC    SETRVEL2
+     448 00002670           SETRVELOK
+     449 00002670     4c6b          MOVE    A3,A11
+     450 00002680     4c29          MOVE    A1,A9                   ;ACCELERATE
+     451 00002690     0d5f          CALLA   CXACCELA
+         000026a0 00000000! 
+     452 000026c0     0320          CLRC                            ;FLAG ACCELERATE
+     453 000026d0     c016          JRUC    SETRVEL2
+     454 000026e0           SETRVEL1
+     455 000026e0     576b          CLR     A11
+     456 000026f0     4c49          MOVE    A2,A9                   ;BRAKE
+     457 00002700     0d5f          CALLA   CXACCELB
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   12
+
+         00002710 00000000! 
+     458 00002730     0d5f          CALLA   CWHLSTOP
+         00002740 00000000! 
+     459 00002760     05a0          MOVE    @PCBSNDF,A0,W
+         00002770 00000000! 
+     460 00002790     cb09          JRNZ    SETRVELN
+     461 000027a0                   SOUND1  PCBRAKSD
+     462 00002800     0580          MOVE    A0,@PCBSNDF,W           ;FLAG BRAKE SOUND
+         00002810 00000000! 
+     463 00002830           SETRVELN
+     464 00002830     0de0          SETC                            ;FLAG BRAKE
+     465 00002840           SETRVEL2
+     466 00002840     5729          CLR     A9
+     467 00002850     0589          MOVE    A9,@PCZEROCT,W
+         00002860 00000000! 
+     468 00002880     1829          MOVK    1,A9
+     469 00002890     4d29          MOVE    A9,A9                   ;CLR Z BIT WITHOUT CLRING C
+     470 000028a0           SETRVELX
+     471 000028a0     09af          MMFM    SP,A0,A9,A11
+         000028b0     0a01  
+     472 000028c0     0960          RETS
+     473                    
+     474 000028d0           REVREV
+     475 000028d0     f015          .WORD   0F015H,015H,0800EH,0800EH,0     ;REV, REV!
+     476                    
+     477                    **************************************************************************
+     478                    *                                                                        *
+     479                    * XVEL2XA - DECELERATE THE CURRENT CAR X VELOCITY TO GIVEN               *
+     480                    *               ADJUSTS WHEEL SPEED                                      *
+     481                    * A8 = PTR TO DRIVER                                                     *
+     482                    * A10 = PTR TO CAR                                                       *
+     483                    * A11 = VELOCITY DESIRED                                                 *
+     484                    * A13 = PTR TO CAR PROCESS                                               *
+     485                    *                                                                        *
+     486                    **************************************************************************
+     487 00002920           XVEL2XA
+     488 00002920     098f          MMTM    SP,A1,A9
+         00002930     4040  
+     489 00002940     b741          MOVE    *A10(OXVEL),A1,L
+         00002950     0040  
+     490 00002960     4961          CMP     A11,A1
+     491 00002970     ca0c          JRZ     XVELXISZA
+     492 00002980     ce06          JRN     XVELXF2SA
+     493 00002990     09c9          MOVI    -FRICTION,A9
+         000029a0     e000  
+     494 000029b0     0d5f          CALLA   CXACCELA
+         000029c0 00000000! 
+     495 000029e0     c005          JRUC    XVELXISZA
+     496 000029f0           XVELXF2SA
+     497 000029f0     09c9          MOVI    FRICTION,A9
+         00002a00     2000  
+     498 00002a10     0d5f          CALLA   CXACCELA
+         00002a20 00000000! 
+     499 00002a40           XVELXISZA
+     500 00002a40     09af          MMFM    SP,A1,A9
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   13
+
+         00002a50     0202  
+     501 00002a60     0960          RETS
+     502                    
+     503                    **************************************************************************
+     504                    *                                                                        *
+     505                    * PORINTRO - THE PORSCHE INTRO PROCESS, FOR WAVE START                   *
+     506                    * ETEMP1 = PTR TO WINDSHIELD OBJECT                                      *
+     507                    * ETEMP3 = PTR TO FRONT WHEEL OBJECT                                     *
+     508                    * ETEMP4 = PTR TO REAR WHEEL OBJECT                                      *
+     509                    *                                                                        *
+     510                    **************************************************************************
+     511 00002a70           PORINTRO
+     512 00002a70     09ee          MOVI    PORINITI,A14
+         00002a80 000036e0" 
+     513 00002aa0     09e6          MOVI    PORP2P1,A6                                               
+         00002ab0 00001980" 
+     514 00002ad0     0d5f          CALLA   CARINIT                 ;INITIALIZE THE CAR
+         00002ae0 00000000! 
+     515 00002b00     ca80          JAZ     DUMDIE                  ;BR = INITIALIZATION FAILURE
+         00002b10 00000000! 
+     516 00002b30     0d5f          CALLA   CARSETZ
+         00002b40 00000000! 
+     517                    ***     CALLA   CSHADST
+     518 00002b60     05a0          MOVE    @PORCNT,A0,W
+         00002b70 00000000! 
+     519 00002b90     1020          INC     A0
+     520 00002ba0     0580          MOVE    A0,@PORCNT,W
+         00002bb0 00000000! 
+     521 00002bd0                   SOUND1  REVREV
+     522 00002c30           PORISTLP
+     523 00002c30     07a1          MOVE    @SCROLLX,A1,L
+         00002c40 00000000! 
+     524 00002c60     cb07          JRNZ    PORDODO 
+     525 00002c70                   SLOOP   1,PORISTLP
+     526 00002ce0           PORDODO
+     527 00002ce0                   SOUND1  SQUEELSR
+     528 00002d40           PORLOOP
+     529 00002d40     07a1          MOVE    @SCROLLX,A1,L           ;GET THE CURRENT SCROLL VALUE
+         00002d50 00000000! 
+     530 00002d70     0d5f          CALLA   CARXVEL                 ;STUFF MY OWN FOR THE INTRO
+         00002d80 00000000! 
+     531 00002da0     0d5f          CALLA   CWHLSPD                 ;AND SET THE SPEED
+         00002db0 00000000! 
+     532 00002dd0     05a0          MOVE    @WORLDTLX+16,A0,W       ;GET THE CURRENT WORLD COORD.
+         00002de0 00000010! 
+     533 00002e00     0b40          CMPI    -1024,A0
+         00002e10     03ff  
+     534 00002e20     c70a          JRGT    PORIEND
+     535 00002e30     0d5f          CALLA   CKCRESET                ;CHECK RESET TIME
+         00002e40 00000000! 
+     536 00002e60                   SLOOP   1,PORLOOP
+     537                    
+     538 00002ed0           PORIEND
+     539 00002ed0                   SLEEP   2
+     540                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   14
+
+     541 00002f10     09cb          MOVI    0,A11
+         00002f20     0000  
+     542 00002f30     09c9          MOVI    -4300H,A9
+         00002f40     bd00  
+     543 00002f50     0d5f          CALLA   CXACCEL
+         00002f60 00000000! 
+     544                    
+     545 00002f80     09e0          MOVI    SPINSNDR,A0
+         00002f90 00000000! 
+     546 00002fb0     0d5f          CALLA   ONESND
+         00002fc0 00000000! 
+     547                    
+     548 00002fe0                   JSRP    CLTURN                                                   
+     549 00003050     09c1          MOVI    -5000H,A1                                                
+         00003060     b000  
+     550 00003070     0d5f          CALLA   CARYZVEL                                                 
+         00003080 00000000! 
+     551 000030a0                   SLEEP   0EH                                                      
+     552                    *
+     553                    *MAKE THE DUDES FLY FROM THE CAR
+     554 000030e0     09c0          MOVI    INPLAY,A0
+         000030f0     0020  
+     555 00003100     0580          MOVE    A0,@GAMSTATE,W          ;MARK INTRO AS FINISHED
+         00003110 00000000! 
+     556                    
+     557 00003130                   SWAP    A10,A8
+     558 00003160     0d5f          CALLA   GETANIXY
+         00003170 00000000! 
+     559 00003190                   SWAP    A10,A8
+     560 000031c0     0b23          ADDI    [30,0],A3
+         000031d0 001e0000  
+     561 000031f0     4c49          MOVE    A2,A9
+     562 00003200     4c6b          MOVE    A3,A11
+     563                    
+     564 00003210     09c7          MOVI    PJUMP|PRYTE,A7
+         00003220     0048  
+     565 00003230     0587          MOVE    A7,@P1CTRL,W
+         00003240 00000000! 
+     566 00003260                   SLEEP   2
+     567 000032a0     09e5          MOVI    P1DATA,A5
+         000032b0 00000000! 
+     568 000032d0     b6a0          MOVE    *A5(POBJ),A0,L
+         000032e0     00a0  
+     569 000032f0     ca2d          JRZ     PORIP2
+     570 00003300     4c06          MOVE    A0,A6
+     571 00003310     4d22          MOVE    A9,A2
+     572 00003320     4d63          MOVE    A11,A3
+     573 00003330     09e4          MOVI    DMAWNZ,A4
+         00003340 00008002  
+     574 00003360     0d5f          CALLA   GANISAG                 ;ADJUST THE TORSO PORTION OF THE BOD
+         00003370 00000000! 
+     575 00003390     4d22          MOVE    A9,A2
+     576 000033a0     4d63          MOVE    A11,A3
+     577 000033b0     b6a0          MOVE    *A5(PLOBJ),A0,L
+         000033c0     0120  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   15
+
+     578 000033d0     0d5f          CALLA   GANISAG                 ;NOW THE LEGS
+         000033e0 00000000! 
+     579 00003400     bb46          MOVE    *A10(OXVEL),*A6(OXVEL),L
+         00003410     0040  
+         00003420     0040  
+     580 00003430     bb40          MOVE    *A10(OXVEL),*A0(OXVEL),L
+         00003440     0040  
+         00003450     0040  
+     581 00003460                   CREATE  INDPID,P1IJDECL
+     582                    
+     583 000034e0     09e1          MOVI    CARLIST,A1
+         000034f0 00000000! 
+     584 00003510     b7a0          MOVE    *A13(PASSPTR),A0,L
+         00003520     0260  
+     585 00003530     ca09          JRZ     PORIP2
+     586 00003540     0d5f          CALLA   DELSUPP
+         00003550 00000000! 
+     587 00003570     0d5f          CALLA   DELSOBJ
+         00003580 00000000! 
+     588 000035a0     5600          CLR     A0
+     589 000035b0     b20d          MOVE    A0,*A13(PASSPTR),L
+         000035c0     0260  
+     590 000035d0           PORIP2
+     591 000035d0     09c7          MOVI    PJUMP|PRYTE,A7
+         000035e0     0048  
+     592 000035f0     0587          MOVE    A7,@P2CTRL,W
+         00003600 00000000! 
+     593 00003620                   SLEEP   2
+     594 00003660     09e5          MOVI    P2DATA,A5
+         00003670 00000000! 
+     595 00003690     b6a0          MOVE    *A5(POBJ),A0,L
+         000036a0     00a0  
+     596 000036b0     ca2a          JRZ     PORGHOST
+     597 000036c0     4c06          MOVE    A0,A6
+     598 000036d0     4d22          MOVE    A9,A2
+     599 000036e0     4d63          MOVE    A11,A3
+     600 000036f0     09e4          MOVI    DMAWNZ,A4
+         00003700 00008002  
+     601 00003720     0d5f          CALLA   GANISAG                 ;ADJUST THE TORSO PORTION OF THE BOD
+         00003730 00000000! 
+     602 00003750     4d22          MOVE    A9,A2
+     603 00003760     4d63          MOVE    A11,A3
+     604 00003770     b6a0          MOVE    *A5(PLOBJ),A0,L
+         00003780     0120  
+     605 00003790     0d5f          CALLA   GANISAG                 ;NOW THE LEGS
+         000037a0 00000000! 
+     606 000037c0     bb46          MOVE    *A10(OXVEL),*A6(OXVEL),L
+         000037d0     0040  
+         000037e0     0040  
+     607 000037f0     bb40          MOVE    *A10(OXVEL),*A0(OXVEL),L
+         00003800     0040  
+         00003810     0040  
+     608 00003820                   CREATE  INDPID,P2IJDECL
+     609                    
+     610 000038a0     09e1          MOVI    ENEMIES,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   16
+
+         000038b0 00000000! 
+     611 000038d0     4d00          MOVE    A8,A0
+     612 000038e0     ca07          JRZ     PORGHOST
+     613 000038f0     0d5f          CALLA   DELSUPP
+         00003900 00000000! 
+     614 00003920     0d5f          CALLA   DELSOBJ
+         00003930 00000000! 
+     615 00003950     5708          CLR     A8
+     616 00003960           PORGHOST
+     617 00003960                   JSRP    CLEFT360                                                 
+     618 000039d0     5621          CLR     A1
+     619 000039e0     0d5f          CALLA   CARYZVEL
+         000039f0 00000000! 
+     620 00003a10     0d5f          CALLA   WHLSTR
+         00003a20 00000000! 
+     621 00003a40                   SLEEP   60H             ;SLEEP AT LEAST THIS LONG
+     622 00003a90           PORIEND1
+     623 00003a90                   SLEEP   3
+     624 00003ad0     05a0          MOVE    @GAMSTATE,A0,W
+         00003ae0 00000000! 
+     625 00003b00     0b40          CMPI    INPLAY,A0
+         00003b10     ffdf  
+     626 00003b20     cbf6          JRNE    PORIEND1
+     627 00003b30     09eb          MOVI    [-2,0],A11
+         00003b40 fffe0000  
+     628 00003b60     09c9          MOVI    -1000H,A9
+         00003b70     f000  
+     629 00003b80     0d5f          CALLA   CXACCEL         ;BACK THE DUDE OFF SCREEN
+         00003b90 00000000! 
+     630                            
+     631 00003bb0           PORIENDX
+     632 00003bb0                   SLEEP   6
+     633 00003bf0                   PUSH    A8
+     634 00003c00     4d48          MOVE    A10,A8
+     635 00003c10     0d5f          CALLA   SCRTST
+         00003c20 00000000! 
+     636 00003c40     09af          MMFM    SP,A8
+         00003c50     0100  
+     637 00003c60     caf4          JREQ    PORIENDX        ;BR = STILL ON SCREEN    
+     638 00003c70     0d5f          CALLA   KILLCARP
+         00003c80 00000000! 
+     639 00003ca0           PORINTX
+     640 00003ca0     0d5f          CALLA   DELCBODY
+         00003cb0 00000000! 
+     641 00003cd0     0d5f          CALLA   CDELALL                 ;DELETE THE COMPANY
+         00003ce0 00000000! 
+     642 00003d00     05a0          MOVE    @PORCNT,A0,W
+         00003d10 00000000! 
+     643 00003d30     1420          DEC     A0
+     644 00003d40     0580          MOVE    A0,@PORCNT,W
+         00003d50 00000000! 
+     645 00003d70                   DIE
+     646                    
+     647                    *
+     648                    *MAKE PLAYERS THAT JUMP FROM A CAR DECEL CORRECTLY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   17
+
+     649                    *PLAYER 1
+     650 00003da0           P1IJDECL
+     651 00003da0     09e2          MOVI    P1DATA,A2
+         00003db0 00000000! 
+     652 00003dd0     09eb          MOVI    P1CTRL,A11
+         00003de0 00000000! 
+     653 00003e00     c006          JRUC    PLJDECEL
+     654                    *PLAYER 2
+     655 00003e10           P2IJDECL
+     656 00003e10     09e2          MOVI    P2DATA,A2
+         00003e20 00000000! 
+     657 00003e40     09eb          MOVI    P2CTRL,A11
+         00003e50 00000000! 
+     658 00003e70           PLJDECEL
+     659 00003e70     b648          MOVE    *A2(POBJ),A8,L
+         00003e80     00a0  
+     660 00003e90     b649          MOVE    *A2(PLOBJ),A9,L
+         00003ea0     0120  
+     661 00003eb0     b74a          MOVE    *A10(OXVEL),A10,L
+         00003ec0     0040  
+     662 00003ed0     09d0          MOVI    01000H,B0
+         00003ee0     1000  
+     663 00003ef0     09f1          MOVI    08000H,B1
+         00003f00 00008000  
+     664 00003f20     0d5f          CALLA   RANGRAND
+         00003f30 00000000! 
+     665 00003f50     400a          ADD     A0,A10                          ;DIFFERENCE IN SPEED
+     666 00003f60                   SLEEP   6
+     667 00003fa0     b348          MOVE    A10,*A8(OXVEL),L
+         00003fb0     0040  
+     668 00003fc0     b349          MOVE    A10,*A9(OXVEL),L
+         00003fd0     0040  
+     669 00003fe0     b703          MOVE    *A8(OYVEL),A3,L
+         00003ff0     0060  
+     670 00004000     0b23          ADDI    [-2,0],A3
+         00004010 fffe0000  
+     671 00004030     b268          MOVE    A3,*A8(OYVEL),L
+         00004040     0060  
+     672 00004050     b269          MOVE    A3,*A9(OYVEL),L
+         00004060     0060  
+     673 00004070                   SLEEP   4
+     674 000040b0           PLJSLP
+     675 000040b0     0bea          SUBI    3000H,A10
+         000040c0     cfff  
+     676 000040d0     b701          MOVE    *A8(OXVEL),A1,L
+         000040e0     0040  
+     677 000040f0     0381          ABS     A1
+     678 00004100     0b61          CMPI    [2,1000H],A1
+         00004110 fffdefff  
+     679 00004130     c60b          JRLE    PLJDECX
+     680 00004140     b348          MOVE    A10,*A8(OXVEL),L
+         00004150     0040  
+     681 00004160     b349          MOVE    A10,*A9(OXVEL),L
+         00004170     0040  
+     682 00004180                   SLOOP   1,PLJSLP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   18
+
+     683 000041f0           PLJDECX
+     684 000041f0     09c0          MOVI    PRYTE,A0
+         00004200     0008  
+     685 00004210     800b          MOVE    A0,*A11,W
+     686 00004220     1a03          MOVK    16,A3
+     687 00004230     0b6b          CMPI    P1CTRL,A11
+         00004240 ffffffff! 
+     688 00004260     ca0a          JREQ    PLJCON
+     689 00004270     09c0          MOVI    P1OID,A0
+         00004280     1000  
+     690 00004290     09e1          MOVI    PLAYERS,A1
+         000042a0 00000000! 
+     691 000042c0     0d5f          CALLA   ISSUPPID
+         000042d0 00000000! 
+     692 000042f0     ca01          JRZ     PLJCON                  ;BR = NO PLAYER 1, JUST 16 TICKS        
+     693 00004300     1203          ADDK    16,A3                   ;MORE STEPS FOR PLAYER 2
+     694 00004310           PLJCON
+     695 00004310                   SLEEPR  A3
+     696 00004350     5600          CLR     A0
+     697 00004360     800b          MOVE    A0,*A11,W
+     698 00004370                   DIE
+     699                            
+     700                            
+     701                    **************************************************************************
+     702                    *                                                                        *
+     703                    * PORTRANS - THE PORSCHE TRANSPORT PROCESS FOR PLAYER BUY-IN.            *
+     704                    * A8 = PTR TO PLAYER TORSO OBJECT (UNINSERTED).                          *
+     705                    * A9 = PTR TO PLAYER LEG OBJECT (UNINSERTED).                            *
+     706                    * A11 = PTR TO PLAYER DATA STRUCTURE.                                    *
+     707                    *                                                                        *
+     708                    **************************************************************************
+     709 000043a0           PORTRANS
+     710 000043a0     0b6b          CMPI    P1DATA,A11
+         000043b0 ffffffff! 
+     711 000043d0     cb04          JRNE    PTRANSP2
+     712 000043e0     09ee          MOVI    PORTRAN1,A14
+         000043f0 00003ee0" 
+     713 00004410     c003          JRUC    PTRANSPG
+     714 00004420           PTRANSP2
+     715 00004420     09ee          MOVI    PORTRAN2,A14
+         00004430 000045c0" 
+     716 00004450           PTRANSPG
+     717 00004450     098c          MMTM    A12,A8,A9               ;PUSH PLAYER OBJECT PTRS
+         00004460     00c0  
+     718 00004470     09e6          MOVI    PORP2P1,A6                                               
+         00004480 00001980" 
+     719 000044a0     0d5f          CALLA   CARINIT                 ;INITIALIZE THE CAR
+         000044b0 00000000! 
+     720 000044d0     ca00          JRZ     PTRANERR                ;ERROR ON CAR INITIALIZATION
+         000044e0     00bc  
+     721 000044f0     0d5f          CALLA   CSHADST
+         00004500 00000000! 
+     722 00004520     0d5f          CALLA   CARSETZ
+         00004530 00000000! 
+     723 00004550     05a0          MOVE    @PORCNT,A0,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   19
+
+         00004560 00000000! 
+     724 00004580     1020          INC     A0
+     725 00004590     0580          MOVE    A0,@PORCNT,W
+         000045a0 00000000! 
+     726                    
+     727 000045c0     09e9          MOVI    8000H,A9
+         000045d0 00008000  
+     728 000045f0           PTRANS1
+     729 000045f0     098f          MMTM    SP,A11
+         00004600     0010  
+     730 00004610     09eb          MOVI    [6,0],A11
+         00004620 00060000  
+     731 00004640     0d5f          CALLA   CXACCEL
+         00004650 00000000! 
+     732 00004670     09af          MMFM    SP,A11
+         00004680     0800  
+     733 00004690     cb07          JRNZ    PTRANS2
+     734 000046a0                   SLOOP   1,PTRANS1
+     735 00004710           PTRANS2
+     736                    ****    MOVE    A8,A0
+     737                    ****    CALLA   GSCRNREL                ;BASHES A1 & A2
+     738                    ****    SRA     16,A1
+     739                    ****    CMPI    150,A1
+     740                    ****    JRGT    PTRANS4
+     741                    ****    CALLA   CKCRESET                ;CHECK FOR CAR RESET TIME
+     742                    ****    SLOOP   6,PTRANS2
+     743 00004710                   SWAP    A10,A8                  ;WATCH FOR PORSCHE TO GET TO LAUNCH SPOT
+     744 00004740     0d5f          CALLA   GETANIX
+         00004750 00000000! 
+     745 00004770                   SWAP    A10,A8
+     746 000047a0     05a1          MOVE    @WORLDTLX+16,A1,W
+         000047b0 00000010! 
+     747 000047d0     4420          SUB     A1,A0                   ;MAKE THE X COORDINATE SCREEN RELATIVE
+     748 000047e0     0b40          CMPI    150,A0
+         000047f0     ff69  
+     749 00004800     c711          JRGT    PTRANS4
+     750 00004810     0d5f          CALLA   CKCRESET
+         00004820 00000000! 
+     751 00004840     4d08          MOVE    A8,A8
+     752 00004850     cb05          JRNZ    PTRANS3                 ;THE DRIVER IS GONE FOR SOME REASON
+     753 00004860     09e0          MOVI    DUMCOLL,A0
+         00004870 00000000! 
+     754 00004890     b20a          MOVE    A0,*A10(OCVECT),L       ;NULL THE COLLISION VECTOR JUST IN CASE
+         000048a0     01d0  
+     755 000048b0           PTRANS3
+     756 000048b0                   SLOOP   6,PTRANS2
+     757                    
+     758 00004920           PTRANS4
+     759 00004920     09e1          MOVI    ENEMIES,A1
+         00004930 00000000! 
+     760 00004950     4d00          MOVE    A8,A0
+     761 00004960     ca06          JRZ     PTRANS40
+     762 00004970     0d5f          CALLA   DELSUPP
+         00004980 00000000! 
+     763 000049a0     0d5f          CALLA   DELSOBJ                 ;DELETE PLACEHOLDER
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   20
+
+         000049b0 00000000! 
+     764 000049d0           PTRANS40
+     765 000049d0     4d48          MOVE    A10,A8
+     766 000049e0     0d5f          CALLA   GETANIX
+         000049f0 00000000! 
+     767                    
+     768 00004a10     0b6b          CMPI    P1DATA,A11
+         00004a20 ffffffff! 
+     769 00004a40     cb04          JRNE    PTRANS5
+     770 00004a50     09e9          MOVI    P1CTRL,A9
+         00004a60 00000000! 
+     771 00004a80     c003          JRUC    PTRANS6
+     772 00004a90           PTRANS5
+     773 00004a90     09e9          MOVI    P2CTRL,A9       
+         00004aa0 00000000! 
+     774 00004ac0           PTRANS6
+     775 00004ac0     09c7          MOVI    PJUMP|PRYTE,A7
+         00004ad0     0048  
+     776 00004ae0     80e9          MOVE    A7,*A9,W
+     777 00004af0     09ac          MMFM    A12,A3,A4
+         00004b00     0018  
+     778 00004b10     4c68          MOVE    A3,A8                           ;GOT THE OBJECT PTRS BACK
+     779 00004b20     b505          MOVE    *A8(OXPOS),A5,W                 ;WARP PLAYER TO DRIVER SPOT     
+         00004b30     0090  
+     780 00004b40     b008          MOVE    A0,*A8(OXPOS),W
+         00004b50     0090  
+     781 00004b60     44a0          SUB     A5,A0
+     782 00004b70     b485          MOVE    *A4(OXPOS),A5,W
+         00004b80     0090  
+     783 00004b90     4005          ADD     A0,A5
+     784 00004ba0     b0a4          MOVE    A5,*A4(OXPOS),W
+         00004bb0     0090  
+     785                    
+     786 00004bc0     4d00          MOVE    A8,A0
+     787 00004bd0     09e1          MOVI    PLAYERS,A1                                               
+         00004be0 00000000! 
+     788 00004c00     0d5f          CALLA   INSOBJ                  ;INSERT TORSO                    
+         00004c10 00000000! 
+     789 00004c30     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         00004c40 00000000! 
+     790 00004c60     4c80          MOVE    A4,A0                                                    
+     791 00004c70     0d5f          CALLA   INSOBJ                  ;INSERT LEGS                     
+         00004c80 00000000! 
+     792 00004ca0     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         00004cb0 00000000! 
+     793 00004cd0     0d5f          CALLA   SHADST2                 ;START SHADOW FOR PLAYER TORSO   
+         00004ce0 00000000! 
+     794 00004d00     4c88          MOVE    A4,A8                                                    
+     795 00004d10     0d5f          CALLA   SHADST                  ;START SHADOW FOR PLAYER LEGS    
+         00004d20 00000000! 
+     796 00004d40     b560          MOVE    *A11(PEXEFLAG),A0,W
+         00004d50     0090  
+     797 00004d60     0ba0          ORI     MINVINC,A0              ;MAKE HIM INVINCIBLE
+         00004d70 00000010  
+     798 00004d90     b00b          MOVE    A0,*A11(PEXEFLAG),W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   21
+
+         00004da0     0090  
+     799 00004db0           PWWL
+     800 00004db0     5708          CLR     A8                      ;INDICATE NO DRIVER PRESENT
+     801 00004dc0                   CREATE  INDPID,PTRANWW
+     802 00004e40     cb07          JRNZ    PWWGO
+     803 00004e50                   SLOOP   1,PWWL
+     804 00004ec0           PWWGO
+     805 00004ec0                   SLEEP   6
+     806 00004f00                   PUSH    A8
+     807 00004f10     4d48          MOVE    A10,A8
+     808 00004f20     0d5f          CALLA   SCRTST
+         00004f30 00000000! 
+     809 00004f50     09af          MMFM    SP,A8
+         00004f60     0100  
+     810 00004f70     caf4          JREQ    PWWGO                   ;BR = STILL ON SCREEN    
+     811 00004f80     0d5f          CALLA   KILLCARP
+         00004f90 00000000! 
+     812 00004fb0     0d5f          CALLA   DELCBODY
+         00004fc0 00000000! 
+     813 00004fe0     0d5f          CALLA   CDELALL                 ;DELETE THE COMPANY
+         00004ff0 00000000! 
+     814 00005010     05a0          MOVE    @PORCNT,A0,W
+         00005020 00000000! 
+     815 00005040     1420          DEC     A0
+     816 00005050     0580          MOVE    A0,@PORCNT,W
+         00005060 00000000! 
+     817 00005080                   DIE
+     818                    *
+     819                    *ERROR ENTRY FOR PLAYER TRANSPORT PORSCHE
+     820                    *LEG PTR, AND TORSO PTR ARE ON PROC STACK RESPECTIVELY
+     821                    *A11 = PLINDX
+     822 000050b0           PTRANERR
+     823 000050b0     09ac          MMFM    A12,A8,A9
+         000050c0     0300  
+     824 000050d0     4d62          MOVE    A11,A2
+     825 000050e0     4d24          MOVE    A9,A4                   ;FOR CONVIENCE
+     826 000050f0     0d5f          CALLA   STARTINVL
+         00005100 00000000! 
+     827 00005120     09e1          MOVI    PLAYERS,A1                                               
+         00005130 00000000! 
+     828 00005150     4d00          MOVE    A8,A0                   ;MAKE SURE TORSO POINTER IS CORRECT
+     829 00005160     0d5f          CALLA   ADJSTWTL
+         00005170 00000000! 
+     830 00005190     0d5f          CALLA   INSOBJ                  ;INSERT TORSO                    
+         000051a0 00000000! 
+     831 000051c0     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         000051d0 00000000! 
+     832 000051f0     4c80          MOVE    A4,A0                                                    
+     833 00005200     0d5f          CALLA   ADJSTWTL
+         00005210 00000000! 
+     834 00005230     0d5f          CALLA   INSOBJ                  ;INSERT LEGS                     
+         00005240 00000000! 
+     835 00005260     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         00005270 00000000! 
+     836 00005290     0d5f          CALLA   SHADST2                 ;START SHADOW FOR PLAYER TORSO   
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   22
+
+         000052a0 00000000! 
+     837 000052c0     4c88          MOVE    A4,A8                                                    
+     838 000052d0     0d5f          CALLA   SHADST                  ;START SHADOW FOR PLAYER LEGS    
+         000052e0 00000000! 
+     839 00005300                   DIE
+     840                    *
+     841                    *PTRANWW - PLAYER TRANSPORT WALK WATCHER PROCESS
+     842                    *A9 = PTR TO PxCTRL
+     843                    *A11 = PTR TO PxDATA
+     844 00005330           PTRANWW
+     845 00005330                   SLEEP   66
+     846 00005380     5600          CLR     A0
+     847 00005390     8009          MOVE    A0,*A9,W
+     848 000053a0     09ca          MOVI    PINVTIM,A10             ;THIS IS THE FLASH COUNT
+         000053b0     001c  
+     849 000053c0     4d69          MOVE    A11,A9
+     850 000053d0     b561          MOVE    *A11(PPID),A1,W
+         000053e0     0240  
+     851 000053f0     0b01          ADDI    PIPID,A1
+         00005400     0030  
+     852 00005410     b768          MOVE    *A11(POBJ),A8,L
+         00005420     00a0  
+     853 00005430     4d6e          MOVE    A11,A14
+     854 00005440     b76b          MOVE    *A11(PLOBJ),A11,L
+         00005450     0120  
+     855 00005460     09e7          MOVI    INVINCO,A7
+         00005470 00000000! 
+     856 00005490     0d5f          CALLA   GETPRC                  ;DO THE INVICIBLE THING
+         000054a0 00000000! 
+     857 000054c0     cb07          JRNZ    PTRANWWX                ;BR = INVINCO PROCESS CREATED O.K.      
+     858 000054d0     b5c0          MOVE    *A14(PEXEFLAG),A0,W
+         000054e0     0090  
+     859 000054f0     0b80          ANDNI   MINVINC,A0              ;CLEAR FLAG IF PROCESS WASN'T CREATED
+         00005500 00000010  
+     860 00005520     b00e          MOVE    A0,*A14(PEXEFLAG),W
+         00005530     0090  
+     861 00005540           PTRANWWX
+     862 00005540                   DIE
+     863                    
+     864                    
+     865                    **************************************************************************
+     866                    *                                                                        *
+     867                    * PORSCOLD - CREATE A DRIVEABLE PORSCHE.                                 *
+     868                    *                                                                        *
+     869                    **************************************************************************
+     870 00005570           PORSCOLD
+     871 00005570     05a0          MOVE    @PORCNT,A0,W
+         00005580 00000000! 
+     872 000055a0     cb08          JRNE    PORSCX                  ;ONLY ONE AT A TIME DUDELY
+     873 000055b0                   CREATE  PORSDPID,PORSCHE
+     874 00005630           PORSCX
+     875 00005630     0960          RETS
+     876                    
+     877                    *INIT TAB FOR PINK CAR PIECES
+     878 00005640           REDINIT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   23
+
+     879 00005640 00000000          .LONG   0,0,0,0
+     880 000056c0     0000          .WORD   0,0
+     881 000056e0 00000000!         .LONG   CFRAG1,0,DUMCOLL
+     882 00005740     8002          .WORD   DMAWNZ,0
+     883 00005760 00000000          .LONG   0
+     884                    
+     885                    **************************************************************************
+     886                    *                                                                        *
+     887                    * PORSCHE EXPLOSION PROCESS, THIS IS TIMED TO SYNC UP WITH THE CEXPLODE *
+     888                    *  WHICH RUNS JUST THE FIRE PART OF THE EXPLOSION. THIS PROCESS IS RESPO *
+     889                    *  FOR DESTROYING THE CAR AND SENDING LITTLE TINY PIECES OF SHRAPNEL ALL *
+     890                    *  OVER THE PLACE.                                                       *
+     891                    * A8 = POINTER TO THE PORSCHE OBJECT                                     *
+     892                    * A9 = OID OF ROCKET                                                     *
+     893                    * I.D. = $ED                                                             *
+     894                    **************************************************************************
+     895 00005780           POREXP
+     896 00005780     0d5f          CALLA   PSTOP
+         00005790 00000000! 
+     897 000057b0     0d5f          CALLA   BLIPOFF                 ;TURN THE SCANNER BLIP OFF
+         000057c0 00000000! 
+     898 000057e0     4d00          MOVE    A8,A0
+     899 000057f0     0d5f          CALLA   DELSHAD
+         00005800 00000000! 
+     900 00005820     2f89          SRL     4,A9
+     901 00005830     2489          SLL     4,A9
+     902 00005840     0b49          CMPI    B1OID,A9
+         00005850     f4ef  
+     903 00005860     cb04          JRNE    POREXP51
+     904 00005870     09e2          MOVI    P1DATA,A2
+         00005880 00000000! 
+     905 000058a0     c006          JRUC    POREXP5K
+     906 000058b0           POREXP51
+     907 000058b0     0b49          CMPI    B2OID,A9
+         000058c0     f4df  
+     908 000058d0     cb08          JRNE    CADENOK
+     909 000058e0     09e2          MOVI    P2DATA,A2
+         000058f0 00000000! 
+     910 00005910           POREXP5K
+     911 00005910     09c1          MOVI    5000H,A1
+         00005920     5000  
+     912 00005930     0d5f          CALLA   SCORE                   ;5K FOR CADILLAC EXPLOSION
+         00005940 00000000! 
+     913 00005960           CADENOK
+     914 00005960     1049          ADDK    EXPLODID,A9             ;MAKE THIS SOME SORT OF EXPLOSION
+     915 00005970     b128          MOVE    A9,*A8(OID),W           ;MAKE THE CAR AN EXPLOSION.
+         00005980     01a0  
+     916                    
+     917                    ***     CALLA   GETOBJ                  ;GET A BLOCK FOR THE RIGHT SHELL
+     918                    ***     JRNE    CADECON                 ;BR = CREATE O.K., CONTINUE
+     919                    ***     MOVE    A8,A0
+     920                    ***     CALLA   DELPAL
+     921                    ***     CALLA   DELSOBJ                 ;FAILURE, DELETE AND DIE
+     922                    ***     DIE
+     923                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   24
+
+     924 00005990           CADECON
+     925                    ***     CALLA   COPYOBJ                 ;TRANSFER DATA TO THE RIGHT SHELL BLOCK
+     926                    ***     MOVE    *A8(OXPOS),A11,W
+     927                    ***     MOVE    *A8(OYPOS),A14,W
+     928                    ***     SLL     16,A14
+     929                    ***     MOVY    A14,A11                 ;A11 = YPOS:XPOS
+     930                    
+     931                    ***     MOVI    CSHELLR,A1
+     932                    ***     MOVE    *A0(OFLAGS),A4,W
+     933                    ***     MOVE    A8,A10
+     934                    ***     MOVE    A0,A8
+     935                    ***     CALLA   ANI                     ;SET-UP SECOND HALF
+     936                    ******* CALLA   OBJOFF                  ;TURN THIS OBJECT OFF
+     937                    ***     CALLA   INSOBJ                  ;AND INSERT IT
+     938                    ***     MOVE    A10,A8
+     939                    ***     MOVE    A0,A10                  ;KEEP HERE FOR SLEEPS
+     940                    
+     941 00005990     09e9          MOVI    POREXPFR,A9             ;GET THE EXPLOSION FRAMES
+         000059a0 00002120" 
+     942 000059c0     5621          CLR     A1
+     943 000059d0                   JSRP    FRANIM                  ;FIRST FRAME
+     944                    
+     945 00005a40     09c0          MOVI    JUNKOID,A0              ;GET THE GARBAGE OID
+         00005a50     0660  
+     946 00005a60     b008          MOVE    A0,*A8(OID),W
+         00005a70     01a0  
+     947                    ***     MOVE    A0,*A10(OID),W
+     948                    
+     949 00005a80     05a0          MOVE    @OVERLOAD,A0
+         00005a90 00000000! 
+     950 00005ab0     0b40          CMPI    4,A0
+         00005ac0     fffb  
+     951 00005ad0     ca00          JREQ    FRAGSKIP                ;BR = OVERLOAD, SKIP THE FRAGS
+         00005ae0     0083  
+     952                    
+     953                    * START ALL THE FRAGMENTS HERE
+     954                    
+     955 00005af0     098f          MMTM    SP,A9,A10,A11
+         00005b00     0070  
+     956 00005b10     0d5f          CALLA   GETCPNT                 ;GET ENEMY'S CENTER
+         00005b20 00000000! 
+     957 00005b40     ee2b          MOVY    A1,A11
+     958 00005b50     ec2b          MOVX    A1,A11                  ;SET UP A STARTING POSITION
+     959 00005b60     4d65          MOVE    A11,A5                  ;SAVE CENTER POSITION 
+     960 00005b70     09e7          MOVI    TRAJEC,A7               ;PROCESS FOR FRAGMENTS AND DOOR
+         00005b80 00000000! 
+     961 00005ba0     5621          CLR     A1                      ;ZERO I.D.
+     962 00005bb0     b50e          MOVE    *A8(OZPOS),A14,W
+         00005bc0     00d0  
+     963 00005bd0     09e0          MOVI    DMAWNZ,A0       
+         00005be0 00008002  
+     964 00005c00     2600          SLL     16,A0
+     965 00005c10     edc0          MOVX    A14,A0                  ;A0 = [DMA FLAGS,ZPOS]
+     966 00005c20     4e05          MOVE    A0,B5                   ;CONSTANT THROUGHOUT FRAGMENT CREATION
+     967 00005c30     09ee          MOVI    DBOUNCE,A14             ;SAME HERE              
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   25
+
+         00005c40 00000000! 
+     968 00005c60     5631          CLR     B1                      ;NO 2nd ANIMATION SCRIPT
+     969                    
+     970                    *SEND FRAGMENTS TO THE RIGHT OF THE EXPLOSION CENTER
+     971 00005c70     18c6          MOVK    6,A6                    ;THIS MANY PIECES
+     972 00005c80           FRAGR
+     973 00005c80     0d5f          CALLA   GETFRAG                 ;GET FRAGMENT AND IT'S Y VELOCITY
+         00005c90 000067c0' 
+     974 00005cb0           FRAGR3
+     975 00005cb0     09c0          MOVI    50,A0                   ;RANDOMIZE POSITION & X VELOCITY
+         00005cc0     0032  
+     976 00005cd0     0d5f          CALLA   RANDU
+         00005ce0 00000000! 
+     977 00005d00     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+     978 00005d10     2580          SLL     12,A0
+     979 00005d20     caf8          JREQ    FRAGR3                  ;NO ZEROZ
+     980 00005d30     4e04          MOVE    A0,B4
+     981 00005d40     0d5f          CALLA   MAKTPROC
+         00005d50 00000000! 
+     982 00005d70     4cab          MOVE    A5,A11                  ;RESTORE CENTER
+     983 00005d80     3e26          DSJ     A6,FRAGR
+     984                    *SEND FRAGMENTS TO THE LEFT OF THE EXPLOSION CENTER
+     985 00005d90     18c6          MOVK    6,A6                    ;THIS MANY PIECES
+     986 00005da0           FRAGL
+     987 00005da0     0d5f          CALLA   GETFRAG
+         00005db0 000067c0' 
+     988 00005dd0           FRAGL3
+     989 00005dd0     09c0          MOVI    50,A0                   ;RANDOMIZE POSITION & VELOCITY
+         00005de0     0032  
+     990 00005df0     0d5f          CALLA   RANDU
+         00005e00 00000000! 
+     991 00005e20     03a0          NEG     A0                      ;THESE GUYS GO LEFT
+     992 00005e30     0520          ZEXT    A0                      ;BLOW OFF THE SIGN
+     993 00005e40     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+     994 00005e50     0500          SEXT    A0                      ;RE-SIGN FOR DIVIDE
+     995 00005e60     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+     996 00005e70     25a0          SLL     13,A0
+     997 00005e80     caf4          JREQ    FRAGL3                  ;NO ZEROZ
+     998 00005e90     4e04          MOVE    A0,B4
+     999 00005ea0     0d5f          CALLA   MAKTPROC
+         00005eb0 00000000! 
+    1000 00005ed0     4cab          MOVE    A5,A11                  ;RESTORE CENTER
+    1001 00005ee0     3ea6          DSJ     A6,FRAGL
+    1002                    *SEND THE DOORS FLYING
+    1003 00005ef0           DOORFRAG
+    1004 00005ef0     09e9          MOVI    CDOORA,A9               ;FRAMES
+         00005f00 00002ea0" 
+    1005 00005f20     09ea          MOVI    REDINIT,A10
+         00005f30 00005640' 
+    1006 00005f50     1846          MOVK    2,A6
+    1007 00005f60           EDOOR
+    1008 00005f60     0d5f          CALLA   GETYZVEL                ;GET THE Y AND Z VELOCITIES
+         00005f70 00000000! 
+    1009 00005f90     1860          MOVK    3,A0
+    1010 00005fa0     0d5f          CALLA   RANDU
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   26
+
+         00005fb0 00000000! 
+    1011 00005fd0     1fe0          BTST    0,A0
+    1012 00005fe0     ca01          JREQ    EDOOR1
+    1013 00005ff0     03a0          NEG     A0
+    1014 00006000           EDOOR1
+    1015 00006000     2600          SLL     16,A0
+    1016 00006010     4e04          MOVE    A0,B4                   ;XVEL IS LOADED
+    1017 00006020     0d5f          CALLA   MAKTPROC
+         00006030 00000000! 
+    1018 00006050     3e06          DSJ     A6,EDOOR
+    1019                    *SEND THE TIRES
+    1020 00006060           CEXPTIRE
+    1021 00006060     09e9          MOVI    PORWEEL1CC,A9           ;FRAMES
+         00006070 00002550" 
+    1022 00006090     09ee          MOVI    DTBOUNCE,A14            ;DO A TIRE BOUNCY 'TING         
+         000060a0 00000000! 
+    1023                    *TIRES TO THE RIGHT OF ME
+    1024 000060c0           CEXPTR1
+    1025 000060c0     0d5f          CALLA   GETYZVEL                ;GET THE Y AND Z VELOCITIES
+         000060d0 00000000! 
+    1026 000060f0           CEXPTR2
+    1027 000060f0     09c0          MOVI    50,A0                   ;RANDOMIZE POSITION & X VELOCITY
+         00006100     0032  
+    1028 00006110     0d5f          CALLA   RANDU
+         00006120 00000000! 
+    1029 00006140     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+    1030 00006150     2580          SLL     12,A0
+    1031 00006160     caf8          JREQ    CEXPTR2                 ;NO ZEROZ
+    1032 00006170     4e04          MOVE    A0,B4                   ;XVEL IS LOADED
+    1033 00006180     0d5f          CALLA   MAKTPROC
+         00006190 00000000! 
+    1034 000061b0     4cab          MOVE    A5,A11
+    1035                    *TIRES TO THE LEFT...
+    1036 000061c0           CEXPTL3
+    1037 000061c0     0d5f          CALLA   GETYZVEL                ;GET THE Y AND Z VELOCITIES
+         000061d0 00000000! 
+    1038 000061f0           CEXPTL4
+    1039 000061f0     09c0          MOVI    50,A0                   ;RANDOMIZE POSITION & VELOCITY
+         00006200     0032  
+    1040 00006210     0d5f          CALLA   RANDU
+         00006220 00000000! 
+    1041 00006240     03a0          NEG     A0                      ;THESE GUYS GO LEFT
+    1042 00006250     0520          ZEXT    A0                      ;BLOW OFF THE SIGN
+    1043 00006260     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+    1044 00006270     0500          SEXT    A0                      ;RE-SIGN FOR DIVIDE
+    1045 00006280     e00b          ADDXY   A0,A11                  ;ADD FOR NEW POSITION
+    1046 00006290     25a0          SLL     13,A0
+    1047 000062a0     caf4          JREQ    CEXPTL4                 ;NO ZEROZ
+    1048 000062b0     4e04          MOVE    A0,B4                   ;XVEL IS LOADED
+    1049 000062c0     0d5f          CALLA   MAKTPROC
+         000062d0 00000000! 
+    1050 000062f0     4cab          MOVE    A5,A11
+    1051 00006300     09af          MMFM    SP,A9,A10,A11
+         00006310     0e00  
+    1052                    *CONTINUE WITH THE CADILLAC EXPLOSION
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   27
+
+    1053 00006320           FRAGSKIP
+    1054 00006320                   SLEEP   1
+    1055                    
+    1056                    ***     MOVE    A10,A0
+    1057                    ***     CALLA   OBJON
+    1058                    
+    1059 00006360     5621          CLR     A1
+    1060 00006370                   JSRP    FRANIM                  ;DO SHELL FRAME
+    1061                    
+    1062 000063e0                   SLEEP   20
+    1063                    
+    1064                    ***     MOVE    A10,A0
+    1065                    ***     CALLA   DELSOBJ                 ;DELETE SHELL RIGHT HALF
+    1066                    
+    1067 00006420     5621          CLR     A1
+    1068 00006430                   JSRP    FRANIM                  ;STUFF THE WRECKAGE
+    1069 000064a0                   SLEEP   10
+    1070 000064e0     c080          JAUC    SINKCARC
+         000064f0 00000000! 
+    1071                    
+    1072                    **************************************************************************
+    1073                    *                                                                        *
+    1074                    * BLOWSHLD - BLOW OUT THE WINDSHIELD OF THE PORSCHE PROCESS.             *
+    1075                    * A8 = PTR TO THE WINDSHIELD OBJECT                                      *
+    1076                    * A11 = OID OF KILLER                                                    *
+    1077                    * NOTE: THE BLOWOUT OBJECT MUST BE CREATED, STUFFED, AND ON THE LIST.    *
+    1078                    *                                                                        *
+    1079                    **************************************************************************
+    1080 00006510           BLOWSHLD
+    1081 00006510                   SOUND1  CADSHLD         ;MAKE A BLOWOUT NOISE
+    1082 00006570     09e9          MOVI    PBLOWWS,A9      ;LOAD ANIMATION SCRIPT
+         00006580 000029d0" 
+    1083 000065a0     2f8b          SRL     4,A11
+    1084 000065b0     248b          SLL     4,A11
+    1085 000065c0     0b4b          CMPI    B1OID,A11
+         000065d0     f4ef  
+    1086 000065e0     cb04          JRNE    BBLOWS1
+    1087 000065f0     09e2          MOVI    P1DATA,A2
+         00006600 00000000! 
+    1088 00006620     c006          JRUC    BBLOWS2
+    1089 00006630           BBLOWS1
+    1090 00006630     0b4b          CMPI    B2OID,A11
+         00006640     f4df  
+    1091 00006650     cb08          JRNE    BLOWAGN
+    1092 00006660     09e2          MOVI    P2DATA,A2
+         00006670 00000000! 
+    1093 00006690           BBLOWS2
+    1094 00006690     09c1          MOVI    250H,A1
+         000066a0     0250  
+    1095 000066b0     0d5f          CALLA   SCORE           ;250 FOR HITTING THE WINDSHIELD
+         000066c0 00000000! 
+    1096 000066e0           BLOWAGN
+    1097 000066e0     1821          MOVK    1,A1
+    1098 000066f0                   JSRP    FRANIM          ;ANIMATE IT
+    1099 00006760     5600          CLR     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   28
+
+    1100 00006770     b208          MOVE    A0,*A8(OPLINK),L
+         00006780     01f0  
+    1101 00006790                   DIE
+    1102                    
+    1103                    **************************************************************************
+    1104                    *                                                                        *
+    1105                    * GETFRAG - GETS A RANDOM CAR FRAGMENT                                   *
+    1106                    *           AND ITS Y & Z VELOCITIES, FOR A BEAUTY TRAJECTORY.           *
+    1107                    * A8 = PTR TO OBLOCK                                                     *
+    1108                    * RETURN(S)                                                              *
+    1109                    * A9 = PTR TO FRAGMENT ANIMATION SCRIPT                                  *
+    1110                    * A10 = PTR TO CORRECT INIT TABLE FOR MAKTPROC                           *
+    1111                    * B2 = Z VELOCITY (32 BITS)                                              *
+    1112                    * B3 = Y VELOCITY (32 BITS)                                              *
+    1113                    *                                                                        *
+    1114                    **************************************************************************
+    1115 000067c0           GETFRAG
+    1116 000067c0                   PUSH    A0
+    1117 000067d0     0d5f          CALLA   GETYZVEL                ;GET A RANDOM Y & Z VELOCITIES
+         000067e0 00000000! 
+    1118                    
+    1119 00006800     1ff3          BTST    0,B3                                            
+    1120 00006810     cb0b          JRNE    GETFRAG2                ;ODD FRACTION, GIVE ME NORMAL STUFF
+    1121 00006820     574a          CLR     A10
+    1122 00006830                   TEST    B2                      ;PIECES ACCORDING TO Z VELOCITY
+    1123 00006840     ce04          JRN     GETFRAG1                ;SHRINK WHILE GOING AWAY
+    1124                    
+    1125 00006850     09e9          MOVI    CFSHRAPA,A9
+         00006860 00000000! 
+    1126 00006880     c012          JRUC    GETFRAG4
+    1127                    
+    1128 00006890           GETFRAG1
+    1129 00006890     09e9          MOVI    CFSHRAPB,A9
+         000068a0 00000000! 
+    1130 000068c0     c00e          JRUC    GETFRAG4
+    1131                    
+    1132 000068d0           GETFRAG2
+    1133 000068d0     09ea          MOVI    REDINIT,A10
+         000068e0 00005640' 
+    1134 00006900     4e70          MOVE    B3,A0
+    1135 00006910     0380          ABS     A0
+    1136 00006920     2dc0          SRL     18,A0
+    1137 00006930     ca04          JRZ     GETFRAG3                ;LOW VELOCITY PIECE
+    1138                    
+    1139 00006940     09e9          MOVI    CSHRAPA,A9      
+         00006950 000030c0" 
+    1140 00006970     c003          JRUC    GETFRAG4
+    1141                    
+    1142 00006980           GETFRAG3
+    1143 00006980     09e9          MOVI    CSHRAPB,A9
+         00006990 000033d0" 
+    1144                    
+    1145 000069b0           GETFRAG4
+    1146 000069b0                   PULL    A0
+    1147 000069d0     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   29
+
+    1148                    
+    1149                    **************************************************************************
+    1150                    *                                                                        *
+    1151                    * PORCOLR - PORSCHE MAIN, COLLISION WITH ROCKET BOMB                     *
+    1152                    * A0 = PTR TO PORSCHE MAIN                                               *
+    1153                    * A8 = PTR TO OBJECT THAT HIT IT                                         *
+    1154                    *                                                                        *
+    1155                    **************************************************************************
+    1156 000069e0           PORCOLR
+    1157 000069e0     b509          MOVE    *A8(OID),A9,W           ;GET KILLERS I.D.
+         000069f0     01a0  
+    1158 00006a00     09ee          MOVI    DUMCOLL,A14
+         00006a10 00000000! 
+    1159 00006a30     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00006a40     01d0  
+    1160 00006a50     b600          MOVE    *A0(OPLINK),A0,L        ;GET THE PROCESS
+         00006a60     01f0  
+    1161 00006a70     0d5f          CALLA   GETA8                   ;GET THE DRIVER PTR
+         00006a80 00000000! 
+    1162 00006aa0     0d5f          CALLA   GETA10                  ;PRESERVE CORRECT STATE FOR CDELALL
+         00006ab0 00000000! 
+    1163 00006ad0     4fa0          MOVE    A13,B0
+    1164 00006ae0     4c0d          MOVE    A0,A13
+    1165 00006af0     0d5f          CALLA   CARSTOP
+         00006b00 00000000! 
+    1166 00006b20     0d5f          CALLA   CDELALL                 ;DELETE ALL PORSCHE PARTS
+         00006b30 00000000! 
+    1167 00006b50     4e1d          MOVE    B0,A13
+    1168 00006b60     0d5f          CALLA   KILL
+         00006b70 00000000! 
+    1169 00006b90     4d48          MOVE    A10,A8                  ;AND PASS IT TO THE PROCESS
+    1170 00006ba0                   CREATE  0EDH,POREXP             ;CREATE THE PORSCHE EXPLODE PROC.
+    1171 00006c20     09e0          MOVI    CVSDOFF,A0
+         00006c30 00000000! 
+    1172 00006c50     0d5f          CALLA   ONESND                  ;TURN OFF THE CAR IDLE SOUND
+         00006c60 00000000! 
+    1173 00006c80     05a0          MOVE    @PORCNT,A0,W
+         00006c90 00000000! 
+    1174 00006cb0     1420          DEC     A0
+    1175 00006cc0     0580          MOVE    A0,@PORCNT,W
+         00006cd0 00000000! 
+    1176 00006cf0     5600          CLR     A0
+    1177 00006d00     0320          CLRC
+    1178 00006d10     0960          RETS
+    1179                    
+    1180                    **************************************************************************
+    1181                    *                                                                        *
+    1182                    * PTRANCOL - PORSCHE TRANSPORT, COLLISION WITH ROCKET BOMB               *
+    1183                    * A0 = PTR TO PORSCHE MAIN                                               *
+    1184                    * A8 = PTR TO OBJECT THAT HIT IT                                         *
+    1185                    *                                                                        *
+    1186                    **************************************************************************
+    1187 00006d20           PTRANCOL
+    1188 00006d20     09ee          MOVI    DUMCOLL,A14
+         00006d30 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   30
+
+    1189 00006d50     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00006d60     01d0  
+    1190 00006d70     b509          MOVE    *A8(OID),A9,W           ;GET THE I.D. FOR SAFE KEEPING
+         00006d80     01a0  
+    1191 00006d90     b600          MOVE    *A0(OPLINK),A0,L        ;GET THE PROCESS
+         00006da0     01f0  
+    1192 00006db0     0d5f          CALLA   GETA10                  ;PRESERVE CORRECT STATE FOR CDELALL
+         00006dc0 00000000! 
+    1193 00006de0     0d5f          CALLA   GETA8                   ;GET THE DRIVER PTR
+         00006df0 00000000! 
+    1194 00006e10     ca4d          JRZ     PTRANC1                 ;NO DRIVER TO LAUNCH
+    1195                    
+    1196 00006e20     b605          MOVE    *A0(PSPTR),A5,L         ;GET THE PROCESS STACK PTR
+         00006e30     0040  
+    1197 00006e40     0b05          ADDI    SLPSTCK,A5              ;OFFSET TO REAL STACK DATA
+         00006e50     00a0  
+    1198 00006e60     0d5f          CALLA   GETA11                  
+         00006e70 00000000! 
+    1199 00006e90     4e01          MOVE    A0,B1                   ;STORE HERE
+    1200 00006ea0     4f00          MOVE    A8,B0                   ;AND HERE
+    1201 00006eb0     4d48          MOVE    A10,A8                  ;PREPARE TO LAUNCH PLAYER
+    1202 00006ec0     0d5f          CALLA   GETANIX
+         00006ed0 00000000! 
+    1203 00006ef0                   PUSH    A9
+    1204 00006f00     0b6b          CMPI    P1DATA,A11
+         00006f10 ffffffff! 
+    1205 00006f30     cb04          JRNE    PTRANC2
+    1206 00006f40     09e9          MOVI    P1CTRL,A9
+         00006f50 00000000! 
+    1207 00006f70     c003          JRUC    PTRANC3
+    1208 00006f80           PTRANC2
+    1209 00006f80     09e9          MOVI    P2CTRL,A9       
+         00006f90 00000000! 
+    1210 00006fb0           PTRANC3
+    1211 00006fb0     09c7          MOVI    PJUMP|PRYTE,A7
+         00006fc0     0048  
+    1212 00006fd0     80e9          MOVE    A7,*A9,W
+    1213 00006fe0     09a5          MMFM    A5,A3,A4
+         00006ff0     0018  
+    1214 00007000     b465          MOVE    *A3(OXPOS),A5,W                 ;WARP PLAYER TO DRIVER SPOT     
+         00007010     0090  
+    1215 00007020     b003          MOVE    A0,*A3(OXPOS),W
+         00007030     0090  
+    1216 00007040     44a0          SUB     A5,A0
+    1217 00007050     b485          MOVE    *A4(OXPOS),A5,W
+         00007060     0090  
+    1218 00007070     4005          ADD     A0,A5
+    1219 00007080     b0a4          MOVE    A5,*A4(OXPOS),W
+         00007090     0090  
+    1220                    
+    1221 000070a0     4c60          MOVE    A3,A0
+    1222 000070b0     09e1          MOVI    PLAYERS,A1                                               
+         000070c0 00000000! 
+    1223 000070e0     0d5f          CALLA   INSOBJ                  ;INSERT TORSO                    
+         000070f0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   31
+
+    1224 00007110     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         00007120 00000000! 
+    1225 00007140     4c80          MOVE    A4,A0                                                    
+    1226 00007150     0d5f          CALLA   INSOBJ                  ;INSERT LEGS                     
+         00007160 00000000! 
+    1227 00007180     0d5f          CALLA   ADDSUPP                 ;ADD TO SUPPLEMENTAL LIST        
+         00007190 00000000! 
+    1228 000071b0     4c68          MOVE    A3,A8
+    1229 000071c0     0d5f          CALLA   SHADST2                 ;START SHADOW FOR PLAYER TORSO   
+         000071d0 00000000! 
+    1230 000071f0     4c88          MOVE    A4,A8                                                    
+    1231 00007200     0d5f          CALLA   SHADST                  ;START SHADOW FOR PLAYER LEGS    
+         00007210 00000000! 
+    1232 00007230                   CREATE  INDPID,PTRANWW
+    1233 000072b0     4e30          MOVE    B1,A0
+    1234 000072c0     4e18          MOVE    B0,A8
+    1235 000072d0                   PULL    A9
+    1236 000072f0           PTRANC1
+    1237 000072f0     4fa0          MOVE    A13,B0
+    1238 00007300     4c0d          MOVE    A0,A13
+    1239 00007310     0d5f          CALLA   CARSTOP
+         00007320 00000000! 
+    1240 00007340     0d5f          CALLA   CDELALL                 ;DELETE ALL PORSCHE PARTS
+         00007350 00000000! 
+    1241 00007370     4e1d          MOVE    B0,A13
+    1242 00007380     0d5f          CALLA   KILL
+         00007390 00000000! 
+    1243 000073b0     4d48          MOVE    A10,A8                  ;AND PASS IT TO THE PROCESS
+    1244 000073c0                   CREATE  0EDH,POREXP             ;CREATE THE PORSCHE EXPLODE PROC.
+    1245 00007440     09e0          MOVI    CVSDOFF,A0
+         00007450 00000000! 
+    1246 00007470     0d5f          CALLA   ONESND                  ;TURN OFF THE CAR IDLE SOUND
+         00007480 00000000! 
+    1247 000074a0     05a0          MOVE    @PORCNT,A0,W
+         000074b0 00000000! 
+    1248 000074d0     1420          DEC     A0
+    1249 000074e0     0580          MOVE    A0,@PORCNT,W
+         000074f0 00000000! 
+    1250 00007510     5600          CLR     A0
+    1251 00007520     0320          CLRC
+    1252 00007530     0960          RETS
+    1253                    
+    1254                    
+    1255                    **************************************************************************
+    1256                    *                                                                        *
+    1257                    * PCDRIVLP - DRIVEABLE PORSCHE COLLISION WITH A LAMP POST                *
+    1258                    * A0 = PTR TO PORSCHE MAIN                                               *
+    1259                    * A8 = PTR TO OBJECT THAT HIT IT                                         *
+    1260                    *                                                                        *
+    1261                    **************************************************************************
+    1262 00007540           PCDRIVLP
+    1263 00007540     b60e          MOVE    *A0(OXVEL),A14,L        ;GET THE X VELOCITY
+         00007550     0040  
+    1264 00007560     4dc1          MOVE    A14,A1
+    1265 00007570     038e          ABS     A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   32
+
+    1266 00007580     0b6e          CMPI    PORFULL-[4,0],A14
+         00007590 fff2ffff  
+    1267 000075b0     c33d          JRHI    PCDRIVM0                ;SLOW ENOUGH TO BOUNCE, SO BOUNCE
+    1268 000075c0     c008          JRUC    PCDRIVD0                ;BLOW UP S.V.P.
+    1269                    **************************************************************************
+    1270                    *                                                                        *
+    1271                    * PCDRIVDC - DRIVEABLE PORSCHE COLLISION WITH A DUMPSTER                 *
+    1272                    * A0 = PTR TO PORSCHE MAIN                                               *
+    1273                    * A8 = PTR TO OBJECT THAT HIT IT                                         *
+    1274                    *                                                                        *
+    1275                    **************************************************************************
+    1276 000075d0           PCDRIVDC
+    1277 000075d0     b60e          MOVE    *A0(OXVEL),A14,L        ;GET THE X VELOCITY
+         000075e0     0040  
+    1278 000075f0     4dc1          MOVE    A14,A1
+    1279 00007600     038e          ABS     A14
+    1280 00007610     0b6e          CMPI    PORFULL-[4,0],A14
+         00007620 fff2ffff  
+    1281 00007640     c260          JRLS    PCDRIVDX                ;SLOW ENOUGH TO BOUNCE, DUMPSTER HANDLE
+    1282 00007650           PCDRIVD0
+    1283 00007650     b60e          MOVE    *A0(OPLINK),A14,L
+         00007660     01f0  
+    1284 00007670     ca6f          JRZ     PCDRIVRC                ;BR = NO PROC
+    1285 00007680     4e00          MOVE    A0,B0
+    1286 00007690     4f01          MOVE    A8,B1
+    1287 000076a0     2ba1          SRA     3,A1                    ;DIVIDE DOWN X VELOCITY
+    1288 000076b0     4dc0          MOVE    A14,A0
+    1289 000076c0     0d5f          CALLA   GETA8   
+         000076d0 00000000! 
+    1290 000076f0     ca02          JRZ     PCDRID00                ;BR = NO DRIVER
+    1291 00007700     b228          MOVE    A1,*A8(OXVEL),L
+         00007710     0040  
+    1292 00007720           PCDRID00        
+    1293 00007720     b608          MOVE    *A0(PASSPTR),A8,L
+         00007730     0260  
+    1294 00007740     ca02          JRZ     PCDRID01
+    1295 00007750     b228          MOVE    A1,*A8(OXVEL),L
+         00007760     0040  
+    1296 00007770           PCDRID01
+    1297 00007770     4e38          MOVE    B1,A8
+    1298 00007780                   SOUND1  PCDMPSND                ;MAKE SOME NOISE
+    1299 000077e0     4e10          MOVE    B0,A0
+    1300 000077f0     0d5f          CALLA   GIBOX                   ;GET THE INTERSECTION BOX
+         00007800 00000000! 
+    1301 00007820     4c2b          MOVE    A1,A11                  ;PASS THE UPPER LEFT TO ROCKET MAN
+    1302 00007830     4c08          MOVE    A0,A8
+    1303 00007840     b509          MOVE    *A8(OZPOS),A9,W
+         00007850     00d0  
+    1304 00007860     b500          MOVE    *A8(OFLAGS),A0,W
+         00007870     0100  
+    1305 00007880     2600          SLL     16,A0
+    1306 00007890     ee09          MOVY    A0,A9
+    1307 000078a0     09ca          MOVI    BEOID,A10
+         000078b0     0be0  
+    1308 000078c0                   CREATE  CEXPID,CEXPLODE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   33
+
+    1309 00007940     4e38          MOVE    B1,A8
+    1310 00007950     4e10          MOVE    B0,A0   
+    1311 00007960     c040          JRUC    PCDRIVRC                ;BLOW THIS BAD DOG
+    1312                    
+    1313                    *
+    1314                    *ENTRY POINT JUST MIRRORING PORSCHE VELOCITIES
+    1315                    *A0 = PTR TO PORSCHE, A8 = PTR TO OBJECT COLLIDED WITH
+    1316 00007970           PCDRIVMV
+    1317 00007970     b601          MOVE    *A0(OXVEL),A1,L
+         00007980     0040  
+    1318 00007990           PCDRIVM0
+    1319 00007990     4c21          MOVE    A1,A1
+    1320 000079a0     ce05          JRN     PCDRIVDA
+    1321 000079b0     0d5f          CALLA   WHICHSID
+         000079c0 00000000! 
+    1322 000079e0     c826          JRC     PCDRIVDX                ;BR = GOING RIGHT ON THE RIGHT, CAN IT
+    1323 000079f0     c004          JRUC    PCDRIVDB
+    1324 00007a00           PCDRIVDA
+    1325 00007a00     0d5f          CALLA   WHICHSID
+         00007a10 00000000! 
+    1326 00007a30     c921          JRNC    PCDRIVDX                ;BR = GOING LEFT ON THE LEFT, CAN IT
+    1327 00007a40           PCDRIVDB
+    1328 00007a40     03a1          NEG     A1                              
+    1329 00007a50     2be1          SRA     1,A1
+    1330 00007a60     b602          MOVE    *A0(OZVEL),A2,L
+         00007a70     00e0  
+    1331 00007a80     b603          MOVE    *A0(OYVEL),A3,L
+         00007a90     0060  
+    1332 00007aa0     4443          SUB     A2,A3
+    1333 00007ab0     03a2          NEG     A2
+    1334 00007ac0     2be2          SRA     1,A2
+    1335 00007ad0     4043          ADD     A2,A3
+    1336 00007ae0     4fa0          MOVE    A13,B0
+    1337 00007af0     b60d          MOVE    *A0(OPLINK),A13,L       ;GET THE PROCESS
+         00007b00     01f0  
+    1338 00007b10     ca12          JRZ     PCDRIVD1                ;BR = NO PROCESS
+    1339 00007b20     4da0          MOVE    A13,A0
+    1340 00007b30     0d5f          CALLA   GETA10                  ;PRESERVE CORRECT STATE FOR CDELALL
+         00007b40 00000000! 
+    1341 00007b60     0d5f          CALLA   GETA8                   ;GET THE DRIVER PTR
+         00007b70 00000000! 
+    1342 00007b90     0d5f          CALLA   CARXVEL                 ;MIRROR/2 X VELOCITY
+         00007ba0 00000000! 
+    1343 00007bc0     4c41          MOVE    A2,A1
+    1344 00007bd0     0d5f          CALLA   CARZVEL                 ;MIRROR/2 Z VELOCITY
+         00007be0 00000000! 
+    1345 00007c00     4c61          MOVE    A3,A1
+    1346 00007c10     0d5f          CALLA   CARYVEL                 ;SUBSEQUENT Y VELOCITY
+         00007c20 00000000! 
+    1347 00007c40           PCDRIVD1
+    1348 00007c40     4e1d          MOVE    B0,A13
+    1349 00007c50           PCDRIVDX
+    1350 00007c50     5600          CLR     A0
+    1351 00007c60     0320          CLRC
+    1352 00007c70     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   34
+
+    1353                    
+    1354                    **************************************************************************
+    1355                    *                                                                        *
+    1356                    * PCDRIVRC - DRIVEABLE PORSCHE COLLISION WITH A ROCKET                   *
+    1357                    * A0 = PTR TO PORSCHE MAIN                                               *
+    1358                    * A8 = PTR TO OBJECT THAT HIT IT                                         *
+    1359                    *                                                                        *
+    1360                    **************************************************************************
+    1361                    *
+    1362                    *INTERSECTION WITH A PLAYER ONE ROCKET
+    1363 00007c80           PC1DRIVR
+    1364 00007c80     05ae          MOVE    @P1DATA+PIRQFLAG,A14,W
+         00007c90 00000080! 
+    1365 00007cb0     0b8e          ANDI    MDRIVER|MPASSEN,A14
+         00007cc0 ffffe7ff  
+    1366 00007ce0     cb6a          JRNZ    PCDRIVRX                ;DON'T BLOW UP THIS CAR, I'M IN IT
+    1367 00007cf0     c007          JRUC    PCDRIVRC
+    1368                    *
+    1369                    *INTERSECTION WITH A PLAYER ONE ROCKET
+    1370 00007d00           PC2DRIVR
+    1371 00007d00     05ae          MOVE    @P2DATA+PIRQFLAG,A14,W
+         00007d10 00000080! 
+    1372 00007d30     0b8e          ANDI    MDRIVER|MPASSEN,A14
+         00007d40 ffffe7ff  
+    1373 00007d60     cb62          JRNZ    PCDRIVRX                ;DON'T BLOW UP THIS CAR, I'M IN IT
+    1374 00007d70           PCDRIVRC
+    1375 00007d70     09ee          MOVI    DUMCOLL,A14
+         00007d80 00000000! 
+    1376 00007da0     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00007db0     01d0  
+    1377 00007dc0     b509          MOVE    *A8(OID),A9,W           ;AND ZE I.D. PLEASE
+         00007dd0     01a0  
+    1378 00007de0     b600          MOVE    *A0(OPLINK),A0,L        ;GET THE PROCESS
+         00007df0     01f0  
+    1379 00007e00     0d5f          CALLA   GETA10                  ;PRESERVE CORRECT STATE FOR CDELALL
+         00007e10 00000000! 
+    1380 00007e30     57ce          CLR     A14
+    1381 00007e40     b3ca          MOVE    A14,*A10(OPLINK),L      ;SHOW NO CONTACT
+         00007e50     01f0  
+    1382 00007e60     0d5f          CALLA   GETA8                   ;GET THE DRIVER PTR
+         00007e70 00000000! 
+    1383 00007e90     ca14          JRZ     PCDRIVR1                ;NO DRIVER TO LAUNCH
+    1384 00007ea0     b50b          MOVE    *A8(OID),A11,W
+         00007eb0     01a0  
+    1385 00007ec0     4e00          MOVE    A0,B0
+    1386 00007ed0     4d00          MOVE    A8,A0
+    1387 00007ee0     0d5f          CALLA   OBJON                   ;TURN THIS GUY ON FOR SURE
+         00007ef0 00000000! 
+    1388 00007f10                   CREATE  INDPID,PDRIVXWW
+    1389 00007f90     4e10          MOVE    B0,A0
+    1390 00007fa0     5708          CLR     A8
+    1391 00007fb0     0788          MOVE    A8,@PLAYCAR,L
+         00007fc0 00000000! 
+    1392 00007fe0           PCDRIVR1
+    1393 00007fe0     b603          MOVE    *A0(PASSPTR),A3,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   35
+
+         00007ff0     0260  
+    1394 00008000     ca16          JRZ     PCDRIVR2
+    1395 00008010     b46b          MOVE    *A3(OID),A11,W
+         00008020     01a0  
+    1396 00008030     4e00          MOVE    A0,B0
+    1397 00008040     4c60          MOVE    A3,A0
+    1398 00008050     0d5f          CALLA   OBJON                   ;OH PLEASE, TURN ME ON TOO.
+         00008060 00000000! 
+    1399 00008080                   CREATE  INDPID,PDRIVXWW
+    1400 00008100     4e10          MOVE    B0,A0
+    1401 00008110     5663          CLR     A3
+    1402 00008120     b260          MOVE    A3,*A0(PASSPTR),L
+         00008130     0260  
+    1403 00008140     0783          MOVE    A3,@PLAYCAR,L
+         00008150 00000000! 
+    1404 00008170           PCDRIVR2
+    1405 00008170     4fa0          MOVE    A13,B0
+    1406 00008180     4c0d          MOVE    A0,A13
+    1407 00008190     0d5f          CALLA   CARSTOP
+         000081a0 00000000! 
+    1408 000081c0     0d5f          CALLA   CDELALL                 ;DELETE ALL PORSCHE PARTS
+         000081d0 00000000! 
+    1409 000081f0     4e1d          MOVE    B0,A13
+    1410 00008200     0d5f          CALLA   KILL
+         00008210 00000000! 
+    1411 00008230     4d48          MOVE    A10,A8                  ;AND PASS IT TO THE PROCESS
+    1412 00008240                   CREATE  0EDH,POREXP             ;CREATE THE PORSCHE EXPLODE PROC.
+    1413 000082c0     09e0          MOVI    CVSDOFF,A0
+         000082d0 00000000! 
+    1414 000082f0     0d5f          CALLA   ONESND                  ;TURN OFF THE CAR IDLE SOUND
+         00008300 00000000! 
+    1415 00008320     05a0          MOVE    @PORCNT,A0,W
+         00008330 00000000! 
+    1416 00008350     1420          DEC     A0
+    1417 00008360     0580          MOVE    A0,@PORCNT,W
+         00008370 00000000! 
+    1418 00008390           PCDRIVRX
+    1419 00008390     5600          CLR     A0
+    1420 000083a0     0320          CLRC
+    1421 000083b0     0960          RETS
+    1422                    
+    1423                    *
+    1424                    *PDRIVXWW - DRIVEABLE PORSCHE WALK WATCHER PROCESS
+    1425                    *A11 = PTR TO PxOID, CHANGES TO PxCTRL
+    1426 000083c0           PDRIVXWW
+    1427 000083c0     0b4b          CMPI    P1OID,A11
+         000083d0     efff  
+    1428 000083e0     cb07          JRNE    PDRIVXW1
+    1429 000083f0     09eb          MOVI    P1CTRL,A11
+         00008400 00000000! 
+    1430 00008420     09ea          MOVI    P1DATA,A10
+         00008430 00000000! 
+    1431 00008450     c009          JRUC    PDRIVXW2
+    1432 00008460           PDRIVXW1
+    1433 00008460     0b4b          CMPI    P2OID,A11
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   36
+
+         00008470     dfff  
+    1434 00008480     cb48          JRNE    PDRIVXWX                ;WHO KNOWS WHAT THE FUCK THIS IS
+    1435 00008490     09eb          MOVI    P2CTRL,A11
+         000084a0 00000000! 
+    1436 000084c0     09ea          MOVI    P2DATA,A10
+         000084d0 00000000! 
+    1437 000084f0           PDRIVXW2
+    1438 000084f0     09c0          MOVI    PJUMP|PRYTE,A0
+         00008500     0048  
+    1439 00008510     800b          MOVE    A0,*A11,W
+    1440 00008520                   SLEEP   3
+    1441 00008560     b540          MOVE    *A10(PIRQFLAG),A0,W
+         00008570     0080  
+    1442 00008580     0b80          ANDI    MDRIVER|MPASSEN,A0      ;CHECK TO SEE IF HE JUMPED OUT
+         00008590 ffffe7ff  
+    1443 000085b0     cbf3          JRNE    PDRIVXW2                ;BR = THE JUMP DIDN'T TAKE YET
+    1444                    
+    1445 000085c0     b748          MOVE    *A10(POBJ),A8,L
+         000085d0     00a0  
+    1446 000085e0     b749          MOVE    *A10(PLOBJ),A9,L        ;GET BOTH PLAYER OBJECT PTRS
+         000085f0     0120  
+    1447 00008600     b70a          MOVE    *A8(OXVEL),A10,L        ;GET THE CURRENT VELOCITY
+         00008610     0040  
+    1448 00008620     cf14          JRNN    PDXWWSLP
+    1449                    
+    1450 00008630           PDXWWNLP
+    1451 00008630     0b0a          ADDI    3000H,A10
+         00008640     3000  
+    1452 00008650     b701          MOVE    *A8(OXVEL),A1,L
+         00008660     0040  
+    1453 00008670     0381          ABS     A1
+    1454 00008680     0b61          CMPI    [1,1000H],A1
+         00008690 fffeefff  
+    1455 000086b0     c61f          JRLE    PDXWWFIN
+    1456 000086c0     b348          MOVE    A10,*A8(OXVEL),L
+         000086d0     0040  
+    1457 000086e0     b349          MOVE    A10,*A9(OXVEL),L
+         000086f0     0040  
+    1458 00008700                   SLOOP   1,PDXWWNLP
+    1459                    
+    1460 00008770           PDXWWSLP
+    1461 00008770     0bea          SUBI    3000H,A10
+         00008780     cfff  
+    1462 00008790     b701          MOVE    *A8(OXVEL),A1,L
+         000087a0     0040  
+    1463 000087b0     0381          ABS     A1
+    1464 000087c0     0b61          CMPI    [1,1000H],A1
+         000087d0 fffeefff  
+    1465 000087f0     c60b          JRLE    PDXWWFIN
+    1466 00008800     b348          MOVE    A10,*A8(OXVEL),L
+         00008810     0040  
+    1467 00008820     b349          MOVE    A10,*A9(OXVEL),L
+         00008830     0040  
+    1468 00008840                   SLOOP   1,PDXWWSLP
+    1469                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   37
+
+    1470 000088b0           PDXWWFIN
+    1471 000088b0                   SLEEP   16
+    1472 000088f0     5600          CLR     A0
+    1473 00008900     800b          MOVE    A0,*A11,W
+    1474 00008910           PDRIVXWX
+    1475 00008910                   DIE
+    1476                    
+    1477                    **************************************************************************
+    1478                    *                                                                        *
+    1479                    * CWINBCOL - VEHICLE WINDSHIELD COLLISION WITH A BULLET                  *
+    1480                    * A0 = PTR TO WINDSHEILD                                                 *
+    1481                    * A8 = PTR TO THING THAT HIT IT                                          *
+    1482                    *                                                                        *
+    1483                    **************************************************************************
+    1484 00008940           CWINBCOL
+    1485 00008940     b50b          MOVE    *A8(OID),A11,W          
+         00008950     01a0  
+    1486 00008960     09ee          MOVI    DUMCOLL,A14
+         00008970 00000000! 
+    1487 00008990     b3c0          MOVE    A14,*A0(OCVECT),L       ;SET UP A DUMB COLLISION
+         000089a0     01d0  
+    1488 000089b0     4c08          MOVE    A0,A8                   ;PASS THE BLOWOUT OBJECT
+    1489 000089c0                   CREATE  0,BLOWSHLD              ;BLOWOUT THE WINDSHIELD
+    1490 00008a40     ca02          JREQ    CWINB1                  ;COULDN'T CREATE THE WINDSHIELD
+    1491 00008a50     b208          MOVE    A0,*A8(OPLINK),L
+         00008a60     01f0  
+    1492 00008a70           CWINB1
+    1493 00008a70     0320          CLRC                            ;DON'T DELETE
+    1494 00008a80     5600          CLR     A0
+    1495 00008a90     0960          RETS
+    1496                    
+    1497                    *
+    1498                    *COLLISION LISTS
+    1499 00008aa0           PORCOLL                                 ;NORMAL PORSCHE COLLISION
+    1500 00008aa0     0b14          .WORD   B1OID|ROCKETID
+    1501 00008ab0 000069e0'         .LONG   PORCOLR
+    1502 00008ad0     0b16          .WORD   B1OID|BOMBID
+    1503 00008ae0 000069e0'         .LONG   PORCOLR
+    1504 00008b00     0b24          .WORD   B2OID|ROCKETID
+    1505 00008b10 000069e0'         .LONG   PORCOLR
+    1506 00008b30     0b26          .WORD   B2OID|BOMBID
+    1507 00008b40 000069e0'         .LONG   PORCOLR
+    1508 00008b60     0be4          .WORD   BEOID|ROCKETID
+    1509 00008b70 000069e0'         .LONG   PORCOLR
+    1510 00008b90     0be8          .WORD   BEOID|LANDMOID
+    1511 00008ba0 000069e0'         .LONG   PORCOLR
+    1512 00008bc0     0be6          .WORD   BEOID|BOMBID
+    1513 00008bd0 000069e0'         .LONG   PORCOLR
+    1514 00008bf0     0bea          .WORD   BEOID|DYNEXPID
+    1515 00008c00 000069e0'         .LONG   PORCOLR
+    1516 00008c20     0000          .WORD   0
+    1517 00008c30 00000000!         .LONG   DUMRTSG
+    1518                    
+    1519 00008c50           PTCOLL                                  ;PORSCHE TRANSPORT COLLISION
+    1520 00008c50     0b14          .WORD   B1OID|ROCKETID
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   38
+
+    1521 00008c60 00006d20'         .LONG   PTRANCOL
+    1522 00008c80     0b24          .WORD   B2OID|ROCKETID
+    1523 00008c90 00006d20'         .LONG   PTRANCOL
+    1524 00008cb0     0be4          .WORD   BEOID|ROCKETID
+    1525 00008cc0 00006d20'         .LONG   PTRANCOL
+    1526 00008ce0     0be8          .WORD   BEOID|LANDMOID
+    1527 00008cf0 00006d20'         .LONG   PTRANCOL
+    1528 00008d10     0be6          .WORD   BEOID|BOMBID
+    1529 00008d20 00006d20'         .LONG   PTRANCOL        
+    1530 00008d40     0bea          .WORD   BEOID|DYNEXPID
+    1531 00008d50 00006d20'         .LONG   PTRANCOL
+    1532 00008d70     0000          .WORD   0
+    1533 00008d80 00000000!         .LONG   DUMRTSG
+    1534                    
+    1535 00008da0           PDRVCOLL                                ;DRIVEABLE PORSCHE COLLISION
+    1536 00008da0     0b14          .WORD   B1OID|ROCKETID
+    1537 00008db0 00007c80'         .LONG   PC1DRIVR
+    1538 00008dd0     0b24          .WORD   B2OID|ROCKETID
+    1539 00008de0 00007d00'         .LONG   PC2DRIVR
+    1540 00008e00     0be4          .WORD   BEOID|ROCKETID
+    1541 00008e10 00007d70'         .LONG   PCDRIVRC
+    1542 00008e30     0be8          .WORD   BEOID|LANDMOID
+    1543 00008e40 00007d70'         .LONG   PCDRIVRC
+    1544 00008e60     0be6          .WORD   BEOID|BOMBID
+    1545 00008e70 00007d70'         .LONG   PCDRIVRC        
+    1546 00008e90     0bea          .WORD   BEOID|DYNEXPID
+    1547 00008ea0 00007d70'         .LONG   PCDRIVRC
+    1548 00008ec0     0bc9          .WORD   BGDMPID
+    1549 00008ed0 000075d0'         .LONG   PCDRIVDC
+    1550 00008ef0     0e50          .WORD   DUMPOID
+    1551 00008f00 00007970'         .LONG   PCDRIVMV
+    1552 00008f20     0bc5          .WORD   BGLID
+    1553 00008f30 00007540'         .LONG   PCDRIVLP
+    1554 00008f50     0000          .WORD   0
+    1555 00008f60 00000000!         .LONG   DUMRTSG
+    1556                    
+    1557 00008f80           PWINCOL
+    1558 00008f80     0b10          .WORD   B1OID|BULLETID
+    1559 00008f90 00008940'         .LONG   CWINBCOL
+    1560 00008fb0     0b20          .WORD   B2OID|BULLETID
+    1561 00008fc0 00008940'         .LONG   CWINBCOL
+    1562 00008fe0     0be0          .WORD   BEOID|BULLETID
+    1563 00008ff0 00008940'         .LONG   CWINBCOL
+    1564 00009010     0b14          .WORD   B1OID|ROCKETID
+    1565 00009020 00008940'         .LONG   CWINBCOL
+    1566 00009040     0b24          .WORD   B2OID|ROCKETID
+    1567 00009050 00008940'         .LONG   CWINBCOL
+    1568 00009070     0be4          .WORD   BEOID|ROCKETID
+    1569 00009080 00008940'         .LONG   CWINBCOL
+    1570 000090a0     0000          .WORD   0
+    1571 000090b0 00000000!         .LONG   DUMRTSG
+    1572 000090d0           PWHLCOL
+    1573 000090d0     0000          .WORD   0
+    1574 000090e0 00000000!         .LONG   DUMRTSG
+    1575                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   39
+
+    1576 00009100           PTNKCOL
+    1577 00009100     0000          .WORD   0
+    1578 00009110 00000000!         .LONG   DUMRTSG
+    1579                    
+    1580                    **** DATA SECTION ****
+    1581 00001000                   .data
+    1582                    *
+    1583                    *PORSCHE ANIMATION TABLES
+    1584                    *
+    1585 00001000     0001  D1OFF   .WORD   1,0,2,6,15,15,0,0,0,0,0,0,0,0,0,0,31,32,33,34,35,36,0,0,37
+    1586 00001190     0026          .WORD   38,39,40,41,42,43,44
+    1587                    
+    1588                    *PLAYER 1 DRIVING THE PORSCHE, PLAYER 2 PASSENGER
+    1589                    *        FIRST LONG WORD IS THE PTR TO THE FRAME OFFSETS
+    1590                    *
+    1591 00001200           PORP1P2
+    1592 00001200 00001000"         .LONG   D1OFF
+    1593 00001220 000017a0"         .LONG   P1DRIVE,D1DETH,D1DETH,LOFDEXP,LOFDEXP1
+    1594                    
+    1595 000012c0 00002100"         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1596 00001340 00002100"         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1597 000013c0 00002100"         .LONG   LOFRAG4
+    1598                    
+    1599 000013e0 00001930"         .LONG   P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE
+    1600 000014e0 00001930"         .LONG   P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE,P2PFIRE
+    1601                    
+    1602 000015e0 000017f0"         .LONG   P1RTURN,P1LTURN,PORRWHL,PORFWHL,PWHLLEFT,PWHLRYTE       
+    1603 000016a0 00002ae0"         .LONG   PFSPIN,PFSPINF,PRSPIN,PRSPINF,PORRWHLR,PORFWHLR
+    1604 00001760 000028f0"         .LONG   PWHLLR,PWHLRR
+    1605                    
+    1606 000017a0           P1DRIVE                                 ;PLAYER 1 DRIVING ANIMATION
+    1607 000017a0 00000000!         .LONG   jtdrive1
+    1608 000017c0     0001          .WORD   1
+    1609 000017d0                   LONGNULL
+    1610                    
+    1611 000017f0           P1RTURN                                 ;PLAYER 1 TURN RIGHT
+    1612 000017f0 00000000!         .LONG   jtdrive1
+    1613 00001810     0001          .WORD   1
+    1614 00001820 00000000          .LONG   0                       ;BREAK 'TIL TURN BACK
+    1615 00001840 00000000!         .LONG   jtdrive1
+    1616 00001860     0001          .WORD   1
+    1617 00001870 00000000          .LONG   0
+    1618                    
+    1619 00001890           P1LTURN                                 ;PLAYER 1 TURN LEFT
+    1620 00001890 00000000!         .LONG   jtdrive1
+    1621 000018b0     0001          .WORD   1
+    1622 000018c0 00000000          .LONG   0
+    1623 000018e0 00000000!         .LONG   jtdrive1
+    1624 00001900     0001          .WORD   1
+    1625 00001910 00000000          .LONG   0
+    1626                    
+    1627 00001930           P2PFIRE                                 ;PLAYER 2 FIRE WHILE RIDING
+    1628 00001930 00000000!         .LONG   ytpassen1
+    1629 00001950     0001          .WORD   1
+    1630 00001960 00000000          .LONG   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   40
+
+    1631                    
+    1632                    *PLAYER 2 DRIVING THE PORSCHE, PLAYER 1 PASSENGER
+    1633                    *        FIRST LONG WORD IS THE PTR TO THE FRAME OFFSETS
+    1634                    *
+    1635 00001980           PORP2P1
+    1636 00001980 00001000"         .LONG   D1OFF
+    1637 000019a0 00001f20"         .LONG   P2DRIVE,D1DETH,D1DETH,LOFDEXP,LOFDEXP1
+    1638                    
+    1639 00001a40 00002100"         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1640 00001ac0 00002100"         .LONG   LOFRAG1,LOFRAG2,LOFRAG2,LOFRAG3
+    1641 00001b40 00002100"         .LONG   LOFRAG4
+    1642                    
+    1643 00001b60 000020b0"         .LONG   P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE
+    1644 00001c60 000020b0"         .LONG   P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE,P1PFIRE
+    1645                    
+    1646 00001d60 00001f70"         .LONG   P2RTURN,P2LTURN,PORRWHL,PORFWHL,PWHLLEFT,PWHLRYTE       
+    1647 00001e20 00002ae0"         .LONG   PFSPIN,PFSPINF,PRSPIN,PRSPINF,PORRWHLR,PORFWHLR
+    1648 00001ee0 000028f0"         .LONG   PWHLLR,PWHLRR
+    1649                    
+    1650 00001f20           P2DRIVE                                 ;PLAYER 2 DRIVING ANIMATION
+    1651 00001f20 00000000!         .LONG   ytdrive1
+    1652 00001f40     0001          .WORD   1
+    1653 00001f50                   LONGNULL
+    1654                    
+    1655 00001f70           P2RTURN                                 ;PLAYER 2 TURN RIGHT
+    1656 00001f70 00000000!         .LONG   jtdrive1
+    1657 00001f90     0001          .WORD   1
+    1658 00001fa0 00000000          .LONG   0                       ;BREAK 'TIL TURN BACK
+    1659 00001fc0 00000000!         .LONG   ytdrive1
+    1660 00001fe0     0001          .WORD   1
+    1661 00001ff0 00000000          .LONG   0
+    1662                    
+    1663 00002010           P2LTURN                                 ;PLAYER 2 TURN LEFT
+    1664 00002010 00000000!         .LONG   jtdrive1
+    1665 00002030     0001          .WORD   1
+    1666 00002040 00000000          .LONG   0
+    1667 00002060 00000000!         .LONG   ytdrive1
+    1668 00002080     0001          .WORD   1
+    1669 00002090 00000000          .LONG   0
+    1670                    
+    1671 000020b0           P1PFIRE                                 ;PLAYER 1 FIRE WHILE RIDING
+    1672 000020b0 00000000!         .LONG   jtpassen1
+    1673 000020d0     0001          .WORD   1
+    1674 000020e0 00000000          .LONG   0
+    1675                    
+    1676 00002100           D1DETH  
+    1677 00002100           LOFRAG1
+    1678 00002100           LOFRAG2
+    1679 00002100           LOFRAG3
+    1680 00002100           LOFRAG4
+    1681 00002100           LOFDEXP:
+    1682 00002100           LOFDEXP1:
+    1683 00002100                   LONGNULL
+    1684                    
+    1685 00002120           POREXPFR                                ;PORSCHE EXPLOSION
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   41
+
+    1686 00002120 00000d00"         .LONG   PORCRASH1
+    1687 00002140     000c          .WORD   12
+    1688 00002150 00000d00"         .LONG   PORCRASH1
+    1689 00002170     0008          .WORD   8
+    1690 00002180 00000d00"         .LONG   PORCRASH1
+    1691 000021a0     0008          .WORD   8
+    1692 000021b0                   LONGNULL
+    1693                    
+    1694 000021d0           PORFWHL                 ;PORSCHE FRONT WHEEL STRAIGHT ROTATE FORWARD
+    1695 000021d0 00000400"         .LONG   PORWHL1F
+    1696 000021f0     0001          .WORD   1
+    1697 00002200 00000480"         .LONG   PORWHL2F
+    1698 00002220     0001          .WORD   1
+    1699 00002230 00000500"         .LONG   PORWHL3F
+    1700 00002250     0001          .WORD   1
+    1701 00002260 00000580"         .LONG   PORWHL4F
+    1702 00002280     0001          .WORD   1
+    1703 00002290 00000000          .LONG   0
+    1704                    
+    1705 000022b0           PORRWHL                 ;PORSCHE REAR WHEEL STRAIGHT ROTATE FORWARD
+    1706 000022b0 00000600"         .LONG   PORWHL1R
+    1707 000022d0     0001          .WORD   1
+    1708 000022e0 00000680"         .LONG   PORWHL2R
+    1709 00002300     0001          .WORD   1
+    1710 00002310 00000700"         .LONG   PORWHL3R
+    1711 00002330     0001          .WORD   1
+    1712 00002340 00000780"         .LONG   PORWHL4R
+    1713 00002360     0001          .WORD   1
+    1714 00002370 00000000          .LONG   0
+    1715                    
+    1716 00002390           PORFWHLR                        ;PORSCHE FRONT WHEEL STRAIGHT ROTATE REVERSE
+    1717 00002390 00000580"         .LONG   PORWHL4F
+    1718 000023b0     0001          .WORD   1
+    1719 000023c0 00000500"         .LONG   PORWHL3F
+    1720 000023e0     0001          .WORD   1
+    1721 000023f0 00000480"         .LONG   PORWHL2F
+    1722 00002410     0001          .WORD   1
+    1723 00002420 00000400"         .LONG   PORWHL1F
+    1724 00002440     0001          .WORD   1
+    1725 00002450 00000000          .LONG   0
+    1726                    
+    1727 00002470           PORRWHLR                        ;PORSCHE REAR WHEEL STRAIGHT ROTATE REVERSE
+    1728 00002470 00000780"         .LONG   PORWHL4R
+    1729 00002490     0001          .WORD   1
+    1730 000024a0 00000700"         .LONG   PORWHL3R
+    1731 000024c0     0001          .WORD   1
+    1732 000024d0 00000680"         .LONG   PORWHL2R
+    1733 000024f0     0001          .WORD   1
+    1734 00002500 00000600"         .LONG   PORWHL1R
+    1735 00002520     0001          .WORD   1
+    1736 00002530 00000000          .LONG   0
+    1737                    
+    1738 00002550           PORWEEL1CC                      ;BOUNCY EXPLOSION WHEELS
+    1739 00002550 00000800"         .LONG   PORWHL1C
+    1740 00002570     2001          .WORD   1|NEWPALET
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   42
+
+    1741 00002580 00000000!         .LONG   PORSHPAL
+    1742 000025a0 00000880"         .LONG   PORWHL2C
+    1743 000025c0     0001          .WORD   1
+    1744 000025d0 00000900"         .LONG   PORWHL3C
+    1745 000025f0     0001          .WORD   1
+    1746 00002600 00000980"         .LONG   PORWHL4C
+    1747 00002620     0001          .WORD   1
+    1748 00002630 00000000          .LONG   0
+    1749                            
+    1750 00002650           PWHLRYTE                        ;PORSCHE WHEELS TURN RYTE FORWARD SPIN
+    1751 00002650 00000000"         .LONG   PRYTEWHL1
+    1752 00002670     0001          .WORD   1
+    1753 00002680 00000080"         .LONG   PRYTEWHL2
+    1754 000026a0     0001          .WORD   1
+    1755 000026b0 00000100"         .LONG   PRYTEWHL3
+    1756 000026d0     0001          .WORD   1
+    1757 000026e0 00000180"         .LONG   PRYTEWHL4
+    1758 00002700     0001          .WORD   1
+    1759 00002710 00000000          .LONG   0
+    1760                    
+    1761 00002730           PWHLLEFT                        ;PORSCHE FRONT WHEELS LEFT FORWARD SPIN
+    1762 00002730 00000200"         .LONG   PLEFTWHL1
+    1763 00002750     0001          .WORD   1
+    1764 00002760 00000280"         .LONG   PLEFTWHL2
+    1765 00002780     0001          .WORD   1
+    1766 00002790 00000300"         .LONG   PLEFTWHL3
+    1767 000027b0     0001          .WORD   1
+    1768 000027c0 00000380"         .LONG   PLEFTWHL4
+    1769 000027e0     0001          .WORD   1
+    1770 000027f0 00000000          .LONG   0
+    1771                    
+    1772 00002810           PWHLRR                          ;PORSCHE WHEELS TURN RYTE REVERSE SPIN
+    1773 00002810 00000180"         .LONG   PRYTEWHL4
+    1774 00002830     0001          .WORD   1
+    1775 00002840 00000100"         .LONG   PRYTEWHL3
+    1776 00002860     0001          .WORD   1
+    1777 00002870 00000080"         .LONG   PRYTEWHL2
+    1778 00002890     0001          .WORD   1
+    1779 000028a0 00000000"         .LONG   PRYTEWHL1
+    1780 000028c0     0001          .WORD   1
+    1781 000028d0 00000000          .LONG   0
+    1782                    
+    1783 000028f0           PWHLLR                          ;PORSCHE FRONT WHEELS LEFT REVERSE SPIN
+    1784 000028f0 00000380"         .LONG   PLEFTWHL4
+    1785 00002910     0001          .WORD   1
+    1786 00002920 00000300"         .LONG   PLEFTWHL3
+    1787 00002940     0001          .WORD   1
+    1788 00002950 00000280"         .LONG   PLEFTWHL2
+    1789 00002970     0001          .WORD   1
+    1790 00002980 00000200"         .LONG   PLEFTWHL1
+    1791 000029a0     0001          .WORD   1
+    1792 000029b0 00000000          .LONG   0
+    1793                    
+    1794 000029d0           PBLOWWS                         ;PORSCHE WINDSHIELD BLOWOUT
+    1795 000029d0 00000d80"         .LONG   PORSHAT1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   43
+
+    1796 000029f0     0007          .WORD   7
+    1797 00002a00 00000e00"         .LONG   PORSHAT2
+    1798 00002a20     0006          .WORD   6
+    1799 00002a30 00000e80"         .LONG   PORSHAT3
+    1800 00002a50     0006          .WORD   6
+    1801 00002a60 00000f00"         .LONG   PORSHAT4
+    1802 00002a80     0005          .WORD   5
+    1803 00002a90 00000f80"         .LONG   PORSHAT5
+    1804 00002ab0     0004          .WORD   4
+    1805 00002ac0                   LONGNULL
+    1806                    
+    1807 00002ae0           PFSPIN                          ;PORSCHE FORWARD 180 UNFLIPPED  
+    1808 00002ae0 00000a80"         .LONG   PORFORS60
+    1809 00002b00     0007          .WORD   7
+    1810 00002b10 00000b00"         .LONG   PORFORS90
+    1811 00002b30     0006          .WORD   6
+    1812 00002b40 00000a80"         .LONG   PORFORS60
+    1813 00002b60     4007          .WORD   FLIPBITS|7,M_FLIPH
+    1814 00002b80 00000c80"         .LONG   PORSCHE1
+    1815 00002ba0     0002          .WORD   2
+    1816 00002bb0 00000000          .LONG   0
+    1817                    
+    1818 00002bd0           PFSPINF                         ;PORSCHE FORWARD 180, FLIPPED   
+    1819 00002bd0 00000a80"         .LONG   PORFORS60
+    1820 00002bf0     0007          .WORD   7
+    1821 00002c00 00000b00"         .LONG   PORFORS90
+    1822 00002c20     0006          .WORD   6
+    1823 00002c30 00000a80"         .LONG   PORFORS60
+    1824 00002c50     4007          .WORD   FLIPBITS|7,0
+    1825 00002c70 00000c80"         .LONG   PORSCHE1
+    1826 00002c90     0002          .WORD   2
+    1827 00002ca0 00000000          .LONG   0
+    1828                    
+    1829 00002cc0           PRSPIN                          ;PORSCHE REVERSE 180 UNFLIPPED  
+    1830 00002cc0 00000b80"         .LONG   PORREVS60
+    1831 00002ce0     0007          .WORD   7
+    1832 00002cf0 00000c00"         .LONG   PORREVS90
+    1833 00002d10     0006          .WORD   6
+    1834 00002d20 00000b80"         .LONG   PORREVS60
+    1835 00002d40     4007          .WORD   FLIPBITS|7,M_FLIPH
+    1836 00002d60 00000c80"         .LONG   PORSCHE1
+    1837 00002d80     0002          .WORD   2
+    1838 00002d90 00000000          .LONG   0
+    1839                    
+    1840 00002db0           PRSPINF                         ;PORSCHE REVERSE 180, FLIPPED
+    1841 00002db0 00000b80"         .LONG   PORREVS60
+    1842 00002dd0     0007          .WORD   7
+    1843 00002de0 00000c00"         .LONG   PORREVS90
+    1844 00002e00     0006          .WORD   6
+    1845 00002e10 00000b80"         .LONG   PORREVS60
+    1846 00002e30     4007          .WORD   FLIPBITS|7,0
+    1847 00002e50 00000c80"         .LONG   PORSCHE1
+    1848 00002e70     0002          .WORD   2
+    1849 00002e80 00000000          .LONG   0
+    1850                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   44
+
+    1851 00002ea0           CDOORA                          ;SPINNING CAR DOOR ANIMATION
+    1852 00002ea0 00000000!         .LONG   CDOOR1
+    1853 00002ec0     2005          .WORD   5|NEWPALET
+    1854 00002ed0 00000000!         .LONG   PORSHPAL
+    1855 00002ef0 00000000!         .LONG   CDOOR2
+    1856 00002f10     0005          .WORD   5
+    1857 00002f20 00000000!         .LONG   CDOOR3
+    1858 00002f40     0005          .WORD   5
+    1859 00002f50 00000000!         .LONG   CDOOR4
+    1860 00002f70     0005          .WORD   5
+    1861 00002f80 00000000!         .LONG   CDOOR5
+    1862 00002fa0     0005          .WORD   5
+    1863 00002fb0 00000000!         .LONG   CDOOR1
+    1864 00002fd0     0005          .WORD   5
+    1865 00002fe0 00000000!         .LONG   CDOOR2
+    1866 00003000     0005          .WORD   5
+    1867 00003010 00000000!         .LONG   CDOOR3
+    1868 00003030     0005          .WORD   5
+    1869 00003040 00000000!         .LONG   CDOOR4
+    1870 00003060     0005          .WORD   5
+    1871 00003070 00000000!         .LONG   CDOOR5
+    1872 00003090     0005          .WORD   5
+    1873 000030a0                   LONGNULL
+    1874                    
+    1875 000030c0           CSHRAPA                                 ;PORSCHE SHRAPNEL ANIMATION
+    1876 000030c0 00000000!         .LONG   CSHRAP1
+    1877 000030e0     2005          .WORD   5|NEWPALET
+    1878 000030f0 00000000!         .LONG   PORSHPAL
+    1879 00003110 00000000!         .LONG   CSHRAP2
+    1880 00003130     0005          .WORD   5
+    1881 00003140 00000000!         .LONG   CSHRAP3
+    1882 00003160     0005          .WORD   5
+    1883 00003170 00000000!         .LONG   CSHRAP4
+    1884 00003190     0005          .WORD   5
+    1885 000031a0 00000000!         .LONG   CSHRAP5
+    1886 000031c0     0005          .WORD   5
+    1887 000031d0 00000000!         .LONG   CSHRAP1
+    1888 000031f0     0005          .WORD   5
+    1889 00003200 00000000!         .LONG   CSHRAP2
+    1890 00003220     0005          .WORD   5
+    1891 00003230 00000000!         .LONG   CSHRAP3
+    1892 00003250     0005          .WORD   5
+    1893 00003260 00000000!         .LONG   CSHRAP4
+    1894 00003280     0005          .WORD   5
+    1895 00003290 00000000!         .LONG   CSHRAP5
+    1896 000032b0     0005          .WORD   5
+    1897 000032c0 00000000!         .LONG   CSHRAP1
+    1898 000032e0     0005          .WORD   5
+    1899 000032f0 00000000!         .LONG   CSHRAP2
+    1900 00003310     0005          .WORD   5
+    1901 00003320 00000000!         .LONG   CSHRAP3
+    1902 00003340     0005          .WORD   5
+    1903 00003350 00000000!         .LONG   CSHRAP4
+    1904 00003370     0005          .WORD   5
+    1905 00003380 00000000!         .LONG   CSHRAP5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   45
+
+    1906 000033a0     0005          .WORD   5
+    1907 000033b0                   LONGNULL
+    1908                    
+    1909 000033d0           CSHRAPB                                 ;PORSCHE FRAGMENT ANIMATION
+    1910 000033d0 00000000!         .LONG   CFRAG1
+    1911 000033f0     2005          .WORD   5|NEWPALET
+    1912 00003400 00000000!         .LONG   PORSHPAL
+    1913 00003420 00000000!         .LONG   CFRAG2
+    1914 00003440     0005          .WORD   5
+    1915 00003450 00000000!         .LONG   CFRAG3
+    1916 00003470     0005          .WORD   5
+    1917 00003480 00000000!         .LONG   CFRAG4
+    1918 000034a0     0005          .WORD   5
+    1919 000034b0 00000000!         .LONG   CFRAG5
+    1920 000034d0     0005          .WORD   5
+    1921 000034e0 00000000!         .LONG   CFRAG1
+    1922 00003500     0005          .WORD   5
+    1923 00003510 00000000!         .LONG   CFRAG2
+    1924 00003530     0005          .WORD   5
+    1925 00003540 00000000!         .LONG   CFRAG3
+    1926 00003560     0005          .WORD   5
+    1927 00003570 00000000!         .LONG   CFRAG4
+    1928 00003590     0005          .WORD   5
+    1929 000035a0 00000000!         .LONG   CFRAG5
+    1930 000035c0     0005          .WORD   5
+    1931 000035d0 00000000!         .LONG   CFRAG1
+    1932 000035f0     0005          .WORD   5
+    1933 00003600 00000000!         .LONG   CFRAG2
+    1934 00003620     0005          .WORD   5
+    1935 00003630 00000000!         .LONG   CFRAG3
+    1936 00003650     0005          .WORD   5
+    1937 00003660 00000000!         .LONG   CFRAG4
+    1938 00003680     0005          .WORD   5
+    1939 00003690 00000000!         .LONG   CFRAG5
+    1940 000036b0     0005          .WORD   5
+    1941 000036c0                   LONGNULL
+    1942                    
+    1943                    *
+    1944                    *THE INTRO PORSCHE INITIALIZATION TABLE
+    1945 000036e0           PORINITI
+    1946 000036e0 00000000          .LONG   0,0,256*10000H,200*Y
+    1947 00003760     0000          .WORD   0,0
+    1948 00003780 00000c80"         .LONG   PORSCHE1,PORZ,PORCOLL
+    1949 000037e0     8002          .WORD   DMAWNZ,INTR1OID|CBODYID
+    1950 00003800 00000000          .LONG   0
+    1951                    
+    1952 00003820 00000000          .LONG   0,0,256*10000H,200*Y
+    1953 000038a0     0000          .WORD   0,0
+    1954 000038c0 00000a00"         .LONG   POR1WIN1,PORZ,PWINCOL
+    1955 00003920     8002          .WORD   DMAWNZ,INTR1OID|WSHLDID
+    1956 00003940 00000000          .LONG   0
+    1957                    
+    1958 00003960 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP2
+    1959                    
+    1960 00003980 00000000          .LONG   0,0,256*10000H,200*Y
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   46
+
+    1961 00003a00     0000          .WORD   0,0
+    1962 00003a20 00000400"         .LONG   PORWHL1F,PORWHLZ,PWHLCOL
+    1963 00003a80     8002          .WORD   DMAWNZ,INTR1OID|FTIREID
+    1964 00003aa0 00000000          .LONG   0
+    1965                    
+    1966 00003ac0 00000000          .LONG   0,0,256*10000H,200*Y
+    1967 00003b40     0000          .WORD   0,0
+    1968 00003b60 00000700"         .LONG   PORWHL3R,PORWHLZ,PWHLCOL
+    1969 00003bc0     8002          .WORD   DMAWNZ,INTR1OID|RTIREID
+    1970 00003be0 00000000          .LONG   0
+    1971                    
+    1972 00003c00 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP5
+    1973 00003c20 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP6
+    1974 00003c40 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP7
+    1975                    
+    1976 00003c60 00000000          .LONG   0,0,256*10000H,200*Y            ;ETEMP8 IS PASSENGER
+    1977 00003ce0     0000          .WORD   0,0
+    1978 00003d00 00000000!         .LONG   jtpassen1,PZSIZ,DUMCOLL
+    1979 00003d60     8002          .WORD   DMAWNZ,P1PLACE
+    1980 00003d80 00000000          .LONG   0
+    1981                    
+    1982 00003da0 00000000          .LONG   0,0,256*10000H,200*Y
+    1983 00003e20     0000          .WORD   0,0
+    1984 00003e40 00000000!         .LONG   ytdrive1,PZSIZ,DUMCOLL
+    1985 00003ea0     8002          .WORD   DMAWNZ,P2PLACE
+    1986 00003ec0 00000000          .LONG   0
+    1987                    
+    1988                    *
+    1989                    *THE PORSCHE TRANSPORT PLAYER 1
+    1990 00003ee0           PORTRAN1
+    1991 00003ee0 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    1992 00003f60     0000          .WORD   0,0
+    1993 00003f80 00000c80"         .LONG   PORSCHE1,PORZ,PTCOLL
+    1994 00003fe0     8002          .WORD   DMAWNZ,CSTR1OID|CBODYID
+    1995 00004000 00000000          .LONG   0
+    1996                    
+    1997 00004020 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    1998 000040a0     0000          .WORD   0,0
+    1999 000040c0 00000a00"         .LONG   POR1WIN1,PORZ,PWINCOL
+    2000 00004120     8002          .WORD   DMAWNZ,CSTR1OID|WSHLDID
+    2001 00004140 00000000          .LONG   0
+    2002                    
+    2003 00004160 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP2
+    2004                    
+    2005 00004180 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2006 00004200     0000          .WORD   0,0
+    2007 00004220 00000400"         .LONG   PORWHL1F,PORWHLZ,PWHLCOL
+    2008 00004280     8002          .WORD   DMAWNZ,CSTR1OID|FTIREID
+    2009 000042a0 00000000          .LONG   0
+    2010                    
+    2011 000042c0 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2012 00004340     0000          .WORD   0,0
+    2013 00004360 00000700"         .LONG   PORWHL3R,PORWHLZ,PWHLCOL
+    2014 000043c0     8002          .WORD   DMAWNZ,CSTR1OID|RTIREID
+    2015 000043e0 00000000          .LONG   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   47
+
+    2016                    
+    2017 00004400 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP5
+    2018 00004420 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP6
+    2019 00004440 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP7
+    2020 00004460 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP8
+    2021                    
+    2022 00004480 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2023 00004500     0000          .WORD   0,0
+    2024 00004520 00000000!         .LONG   jtdrive1,PZSIZ,DUMCOLL
+    2025 00004580     8002          .WORD   DMAWNZ,P1PLACE
+    2026 000045a0 00000000          .LONG   0
+    2027                    
+    2028                    *
+    2029                    *THE PORSCHE TRANSPORT PLAYER 2
+    2030 000045c0           PORTRAN2
+    2031 000045c0 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2032 00004640     0000          .WORD   0,0
+    2033 00004660 00000c80"         .LONG   PORSCHE1,PORZ,PTCOLL
+    2034 000046c0     8002          .WORD   DMAWNZ,CSTR1OID|CBODYID
+    2035 000046e0 00000000          .LONG   0
+    2036                    
+    2037 00004700 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2038 00004780     0000          .WORD   0,0
+    2039 000047a0 00000a00"         .LONG   POR1WIN1,PORZ,PWINCOL
+    2040 00004800     8002          .WORD   DMAWNZ,CSTR1OID|WSHLDID
+    2041 00004820 00000000          .LONG   0
+    2042                    
+    2043 00004840 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP2
+    2044                    
+    2045 00004860 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2046 000048e0     0000          .WORD   0,0
+    2047 00004900 00000400"         .LONG   PORWHL1F,PORWHLZ,PWHLCOL
+    2048 00004960     8002          .WORD   DMAWNZ,CSTR1OID|FTIREID
+    2049 00004980 00000000          .LONG   0
+    2050                    
+    2051 000049a0 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2052 00004a20     0000          .WORD   0,0
+    2053 00004a40 00000700"         .LONG   PORWHL3R,PORWHLZ,PWHLCOL
+    2054 00004aa0     8002          .WORD   DMAWNZ,CSTR1OID|RTIREID
+    2055 00004ac0 00000000          .LONG   0
+    2056                    
+    2057 00004ae0 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP5
+    2058 00004b00 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP6
+    2059 00004b20 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP7
+    2060 00004b40 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP8
+    2061                    
+    2062 00004b60 00000000          .LONG   0,0,PORTRANX*10000H,PORTRANY*Y
+    2063 00004be0     0000          .WORD   0,0
+    2064 00004c00 00000000!         .LONG   ytdrive1,PZSIZ,DUMCOLL
+    2065 00004c60     8002          .WORD   DMAWNZ,P2PLACE
+    2066 00004c80 00000000          .LONG   0
+    2067                    *
+    2068                    *THE DRIVEABLE PORSCHE INIT TABLES
+    2069 00004ca0           PORDINIT
+    2070 00004ca0 00000000          .LONG   0,0,PORDIXR*10000H,PORTRANY*Y
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:04 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- THE PORSCHE >>>                                  PAGE   48
+
+    2071 00004d20     0000          .WORD   0,0
+    2072 00004d40 00000c80"         .LONG   PORSCHE1,PORZ,PDRVCOLL
+    2073 00004da0     8002          .WORD   DMAWNZ,TRAN1OID|CBODYID
+    2074 00004dc0 00000000!         .LONG   PORSBLIP
+    2075                    
+    2076 00004de0 00000000          .LONG   0,0,PORDIXR*10000H,PORTRANY*Y
+    2077 00004e60     0000          .WORD   0,0
+    2078 00004e80 00000a00"         .LONG   POR1WIN1,PORZ,PWINCOL
+    2079 00004ee0     8002          .WORD   DMAWNZ,TRAN1OID|WSHLDID
+    2080 00004f00 00000000          .LONG   0
+    2081                    
+    2082 00004f20 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP2
+    2083                    
+    2084 00004f40 00000000          .LONG   0,0,PORDIXR*10000H,PORTRANY*Y
+    2085 00004fc0     0000          .WORD   0,0
+    2086 00004fe0 00000400"         .LONG   PORWHL1F,PORWHLZ,DUMCOLL
+    2087 00005040     8002          .WORD   DMAWNZ,TRAN1OID|FTIREID
+    2088 00005060 00000000          .LONG   0
+    2089                    
+    2090 00005080 00000000          .LONG   0,0,PORDIXR*10000H,PORTRANY*Y
+    2091 00005100     0000          .WORD   0,0
+    2092 00005120 00000680"         .LONG   PORWHL2R,PORWHLZ,DUMCOLL
+    2093 00005180     8002          .WORD   DMAWNZ,TRAN1OID|RTIREID
+    2094 000051a0 00000000          .LONG   0
+    2095                    
+    2096 000051c0 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP5
+    2097 000051e0 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP6
+    2098 00005200 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP7
+    2099 00005220 7fff7fff          .LONG   7FFF7FFFH                       ;SKIP ETEMP8
+    2100                    
+    2101 00005240 7fff7fff          .LONG   7FFF7FFFH                       ;YOU PROVIDE THE DRIVER
+    2102                    
+    2103                            .END
+
+ No Errors,  No Warnings

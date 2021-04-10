@@ -38,9 +38,9 @@ BGNDPAL.OBJ
 NARCL.REL
 NARCE.REL
 NARCT.REL
-\video\MPROC.OBJ		/*MULTI-TASKER*/
-\video\NDSP1.OBJ		/*IMAGE HANDLER*/
-\video\GSPSND.OBJ		/*SOUND PROCESSOR*/
+video\MPROC.OBJ		/*MULTI-TASKER*/
+video\NDSP1.OBJ		/*IMAGE HANDLER*/
+video\GSPSND.OBJ		/*SOUND PROCESSOR*/
 
 MEMORY        			/* set up memory for sdb board */
 {

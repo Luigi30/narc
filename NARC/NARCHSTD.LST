@@ -1,0 +1,2116 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCHSTD.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L,T
+       5                            .MNOLIST
+       6                    **************************************************************************
+       7                    *                                                                        *
+       8                    *          NARC (R)                                                      *
+       9                    *                                                                        *
+      10                    *          Copyright 1988 Williams Electronics Games Inc.                *
+      11                    *          All Rights Reserved                                           *
+      12                    *                                                                        *
+      13                    **************************************************************************
+      14                    *                                                                        *
+      15                    *          HIGH SCORE TABLE HANDLER                                      *
+      16                    *                                                                        *
+      17                    *          Larry DeMar    October 4, 1988                                *
+      18                    *                                                                        *
+      19                    **************************************************************************
+      20                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      21                            .INCLUDE        "\video\DISPEQU.ASM"
+      22                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      23                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      24                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      25                            .INCLUDE        "IMGTBL.GLO"            ;GLOBALS
+      26                    *       LOCAL STUFF
+      27                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      28                             .INCLUDE        "NARCLEQU.ASM"             ;LINKY EQUATES
+      29                    *
+      30                    *        IN THIS MODULE
+      31                    *
+      32                             .GLOBAL         GET_HSCR
+      33                             .GLOBAL         RC_BYTEI
+      34                             .GLOBAL         RC_BYTE
+      35                             .GLOBAL         RC_WORD
+      36                             .GLOBAL         RC_LONG
+      37                             .GLOBAL         RC_LONGI
+      38                             .GLOBAL         WC_BYTE
+      39                             .GLOBAL         WC_BYTEI
+      40                             .GLOBAL         WC_WORD
+      41                             .GLOBAL         WC_WORDI
+      42                             .GLOBAL         WC_LONG
+      43                             .GLOBAL         WC_LONGI
+      44                             .GLOBAL         PT_ENTRY
+      45                             .GLOBAL         INIT_TB
+      46                             .GLOBAL         INIT_TAB    ;GEORGES POWER UP ENTRY
+      47                             .GLOBAL         P_FORK 
+      48                             .GLOBAL         VAL_TAB
+      49                             .GLOBAL         ROM_PTRS
+      50                             .GLOBAL         ALL_TAB
+      51                             .GLOBAL         TOD_TAB
+      52                             .GLOBAL         E_GAME
+      53                             .GLOBAL         ISHSTD
+      54                             .GLOBAL         SET_PAGE
+      55                             .GLOBAL         A2_CHECK
+      56                             .GLOBAL         DEC_HSR,INIT_HSR,GET_HSC
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    2
+
+      57                    *
+      58                    *        OTHER MODULES
+      59                    *
+      60                    *
+      61                    *        INITAL ENTRY MODULE
+      62                    *
+      63                             .GLOBAL         E_INITS, P1_INITS, P2_INITS
+      64                             .GLOBAL         SPRAYS, KIL_SPRY
+      65                    
+      66                    *
+      67                    *        SPRAY PAINT MODULE
+      68                    *
+      69                             .GLOBAL         BINBCD
+      70                             .GLOBAL         SPR_GPAL, SPR_FPAL 
+      71                    *
+      72                    *        NARCHELP
+      73                    *
+      74                             .GLOBAL         DEF_PAGE,GET_ADJ
+      75                    
+      76 00000000                    .TEXT
+      77                    
+      78                    **************************************************************************
+      79                    *                                                                        *
+      80                    *          HIGH SCORE TABLE DEFINITIONS                                  *
+      81                    *                                                                        *
+      82                    **************************************************************************
+      83                    
+      84 00000000           ALL_TAB
+      85 00000000 01400000           .LONG   ALL_TIME_ORIGIN           ;LOCATION OF TABLE
+      86 00000020     001e           .WORD   ALL_TIME_ENTRIES-1        ;NUMBER IN THE TABLE (DON'T COUNT ZERO FILLER)
+      87 00000030     0014           .WORD   ALL_TIME_VISIBLE          ;# VISIBLE (SHOW 20 ALL TIME)
+      88 00000040     0080           .WORD   ALL_TIME_SELECT           ;BITS TO SELECT IT
+      89 00000050 00004330'          .LONG   ALL_TIME_ROM_TABLE        ;ROM IMAGE OF TABLE
+      90 00000070     0006           .WORD   ALL_TIME_ENTRIES/5        ;RESET TABLE IF 1/5 OR MORE BAD
+      91                    
+      92 00000080           TOD_TAB
+      93 00000080 01400000           .LONG   TODAYS_ORIGIN           ;LOCATION OF TABLE
+      94 000000a0     0008           .WORD   TODAYS_ENTRIES-1        ;NUMBER IN THE TABLE (DON'T COUNT ZERO FILLER)
+      95 000000b0     0005           .WORD   TODAYS_VISIBLE          ;# VISIBLE (SHOW 20 ALL TIME)
+      96 000000c0     0000           .WORD   TODAYS_SELECT           ;BITS TO SELECT IT
+      97 000000d0 00004af0'          .LONG   TODAYS_ROM_TABLE        ;ROM IMAGE OF TABLE
+      98 000000f0     0001           .WORD   TODAYS_ENTRIES/5        ;RESET TABLE IF 1/5 OR MORE BAD
+      99                    
+     100 00000100           P_FORK
+     101 00000100     098f           MMTM    SP,A1
+         00000110     4000  
+     102 00000120     b5a1           MOVE    *A13(PROCID),A1,W    ;PASS OUR ID TO FORKED PROCESS
+         00000130     0020  
+     103 00000140     0d5f           CALLA   GETPRC               ;MAKE THE PROCESS
+         00000150 00000000! 
+     104 00000170     09af          MMFM    SP,A1
+         00000180     0002  
+     105 00000190     0960          RETS
+     106                    
+     107                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    3
+
+     108                    *                                                                        *
+     109                    *          AUTO HIGH SCORE TABLE RESET HANDLING                          *
+     110                    *                                                                        *
+     111                    **************************************************************************
+     112                    *                                                                        *
+     113                    *          DEC_HSR                                                       *
+     114                    *                                                                        *
+     115                    *          THIS IS CALLED WITH EACH START OR CONTINUE FOR                *
+     116                    *          A PLAYER.  IT REMOVES 1 FROM THE HSTD COUNTER UNLESS          *
+     117                    *          ITS ALREADY SITTING AT ZERO.                                  *
+     118                    *                                                                        *
+     119                    **************************************************************************
+     120 000001a0     098f  DEC_HSR  MMTM    SP,A0
+         000001b0     8000  
+     121 000001c0     0d3f           CALLR   GET_HSC         ;THIS IS EASY...GET THE COUNTER
+         000001d0     0033  
+     122 000001e0     ca03           JRZ     DECHX           ;ITS ZERO....NO ACTION.
+     123 000001f0     1420           DEC     A0              ;REMOVE A TICK
+     124 00000200     0d3f           CALLR   PUT_HSC         ;PUT IT BACK JAK
+         00000210     001d  
+     125 00000220     09af  DECHX   MMFM    SP,A0
+         00000230     0001  
+     126 00000240     0960          RETS
+     127                    
+     128                    **************************************************************************
+     129                    *                                                                        *
+     130                    *          DELAY_HSRESET                                                 *
+     131                    *                                                                        *
+     132                    *          THIS IS CALLED WHEN A NEW ENTRY IS MADE IN THE ALL TIME       *
+     133                    *          HIGH SCORE TABLE.  IF WE'RE CLOSE TO A HIGH SCORE             *
+     134                    *          RESET, WE PUT IT OFF AWHILE SO HE CAN SHOW HIS FRIENDS        *
+     135                    *          FOR A FEW DAYS.                                               *
+     136                    *                                                                        *
+     137                    **************************************************************************
+     138              02ee  HS_MIN   EQU     750             ;ALWAYS 750 PLAYS BEFORE REMOVING A FRESH
+     139                    *                                ;NAME.
+     140 00000250           DELAY_HSRESET
+     141 00000250     098f           MMTM    SP,A0
+         00000260     8000  
+     142 00000270     0d3f           CALLR   GET_HSC         ;THIS IS EASY...GET THE COUNTER
+         00000280     0028  
+     143 00000290     0b40           CMPI    HS_MIN,A0       ;IS IT TOO LOW
+         000002a0     fd11  
+     144 000002b0     c904           JRHS    DHX             ;NOPE...NO ACTION
+     145                    
+     146 000002c0     09c0           MOVI    HS_MIN,A0       ;STOP THE RESET!
+         000002d0     02ee  
+     147 000002e0     0d3f           CALLR   PUT_HSC         ;THIS MANY PLAYS TILL RESET!
+         000002f0     000f  
+     148 00000300     09af  DHX     MMFM    SP,A0
+         00000310     0001  
+     149 00000320     0960          RETS
+     150                    
+     151                    **************************************************************************
+     152                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    4
+
+     153                    *          INIT_HSR                                                      *
+     154                    *                                                                        *
+     155                    *          THIS IS CALLED TO INITIALIZE THE HIGH SCORE RESET             *
+     156                    *          COUNTER TO ITS ADJUSTED VALUE.                                *
+     157                    *                                                                        *
+     158                    **************************************************************************
+     159 00000330     098f  INIT_HSR MMTM    SP,A0
+         00000340     8000  
+     160 00000350     09c0           MOVI    ADJHSRES,A0
+         00000360     000d  
+     161 00000370     0d5f           CALLA   GET_ADJ              ;GET THE ADJUSTED VALUE
+         00000380 00000000! 
+     162 000003a0     0d3f           CALLR   PUT_HSC              ;SET IT TO THIS VALUE
+         000003b0     0003  
+     163 000003c0     09af          MMFM    SP,A0
+         000003d0     0001  
+     164 000003e0     0960          RETS
+     165                    
+     166                    **************************************************************************
+     167                    *                                                                        *
+     168                    *          PUT_HSC                                                       *
+     169                    *                                                                        *
+     170                    *          THIS IS CALLED TO SET THE HIGH SCORE RESET COUNTER            *
+     171                    *          TO THE VALUE IN A0.                                           *
+     172                    *                                                                        *
+     173                    **************************************************************************
+     174 000003f0     098f  PUT_HSC  MMTM    SP,A7,A0
+         00000400     8100  
+     175 00000410     0d3f           CALLR   HSR_PAGE             ;HIGH SCORE PAGE
+         00000420     002b  
+     176                    
+     177 00000430     09e7           MOVI    HRESET_COUNTER,A7    ;POINT AT 
+         00000440 014011a0  
+     178 00000460     0d3f           CALLR   WC_LONGI             ;WRITE OUR PARAMETER
+         00000470     03e6  
+     179 00000480     03e0           NOT     A0                   ;NEGATE IT.
+     180 00000490     0d3f           CALLR   WC_LONG              ;AND WRITE IN SUBSEQUENT SPOT.
+         000004a0     03d7  
+     181 000004b0     0d5f           CALLA   DEF_PAGE             ;FLIP PAGE
+         000004c0 00000000! 
+     182 000004e0     09af          MMFM    SP,A7,A0             ;AND RETURN
+         000004f0     0081  
+     183 00000500     0960          RETS
+     184                    
+     185                    **************************************************************************
+     186                    *                                                                        *
+     187                    *          GET_HSC                                                       *
+     188                    *                                                                        *
+     189                    *          THIS IS CALLED TO FETCH THE HIGH SCORE COUNTER IN A0.         *
+     190                    *          IF IT IS INVALID, IT WILL IMMEDIATELY BE RESET TO THE         *
+     191                    *          ADJUSTED VALUE AND THIS IS WHAT WILL BE RETURNED              *
+     192                    *          IN A0.           .EQ. MEANS ITS AT ZERO!                      *
+     193                    *                                                                        *
+     194                    **************************************************************************
+     195 00000510     098f  GET_HSC  MMTM    SP,A7,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    5
+
+         00000520     4100  
+     196 00000530     0d3f           CALLR   HSR_PAGE             ;POINT PAGE AT HSR
+         00000540     0019  
+     197                    
+     198 00000550     09e7           MOVI    HRESET_COUNTER,A7    ;POINT AT 
+         00000560 014011a0  
+     199 00000580     0d3f           CALLR   RC_LONGI             ;READ THE VALUE
+         00000590     03ac  
+     200 000005a0     4c01           MOVE    A0,A1                ;STASH IT
+     201 000005b0     0d3f           CALLR   RC_LONG              ;READ VERIFIER
+         000005c0     0397  
+     202 000005d0     03e0           NOT     A0                   ;SEE IF ITS VALID
+     203 000005e0     4801           CMP     A0,A1
+     204 000005f0     ca07           JRZ     GET_HSCX             ;IT IS....RETURN IT.
+     205                    
+     206 00000600     0d3f           CALLR   INIT_HSR             ;REFRESH IT WITH FACTORY VALUE
+         00000610     ffd1  
+     207                    *
+     208                    *        NOW RETURN THE FACTORY VALUE IN CASE IT DIDN'T TAKE
+     209                    *
+     210 00000620     09c0           MOVI    ADJHSRES,A0
+         00000630     000d  
+     211 00000640     0d5f           CALLA   GET_ADJ              ;GET THE ADJUSTED VALUE
+         00000650 00000000! 
+     212                    
+     213 00000670     0d5f  GET_HSCX CALLA   DEF_PAGE             ;FLIP PAGE AWAY FROM US
+         00000680 00000000! 
+     214 000006a0     4c00           MOVE    A0,A0                ;SET Z FLAG BASED ON COUNTER
+     215 000006b0     09af          MMFM    SP,A7,A1
+         000006c0     0082  
+     216 000006d0     0960          RETS
+     217                    
+     218 000006e0     098f  HSR_PAGE MMTM    SP,A1
+         000006f0     4000  
+     219 00000700     09c1           MOVI    HSR_SELECT,A1
+         00000710     0040  
+     220 00000720     0d3f           CALLR   SET_PAGE
+         00000730     026f  
+     221 00000740     09af          MMFM    SP,A1
+         00000750     0002  
+     222 00000760     0960          RETS
+     223                    
+     224                    **************************************************************************
+     225                    *                                                                        *
+     226                    *          HIGH LEVEL HSTD ROUTINES                                      *
+     227                    *                                                                        *
+     228                    **************************************************************************
+     229                    
+     230          00f00000  TEN_X    EQU     0F00000H
+     231          00f40000  ONE_O_X  EQU     0F40000H
+     232          00fe0000  ONE_X    EQU     0FE0000H
+     233                    
+     234 00000770           TIMER_TENS
+     235 00000770 00000000           .LONG   0,0,TEN_X,1500000H             ;XV, YV, XP, YP
+     236 000007f0     0000           .WORD   0,30                           ;Z VEL 10....Z POS 0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    6
+
+     237 00000810 000009f0'          .LONG   NO_IMG,1,DUMCOLL               ;IMG, Z SIZE, COLLISION VECT
+     238 00000870     8008           .WORD   DMACNZ,5                       ;WRITE NON-ZERO CONSTANT, OBJECT ID
+     239 00000890 00000000           .LONG   0                              ;NO SCANNER BLIP
+     240                    
+     241 000008b0           TIMER_UNITS
+     242 000008b0 00000000           .LONG   0,0,ONE_X,1500000H             ;XV, YV, XP, YP
+     243 00000930     0000           .WORD   0,30                           ;Z VEL 10....Z POS 0
+     244 00000950 000009f0'          .LONG   NO_IMG,1,DUMCOLL               ;IMG, Z SIZE, COLLISION VECT
+     245 000009b0     8008           .WORD   DMACNZ,5                       ;WRITE NON-ZERO CONSTANT, OBJECT ID
+     246 000009d0 00000000           .LONG   0                              ;NO SCANNER BLIP
+     247                    
+     248 000009f0           NO_IMG
+     249 000009f0     0004           .WORD   4,4,0,0                        ;WIDTH, HEIGHT, OFFSET,OFFSET
+     250 00000a30 02000000           .LONG   IROM,NARCS                     ;SOURCE, PALETTE
+     251                    
+     252                    **************************************************************************
+     253                    *                                                                        *
+     254                    *          E_GAME                                                        *
+     255                    *                                                                        *
+     256                    *          THIS PROCESS IS GIVEN CONTROL AT GAME OVER.  ITS              *
+     257                    *          JOB IS TO GET INITIALS FROM THE PLAYER IF NECESSARY.          *
+     258                    *                                                                        *
+     259                    **************************************************************************
+     260 00000a70           E_GAME   SLEEP   1                         ;GET FRESH TIMER FOR HEAVY WORK COMING!
+     261 00000ab0     0d5f           CALLA   SPR_GPAL                  ;GET GLOBAL PALETTE FOR SPRAYER
+         00000ac0 00000000! 
+     262                    
+     263 00000ae0     5621           CLR     A1
+     264 00000af0     0581           MOVE    A1,@SPRAYS,W              ;NOBODY IS SPRAYING YET!
+         00000b00 00000000! 
+     265                    
+     266 00000b20     09c1           MOVI    END_GAME_PID,A1
+         00000b30     0abc  
+     267 00000b40     b02d           MOVE    A1,*A13(PROCID),W         ;SET OUR ID TO SOMETHING UNIQUE
+         00000b50     0020  
+     268                    
+     269 00000b60     07a8           MOVE    @P2DATA+PSCORE,A8,L       ;PASS THE SCORE TO THE PROCESS
+         00000b70 000001a0! 
+     270 00000b90     07aa           MOVE    @P1DATA+PSCORE,A10,L      ;PASS *OTHER* SCORE IN A10
+         00000ba0 000001a0! 
+     271 00000bc0     09e9           MOVI    P2_INITS,A9               ;DATABASE FOR P1
+         00000bd0 00000000! 
+     272 00000bf0     4dab           MOVE    A13,A11                   ;PASS OUR ID IN A11
+     273 00000c00     09e7           MOVI    GET_LET,A7                ;PROCESS NAME
+         00000c10 00001980' 
+     274 00000c30     0d3f           CALLR   P_FORK                    ;START IT
+         00000c40     ff4b  
+     275                    
+     276 00000c50     07a8           MOVE    @P1DATA+PSCORE,A8,L
+         00000c60 000001a0! 
+     277 00000c80     07aa           MOVE    @P2DATA+PSCORE,A10,L      ;PASS *OTHER* SCORE IN A10
+         00000c90 000001a0! 
+     278 00000cb0     09e9           MOVI    P1_INITS,A9
+         00000cc0 00000000! 
+     279 00000ce0     09e7           MOVI    GET_LET,A7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    7
+
+         00000cf0 00001980' 
+     280 00000d10     0d3f           CALLR   P_FORK
+         00000d20     ff3d  
+     281                    *
+     282 00000d30     09c0           MOVI    31,A0                     ;STORE TIMER IN PROCESS AREA
+         00000d40     001f  
+     283 00000d50     b00d           MOVE    A0,*A13(PDATA),W          ;LET THE GUY ABOVE US WATCH THIS!
+         00000d60     0060  
+     284                    *
+     285                    *        NOW WE'VE STARTED EM.......SEE IF ANYONE IS HANGING AROUND?
+     286                    *
+     287 00000d70                    SLEEP   8                         ;GIVE EM STARTUP TIME
+     288 00000db0     0d3f           CALLR   HSTD_P                    ;ANYONE ALIVE?
+         00000dc0     00ae  
+     289 00000dd0     ca37           JRZ     HSTD_DONE                 ;NOPE......EXIT
+     290                    *
+     291                    *        THEY'RE RUNNING.....LETS PUT UP A TIMER!
+     292                    *
+     293 00000de0     0d3f           CALLR   SETUP_TIMER
+         00000df0     0041  
+     294                    
+     295 00000e00           WAIT_FOR_INIT_PS
+     296 00000e00     0d3f           CALLR   BLANK_TIMER               ;BLANK OUT THE CURRENT NUMBER
+         00000e10     0082  
+     297 00000e20                    SLEEP   2                         ;LET THE BLINKING HIT
+     298 00000e60     b5a0           MOVE    *A13(PDATA),A0,W          ;GET TIME IN A0
+         00000e70     0060  
+     299 00000e80     ca08           JREQ    SLEEP_TICK                ;KEEP OFF AT REAL ZERO
+     300 00000e90     1420           DEC     A0                        ;SHOW 1 LESS TO MAKE ZERO SHOW
+     301                    
+     302 00000ea0     0d5f           CALLA   BINBCD                    ;CONVERT TO BCD
+         00000eb0 00000000! 
+     303 00000ed0     0d3f           CALLR   UPDATE_TIMER              ;AND DISPLAY IT!
+         00000ee0     0052  
+     304                    
+     305 00000ef0     09c8           MOVI    6,A8                      ;6 TICKS PER TOCK
+         00000f00     0006  
+     306 00000f10           SLEEP_TICK
+     307 00000f10                    SLEEP   8
+     308 00000f50     0d3f           CALLR   HSTD_P                    ;ANYONE ALIVE?
+         00000f60     0094  
+     309 00000f70     ca08           JRZ     CLEANUP_TIMER             ;NOPE....WE'RE DONE!
+     310 00000f80     3d08           DSJS    A8,SLEEP_TICK
+     311                    
+     312 00000f90     b5a0           MOVE    *A13(PDATA),A0,W          ;GET TIMER
+         00000fa0     0060  
+     313 00000fb0     cae4           JREQ    WAIT_FOR_INIT_PS          ;OUT OF TIME...LEAVE IT
+     314                    
+     315 00000fc0     1420           DEC     A0
+     316 00000fd0     b00d           MOVE    A0,*A13(PDATA),W          ;PUT BACK
+         00000fe0     0060  
+     317 00000ff0     c0e0           JRUC    WAIT_FOR_INIT_PS
+     318                    
+     319 00001000           CLEANUP_TIMER
+     320 00001000     0d3f           CALLR   BLANK_TIMER               ;BLANK OUT THE TIMER
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    8
+
+         00001010     0062  
+     321 00001020                    SLEEP   2                         ;LET IT GO BLANK
+     322                    
+     323 00001060     4d40           MOVE    A10,A0
+     324 00001070     ca06           JRZ     TENS_ZAPPED
+     325                    
+     326 00001080     0d5f           CALLA   DELPAL                    ;TRASH IT!
+         00001090 00000000! 
+     327 000010b0     0d5f           CALLA   DELOBJ
+         000010c0 00000000! 
+     328                    
+     329 000010e0           TENS_ZAPPED
+     330 000010e0     4d20           MOVE    A9,A0
+     331 000010f0     0d5f           CALLA   DELPAL                    ;TRASH IT!
+         00001100 00000000! 
+     332 00001120     0d5f           CALLA   DELOBJ
+         00001130 00000000! 
+     333                    
+     334 00001150           HSTD_DONE
+     335 00001150                    SOUND1  KIL_SPRY                  ;TURN OFF ANY REMNANT SPRAY SOUND
+     336 000011b0     0d5f           CALLA   SPR_FPAL                  ;FREE UP THE GLOBAL SPRAYER PALETTE
+         000011c0 00000000! 
+     337 000011e0                    RETP                              ;THEY'RE DONE..RETURN
+     338                    
+     339              f5f5  TIMER_COLOR      EQU     0F5F5H            ;CONSTANT USED FOR TIMER
+     340                    
+     341 00001210           SETUP_TIMER
+     342 00001210     09ee           MOVI    TIMER_UNITS,A14
+         00001220 000008b0' 
+     343 00001240     0d3f           CALLR   GET_DIGIT
+         00001250     0008  
+     344 00001260     4c09           MOVE    A0,A9                     ;KEEP UNITS IN A9
+     345                    
+     346 00001270     09ee           MOVI    TIMER_TENS,A14
+         00001280 00000770' 
+     347 000012a0     0d3f           CALLR   GET_DIGIT
+         000012b0     0002  
+     348 000012c0     4c0a           MOVE    A0,A10                    ;THEY'RE SET!
+     349 000012d0     0960           RETS
+     350                    
+     351 000012e0           GET_DIGIT
+     352 000012e0     098f           MMTM    SP,A1
+         000012f0     4000  
+     353 00001300     0d5f           CALLA   GPALOBJ                   ;GET THE STUFF
+         00001310 00000000! 
+     354 00001330     0d5f           CALLA   STFOBJ
+         00001340 00000000! 
+     355                    
+     356 00001360     09e1           MOVI    TIMER_COLOR,A1
+         00001370 0000f5f5  
+     357 00001390     b020           MOVE    A1,*A0(OCONST),W
+         000013a0     0170  
+     358                    
+     359 000013b0     0d5f           CALLA   INSOBJ                    ;ITS SET
+         000013c0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE    9
+
+     360 000013e0     09af          MMFM    SP,A1
+         000013f0     0002  
+     361 00001400     0960          RETS
+     362                    
+     363 00001410           UPDATE_TIMER
+     364 00001410     4c03           MOVE    A0,A3                     ;FIRST DO TENS
+     365 00001420     4c61           MOVE    A3,A1
+     366 00001430     2f81           SRL     4,A1
+     367 00001440     cb0f           JRNZ    REAL_TENS
+     368                    
+     369 00001450     4d40           MOVE    A10,A0
+     370 00001460     ca18           JRZ     TENS_GONE
+     371 00001470     0d5f           CALLA   DELPAL                    ;TRASH IT!
+         00001480 00000000! 
+     372 000014a0     0d5f           CALLA   DELOBJ
+         000014b0 00000000! 
+     373 000014d0     574a           CLR     A10
+     374                    
+     375 000014e0     09e0           MOVI    (TEN_X+ONE_X)/2,A0
+         000014f0 00f70000  
+     376 00001510     b209           MOVE    A0,*A9(OXVAL),L           ;CENTER THE ONES
+         00001520     0080  
+     377                    
+     378 00001530     c00b           JRUC    TENS_GONE
+     379                    
+     380 00001540           REAL_TENS
+     381 00001540     0b41           CMPI    1,A1                      ;ARE WE DOWN TO "10"
+         00001550     fffe  
+     382 00001560     cb05           JRNZ    NOT_ONE_0
+     383                    
+     384 00001570     09e0           MOVI    ONE_O_X,A0
+         00001580 00f40000  
+     385 000015a0     b20a           MOVE    A0,*A10(OXVAL),L          ;SLIDE IT OVER TO LOOK NICE!
+         000015b0     0080  
+     386 000015c0           NOT_ONE_0
+     387 000015c0     4d42           MOVE    A10,A2                    ;GET 10'S OBJECT IN A2
+     388 000015d0     0d3f           CALLR   UPDATE_NUMBER             ;OBJECT A2 GETS NUMBER IN A1
+         000015e0     0011  
+     389                    
+     390 000015f0           TENS_GONE
+     391 000015f0     4c61           MOVE    A3,A1
+     392 00001600     4d22           MOVE    A9,A2
+     393 00001610     0d3f           CALLR   UPDATE_NUMBER
+         00001620     000d  
+     394 00001630     0960          RETS
+     395                    
+     396 00001640           BLANK_TIMER
+     397 00001640     098f           MMTM    SP,A0
+         00001650     8000  
+     398 00001660     5600           CLR     A0
+     399 00001670     b009           MOVE    A0,*A9(OCONST),W
+         00001680     0170  
+     400 00001690     4d4a           MOVE    A10,A10                   ;TENS PRESENT?
+     401 000016a0     ca02           JREQ    BT_NT                     ;NOPE
+     402 000016b0     b00a           MOVE    A0,*A10(OCONST),W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   10
+
+         000016c0     0170  
+     403 000016d0     09af  BT_NT   MMFM    SP,A0
+         000016e0     0001  
+     404 000016f0     0960          RETS
+     405                    
+     406                    **************************************************************************
+     407                    *                                                                        *
+     408                    *          UPDATE_NUMBER                                                 *
+     409                    *                                                                        *
+     410                    *          OBJECT IN A2                                                  *
+     411                    *          NIBBLE IN A1                                                  *
+     412                    *                                                                        *
+     413                    *          GET CORRECT NUMBER IMAGE IN THE OBJECT.                       *
+     414                    *                                                                        *
+     415                    *                                                                        *
+     416                    **************************************************************************
+     417 00001700           UPDATE_NUMBER
+     418 00001700     098f           MMTM    SP,A1,A4,A6,A7,A8
+         00001710     4b80  
+     419 00001720     09e6           MOVI    RD15FONT,A6
+         00001730 00000000! 
+     420 00001750     0b81           ANDI    0FH,A1
+         00001760 fffffff0  
+     421 00001780     0b01           ADDI    LET_0-EX_PT,A1       ;INDEX TO TABLE
+         00001790     000f  
+     422 000017a0     24a1           SLL     5,A1                 ;
+     423 000017b0     4026           ADD     A1,A6                ;POINT TO IMAGE (A1 FOR ANI)
+     424 000017c0     86c1           MOVE    *A6,A1,L             ;FETCH THE IMAGE FOR ANI
+     425                    
+     426 000017d0     4c48           MOVE    A2,A8                ;OBJECT STRUCTURE FOR ANI
+     427 000017e0     b444           MOVE    *A2(OFLAGS),A4,W     ;FETCH THE OFLAGS
+         000017f0     0100  
+     428 00001800     0d5f           CALLA   ANI                  ;SET NEW ANIMATION PICTURE
+         00001810 00000000! 
+     429                    
+     430 00001830     09e6           MOVI    TIMER_COLOR,A6       ;GET THE DRAWING COLOR BACK OUT.
+         00001840 0000f5f5  
+     431 00001860     b0c2           MOVE    A6,*A2(OCONST),W
+         00001870     0170  
+     432                    
+     433 00001880     09af          MMFM    SP,A1,A4,A6,A7,A8
+         00001890     01d2  
+     434 000018a0     0960          RETS
+     435                    
+     436                    **************************************************************************
+     437                    *                                                                        *
+     438                    *          HSTD_P                                                        *
+     439                    *                                                                        *
+     440                    *          ARE EITHER OF THE ENTER INITIALS PROCESSES ALIVE.             *
+     441                    *          JRNZ MEANS YES.                                               *
+     442                    *                                                                        *
+     443                    **************************************************************************
+     444 000018b0     098f  HSTD_P   MMTM    SP,A0,A1
+         000018c0     c000  
+     445 000018d0     09c0           MOVI    END_GAME_PID,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   11
+
+         000018e0     0abc  
+     446 000018f0     09e1           MOVI    0FFFFH,A1
+         00001900 0000ffff  
+     447 00001920     0d5f           CALLA   EXISTP
+         00001930 00000000! 
+     448 00001950     09af          MMFM    SP,A0,A1
+         00001960     0003  
+     449 00001970     0960          RETS
+     450                    
+     451                    **************************************************************************
+     452                    *                                                                        *
+     453                    *          GET_LET                                                       *
+     454                    *                                                                        *
+     455                    *          THIS IS THE RE-ENTRANT ROUTINE FOR EACH PLAYER'S              *
+     456                    *          GET YOUR INITIALS.                                            *
+     457                    *                                                                        *
+     458                    *          A8 HAS THE SCORE.                                             *
+     459                    *          A9 HAS THE GET INITIALS DESCRIPTOR STRING.                    *
+     460                    *          A10 HAS SCORE OF "OTHER" PLAYER                               *
+     461                    *          A11 HAS POINTER TO PROCESS THAT CREATED US                    *
+     462                    *                                                                        *
+     463                    *          WE LOOK UP THE SCORE IN THE VARIOUS TABLES.                   *
+     464                    *          IF ITS GOOD ENOUGH IN EITHER TABLE, THEN                      *
+     465                    *          CREATE A GET THE INITIALS PROCESS.                            *
+     466                    *                                                                        *
+     467                    *          THAT PROCESS STORES THE INITIALS IN OUR PROCESS               *
+     468                    *          STORE AREA.                                                   *
+     469                    *                                                                        *
+     470                    *          WHEN IT DIES, WE TAKE THE INITIALS AND PUT THEM               *
+     471                    *          IN THE HIGH SCORE TABLES.                                     *
+     472                    *                                                                         *
+     473                    **************************************************************************
+     474              0060  GL_SCORE         EQU     PDATA                  ;LONG - SCORE OF PLAYER
+     475              0080  GL_DAD           EQU     GL_SCORE+LONG_SIZE     ;LONG-FATHER PROCESS.....TO WATCH HIS TIMER
+     476              00a0  GL_SON           EQU     GL_DAD+LONG_SIZE       ;LONG-SON TO CLEANUP ON TIMEOUT
+     477              00c0  GL_INITS         EQU     GL_SON+LONG_SIZE       ;NUMBER OF INITS - PLACE TO STORE FETCHED INITS
+     478                    *
+     479                    
+     480 00001980     0d3f  GET_LET  CALLR   CHECK_ALL_TIME                 ;ARE WE ON THE ALL TIME TABLE?
+         00001990     0067  
+     481 000019a0     cb03           JRNZ    GET_EM                         ;WE ARE...GET INITS
+     482 000019b0     0d3f           CALLR   CHECK_TODAY
+         000019c0     0070  
+     483 000019d0     ca47           JRZ     TOO_BAD                        ;DIDN'T MAKE IT..EXIT
+     484                    
+     485 000019e0     b36d  GET_EM   MOVE    A11,*A13(GL_DAD),L             ;SAVE THE TIMER GUY
+         000019f0     0080  
+     486 00001a00     b30d           MOVE    A8,*A13(GL_SCORE),L            ;SAVE THE SCORE IN MEMORY
+         00001a10     0060  
+     487 00001a20     4d28           MOVE    A9,A8                          ;PASS STRUCTURE IN A8
+     488 00001a30     4da9           MOVE    A13,A9                         ;POINT IN OUR PROCESS AREA 
+     489                    *                                               ;TO PLACE TO STORE
+     490 00001a40     0b09           ADDI    GL_INITS,A9                    ;POINT RIGHT AT INITIALS
+         00001a50     00c0  
+     491 00001a60     09e7           MOVI    E_INITS,A7                     ;THIS IS THE PROCESS TO MAKE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   12
+
+         00001a70 00000000! 
+     492 00001a90     b501           MOVE    *A8(LET_PID),A1,W              ;FETCH ID FOR THIS ONE
+         00001aa0     00b0  
+     493 00001ab0     0d5f           CALLA   GETPRC                         ;MAKE THE PROCESS
+         00001ac0 00000000! 
+     494                    
+     495 00001ae0     b20d           MOVE    A0,*A13(GL_SON),L              ;SAVE HIS ID.
+         00001af0     00a0  
+     496                    
+     497 00001b00     4c28           MOVE    A1,A8                          ;SAVE THE ID
+     498                    *         MOVI    SPACE,A0                       ;BLANK OUT THE INITIALS
+     499 00001b10     5600           CLR     A0                             ;ZERO MEANS NOT ENTERED YET
+     500 00001b20     09c1           MOVI    NUM_INITS,A1
+         00001b30     0003  
+     501                    *
+     502                    *        A9 POINTS AT INITIAL STORAGE AREA
+     503                    *
+     504 00001b40     8c09  SP_STOR  MOVB    A0,*A9                         ;PUT A SPACE WHERE POINTER POINTS
+     505 00001b50     0b09           ADDI    BYTE_SIZE,A9                   ;PUSH POINTER
+         00001b60     0008  
+     506 00001b70     3c81           DSJS    A1,SP_STOR
+     507                    
+     508 00001b80           GETTING  SLEEP   8                              ;WAIT FOR IT TO FINISH
+     509 00001bc0     4d00           MOVE    A8,A0
+     510 00001bd0     09e1           MOVI    0FFFFH,A1
+         00001be0 0000ffff  
+     511 00001c00     0d5f           CALLA   EXISTP                          ;IS HE DONE?
+         00001c10 00000000! 
+     512 00001c30     ca0c           JRZ     FINISHED                        ;YEP.....NO CLEANUP REQUIRED!
+     513                    
+     514 00001c40     b7a0           MOVE    *A13(GL_DAD),A0,L              ;CHECK DAD'S TIMER
+         00001c50     0080  
+     515 00001c60     b400           MOVE    *A0(PDATA),A0,W                ;THIS IS WHERE HE KEEPS IT!
+         00001c70     0060  
+     516 00001c80     cbef           JRNZ    GETTING                        ;ITS RUNNING....CONTINUE
+     517                    *
+     518                    *        DAD TIMED OUT....OUR PROC IS RUNNING
+     519                    *
+     520 00001c90     b7a1           MOVE    *A13(GL_SON),A1,L              ;GET THE GUY...WE'RE GONNA TRASH HIM
+         00001ca0     00a0  
+     521 00001cb0     09c0           MOVI    1,A0
+         00001cc0     0001  
+     522 00001cd0     b001           MOVE    A0,*A1(ENT_TIMEOUT),W          ;TELL HIM HE'S TIMED OUT!
+         00001ce0     0210  
+     523 00001cf0     c0e8           JRUC    GETTING                        ;AND WAIT FOR HIS CLEANUP!
+     524                    
+     525 00001d00           FINISHED
+     526 00001d00     b7a0           MOVE    *A13(GL_SCORE),A0,L            ;GET THE SCORE
+         00001d10     0060  
+     527 00001d20     4da1           MOVE    A13,A1                         ;SETUP POINTER TO INITIALS
+     528 00001d30     0b01           ADDI    GL_INITS,A1                    ;NOW WE'RE SET
+         00001d40     00c0  
+     529                    
+     530 00001d50     09e8           MOVI    TOD_TAB,A8                     ;ALWAYS ADD TO TODAYS (EVEN IF SPACES)
+         00001d60 00000080' 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   13
+
+     531 00001d80     0d3f           CALLR   ADD_ENTRY                      ;ADD EM TO THIS ONE IF NEC.
+         00001d90     006f  
+     532                    
+     533 00001da0     0d3f           CALLR   CHECK_INITS                    ;SEE IF ALL BLANK  
+         00001db0     004b  
+     534 00001dc0     ca08           JRZ     TOO_BAD                        ;DON'T ADD UGLY ONES.
+     535                    
+     536 00001dd0     09e8           MOVI    ALL_TAB,A8
+         00001de0 00000000' 
+     537 00001e00     0d3f           CALLR   ADD_ENTRY                      ;ADD EM TO THE TABLE
+         00001e10     0067  
+     538 00001e20     c802           JRC     TOO_BAD                        ;DIDN'T MAKE ALL TIME
+     539                    
+     540 00001e30     0d3f           CALLR   DELAY_HSRESET                  ;NEW ENTRY....DON'T RESET TOO QUICK
+         00001e40     fe40  
+     541                    
+     542 00001e50     c080  TOO_BAD  JAUC    SUCIDE                         ;WE'RE DONE!
+         00001e60 00000000! 
+     543                    
+     544                    **************************************************************************
+     545                    *                                                                        *
+     546                    *       ISHSTD                                                           *
+     547                    *                                                                        *
+     548                    *       DID ANYONE MAKE THE HIGH SCORE TABLE.                            *
+     549                    *                                                                        *
+     550                    *       .EQ.            NO                                               *
+     551                    *       .NE.            YES                                              *
+     552                    *                                                                        *
+     553                    **************************************************************************
+     554 00001e80     098f  ISHSTD  MMTM    SP,A8,A10
+         00001e90     00a0  
+     555 00001ea0     07a8          MOVE    @P1DATA+PSCORE,A8,L
+         00001eb0 000001a0! 
+     556 00001ed0     07aa          MOVE    @P2DATA+PSCORE,A10,L
+         00001ee0 000001a0! 
+     557                    
+     558 00001f00     0d3f          CALLR   CHECK_ALL_TIME
+         00001f10     000f  
+     559 00001f20     cb0b          JRNZ    VERY_HIGH
+     560                    
+     561 00001f30     0d3f          CALLR   CHECK_TODAY
+         00001f40     0018  
+     562 00001f50     cb08          JRNZ    VERY_HIGH
+     563                    
+     564 00001f60                   SWAP    A8,A10
+     565                            
+     566 00001f90     0d3f          CALLR   CHECK_ALL_TIME
+         00001fa0     0006  
+     567 00001fb0     cb02          JRNZ    VERY_HIGH
+     568                    
+     569 00001fc0     0d3f          CALLR   CHECK_TODAY
+         00001fd0     000f  
+     570 00001fe0           VERY_HIGH
+     571 00001fe0     09af          MMFM    SP,A8,A10
+         00001ff0     0500  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   14
+
+     572 00002000     0960          RETS
+     573                    
+     574 00002010           CHECK_ALL_TIME
+     575 00002010     098f           MMTM    SP,A0,A2,A8
+         00002020     a080  
+     576 00002030     4d00           MOVE    A8,A0
+     577 00002040     4d42           MOVE    A10,A2                         ;SHOW "OTHER" SCORE IN A2
+     578 00002050     09e8           MOVI    ALL_TAB,A8
+         00002060 00000000' 
+     579 00002080     0d3f           CALLR   CHECK_SCORE                    
+         00002090     002d  
+     580 000020a0     09af          MMFM    SP,A0,A2,A8
+         000020b0     0105  
+     581 000020c0     0960          RETS
+     582                    
+     583 000020d0           CHECK_TODAY
+     584 000020d0     098f           MMTM    SP,A0,A2,A8               
+         000020e0     a080  
+     585 000020f0     4d42           MOVE    A10,A2                         ;SHOW "OTHER" SCORE IN A2
+     586 00002100     4d00           MOVE    A8,A0
+     587 00002110     09e8           MOVI    TOD_TAB,A8
+         00002120 00000080' 
+     588 00002140     0d3f           CALLR   CHECK_SCORE                    
+         00002150     0021  
+     589 00002160     09af          MMFM    SP,A0,A2,A8               
+         00002170     0105  
+     590 00002180     0960          RETS
+     591                    
+     592                    **************************************************************************
+     593                    *                                                                        *
+     594                    *          A2_CHECK                                                      *
+     595                    *                                                                        *
+     596                    *          DOES THE SCORE IN A2 MATCH EITHER OF THE PLAYER'S SCORE.      *
+     597                    *          .EQ.  MEANS YES                                               *
+     598                    *          .NE.  MEANS NO                                                *
+     599                    *                                                                        *
+     600                    *          THIS IS A NARCSPRY MODULE MOVED HERE TO FREE                  *
+     601                    *          NARCSPRY DEPENDANCY ON NARCEQU  (T.I. B.D. OVERFLOWS)         *
+     602                    *                                                                        *
+     603                    **************************************************************************
+     604 00002190           A2_CHECK
+     605 00002190     098f           MMTM    SP,A0
+         000021a0     8000  
+     606 000021b0     07a0           MOVE    @P1DATA+PSCORE,A0,L
+         000021c0 000001a0! 
+     607 000021e0     4840           CMP     A2,A0
+     608 000021f0     ca04           JREQ    A2_SUCC              ;IT WAS PLAYER 1'S SCORE
+     609                    
+     610 00002200     07a0           MOVE    @P2DATA+PSCORE,A0,L
+         00002210 000001a0! 
+     611 00002230     4840           CMP     A2,A0
+     612                    
+     613 00002240     09af  A2_SUCC  MMFM    SP,A0
+         00002250     0001  
+     614 00002260     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   15
+
+     615                    
+     616                    **************************************************************************
+     617                    *                                                                        *
+     618                    *          CHECK_INITS                                                   *
+     619                    *                                                                        *
+     620                    *          A1 POINTS AT A SET OF INITIALS ENTERED.  RETURN .EQ.          *
+     621                    *          IF THEY'RE ALL SPACES (OR ZERO).                              *
+     622                    *                                                                        *
+     623                    **************************************************************************
+     624 00002270           CHECK_INITS
+     625 00002270     098f           MMTM    SP,A0,A1,A2
+         00002280     e000  
+     626 00002290     09c2           MOVI    NUM_INITS,A2
+         000022a0     0003  
+     627 000022b0           CHECK_NEXT
+     628 000022b0     8e20           MOVB    *A1,A0               ;GET AN INITIAL
+     629 000022c0     ca03           JRZ     SPACE_FOUND          ;NULL IS A SPACE
+     630 000022d0     0b40           CMPI    SPACE,A0             ;IS IT A REAL SPACE?
+         000022e0     ffdf  
+     631 000022f0     cb04           JRNZ    LET_FOUND
+     632 00002300           SPACE_FOUND
+     633 00002300     0b01           ADDI    BYTE_SIZE,A1
+         00002310     0008  
+     634 00002320     3d02           DSJS    A2,CHECK_NEXT
+     635 00002330     5642           CLR     A2                   ;SET Z BIT ON FALL THROUGH
+     636                    
+     637 00002340           LET_FOUND
+     638 00002340     09af          MMFM    SP,A0,A1,A2
+         00002350     0007  
+     639 00002360     0960          RETS
+     640                    
+     641                    **************************************************************************
+     642                    *                                                                        *
+     643                    *          CHECK_SCORE                                                   *
+     644                    *                                                                        *
+     645                    *          THIS IS CALLED WITH A SCORE IN A0 TO SEE IF IT                *
+     646                    *          IS HIGH ENOUGH TO MAKE THE TABLE.                             *
+     647                    *                                                                        * 
+     648                    *          THE OTHER PLAYER'S SCORE IS PASSED IN A2.  IF                 * 
+     649                    *          THE PLAYER MAKES THE LAST POSITION OF THE TABLE,              *
+     650                    *          THEN HIS SCORE IS COMPARED AGAINST THE OTHER SCORE            *
+     651                    *          IT MUST BE HIGHER THAN THE OTHER SCORE, OTHERWISE             *
+     652                    *          HE WILL ENTER HIS INITIALS, BUT THERE WILL BE NO              *
+     653                    *          PLACE TO PUT THEM WHEN HIS BUDDY IS DONE ENTERING HIS!        *
+     654                    *                                                                        *
+     655                    *          THIS ROUTINE CALLS FIND_TABLE_LEVEL WHICH RETURNS             *
+     656                    *          THE POINT IN THE TABLE THAT THE PASSED SCORE WOULD            *
+     657                    *          LAND.   THIS VALUE MUST BE LESS THAN OR EQUAL TO              *
+     658                    *          THE "TB_VISIBLE" VALUE FOR THE TABLE.  THIS WOULD             *
+     659                    *          MEAN THAT WE WANT TO GET THE PLAYER'S INITIALS.               *
+     660                    *                                                                        *
+     661                    *          A8 CONTAINS ROM POINTER FOR TABLE TO CHECK.                   *
+     662                    *          RETURN A0 = 0 (AND .EQ.) IF SCORE ISN'T HIGH ENOUGH           *
+     663                    *          AND A0 = POSITION IN TABLE IF SCORE MAKES IT.                 *
+     664                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   16
+
+     665                    **************************************************************************
+     666 00002370           CHECK_SCORE
+     667 00002370     098f           MMTM    SP,A1,A3,A9,A10
+         00002380     5060  
+     668 00002390     4c03           MOVE    A0,A3                     ;STASH SCORE IN A3
+     669 000023a0     0d3f           CALLR   FIND_TABLE_LEVEL          ;SEE WHERE WE LAND IN THIS TABLE
+         000023b0     003b  
+     670 000023c0     ca08           JRZ     ANSWER_IN_A0              ;ZERO.....GUY DIDN'T MAKE IT
+     671 000023d0     b501           MOVE    *A8(TB_VISIBLE),A1,W      ;GET THE NUMBER "ENTERED"
+         000023e0     0030  
+     672 000023f0     4820           CMP     A1,A0                     ;A0 MUST BE LESS OR EQUAL
+     673 00002400     c804           JRLO    ANSWER_IN_A0              ;NOT LAST ENTRY...RETURN SUCCESS
+     674 00002410     c302           JRHI    DIDNT_MAKE_HSTD
+     675                    *
+     676                    *        GUY IS GOING FOR LAST POSITION.....SEE IF HIS BUDDY IS
+     677                    *        GOING TO NOSE HIM OUT:
+     678                    *
+     679 00002420     4843           CMP     A2,A3                     ;HI MUST BE HIGHER THAN BUDDY
+     680 00002430     c301           JRHI    ANSWER_IN_A0
+     681                    *
+     682                    *
+     683                    *        ****** NOTE  NOTE NOTE NOTE NOTE NOTE NOTE NOTE ******
+     684                    *        ****** NOTE  NOTE NOTE NOTE NOTE NOTE NOTE NOTE ******
+     685                    *
+     686                    *        NOTE THAT IF BOTH PLAYERS HAVE AN IDENTICAL SCORE THAT
+     687                    *        WOULD MAKE THE LAST POSITION OF A TABLE, THEN THEY
+     688                    *        WONT GET TO ENTER THEIR INITIALS!!!!!!
+     689                    *
+     690                    *        TOUGH LUCK!     -LED  10/22/88
+     691                    *
+     692                    *        ****** NOTE  NOTE NOTE NOTE NOTE NOTE NOTE NOTE ******
+     693                    *        ****** NOTE  NOTE NOTE NOTE NOTE NOTE NOTE NOTE ******
+     694                    *
+     695                    *
+     696                    *        WE WOULD MAKE THE PHYSICAL TABLE, BUT WE'RE OUT OF
+     697                    *        WHAT THE PLAYER CAN SEE....RETURN FALSE
+     698                    *
+     699 00002440           DIDNT_MAKE_HSTD
+     700 00002440     5600           CLR     A0                        ;RETURN FAILURE
+     701 00002450           ANSWER_IN_A0:
+     702 00002450     4c00           MOVE    A0,A0                     ;SET EQ BIT ACCORDINGLY
+     703 00002460     09af          MMFM    SP,A1,A3,A9,A10
+         00002470     060a  
+     704 00002480     0960          RETS
+     705                    
+     706                    **************************************************************************
+     707                    *                                                                        *
+     708                    *          ADD_ENTRY                                                     *
+     709                    *                                                                        *
+     710                    *          THIS IS CALLED AFTER "ENTER YOUR INITIALS" TO                 *
+     711                    *          ADD AN ENTRY TO THE TABLE.  A0 CONTAINS THE                   *
+     712                    *          SCORE OF THE PLAYER.  A1 CONTAINS A POINTER                   *
+     713                    *          TO THE FETCHED INITIALS.   THE INITIALS ARE                   *
+     714                    *          STORED AS CONSECUTIVE BYTES IN CONVENTIONAL                   *
+     715                    *          (1 BYTE TAKES 1 BYTE SPACE) RAM.                              *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   17
+
+     716                    *                                                                        *
+     717                    *          A8 contains a the table to store the entry in.                *
+     718                    *                                                                        *
+     719                    *          RETURN CARRY SET IF IT DIDN'T MAKE IT INTO REQUESTED TABLE    *
+     720                    *                                                                        *
+     721                    **************************************************************************
+     722 00002490           ADD_ENTRY
+     723 00002490     098f           MMTM    SP,A0,A1,A2,A3,A4,A7,A9,A10
+         000024a0     f960  
+     724 000024b0     0d3f           CALLR   ROM_PTRS                  ;SETUP FOR THIS TABLE
+         000024c0     0089  
+     725 000024d0     4c04           MOVE    A0,A4                     ;STASH THE SCORE A SEC.
+     726 000024e0     5642           CLR     A2                        ;DONT WORRY ABOUT OTHER GUY AT THIS POINT
+     727 000024f0     0d3f           CALLR   CHECK_SCORE               ;DOES THE REQUEST MAKE IT?
+         00002500     ffe6  
+     728 00002510     0de0           SETC                              ;ANTICIPATE FAILURE
+     729 00002520     ca21           JRZ     DIDNT_MAKE_IT             ;DON'T KNOW WHY I GOT THESE INITS.
+     730                    *
+     731                    *        A0 NOW HAS THE PLACE FOR THE NEW GUY.
+     732                    *        MOVE THE ENTIRE TABLE DOWN 1 UNIT.
+     733                    *
+     734 00002530     4d43           MOVE    A10,A3                    ;LAST GUY IN TABLE IS DESTINATION
+     735 00002540           COPY_DOWN_LOOP
+     736 00002540     4c62           MOVE    A3,A2                     ;GUY BEFORE HIM IS SOURCE
+     737 00002550     1422           DEC     A2                        ;A2 NOW HAS SOURCE
+     738 00002560     4802           CMP     A0,A2                     ;IS SOURCE LOWER THAN OUR SLOT? 
+     739 00002570     c804           JRLO    COPY_DONE                 ;IT IS...DON'T MOVE HIM.  
+     740                    
+     741 00002580     0d3f           CALLR   COPY_ENTRY                ;COPY A2 ENTRY TO A3
+         00002590     00d5  
+     742 000025a0     1423           DEC     A3                        ;MOVE DOWN TO ONE BEFORE
+     743 000025b0     c0f8           JRUC    COPY_DOWN_LOOP
+     744                    
+     745 000025c0           COPY_DONE
+     746 000025c0     0d3f           CALLR   PUT_SCORE_FOR_ENTRY       ;SCORE IN A4 WRITTEN TO ENTRY A0
+         000025d0     003a  
+     747                    *
+     748                    *        INITAIAL POINTER IS IN A1
+     749                    *        TABLE OFFSET IN A0
+     750                    *
+     751 000025e0     0d3f           CALLR   PT_ENTRY                  ;GET ENTRY POINTER IN A7
+         000025f0     006d  
+     752 00002600     0b07           ADDI    HS_INITS,A7               ;POINT AT FIRST INITIAL
+         00002610     0040  
+     753 00002620     09c2           MOVI    NUM_INITS,A2              ;THIS IS NUMBER OF INITIALS
+         00002630     0003  
+     754 00002640     098f           MMTM    SP,A0                     ;SAVE A0
+         00002650     8000  
+     755                    
+     756 00002660           INIT_COPY_LOOP
+     757 00002660     8e20           MOVB    *A1,A0                    ;GET AN INITIAL
+     758 00002670     cb02           JRNZ    NOT_BLANK
+     759 00002680     09c0           MOVI    SPACE,A0                  ;REPLACE BLANKS WITH SPACES
+         00002690     0020  
+     760 000026a0           NOT_BLANK
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   18
+
+     761 000026a0     0d3f           CALLR   WC_BYTEI       ;WRITE THE BYTE AND INCREMENT
+         000026b0     01a0  
+     762 000026c0     0b01           ADDI    BYTE_SIZE,A1              ;A1 TO NEXT BYTE PLEASE
+         000026d0     0008  
+     763 000026e0     3d22           DSJ     A2,INIT_COPY_LOOP
+     764                    
+     765 000026f0     09af          MMFM    SP,A0                     ;GET BACK ENTRY NUMBER
+         00002700     0001  
+     766 00002710     0d3f           CALLR   FORM_HS_CKSUM_AND_STORE   ;FOR CHECKSUM FOR THIS ENTRY AND STORE!
+         00002720     004c  
+     767 00002730     0320           CLRC                              ;RETURN SUCCESS!
+     768                    
+     769 00002740           DIDNT_MAKE_IT
+     770 00002740     09af          MMFM    SP,A0,A1,A2,A3,A4,A7,A9,A10
+         00002750     069f  
+     771 00002760     0960          RETS
+     772                    
+     773                    **************************************************************************
+     774                    *                                                                        *
+     775                    *          FIND_TABLE_LEVEL                                              *
+     776                    *                                                                        *
+     777                    *          THIS IS CALLED TO COMPARE THE SCORE IN A0 TO                  *
+     778                    *          THE TABLE POINTED TO BY A8.                                   *
+     779                    *                                                                        *
+     780                    *          RETURN PHYSICALLY WHERE IT FITS IN A0, AND                    *
+     781                    *          SET THE Z FLAG ACCORDINGLY                                    *
+     782                    *                                                                        *
+     783                    **************************************************************************
+     784 00002770           FIND_TABLE_LEVEL
+     785 00002770     098f           MMTM    SP,A1,A2,A3
+         00002780     7000  
+     786 00002790     0d3f           CALLR   ROM_PTRS                  ;SETUP FOR THIS TABLE
+         000027a0     005b  
+     787 000027b0     0d3f           CALLR   VAL_TAB                   ;FIX THE TABLE IN CASE ITS BROKEN.
+         000027c0     00ca  
+     788 000027d0     c809           JRC     FTL_FAIL                  ;CAN'T VALIDATE..SAY SCORE DIDN'T MAKE IT
+     789                    
+     790 000027e0     4c02           MOVE    A0,A2                     ;KEEP SCORE IN A2
+     791 000027f0     1820           MOVK    1,A0                      ;START AT 1 AND WORK UP.
+     792                    
+     793 00002800           CHECK_NEXT_SCORE
+     794 00002800     0d3f           CALLR   GET_HSCR       ;FETCH A0 ENTRY'S SCORE IN A1
+         00002810     000a  
+     795 00002820     4822           CMP     A1,A2                     ;HOW DO WE FARE AGAINST A1?
+     796 00002830     c304           JRHI    FOUND_THE_SPOT            ;WE FOUND THE SPOT
+     797 00002840     1020           INC     A0                        ;KEEP MOVING DOWN TILL WE FIT
+     798 00002850     4940           CMP     A10,A0                    ;ARE WE LOOKING AT THE LAST ONE?
+     799 00002860     c2f9           JRLS    CHECK_NEXT_SCORE
+     800                    
+     801 00002870           FTL_FAIL
+     802 00002870     5600           CLR     A0                        ;WE'RE NOT HIGH ENOUGH RETURN FAILURE
+     803                    
+     804 00002880           FOUND_THE_SPOT
+     805 00002880     4c00           MOVE    A0,A0                     ;MAKE SURE YOU SET THE FLAGS
+     806 00002890     09af          MMFM    SP,A1,A2,A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   19
+
+         000028a0     000e  
+     807 000028b0     0960          RETS
+     808                    
+     809                    **************************************************************************
+     810                    *                                                                        *
+     811                    *          GET_HSCR                                                      *
+     812                    *                                                                        *
+     813                    *          THIS IS CALLED TO FETCH THE SCORE FROM CMOS FOR               *
+     814                    *          A GIVEN ENTRY.                                                *
+     815                    *                                                                        *
+     816                    *          ENTRY NUMBER PASSED IN A0.                                    *
+     817                    *          SCORE RETURNED IN A1.                                         *
+     818                    *                                                                        *
+     819                    **************************************************************************
+     820 000028c0           GET_HSCR
+     821 000028c0     098f           MMTM    SP,A7,A0
+         000028d0     8100  
+     822 000028e0     0d3f           CALLR   PT_ENTRY                  ;POINT A7 AT ENTRY
+         000028f0     003d  
+     823 00002900     0b07           ADDI    HS_SCORE,A7               ;INDEX SCORE PART.
+         00002910     0000  
+     824 00002920     0d3f           CALLR   RC_LONG            ;FETCH THE LONG WORD INTO A0
+         00002930     0160  
+     825 00002940     4c01           MOVE    A0,A1                     ;MOVE TO A1
+     826 00002950     09af          MMFM    SP,A7,A0
+         00002960     0081  
+     827 00002970     0960          RETS
+     828                    
+     829                    **************************************************************************
+     830                    *                                                                        *
+     831                    *          PUT_SCORE_FOR_ENTRY                                           *
+     832                    *                                                                        *
+     833                    *          THIS IS CALLED TO WRITE OUT THE SCORE FOR A GIVEN ENTRY.      *
+     834                    *          ENTRY SPECIFIED BY A0.                                        *
+     835                    *          SCORE PASSED IN A4.                                           *
+     836                    *                                                                        *
+     837                    **************************************************************************
+     838 00002980           PUT_SCORE_FOR_ENTRY
+     839 00002980     098f           MMTM    SP,A7,A0
+         00002990     8100  
+     840 000029a0     0d3f           CALLR   PT_ENTRY                  ;POINT A7 AT ENTRY
+         000029b0     0031  
+     841 000029c0     0b07           ADDI    HS_SCORE,A7               ;INDEX SCORE PART.
+         000029d0     0000  
+     842 000029e0     4c80           MOVE    A4,A0                     ;MOVE SCORE TO A0
+     843 000029f0     0d3f           CALLR   WC_LONG           ;WRITE OUT THE LONG WORD 
+         00002a00     0181  
+     844 00002a10     09af          MMFM    SP,A7,A0
+         00002a20     0081  
+     845 00002a30     0960          RETS
+     846                    
+     847                    **************************************************************************
+     848                    *                                                                        *
+     849                    *          LOW LEVEL HSTD PROCESSING                                     *
+     850                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   20
+
+     851                    **************************************************************************
+     852                    *
+     853                    *        FOR HIGH SCORE ROUTINES
+     854                    *
+     855                    *        A8  = ROM POINTER FOR A GIVEN TABLE STATS
+     856                    *        A9  = RAM POINTER FOR CMOS DATA
+     857                    *        A10 = NUMBER OF ENTRIES IN THE TABLE
+     858                    *
+     859                    *        A0  = PARTICULAR ENTRY TO DEAL WITH
+     860                    *                0 = FILL ENTRY (POINTER ROUTINES POINT HERE IF ERROR)
+     861                    *                1 = HIGHEST SCORE IN TABLE
+     862                    *                N = NTH SCORE
+     863                    *
+     864                    *        A1  = OUTPUT OF CHECKSUM ROUTINE  (BYTE)
+     865                    *
+     866                    *        A7  = POINTER TO CURRENT ENTRY
+     867                    *
+     868                    *        A4,A5,A6  SCRATCH
+     869                    *
+     870                    **************************************************************************
+     871                    *                                                                        *
+     872                    *          FORM_HS_CKSUM                                                 *
+     873                    *                                                                        *
+     874                    *          THIS IS CALLED TO FORM THE CHECKSUM FOR THE SCORE             *
+     875                    *          NUMBER IN A0.  (RAM POINTER ASSUMED IN A9).                   *
+     876                    *          CHECKSUM IS RETURNED IN A1.   THIS IS A *BYTE*.               *
+     877                    *                                                                        *
+     878                    *          CHECKSUM IS COMPUTED AS THE COMPLEMENT OF THE SIMPLE SUM      *
+     879                    *          OF THE BYTES IN THE ENTRY.                                    *
+     880                    *                                                                        *
+     881                    *          THIS ROUTINE RETURNS WITH THE Z BIT SET (.EQ.) IF THE         *
+     882                    *          CHECKSUM FOR THIS ENTRY MATCHES.                              *
+     883                    *                                                                        *
+     884                    **************************************************************************
+     885 00002a40           FORM_HS_CKSUM
+     886 00002a40     098f           MMTM    SP,A0,A4,A6,A7
+         00002a50     8b00  
+     887 00002a60     0d3f           CALLR   PT_ENTRY                  ;A7 = POINTER TO CURRENT ENTRY
+         00002a70     0025  
+     888 00002a80     098f           MMTM    SP,A7                     ;SAVE POINTER TO ENTRY
+         00002a90     0100  
+     889 00002aa0     09c4           MOVI    HS_BYTES_TO_CHECK,A4      ;COUNT DOWN THE BYTES
+         00002ab0     0007  
+     890 00002ac0     5621           CLR     A1                        ;KEEP SUM IN A1
+     891 00002ad0           ADD_A_BYTE
+     892 00002ad0     0d3f           CALLR   RC_BYTEI        ;GET A BYTE INTO A0
+         00002ae0     0127  
+     893 00002af0     4001           ADD     A0,A1                     ;ADD TO SUM
+     894 00002b00     3c84           DSJ     A4,ADD_A_BYTE             ;ONE MORE ADDED
+     895 00002b10     03e1           NOT     A1                        ;CHECKSUM IS NOW IN LOW BYTE
+     896 00002b20     0b81           ANDI    BYTE_MASK,A1                   ;MASK SO ITS COOL
+         00002b30 ffffff00  
+     897 00002b50     09af          MMFM    SP,A7                     ;GET POINTER BACK
+         00002b60     0080  
+     898 00002b70     0b07           ADDI    HS_CKBYTE,A7              ;POINT AT CHECKBYTE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   21
+
+         00002b80     0070  
+     899 00002b90     0d3f           CALLR   RC_BYTE            ;READ IN THE BYTE
+         00002ba0     0114  
+     900 00002bb0     4801           CMP     A0,A1                     ;COMPARE WHAT'S THERE TO WHAT WE GOT
+     901 00002bc0     09af          MMFM    SP,A0,A4,A6,A7                  ;Z BIT RETURNS COMPARE
+         00002bd0     00d1  
+     902 00002be0     0960          RETS                              ;A1 RETURNS CKSUM
+     903                    
+     904                    **************************************************************************
+     905                    *                                                                        *
+     906                    *          FORM_HS_CKSUM_AND_STORE                                       *
+     907                    *                                                                        *
+     908                    *          THIS IS USED TO SET THE CHECKSUM FOR THE CURRENT              *
+     909                    *          ENTRY (A0) TO THE CORRECT VALUE.                              *
+     910                    *                                                                        *
+     911                    **************************************************************************
+     912 00002bf0           FORM_HS_CKSUM_AND_STORE
+     913 00002bf0     098f           MMTM    SP,A0,A7
+         00002c00     8100  
+     914 00002c10     0d3f           CALLR   FORM_HS_CKSUM             ;GET THE CKSUM IN A1, POINTER IN A7
+         00002c20     ffe1  
+     915 00002c30     0d3f           CALLR   PT_ENTRY                  ;POINT AT THE VALUE
+         00002c40     0008  
+     916 00002c50     0b07           ADDI    HS_CKBYTE,A7              ;POINT AT CHECKBYTE
+         00002c60     0070  
+     917 00002c70     4c20           MOVE    A1,A0                     ;GET CHECKBYTE TO A0
+     918 00002c80     0d3f           CALLR   WC_BYTE           ;WRITE OUT THE BYTE
+         00002c90     010a  
+     919 00002ca0     09af          MMFM    SP,A0,A7
+         00002cb0     0081  
+     920 00002cc0     0960          RETS
+     921                    
+     922                    **************************************************************************
+     923                    *                                                                        *
+     924                    *          PT_ENTRY                                                      *
+     925                    *                                                                        *
+     926                    *          THIS IS CALLED TO POINT AT A GIVEN ENTRY OF                   *
+     927                    *          THE HIGH SCORE TABLE.  THIS ROUTINE BASES                     *
+     928                    *          ACTIVITY ON ROM POINTER IN A8.  IT FETCHES                    *
+     929                    *          FRESH COPIES OF THE A9 RAM POINTER AND THE                    *
+     930                    *          A10 ENTRY COUNTER.  IT RETURNS THE ENTRY                      *
+     931                    *          POINTER IN A7.                                                *
+     932                    *                                                                        *
+     933                    *          A0 SPECIFIES WHICH ENTRY TO POINT AT                          *
+     934                    *          A8,A9,A10 AND SYSCTRL ASSUMED SET PROPERLY                    *
+     935                    *          A7 RETURNED POINTING TO THAT ENTRY                            *
+     936                    *                                                                        *
+     937                    **************************************************************************
+     938 00002cd0           PT_ENTRY
+     939 00002cd0     4940           CMP     A10,A0                   ;A10 IS MAX VALUE
+     940 00002ce0     c202           JRLS    POINTER_IN_RANGE
+     941                    
+     942                             .IF DEBUG
+     943                                JRUC   $                         ;HANG IN DEVELOPMENT
+     944                             .ENDIF
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   22
+
+     945                    
+     946 00002cf0     4d27           MOVE    A9,A7                     ;RETURN ZERO OFFSET IN FIELD
+     947 00002d00     0960           RETS
+     948                    
+     949 00002d10           POINTER_IN_RANGE
+     950 00002d10     09c7           MOVI    HS_SIZE,A7                ;SIZE OF ENTRY
+         00002d20     0080  
+     951 00002d30     5e07           MPYU    A0,A7                     ;OFFSET OF ENTRY
+     952 00002d40     4127           ADD     A9,A7                     ;ADD IN THE BASE
+     953 00002d50     0960           RETS
+     954                    
+     955                    **************************************************************************
+     956                    *                                                                        *
+     957                    *          ROM_PTRS                                                      *
+     958                    *                                                                        *
+     959                    *          THIS IS CALLED TO LOAD UP THE ROM STRUCTURE                   *
+     960                    *          DATA INTO REGISTERS.                                          *
+     961                    *                                                                        *
+     962                    *          THIS ALSO SETS UP STATUS WORD TO SELECT THE CMOS              *
+     963                    *          BANK SELECT FOR WHERE THE PARTICULAR TABLE RESIDES.           *
+     964                    *                                                                        *
+     965                    *          INPUT A8    = HSTD STRUCTURE ROM POINTER.                     *
+     966                    *                                                                        *
+     967                    *          OUTPUT  A9  = CMOS RAM POINTER TO BASE OF TABLE               *
+     968                    *          OUTPUT  A10 = LAST ENTRY IN TABLE.  TABLE WILL                *
+     969                    *                          HAVE A10+1 ENTRIES SINCE ENTRY                *
+     970                    *                          0 IS A FILLER.                                *
+     971                    *                                                                        *
+     972                    **************************************************************************
+     973 00002d60           ROM_PTRS
+     974 00002d60     098f           MMTM    SP,A0,A1                  ;SCRATCH REGGIES
+         00002d70     c000  
+     975 00002d80     b709           MOVE    *A8(TB_POINTER),A9,L      ;GET CMOS POINTER
+         00002d90     0000  
+     976 00002da0     b50a           MOVE    *A8(TB_COUNT),A10,W       ;GET NUMBER OF ENTRIES
+         00002db0     0020  
+     977 00002dc0     b501           MOVE    *A8(TB_PAGE_BITS),A1      ;GET OUR CMOS PAGE BITS
+         00002dd0     0040  
+     978                    
+     979 00002de0     0d3f           CALLR   SET_PAGE                  ;
+         00002df0     0003  
+     980                    
+     981 00002e00     09af          MMFM    SP,A0,A1                  ;SCRATCH REGGIES
+         00002e10     0003  
+     982 00002e20     0960          RETS
+     983                    
+     984                    **************************************************************************
+     985                    *                                                                        *
+     986                    *          SET_PAGE                                                      *
+     987                    *                                                                        *
+     988                    *          This is called to set the CMOS page to the bits               *
+     989                    *          contained in A1.                                              *
+     990                    *                                                                        *
+     991                    **************************************************************************
+     992 00002e30           SET_PAGE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   23
+
+     993 00002e30     098f           MMTM    SP,A0,A1
+         00002e40     c000  
+     994 00002e50     0b81           ANDI    CMOS_PAGE_SELECT_BITS,A1  ;KILL SIGN EXTEND..SAVE BITS
+         00002e60 ffffff3f  
+     995 00002e80     01e0           PUSHST                            ;SAVE INTERRUPT STATUS
+     996 00002e90     0360           DINT                              ;STOP INTERRUPTS
+     997 00002ea0     05a0           MOVE    @SYSCOPY,A0,W             ;GET THE RAM COPY
+         00002eb0 00000000! 
+     998 00002ed0     0b80           ANDNI   CMOS_PAGE_SELECT_BITS,A0  ;REMOVE THE CURRENT PAGE SELECT
+         00002ee0 000000c0  
+     999 00002f00     5420           OR      A1,A0                     ;ADD IN OUR BITS
+    1000 00002f10     0580           MOVE    A0,@SYSCOPY,W             ;PUT THEM BACK IN THE RAM COPY
+         00002f20 00000000! 
+    1001 00002f40     0580           MOVE    A0,@SYSCTRL,W             ;NOW THE HARDWARE
+         00002f50 01f00000  
+    1002 00002f70     01c0           POPST                             ;OK TO RE-START INTS
+    1003 00002f80     09af          MMFM    SP,A0,A1
+         00002f90     0003  
+    1004 00002fa0     0960          RETS
+    1005                    
+    1006                    **************************************************************************
+    1007                    *                                                                        *
+    1008                    *          INIT_TAB                                                      *
+    1009                    *                                                                        *
+    1010                    *          This entrypoint is called at power up to                      *
+    1011                    *          clear out "today's" high score table.  We do                  *
+    1012                    *          this job, and then we do the job on the                       *
+    1013                    *          all time table for high score reset if                        *
+    1014                    *          necessary.                                                    *
+    1015                    *                                                                        *
+    1016                    **************************************************************************
+    1017 00002fb0     098f  INIT_TAB MMTM    SP,A8,A0
+         00002fc0     8080  
+    1018                    
+    1019 00002fd0     09e8           MOVI    TOD_TAB,A8
+         00002fe0 00000080' 
+    1020 00003000     0d3f           CALLR   INIT_TB         ;RESET TODAYS TABLE
+         00003010     0013  
+    1021                    
+    1022 00003020     0d3f           CALLR   GET_HSC         ;CHECK THE HIGH SCORE RESET COUNTER
+         00003030     fd4d  
+    1023 00003040     cb0d           JRNZ    INIT_TAB1        ;NOT ZERO...NO MORE ACTIVITY
+    1024                    *
+    1025                    *        ITS ZERO....SEE IF ITS TURNED OFF
+    1026                    *
+    1027 00003050     09c0           MOVI    ADJHSRES,A0
+         00003060     000d  
+    1028 00003070     0d5f           CALLA   GET_ADJ              ;GET THE ADJUSTED VALUE
+         00003080 00000000! 
+    1029 000030a0     ca07           JRZ     INIT_TAB1            ;ITS TURNED OFF...NO ACTION.
+    1030                    
+    1031 000030b0     09e8           MOVI    ALL_TAB,A8      ;RESET THE ALL TIME TABLE
+         000030c0 00000000' 
+    1032 000030e0     0d3f           CALLR   INIT_TB         ;INIT THE ALL TIME TABLE
+         000030f0     0005  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   24
+
+    1033                    
+    1034 00003100     0d3f           CALLR   INIT_HSR        ;RESET THE COUNTER TO ADJUSTED VALUE
+         00003110     fd21  
+    1035                    
+    1036 00003120           INIT_TAB1
+    1037 00003120     09af          MMFM    SP,A8,A0
+         00003130     0101  
+    1038 00003140     0960          RETS
+    1039                    
+    1040                    **************************************************************************
+    1041                    *                                                                        *
+    1042                    *          INIT_TB                                                       *
+    1043                    *                                                                        *
+    1044                    *          THIS IS CALLED TO SETUP A HIGH SCORE TABLE WITH               *
+    1045                    *          FACTORY ENTRIES.                                              *
+    1046                    *                                                                        *
+    1047                    *          A8 = ROM TABLE POINTER                                        *
+    1048                    *                                                                        *
+    1049                    **************************************************************************
+    1050 00003150           INIT_TB
+    1051 00003150     098f           MMTM    SP,A5,A6,A7,A0
+         00003160     8700  
+    1052 00003170     0d3f           CALLR   ROM_PTRS             ;STUFF TABLE DATA
+         00003180     ffbd  
+    1053 00003190     b706           MOVE    *A8(TB_FACTORY),A6,L ;GET THE FACTORY TABLE
+         000031a0     0050  
+    1054 000031b0     4d45           MOVE    A10,A5               ;NUMBER OF VALID ENTRIES
+    1055 000031c0     1025           INC     A5                   ;1 MORE TO HOLD ZERO ENTRY
+    1056 000031d0     09c1           MOVI    HS_SIZE_IN_BYTES,A1  ;SIZE OF 1 ENTRY
+         000031e0     0008  
+    1057 000031f0     5e25           MPYU    A1,A5                ;A7 HAS NUMBER OF WORDS TO MOVE
+    1058 00003200     4d27           MOVE    A9,A7                ;CMOS POINTER IN A7
+    1059                    
+    1060 00003210           INIT_TB_1
+    1061 00003210     8ec0           MOVB    *A6,A0               ;GET A BYTE FROM ROM
+    1062 00003220     0b06           ADDI    BYTE_SIZE,A6         ;KICK ROM POINTER
+         00003230     0008  
+    1063 00003240     0d3f           CALLR   WC_BYTEI  ;WRITE THE BYTE AND INCREMENT
+         00003250     00e6  
+    1064 00003260     3cc5           DSJS    A5,INIT_TB_1        ;UNTIL THEY'RE ALL THERE.
+    1065                    
+    1066 00003270     4d40           MOVE    A10,A0               ;POINT AT LAST ENTRY
+    1067 00003280           INIT_TB_2
+    1068 00003280     0d3f           CALLR   FORM_HS_CKSUM_AND_STORE   ;SET ITS CHECKSUM
+         00003290     ff95  
+    1069 000032a0     1420           DEC     A0                   ;MOVE DOWN
+    1070 000032b0     cffc           JRNN    INIT_TB_2           ;SET EACH ONE INCLUDING ZERO
+    1071 000032c0     09af          MMFM    SP,A5,A6,A7,A0
+         000032d0     00e1  
+    1072 000032e0     0960          RETS
+    1073                             
+    1074                    **************************************************************************
+    1075                    *                                                                        *
+    1076                    *          KILL_TAB                                                      *
+    1077                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   25
+
+    1078                    *          THIS IS CALLED TO SMASH A HIGH SCORE TABLE.                   *
+    1079                    *                                                                        *
+    1080                    **************************************************************************
+    1081                    *KILL_TAB
+    1082                    *         MMTM    SP,A5,A6,A7,A0
+    1083                    *         CALLR   ROM_PTRS             ;STUFF TABLE DATA
+    1084                    *         MOVE    A10,A0               ;POINT AT LAST ENTRY
+    1085                    *KILL_TAB_2
+    1086                    *
+    1087                    *         MMTM    SP,A0,A7
+    1088                    *         CALLR   FORM_HS_CKSUM             ;GET THE CKSUM IN A1, POINTER IN A7
+    1089                    *         CALLR   PT_ENTRY                  ;POINT AT THE VALUE
+    1090                    *         ADDI    HS_CKBYTE,A7              ;POINT AT CHECKBYTE
+    1091                    *         MOVE    A1,A0                     ;GET CHECKBYTE TO A0
+    1092                    *         INC     A0                        ;BAD CKSUM
+    1093                    *         CALLR   WC_BYTE                   ;WRITE OUT THE BYTE
+    1094                    *       MMFM    SP,A0,A7
+    1095                    *
+    1096                    *         DEC     A0                   ;MOVE DOWN
+    1097                    *         JRNN    KILL_TAB_2           ;SET EACH ONE INCLUDING ZERO
+    1098                    *       MMFM    SP,A5,A6,A7,A0
+    1099                    *       RETS
+    1100                    *         
+    1101                    **************************************************************************
+    1102                    *                                                                        *
+    1103                    *          COPY_ENTRY                                                    *
+    1104                    *                                                                        *
+    1105                    *          THIS IS CALLED TO COPY 1 ENTRY OF THE TABLE TO A              *
+    1106                    *          DIFFERENT LOCATION IN THE TABLE.                              *
+    1107                    *                                                                        *
+    1108                    *          A8,A9,A10,SYSCTRL ASSUMED TO BE SETUP ALREADY                 *
+    1109                    *          A2 = SOURCE ENTRY  (NUMBER)                                   *
+    1110                    *          A3 = DESTINATION ENTRY (NUMBER)                               *
+    1111                    *                                                                        *
+    1112                    **************************************************************************
+    1113 000032f0           COPY_ENTRY
+    1114 000032f0     098f           MMTM    SP,A0,A4,A5,A6,A7
+         00003300     8f00  
+    1115 00003310     09c4           MOVI    HS_SIZE_IN_BYTES,A4      ;ENTRY SIZE IN BYTES
+         00003320     0008  
+    1116 00003330     4c40           MOVE    A2,A0                    ;FIRST POINT FOR A0
+    1117 00003340     0d3f           CALLR   PT_ENTRY           
+         00003350     ff97  
+    1118 00003360     4ce6           MOVE    A7,A6                    ;A6 = SOURCE POINTER
+    1119 00003370     4c60           MOVE    A3,A0
+    1120 00003380     0d3f           CALLR   PT_ENTRY                 ;A5 = DESTINATION
+         00003390     ff93  
+    1121 000033a0     4ce5           MOVE    A7,A5
+    1122 000033b0           COPY_LOOP
+    1123                    *
+    1124                    *        IN THIS LOOP WE MOVE A BYTE AT A TIME.
+    1125                    *        SINCE THE WORD AND LONG DO THE SHIFTING AND
+    1126                    *        MASKING AND CALL MULTIPLE ROUTINES, THIS IS 
+    1127                    *        THE MOST EFFICIENT MODE OF OPERATION.
+    1128                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   26
+
+    1129 000033b0     4cc7           MOVE    A6,A7                    ;SOURCE IN CMOS REGGIE
+    1130 000033c0     0d3f           CALLR   RC_BYTEI       ;FETCH A WORD
+         000033d0     0098  
+    1131 000033e0     4ce6           MOVE    A7,A6
+    1132 000033f0     4ca7           MOVE    A5,A7                    ;DESTINATION
+    1133 00003400     0d3f           CALLR   WC_BYTEI      ;WRITE IT
+         00003410     00ca  
+    1134 00003420     4ce5           MOVE    A7,A5                    ;BACK TO DEST REGGIE
+    1135 00003430     3d24           DSJ     A4,COPY_LOOP             ;UNTIL ALL WORDS ARE COPIED
+    1136 00003440     09af          MMFM    SP,A0,A4,A5,A6,A7
+         00003450     00f1  
+    1137 00003460     0960          RETS
+    1138                    
+    1139                    **************************************************************************
+    1140                    *                                                                        *
+    1141                    *          VAL_TAB                                                       *
+    1142                    *                                                                        *
+    1143                    *          THIS ROUTINE IS CALLED WHEN WE ARE INTERESTED IN              *
+    1144                    *          THE HSTD TABLE DATA.  A8 CONTAINS THE ROM POINTER             *
+    1145                    *          FOR THE TABLE.  FOR ANY ENTRIES THAT WE THROW                 *
+    1146                    *          OUT, WE MOVE THE REST OF THE TABLE UP, AND CREATE             *
+    1147                    *          A NEW ENTRY AT THE END OF THE TABLE.                          *
+    1148                    *                                                                        *
+    1149                    *          A2 = 0 ON OUTSIDE CALL.                                       *
+    1150                    *          A2 = 1 ON RECURSIVE CALL (THE CHECK AFTER RE-INIT)            *
+    1151                    *                                                                        *
+    1152                    *          THERE ARE 3 CHECKS MADE FOR EACH ENTRY:                       *
+    1153                    *                                                                        *
+    1154                    *          1)      IS CHECKSUM CORRECT.                                  *
+    1155                    *          2)      IS SCORE ALL NUMERIC                                  *
+    1156                    *          3)      ARE INITIALS ALL VALID ENTRIES.                       *
+    1157                    *                                                                        *
+    1158                    *        OUTPUT CC = TABLE OK                                            *
+    1159                    *               CS = PROBLEM THAT CAN'T BE RECTIFIED                     *
+    1160                    *                    (PROBABLY BAD RAM)                                  *
+    1161                    *                                                                        *
+    1162                    *               A2 = 0 ...table ok, or cleaned up                        *
+    1163                    *               A2 otherwise meanes table initialized                    *
+    1164                    *                                                                        *
+    1165                    **************************************************************************
+    1166 00003470           VAL_TAB
+    1167 00003470     5642           CLR     A2              ;indicate first call in
+    1168 00003480     0d3f           CALLR   DO_VALIDATE     ;validate
+         00003490     0001  
+    1169 000034a0     0960          RETS
+    1170                    
+    1171 000034b0           DO_VALIDATE
+    1172 000034b0     098f           MMTM    SP,A0,A1,A3,A4,A5,A6,A7
+         000034c0     df00  
+    1173 000034d0     0d3f           CALLR   ROM_PTRS                  ;SETUP FOR TABLE
+         000034e0     ff87  
+    1174 000034f0     09c0           MOVI    1,A0                      ;ITERATE THROUGH THE ENTRIES
+         00003500     0001  
+    1175 00003510     5621           CLR     A1                        ;COUNT ERRORS
+    1176                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   27
+
+    1177 00003520           CHECK_A0_ENTRY
+    1178 00003520     0d3f           CALLR   CHECK_ENTRY               ;IS THE ENTRY OK?
+         00003530     001d  
+    1179 00003540     c911           JRNC    VT_1                      ;YEP.
+    1180                    
+    1181 00003550     0d3f           CALLR   REMOVE_ENTRY              ;REMOVE THIS ENTRY
+         00003560     0056  
+    1182 00003570     1021           INC     A1
+    1183 00003580     b503           MOVE    *A8(TB_ERROR_COUNT),A3    ;GET THRESHOLD
+         00003590     0070  
+    1184 000035a0     4861           CMP     A3,A1                     ;ARE WE THERE?
+    1185 000035b0     c8f6           JRLO    CHECK_A0_ENTRY            ;NOPE...CHECK MOVE UP ENTRY AT A0
+    1186                    *
+    1187                    *        TABLE IS MESSED UP....RE-INITIALIZE IT PLEASE
+    1188                    *
+    1189 000035c0     4c42           MOVE    A2,A2                     ;IS THIS RECURSIVE CHECK AFTER INIT?
+    1190 000035d0     cb0f           JRNZ    CANT_VALIDATE             ;THEN RETURN FAILURE
+    1191                    
+    1192 000035e0     0d3f           CALLR   INIT_TB                  ;INIT THIS TABLE PLEASE
+         000035f0     ffb5  
+    1193 00003600     1822           MOVK    1,A2                      ;INDICATE RECURSIVE CALL
+    1194 00003610     0d3f           CALLR   DO_VALIDATE               ;IS IT ALRIGHT NOW?
+         00003620     ffe8  
+    1195 00003630     09af          MMFM    SP,A0,A1,A3,A4,A5,A6,A7
+         00003640     00fb  
+    1196 00003650     0960          RETS
+    1197                    *
+    1198                    *        LAST ENTRY WAS VALID...MOVE TO NEXT
+    1199                    *
+    1200 00003660     1020  VT_1     INC     A0                        ;KICK IT
+    1201 00003670     4940           CMP     A10,A0                    ;STILL IN TABLE?
+    1202 00003680     c2e9           JRLS    CHECK_A0_ENTRY            ;YEP....CHECK THIS ENTRY
+    1203                    
+    1204 00003690     0320           CLRC                              ;RETURN VALID!
+    1205 000036a0     09af          MMFM    SP,A0,A1,A3,A4,A5,A6,A7
+         000036b0     00fb  
+    1206 000036c0     0960          RETS
+    1207                    
+    1208 000036d0           CANT_VALIDATE
+    1209 000036d0     0de0           SETC                              ;RETURN FAILURE!
+    1210 000036e0     09af          MMFM    SP,A0,A1,A3,A4,A5,A6,A7
+         000036f0     00fb  
+    1211 00003700     0960          RETS
+    1212                    
+    1213                    **************************************************************************
+    1214                    *                                                                        *
+    1215                    *          CHECK_ENTRY                                                   *
+    1216                    *                                                                        *
+    1217                    *          THIS IS CALLED TO CHECK THE ENTRY INDICATED BY                *
+    1218                    *          A0.                                                           *
+    1219                    *                                                                        *
+    1220                    *          CC = OK                                                       *
+    1221                    *          CS = ENTRY BAD                                                *
+    1222                    *                                                                        *
+    1223                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   28
+
+    1224 00003710           CHECK_ENTRY
+    1225 00003710     098f           MMTM    SP,A0,A1,A2,A3,A7
+         00003720     f100  
+    1226                    
+    1227 00003730     0d3f           CALLR   FORM_HS_CKSUM             ;CHECK OUT CKSUM FIRST
+         00003740     ff2f  
+    1228 00003750     cb23           JRNZ    CHECK_FAIL                ;BAD CHECKSUM....ITS BAD
+    1229                    *
+    1230                    *        CHECKSUM OK...CHECK SCORE
+    1231                    *
+    1232 00003760     0d3f           CALLR   GET_HSCR       ;SCORE IN A1
+         00003770     ff14  
+    1233 00003780     4c23           MOVE    A1,A3                     ;SAVE COPY OF SCORE
+    1234                    
+    1235 00003790           CHECK_DIGIT
+    1236 00003790     4c22           MOVE    A1,A2                     ;COPY FOR NEXT NIBBLE
+    1237 000037a0     0b82           ANDI    0FH,A2                    ;MASK THE NIBBLE
+         000037b0 fffffff0  
+    1238 000037d0     0b42           CMPI    9,A2
+         000037e0     fff6  
+    1239 000037f0     c319           JRHI    CHECK_FAIL                ;NIBBLE TOO HIGH
+    1240 00003800     2f81           SRL     4,A1                      ;SHIFT DOWN TO NEXT NIBBLE
+    1241 00003810     cbf7           JRNZ    CHECK_DIGIT
+    1242                    
+    1243 00003820     1420           DEC     A0                        ;MAKE SURE WE ARE LOWER THAN PREVIOUS SCORE!
+    1244 00003830     ca04           JREQ    FIRST_ENT                 ;WE'RE THE 1ST IN THE TABLE
+    1245                    
+    1246 00003840     0d3f           CALLR   GET_HSCR       ;GET THE SCORE FOR THE GUY BEFORE US
+         00003850     ff06  
+    1247 00003860     4823           CMP     A1,A3                     ;OURS MUST BE LOWER OR SAME
+    1248 00003870     c311           JRHI    CHECK_FAIL                ;OURS IS BIGGER....REMOVE US
+    1249                    
+    1250 00003880           FIRST_ENT
+    1251 00003880     1020           INC     A0                        ;RESTORE THE ENTRY NUMBER
+    1252                    *
+    1253                    *        SCORE OK...CHECK INITIALS
+    1254                    *
+    1255 00003890     0d3f           CALLR   PT_ENTRY                  ;POINT A7 AT ENTRY
+         000038a0     ff42  
+    1256 000038b0     0b07           ADDI    HS_INITS,A7               ;POINT AT FIRST INITIAL
+         000038c0     0040  
+    1257 000038d0     09c2           MOVI    NUM_INITS,A2              ;THIS IS NUMBER OF INITIALS
+         000038e0     0003  
+    1258                    
+    1259 000038f0           NEXT_LETTER
+    1260 000038f0     0d3f           CALLR   RC_BYTEI        ;FETCH A BYTE
+         00003900     0045  
+    1261                    
+    1262 00003910     0d3f           CALLR   VERIFY_LETTER             ;SEE IF ITS VALID.
+         00003920     000a  
+    1263 00003930     c805           JRC     CHECK_FAIL                ;NOT A LETTER...BYTE
+    1264                    
+    1265 00003940     3cc2           DSJ     A2,NEXT_LETTER
+    1266                    
+    1267 00003950     0320           CLRC                              ;RETURN PASS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   29
+
+    1268 00003960     09af          MMFM    SP,A0,A1,A2,A3,A7
+         00003970     008f  
+    1269 00003980     0960          RETS
+    1270                    
+    1271 00003990           CHECK_FAIL
+    1272 00003990     0de0           SETC
+    1273 000039a0     09af          MMFM    SP,A0,A1,A2,A3,A7
+         000039b0     008f  
+    1274 000039c0     0960          RETS
+    1275                    
+    1276                    
+    1277                    **************************************************************************
+    1278                    *                                                                        *
+    1279                    *          VERIFY_LETTER                                                 *
+    1280                    *                                                                        *
+    1281                    *          THIS IS CALLED FOR EACH INITIAL LETTER TO SEE                 *
+    1282                    *          IF ITS VALID.                                                 *
+    1283                    *                                                                        *
+    1284                    *          CC = VALID                                                    *
+    1285                    *          CS = NOT VALID                                                *
+    1286                    *                                                                        *
+    1287                    **************************************************************************
+    1288                    
+    1289 000039d0           VERIFY_LETTER
+    1290 000039d0     0b80           ANDI    BYTE_MASK,A0             ;KEEP JUST THE BYTE
+         000039e0 ffffff00  
+    1291                    
+    1292 00003a00     0b40           CMPI    SPACE,A0                    ;SPACE?
+         00003a10     ffdf  
+    1293 00003a20     ca06           JREQ    VERIFY_PASS                ;ITS OK.
+    1294                    
+    1295 00003a30     0b40           CMPI    LET_A,A0                    ;BETWEEN A-Z?
+         00003a40     ffbe  
+    1296 00003a50     c805           JRLO    VERIFY_FAIL
+    1297                    
+    1298 00003a60     0b40           CMPI    LET_Z,A0
+         00003a70     ffa5  
+    1299 00003a80     c302           JRHI    VERIFY_FAIL
+    1300                    
+    1301 00003a90           VERIFY_PASS
+    1302 00003a90     0320           CLRC
+    1303 00003aa0     0960           RETS
+    1304                    
+    1305 00003ab0           VERIFY_FAIL
+    1306 00003ab0     0de0           SETC
+    1307 00003ac0     0960           RETS
+    1308                    
+    1309                    **************************************************************************
+    1310                    *                                                                        *
+    1311                    *          REMOVE_ENTRY                                                  *
+    1312                    *                                                                        *
+    1313                    *          THIS IS CALLED TO REMOVE A BAD ENTRY FROM THE TABLE.          *
+    1314                    *          IT DELETES THE ENTRY INDICATED BY A0.                         *
+    1315                    *                                                                        *
+    1316                    *          IT BUBBLES THE REST OF THE TABLE UP 1 UNIT.                   *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   30
+
+    1317                    *                                                                        *
+    1318                    *          IT THEN PUTS THE LOWEST SCORE FROM THE ROM TABLE              *
+    1319                    *          WITH INITIALS IN THAT ENTRY.                                  *
+    1320                    *                                                                        *
+    1321                    **************************************************************************
+    1322 00003ad0           REMOVE_ENTRY
+    1323 00003ad0     098f           MMTM    SP,A0,A1,A2,A6,A7
+         00003ae0     e300  
+    1324 00003af0     4c03           MOVE    A0,A3                ;THIS IS DEST
+    1325 00003b00     4c62           MOVE    A3,A2                ;SOURCE IS 1 BELOW
+    1326                    
+    1327 00003b10           BUBBLE_ANOTHER
+    1328 00003b10     1022           INC     A2                   ;NOW WE'RE SET FOR A COPY...
+    1329                    
+    1330 00003b20     4942           CMP     A10,A2               ;IS SOURCE OUT OF RANGE?
+    1331 00003b30     c304           JRHI    BUBBLE_DONE          ;YEP....WE'RE AT THE BOTTOM (A3)
+    1332                    
+    1333 00003b40     0d3f           CALLR   COPY_ENTRY
+         00003b50     ff79  
+    1334 00003b60     1023           INC     A3
+    1335 00003b70     c0f9           JRUC    BUBBLE_ANOTHER
+    1336                    
+    1337 00003b80           BUBBLE_DONE
+    1338 00003b80     4c60           MOVE    A3,A0                ;THIS IS BOTTOM OF TABLE
+    1339 00003b90     0d3f           CALLR   PT_ENTRY             ;A7 POINTS AT CMOS BLOCK
+         00003ba0     ff12  
+    1340                    
+    1341 00003bb0     b706           MOVE    *A8(TB_FACTORY),A6,L  ;GET FACTORY TABLE
+         00003bc0     0050  
+    1342 00003bd0     09c1           MOVI    HS_ROM_SIZE,A1        ;SIZE OF ENTRY
+         00003be0     0040  
+    1343 00003bf0     5f41           MPYU    A10,A1                ;TIMES NUMBER OF VALID ENTRIES..POINTS AT LAST.
+    1344 00003c00     4026           ADD     A1,A6                 ;NOW WE POINT AT END OF ROM TABLE
+    1345 00003c10     09c2           MOVI    HS_SIZE_IN_BYTES,A2   ;SIZE OF ENTRY
+         00003c20     0008  
+    1346                    
+    1347 00003c30           REPLACE_LOOP
+    1348 00003c30     8ec0           MOVB    *A6,A0             ;MOVE A ROM BYTE TO A0
+    1349 00003c40     0b06           ADDI    BYTE_SIZE,A6
+         00003c50     0008  
+    1350 00003c60     0d3f           CALLR   WC_BYTEI  ;WRITE THE WORD AND INCREMENT
+         00003c70     0044  
+    1351 00003c80     3cc2           DSJ     A2,REPLACE_LOOP      ;UNTIL THEY'RE ALL THERE.
+    1352                    
+    1353 00003c90     4d40           MOVE    A10,A0               ;POINT AT "LAST" ENTRY
+    1354 00003ca0     0d3f           CALLR   FORM_HS_CKSUM_AND_STORE   ;STORE THE CHECKBYTE
+         00003cb0     fef3  
+    1355 00003cc0     09af          MMFM    SP,A0,A1,A2,A6,A7         ;AND RETURN
+         00003cd0     00c7  
+    1356 00003ce0     0960          RETS
+    1357                    
+    1358                    **************************************************************************
+    1359                    *                                                                        *
+    1360                    *          CMOS UTILITIES                                                *
+    1361                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   31
+
+    1362                    **************************************************************************
+    1363                    
+    1364                    **************************************************************************
+    1365                    *                                                                        *
+    1366                    *          FOR ALL OF THESE CMOS ROUTINES.                               *
+    1367                    *                                                                        *
+    1368                    *                  A7 = POINTER TO MEMORY                                *
+    1369                    *                  A0 = DATA TO/FROM MEMORY                              *
+    1370                    *                                                                        *
+    1371                    **************************************************************************
+    1372                    *
+    1373                    *        ****  IMPORTANT NOTE ON WORD AND LONG WORD PACKING  ****
+    1374                    *        ****  IMPORTANT NOTE ON WORD AND LONG WORD PACKING  ****
+    1375                    *        ****  IMPORTANT NOTE ON WORD AND LONG WORD PACKING  ****
+    1376                    *        ****  IMPORTANT NOTE ON WORD AND LONG WORD PACKING  ****
+    1377                    *        ****  IMPORTANT NOTE ON WORD AND LONG WORD PACKING  ****
+    1378                    *
+    1379                    *        NOTE THAT REQUESTS FOR WORDS RETURN THE 2 BYTES PACKED
+    1380                    *        INTO A WORD AS <1ST BYTE><2ND BYTE>.   THIS IS NOT
+    1381                    *        THE SAME WAY THAT THE GSP HANDLES A WORD POINTED AT
+    1382                    *        WITH A POINTER.
+    1383                    *
+    1384                    *        LONG WORDS WORK SIMILARLY:
+    1385                    *
+    1386                    *           MSB                                              LSB
+    1387                    *               <1ST BYTE> <2ND BYTE> <3RD BYTE> <4TH BYTE>
+    1388                    *
+    1389                    *        TOUGH LUCK INTEL HACKERS!
+    1390                    *
+    1391                    *
+    1392                    *        RC_BYTE
+    1393                    *        WC_BYTE
+    1394                    *
+    1395                    *        These 2 routines are the only routines that ever touch
+    1396                    *        CMOS ram.  This is done to localize the effect of
+    1397                    *        changes in the architecture.  All efforts to deal with
+    1398                    *        CMOS should come through these routines.  Locking
+    1399                    *        hardware will be easily added in the future (as well
+    1400                    *        as different memory mapping).
+    1401                    *
+    1402 00003cf0           RC_BYTE
+    1403 00003cf0     8ee0           MOVB    *A7,A0
+    1404 00003d00     0b80           ANDI    BYTE_MASK,A0
+         00003d10 ffffff00  
+    1405 00003d30     0960           RETS
+    1406                    
+    1407 00003d40           WC_BYTE
+    1408 00003d40     8c07           MOVB    A0,*A7          ;WRITE OUT THE BYTE
+    1409 00003d50     0960           RETS                    ;AND RETURN
+    1410                    
+    1411                    **************************************************************************
+    1412                    *                                                                        *
+    1413                    *          RC_BYTEI                                            *
+    1414                    *                                                                        *
+    1415                    *          READ BYTE POINTED TO BY A7...INCREMENT POINTER TO             *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   32
+
+    1416                    *          "NEXT" BYTE.                                                  *
+    1417                    *                                                                        *
+    1418                    **************************************************************************
+    1419 00003d60           RC_BYTEI
+    1420 00003d60     0d3f           CALLR   RC_BYTE
+         00003d70     fff7  
+    1421 00003d80     0b07           ADDI    C_BYTE_SIZE,A7    ;WORDS SEPARATE CMOS BYTES.
+         00003d90     0010  
+    1422 00003da0     4c00           MOVE    A0,A0             ;RETURN FLAGS ACCORDINGLY
+    1423 00003db0     0960           RETS
+    1424                    
+    1425 00003dc0           RC_WORD
+    1426 00003dc0     098f           MMTM    SP,A1,A7              ;USE A1 TO COMBINE BYTES
+         00003dd0     4100  
+    1427 00003de0     0d3f           CALLR   RC_BYTEI    ;GET A BYTE
+         00003df0     fff6  
+    1428 00003e00     4c01           MOVE    A0,A1                 ;SAVE IN A1
+    1429 00003e10     0b81           ANDI    BYTE_MASK,A1          ;MASK ONLY BYTE
+         00003e20 ffffff00  
+    1430 00003e40     2501           SLL     8,A1                  ;SHIFT TO HIGH BYTE
+    1431 00003e50     0d3f           CALLR   RC_BYTE        ;GET THE 2ND BYTE
+         00003e60     ffe8  
+    1432 00003e70     0b80           ANDI    BYTE_MASK,A0
+         00003e80 ffffff00  
+    1433 00003ea0     5420           OR      A1,A0                 ;A0 HAS THE WORD
+    1434 00003eb0     09af          MMFM    SP,A1,A7              
+         00003ec0     0082  
+    1435 00003ed0     0960          RETS
+    1436                    
+    1437 00003ee0           RC_WORDI
+    1438 00003ee0     0d3f           CALLR   RC_WORD
+         00003ef0     ffec  
+    1439 00003f00     0b07           ADDI    C_WORD_SIZE,A7    ;LONG SEPARATE CMOS WORDS.
+         00003f10     0020  
+    1440 00003f20     4c00           MOVE    A0,A0             ;RETURN FLAGS ACCORDINGLY
+    1441 00003f30     0960           RETS
+    1442                    
+    1443 00003f40           RC_LONG
+    1444 00003f40     098f           MMTM    SP,A1,A7              ;USE A1 TO COMBINE BYTES
+         00003f50     4100  
+    1445 00003f60     0d3f           CALLR   RC_WORDI    ;GET A WORD
+         00003f70     fff6  
+    1446 00003f80     4c01           MOVE    A0,A1                 ;SAVE IN A1
+    1447 00003f90     0b81           ANDI    WORD_MASK,A1          ;MASK ONLY WORD
+         00003fa0 ffff0000  
+    1448 00003fc0     2601           SLL     16,A1                 ;SHIFT TO HIGH WORD
+    1449 00003fd0     0d3f           CALLR   RC_WORD        ;GET THE 2ND WORD
+         00003fe0     ffdd  
+    1450 00003ff0     0b80           ANDI    WORD_MASK,A0
+         00004000 ffff0000  
+    1451 00004020     5420           OR      A1,A0                 ;A0 HAS THE LONG WORD
+    1452 00004030     09af          MMFM    SP,A1,A7              
+         00004040     0082  
+    1453 00004050     0960          RETS
+    1454                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   33
+
+    1455 00004060           RC_LONGI
+    1456 00004060     0d3f           CALLR   RC_LONG
+         00004070     ffec  
+    1457 00004080     0b07           ADDI    C_LONG_SIZE,A7    ;DOUBLE THE DISTANCE FOR BRAIN DAMIJ
+         00004090     0040  
+    1458 000040a0     4c00           MOVE    A0,A0             ;RETURN FLAGS ACCORDINGLY
+    1459 000040b0     0960           RETS
+    1460                    
+    1461 000040c0           WC_BYTEI
+    1462 000040c0     0d3f           CALLR   WC_BYTE
+         000040d0     ffc6  
+    1463 000040e0     0b07           ADDI    C_BYTE_SIZE,A7
+         000040f0     0010  
+    1464 00004100     0960           RETS
+    1465                    
+    1466 00004110           WC_WORD
+    1467 00004110     098f           MMTM    SP,A0,A1,A7
+         00004120     c100  
+    1468 00004130     4c01           MOVE    A0,A1           ;MAKE COPY OF WORD
+    1469 00004140     2f00           SRL     8,A0            ;GET HIGH BYTE IN A0
+    1470 00004150     0d3f           CALLR   WC_BYTEI  ;WRITE THE HIGH BYTE
+         00004160     fff5  
+    1471 00004170     4c20           MOVE    A1,A0           ;NOW GET THE LOW BYTE BACK
+    1472 00004180     0d3f           CALLR   WC_BYTE ;WRITE IT
+         00004190     ffba  
+    1473 000041a0     09af          MMFM    SP,A0,A1,A7     ;AND RESTORE ALL WE TOUCHED
+         000041b0     0083  
+    1474 000041c0     0960          RETS
+    1475                    
+    1476 000041d0           WC_WORDI
+    1477 000041d0     0d3f           CALLR   WC_WORD
+         000041e0     fff2  
+    1478 000041f0     0b07           ADDI    C_WORD_SIZE,A7
+         00004200     0020  
+    1479 00004210     0960           RETS
+    1480                    
+    1481 00004220           WC_LONG
+    1482 00004220     098f           MMTM    SP,A0,A1,A7
+         00004230     c100  
+    1483 00004240     4c01           MOVE    A0,A1           ;MAKE COPY OF LONG
+    1484 00004250     2e00           SRL     16,A0           ;GET HIGH WORD IN A0
+    1485 00004260     0d3f           CALLR   WC_WORDI  ;WRITE THE HIGH WORD
+         00004270     fff5  
+    1486 00004280     4c20           MOVE    A1,A0           ;NOW GET THE LOW WORD BACK
+    1487 00004290     0d3f           CALLR   WC_WORD ;WRITE IT
+         000042a0     ffe6  
+    1488 000042b0     09af          MMFM    SP,A0,A1,A7     ;AND RESTORE ALL WE TOUCHED
+         000042c0     0083  
+    1489 000042d0     0960          RETS
+    1490                    
+    1491 000042e0           WC_LONGI
+    1492 000042e0     0d3f           CALLR   WC_LONG
+         000042f0     fff2  
+    1493 00004300     0b07           ADDI    C_LONG_SIZE,A7
+         00004310     0040  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   34
+
+    1494 00004320     0960           RETS
+    1495                    
+    1496                    *****************************************************************************
+    1497                    *****************************************************************************
+    1498                    *****
+    1499                    *****    DEFAULT ROM HSTD TABLES AND TABLE DEFINITIONS
+    1500                    *****
+    1501                    *****************************************************************************
+    1502                    *****************************************************************************
+    1503                    
+    1504              0000  TB_POINTER       EQU     0                      ;LONG-POINTER TO BEGINNING OF TABLE
+    1505              0020  TB_COUNT         EQU     TB_POINTER+LONG_SIZE   ;WORD....# IN THE TABLE.
+    1506              0030  TB_VISIBLE       EQU     TB_COUNT+WORD_SIZE ;WORD....NUMBER DISPLAYED
+    1507              0040  TB_PAGE_BITS     EQU     TB_VISIBLE+WORD_SIZE     ;WORD....STATUS WORD FOR CMOS PAGE
+    1508              0050  TB_FACTORY       EQU     TB_PAGE_BITS+WORD_SIZE   ;LONG....ROM STARTUP TABLE
+    1509              0070  TB_ERROR_COUNT   EQU     TB_FACTORY+LONG_SIZE     ;WORD....NUM ERRORS TO RE-INIT
+    1510                    *
+    1511                    
+    1512                    SCR_M    $MACRO  A,B,C,D
+    1513                             .BYTE   :A:
+    1514                             .BYTE   :B:
+    1515                             .BYTE   :C:
+    1516                             .BYTE   :D:
+    1517                             $ENDM
+    1518                    
+    1519                    INIT_M   $MACRO  A,B,C
+    1520                             .BYTE   :A:
+    1521                             .BYTE   :B:
+    1522                             .BYTE   :C:
+    1523                             .BYTE   0               ;CHECKBYTE
+    1524                             $ENDM
+    1525                    
+    1526 00004330           ALL_TIME_ROM_TABLE:
+    1527 00004330                    SCR_M   02H,12H,21H,45H                ;****ZERO ENTRY...NOT SEEN!
+    1528 00004350                    INIT_M  'E','P','J'
+    1529              0040  ROM_ENTRY_SIZE      EQU     $-ALL_TIME_ROM_TABLE
+    1530 00004370                    SCR_M   01H,00H,00H,01H
+    1531 00004390                    INIT_M  'J','E','H'           ;1
+    1532 000043b0                    SCR_M   00H,92H,52H,21H
+    1533 000043d0                    INIT_M  'J','R','N'           ;2
+    1534 000043f0                    SCR_M   00H,88H,88H,88H
+    1535 00004410                    INIT_M  'T','J','E'           ;3
+    1536 00004430                    SCR_M   00H,79H,82H,18H
+    1537 00004450                    INIT_M  'L','I','N'           ;4           
+    1538 00004470                    SCR_M   00H,77H,77H,77H
+    1539 00004490                    INIT_M  'M','L',' '           ;5   ;LOCASIO
+    1540 000044b0                    SCR_M   00H,69H,69H,96H
+    1541 000044d0                    INIT_M  'G','W','S'           ;6
+    1542 000044f0                    SCR_M   00H,66H,66H,66H
+    1543 00004510                    INIT_M  'A','L',' '           ;7
+    1544 00004530                    SCR_M   00H,65H,10H,08H
+    1545 00004550                    INIT_M  'B','L','S'           ;8   
+    1546 00004570                    SCR_M   00H,57H,02H,18H
+    1547 00004590                    INIT_M  'J','R','H'           ;9 ;J.R.
+    1548 000045b0                    SCR_M   00H,55H,55H,55H 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   35
+
+    1549 000045d0                    INIT_M  'J',' ','P'           ;10  ;J.P.
+    1550 000045f0                    SCR_M   00H,55H,01H,27H                 
+    1551 00004610                    INIT_M  'D','T','W'           ;11  ;WATSON
+    1552 00004630                    SCR_M   00H,51H,11H,15H
+    1553 00004650                    INIT_M  'D',' ','P'           ;12  ;DIANA
+    1554 00004670                    SCR_M   00H,48H,48H,47H
+    1555 00004690                    INIT_M  'R','A','Y'           ;13
+    1556 000046b0                    SCR_M   00H,44H,44H,44H
+    1557 000046d0                    INIT_M  'W','B','D'           ;14  ;WE KNOW WHAT B.D. STANDS FOR
+    1558 000046f0                    SCR_M   00H,41H,82H,80H
+    1559 00004710                    INIT_M  'K','J','F'           ;15  ;THE MAN
+    1560 00004730                    SCR_M   00H,39H,20H,35H
+    1561 00004750                    INIT_M  'N','D','N'           ;16
+    1562 00004770                    SCR_M   00H,38H,10H,90H
+    1563 00004790                    INIT_M  'J',' ','B'           ;17    IS HE BEAGLE?
+    1564 000047b0                    SCR_M   00H,36H,02H,13H
+    1565 000047d0                    INIT_M  'S','S','R'           ;18
+    1566 000047f0                    SCR_M   00H,33H,09H,60H
+    1567 00004810                    INIT_M  'M','R',' '           ;19
+    1568 00004830                    SCR_M   00H,32H,66H,66H
+    1569 00004850                    INIT_M  'B','I','G'           ;20
+    1570 00004870                    SCR_M   00H,31H,00H,55H
+    1571 00004890                    INIT_M  'L','E','P'
+    1572 000048b0                    SCR_M   00H,30H,75H,65H
+    1573 000048d0                    INIT_M  'M','D','R'
+    1574 000048f0                    SCR_M   00H,29H,72H,56H
+    1575 00004910                    INIT_M  'B','A','C'
+    1576 00004930                    SCR_M   00H,28H,70H,70H
+    1577 00004950                    INIT_M  'W',' ','R'
+    1578 00004970                    SCR_M   00H,27H,60H,60H
+    1579 00004990                    INIT_M  'M','P','T'
+    1580 000049b0                    SCR_M   00H,26H,55H,20H
+    1581 000049d0                    INIT_M  'S','U','E'
+    1582 000049f0                    SCR_M   00H,25H,44H,80H
+    1583 00004a10                    INIT_M  'M','O','M'
+    1584 00004a30                    SCR_M   00H,24H,44H,79H
+    1585 00004a50                    INIT_M  'D','A','D'
+    1586 00004a70                    SCR_M   00H,23H,44H,78H
+    1587 00004a90                    INIT_M  'S','F','D'
+    1588 00004ab0                    SCR_M   00H,22H,44H,77H
+    1589 00004ad0                    INIT_M  'A','K','D'
+    1590              001f  ALL_TIME_ENTRIES     EQU     ($-ALL_TIME_ROM_TABLE)/ROM_ENTRY_SIZE
+    1591                    
+    1592 00004af0           TODAYS_ROM_TABLE:
+    1593 00004af0                    SCR_M   02H,12H,21H,45H                ;****ZERO ENTRY...NOT SEEN!
+    1594 00004b10                    INIT_M  'E','P','J'
+    1595 00004b30                    SCR_M   00H,20H,01H,27H
+    1596 00004b50                    INIT_M  'D','R','J'
+    1597 00004b70                    SCR_M   00H,10H,08H,65H
+    1598 00004b90                    INIT_M  'G','N','P'
+    1599 00004bb0                    SCR_M   00H,08H,21H,64H
+    1600 00004bd0                    INIT_M  'T','R','A'
+    1601 00004bf0                    SCR_M   00H,05H,72H,18H
+    1602 00004c10                    INIT_M  'L','E','D'
+    1603 00004c30                    SCR_M   00H,05H,12H,55H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+High Score to Date Management                                        PAGE   36
+
+    1604 00004c50                    INIT_M  'M','L',' '        
+    1605 00004c70                    SCR_M   00H,04H,12H,50H
+    1606 00004c90                    INIT_M  'L','E','D'
+    1607 00004cb0                    SCR_M   00H,03H,19H,20H
+    1608 00004cd0                    INIT_M  'F','O','O'
+    1609 00004cf0                    SCR_M   00H,03H,19H,19H
+    1610 00004d10                    INIT_M  'B','A','R'
+    1611              0009  TODAYS_ENTRIES     EQU     ($-TODAYS_ROM_TABLE)/ROM_ENTRY_SIZE
+    1612                             .END
+
+ No Errors,  No Warnings

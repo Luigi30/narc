@@ -1,0 +1,2461 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCHEDA.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\mprocEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                    *       LOCAL STUFF
+      21                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      22                            .INCLUDE        "NARCTEQU.ASM"
+      23                            .include        "imgtbl.glo"
+      24                            .include        "narcHEAD.tbl"
+      25                            .include        "narcxtra.glo"
+      26                    
+      27                            .GLOBL  MkNuke
+      28                            .GLOBL  InitTbls,DIRANI
+      29                            .GLOBL  BONEINI,CHUNKINI,CHNKTINI,SpineIni
+      30                            .GLOBL  BRECOIL,BRECOILF,TUNGFLEX,TUNGFLXF,RRECOIL,RRECOILF,RRECOIL
+      31                            .GLOBL  KABOOM,KABOOMF,BOOM5a,BOOM5b,BOOM5c,BOOM6
+      32                            .GLOBL  CHNKTBL1,CHNKTBL2,CHNKTBL3,CHNKTBL4,CHNKTBL5
+      33                            .GLOBL  HED3hat,skull4,jaw4,stump,stumpskl,BASEskl
+      34                    
+      35                            .GLOBL  HEADCOLL,BASECOLL,TUNGCOLL,SPNECOLL
+      36                            .GLOBL  SDIRANI
+      37                            .GLOBL  baseflsh
+      38                            .GLOBL  jawbite,jawbitef,FLYSPINE,FLYSKULL,BlowSkul
+      39                    
+      40 00000000     f005  FTungSND        .WORD   0F005H,010H,0804eH,0 ;fire tung
+      41 00000040     f005  TungHSND        .WORD   0F005H,015H,08015H,0 ;tung hits player
+      42                    
+      43          00230000  HEADZSIZ        .set    000230000H      ;use Z plus only
+      44              0005  BASEZMIN        .set    5
+      45              0028  BASEZPOS        .set    028H
+      46          00280005  BASEZSIZ        .set    BASEZPOS*ZP+BASEZMIN
+      47          00120012  TUNGZSIZ        .set    000120012H
+      48                    
+      49                    **************************************************************************
+      50 00000080           InitTbls:
+      51 00000080 00000180'         .long   BASELini,BASERini,FACEini,HATini,NECKini,GLASini,TUNGini,0
+      52                    
+      53                    *       .LONG   OXVEL,OYVEL,OXVAL,XYVAL
+      54                    *       .WORD   OZPOS,OZVEL
+      55                    *       .LONG   OIMG,OZSIZ,OCVECT
+      56                    *       .WORD   OFLAGS,OID
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    2
+
+      57 00000180           BASELini
+      58 00000180 00000000          .LONG   0,0,0,0
+      59 00000200     0000          .WORD   0,0
+      60 00000220 00000280"         .LONG   BASElh2e,BASEZSIZ,BASECOLL
+      61                    ;       .WORD   DMAWNZ,HEADEOID|0
+      62 00000280     8002          .WORD   DMAWNZ,BEOID|BASEID
+      63 000002a0 00000000!         .LONG   HEADBLIP
+      64 000002c0           BASERini
+      65 000002c0 00000000          .LONG   0,0,0,0
+      66 00000340     0000          .WORD   0,0
+      67 00000360 00000280"         .LONG   BASElh2e,BASEZSIZ,BASECOLL
+      68                    ;       .WORD   DMAWNZ,HEADEOID|1
+      69 000003c0     8002          .WORD   DMAWNZ,BEOID|BASEID
+      70 000003e0 00000000          .LONG   0
+      71 00000400           FACEini
+      72 00000400 00000000          .LONG   0,0,0,0
+      73 00000480     0000          .WORD   0,0
+      74 000004a0 00000400"         .LONG   HED3mou1,HEADZSIZ,HEADCOLL
+      75 00000500     8002          .WORD   DMAWNZ,HEADEOID|2
+      76 00000520 00000000          .LONG   0
+      77 00000540           HATini
+      78 00000540 00000000          .LONG   0,0,0,0
+      79 000005c0     0000          .WORD   0,0
+      80 000005e0 00000380"         .LONG   HED3hat,HEADZSIZ,HEADCOLL
+      81 00000640     8002          .WORD   DMAWNZ,HEADEOID|3
+      82 00000660 00000000          .LONG   0
+      83 00000680           NECKini
+      84 00000680 00000000          .LONG   0,0,0,0
+      85 00000700     0000          .WORD   0,0
+      86 00000720 00000580"         .LONG   HED3neck,HEADZSIZ,HEADCOLL
+      87 00000780     8002          .WORD   DMAWNZ,HEADEOID|4
+      88 000007a0 00000000          .LONG   0
+      89 000007c0           GLASini
+      90 000007c0 00000000          .LONG   0,0,0,0
+      91 00000840     0000          .WORD   0,0
+      92 00000860 00000a80"         .LONG   GLAS3,HEADZSIZ,HEADCOLL
+      93 000008c0     8002          .WORD   DMAWNZ,HEADEOID|5
+      94 000008e0 00000000          .LONG   0
+      95 00000900           TUNGini
+      96 00000900 00000000          .LONG   0,0,0,0
+      97 00000980     0000          .WORD   0,0
+      98 000009a0 00000c80"         .LONG   TUNG0,TUNGZSIZ,TUNGCOLL
+      99 00000a00     8002          .WORD   DMAWNZ,HEADEOID|6
+     100 00000a20 00000000          .LONG   0
+     101                    
+     102                    
+     103 00000a40           SpineIni:
+     104 00000a40 00000000          .LONG   0,0,0,0
+     105 00000ac0     0000          .WORD   0,0
+     106 00000ae0 00002200"         .LONG   spine,050005H,SPNECOLL
+     107 00000b40     8002          .WORD   DMAWNZ,HEADEOID|7
+     108 00000b60 00000000          .LONG   0
+     109                    
+     110                    
+     111                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    3
+
+     112 00000b80           CHNKTBL1:
+     113 00000b80 00005d50'         .long   CHUNKA,CHUNKB,CHUNKC,CHUNKD
+     114 00000c00 00005d50'         .long   CHUNKA,CHUNKB,CHUNKC,CHUNKD
+     115 00000c80 00005f90'         .long   CHUNKAR,CHUNKBR,CHUNKCR,CHUNKDR
+     116 00000d00 00005f90'         .long   CHUNKAR,CHUNKBR,CHUNKCR,CHUNKDR
+     117 00000d80 00006df0'         .long   CHUNKE,CHUNKF,CHUNKH
+     118 00000de0 00006df0'         .long   CHUNKE,CHUNKF,CHUNKH
+     119 00000e40 00000000          .long   0
+     120 00000e60           CHNKTBL2:
+     121 00000e60 00007c30'         .long   CHUNKT1,CHUNKT1,CHUNKT2,CHUNKT2,CHUNKT3,CHUNKT3
+     122 00000f20 00008380'         .long   CHUNKT4,CHUNKT4,CHUNKT5,CHUNKT5,CHUNKT6,CHUNKT6
+     123 00000fe0 00000000          .long   0
+     124 00001000           CHNKTBL3:
+     125 00001000 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     126 00001080 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     127 00001100 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     128 00001180 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     129 00001200 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     130 00001280 00005d50'         .long   CHUNKA,CHUNKB,CHUNKD
+     131 000012e0 00005d50'         .long   CHUNKA,CHUNKB,CHUNKD
+     132 00001340 00005f90'         .long   CHUNKAR,CHUNKBR,CHUNKDR
+     133 000013a0 00005f90'         .long   CHUNKAR,CHUNKBR,CHUNKDR
+     134 00001400 00000000          .long   0
+     135 00001420           CHNKTBL4:
+     136 00001420 00006df0'         .long   CHUNKE,CHUNKF,CHUNKG,CHUNKH
+     137 000014a0 00005f90'         .long   CHUNKAR,CHUNKB,CHUNKDR
+     138 00001500 00000000          .long   0
+     139 00001520           CHNKTBL5:
+     140 00001520 000061d0'         .long   CHUNKB,CHUNKD
+     141 00001560 00005f90'         .long   CHUNKAR,CHUNKCR,CHUNKDR
+     142 000015c0 00006df0'         .long   CHUNKE,CHUNKF
+     143 00001600 00000000          .long   0
+     144                    **************************************************************************
+     145                    
+     146                    **************************************************************************
+     147 00001620           hed90ft0:
+     148 00001620 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG0
+     149 00001700       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     150 00001738       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     151 00001740                   .EVEN
+     152 00001740           hed90ft1:
+     153 00001740 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG1
+     154 00001820       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     155 00001858       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     156 00001860                   .EVEN
+     157 00001860           hed90ft2:
+     158 00001860 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG2
+     159 00001940       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     160 00001978       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     161 00001980                   .EVEN
+     162 00001980           hed90ft3:
+     163 00001980 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG3
+     164 00001a60       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     165 00001a98       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     166 00001aa0                   .EVEN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    4
+
+     167 00001aa0           hed90ft4:
+     168 00001aa0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG4
+     169 00001b80       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     170 00001bb8       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     171 00001bc0                   .EVEN
+     172 00001bc0           hed90ft5:
+     173 00001bc0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG5
+     174 00001ca0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     175 00001cd8       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     176 00001ce0                   .EVEN
+     177 00001ce0           hed90ft6:
+     178 00001ce0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG6
+     179 00001dc0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     180 00001df8       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     181 00001e00                   .EVEN
+     182 00001e00           hed90ft7:
+     183 00001e00 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG7
+     184 00001ee0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     185 00001f18       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     186 00001f20                   .EVEN
+     187 00001f20           hed90ft8:
+     188 00001f20 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG8
+     189 00002000       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     190 00002038       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     191 00002040                   .EVEN
+     192 00002040           hed90ft9:
+     193 00002040 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG9
+     194 00002120       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     195 00002158       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     196 00002160                   .EVEN
+     197                    
+     198 00002160           hed90t0:
+     199 00002160 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG0
+     200 00002240       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     201 00002278       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     202 00002280                   .EVEN
+     203 00002280           hed90t1:
+     204 00002280 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG1
+     205 00002360       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     206 00002398       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     207 000023a0                   .EVEN
+     208 000023a0           hed90t2:
+     209 000023a0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG2
+     210 00002480       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     211 000024b8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     212 000024c0                   .EVEN
+     213 000024c0           hed90t3:
+     214 000024c0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG3
+     215 000025a0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     216 000025d8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     217 000025e0                   .EVEN
+     218 000025e0           hed90t4:
+     219 000025e0 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG4
+     220 000026c0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     221 000026f8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    5
+
+     222 00002700                   .EVEN
+     223 00002700           hed90t5:
+     224 00002700 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG5
+     225 000027e0       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     226 00002818       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     227 00002820                   .EVEN
+     228 00002820           hed90t6:
+     229 00002820 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG6
+     230 00002900       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     231 00002938       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     232 00002940                   .EVEN
+     233 00002940           hed90t7:
+     234 00002940 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou2,HED3hat,HED3neck,GLAS3,TUNG7
+     235 00002a20       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     236 00002a58       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     237 00002a60                   .EVEN
+     238 00002a60           hed90t8:
+     239 00002a60 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG8
+     240 00002b40       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     241 00002b78       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     242 00002b80                   .EVEN
+     243 00002b80           hed90t9:
+     244 00002b80 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou3,HED3hat,HED3neck,GLAS3,TUNG9
+     245 00002c60       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     246 00002c98       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     247 00002ca0                   .EVEN
+     248                    
+     249                    
+     250 00002ca0           hed120:
+     251 00002ca0 00000280"         .LONG   BASElh2e,BASElh2e,HEAD4,0,0,GLAS4,0
+     252 00002d80       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     253 00002db8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     254 00002dc0                   .EVEN
+     255 00002dc0           hed120f:
+     256 00002dc0 00000280"         .LONG   BASElh2e,BASElh2e,HEAD4,0,0,GLAS4,0
+     257 00002ea0       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     258 00002ed8       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     259 00002ee0                   .EVEN
+     260 00002ee0           hed60:
+     261 00002ee0 00000280"         .LONG   BASElh2e,BASElh2e,HEAD2,0,0,GLAS2,0
+     262 00002fc0       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     263 00002ff8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     264 00003000                   .EVEN
+     265 00003000           hed60f:
+     266 00003000 00000280"         .LONG   BASElh2e,BASElh2e,HEAD2,0,0,GLAS2,0
+     267 000030e0       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     268 00003118       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     269 00003120                   .EVEN
+     270 00003120           hed30:
+     271 00003120 00000280"         .LONG   BASElh2e,BASElh2e,HEAD1,0,0,GLAS1,0
+     272 00003200       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     273 00003238       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     274 00003240                   .EVEN
+     275 00003240           hed30f:
+     276 00003240 00000280"         .LONG   BASElh2e,BASElh2e,HEAD1,0,0,GLAS1,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    6
+
+     277 00003320       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     278 00003358       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     279 00003360                   .EVEN
+     280 00003360           hed0:
+     281 00003360 00000280"         .LONG   BASElh2e,BASElh2e,HEAD0,0,0,GLAS0,0
+     282 00003440       00          .BYTE          0,       0,    2,0,1,    3, 1 ;Zoff
+     283 00003478       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     284 00003480                   .EVEN
+     285                    
+     286                    
+     287 00003480           recoil:
+     288 00003480 00000280"         .LONG   BASElh2e,BASElh2e,HEAD3r,0,0,GLAS3r2,0
+     289 00003560       00          .BYTE          0,       0,     2,0,1,     3,1    ;Z off
+     290 00003598       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     291 000035a0                   .EVEN
+     292 000035a0           recoilf:
+     293 000035a0 00000280"         .LONG   BASElh2e,BASElh2e,HEAD3r,0,0,GLAS3r2,0
+     294 00003680       00          .BYTE          0,       0,     2,0,1,     3,1    ;Z off
+     295 000036b8       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     296 000036c0                   .EVEN
+     297                    
+     298                    
+     299 000036c0           hedblow0:
+     300 000036c0 00000280"         .LONG   BASElh2e,BASElh2e,0,0,0,0,0
+     301 000037a0       00          .BYTE          0,       0,     1,     2,     3,    2,    1 ;Z off
+     302 000037d8       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     303 000037e0           hedblow1:
+     304 000037e0 00000280"         .LONG   BASElh2e,BASElh2e,stump,skull4H,jaw4H,0,0
+     305 000038c0       00          .BYTE          0,       0,    1,     2,     3,    2,    1 ;Z off
+     306 000038f8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+     307                    
+     308 00003900           hedblo0f:
+     309 00003900 00000280"         .LONG   BASElh2e,BASElh2e,0,0,0,0,0
+     310 000039e0       00          .BYTE          0,       0,     1,     2,     3,    2,    1 ;Z off
+     311 00003a18       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+     312 00003a20           hedblo1f:
+     313 00003a20 00000280"         .LONG   BASElh2e,BASElh2e,stump,skull4H,jaw4H,0,0
+     314 00003b00       00          .BYTE          0,       0,    1,     2,     3,    2,    1 ;Z off
+     315 00003b38       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     316                    
+     317 00003b40           hed90f:
+     318 00003b40 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou1,HED3hat,HED3neck,GLAS3,0
+     319 00003c20       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     320 00003c58       40          .BYTE   040H ;flip bits - top 6 bits correspond to first 6 parts
+     321 00003c60                   .EVEN
+     322 00003c60           hed90:
+     323 00003c60 00000280"         .LONG   BASElh2e,BASElh2e,HED3mou1,HED3hat,HED3neck,GLAS3,0
+     324 00003d40       00          .BYTE          0,       0,       2,      0,       1,    3,1 ;ZOFF
+     325 00003d78       bf          .BYTE   0BFH ;flip bits - top 6 bits correspond to first 6 parts
+     326 00003d80                   .EVEN
+     327                    
+     328                    
+     329 00003d80           DIRANI:
+     330 00003d80 000040e0'         .LONG   HED120F
+     331 00003da0 00004130'         .LONG   HED90F
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    7
+
+     332 00003dc0 00004260'         .LONG   HED60F
+     333 00003de0 000042b0'         .LONG   HED30F
+     334 00003e00 00004520'         .LONG   HED0
+     335 00003e20 000044d0'         .LONG   HED30
+     336 00003e40 00004480'         .LONG   HED60
+     337 00003e60 00004350'         .LONG   HED90
+     338 00003e80 00004300'         .LONG   HED120
+     339                    ;*** THESE ARE USED WHEN TALKING
+     340 00003ea0 000040e0'         .LONG   HED120F
+     341 00003ec0 00004180'         .LONG   HEDTALKF
+     342 00003ee0 00004260'         .LONG   HED60F
+     343 00003f00 000042b0'         .LONG   HED30F
+     344 00003f20 00004520'         .LONG   HED0
+     345 00003f40 000044d0'         .LONG   HED30
+     346 00003f60 00004480'         .LONG   HED60
+     347 00003f80 000043a0'         .LONG   HEDTALK
+     348 00003fa0 00004300'         .LONG   HED120
+     349                    ;*** THESE ARE USED WHEN Laughing
+     350 00003fc0 000040e0'         .LONG   HED120F
+     351 00003fe0 00004180'         .LONG   HEDLAFFF
+     352 00004000 00004260'         .LONG   HED60F
+     353 00004020 000042b0'         .LONG   HED30F
+     354 00004040 00004520'         .LONG   HED0
+     355 00004060 000044d0'         .LONG   HED30
+     356 00004080 00004480'         .LONG   HED60
+     357 000040a0 000043a0'         .LONG   HEDLAFF
+     358 000040c0 00004300'         .LONG   HED120
+     359                    
+     360 000040e0           HED120F:
+     361 000040e0 00002dc0'         .long   hed120f
+     362 00004100     0006          .word   6
+     363 00004110 00000000          .long   0
+     364 00004130           HED90F:
+     365 00004130 00003b40'         .long   hed90f
+     366 00004150     0006          .word   6
+     367 00004160 00000000          .long   0
+     368 00004180           HEDTALKF:
+     369 00004180           HEDLAFFF:
+     370 00004180 00001620'         .long   hed90ft0
+     371 000041a0     0007          .word   7
+     372 000041b0 00001740'         .long   hed90ft1
+     373 000041d0     000a          .word   10
+     374 000041e0 00001620'         .long   hed90ft0
+     375 00004200     0005          .word   5
+     376 00004210 00001740'         .long   hed90ft1
+     377 00004230     0007          .word   7
+     378 00004240 00000000          .long   0
+     379                    
+     380 00004260           HED60F:
+     381 00004260 00003000'         .long   hed60f
+     382 00004280     0006          .word   6
+     383 00004290 00000000          .long   0
+     384 000042b0           HED30F:
+     385 000042b0 00003240'         .long   hed30f
+     386 000042d0     0006          .word   6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    8
+
+     387 000042e0 00000000          .long   0
+     388 00004300           HED120:
+     389 00004300 00002ca0'         .long   hed120
+     390 00004320     0006          .word   6
+     391 00004330 00000000          .long   0
+     392 00004350           HED90:
+     393 00004350 00003c60'         .long   hed90
+     394 00004370     0006          .word   6
+     395 00004380 00000000          .long   0
+     396 000043a0           HEDTALK:
+     397 000043a0           HEDLAFF:
+     398 000043a0 00002160'         .long   hed90t0
+     399 000043c0     0007          .word   7
+     400 000043d0 00002280'         .long   hed90t1
+     401 000043f0     000a          .word   10
+     402 00004400 00002160'         .long   hed90t0
+     403 00004420     0005          .word   5
+     404 00004430 00002280'         .long   hed90t1
+     405 00004450     0007          .word   7
+     406 00004460 00000000          .long   0
+     407 00004480           HED60:
+     408 00004480 00002ee0'         .long   hed60
+     409 000044a0     0006          .word   6
+     410 000044b0 00000000          .long   0
+     411 000044d0           HED30:
+     412 000044d0 00003120'         .long   hed30
+     413 000044f0     0006          .word   6
+     414 00004500 00000000          .long   0
+     415 00004520           HED0:
+     416 00004520 00003360'         .long   hed0
+     417 00004540     0006          .word   6
+     418 00004550 00000000          .long   0
+     419                    
+     420                    
+     421 00004570           TUNGFLEX:
+     422 00004570 00002ee0'         .long   hed60
+     423 00004590     0004          .word   4
+     424 000045a0 00003120'         .long   hed30
+     425 000045c0     0004          .word   4
+     426 000045d0 00003360'         .long   hed0
+     427 000045f0     0004          .word   4
+     428 00004600 00003240'         .long   hed30f
+     429 00004620     0004          .word   4
+     430 00004630 00003000'         .long   hed60f
+     431 00004650     0004          .word   4
+     432 00004660 00001620'         .long   hed90ft0
+     433 00004680     0002          .word   2
+     434 00004690 00001740'         .long   hed90ft1
+     435 000046b0     0002          .word   2
+     436 000046c0 00001860'         .long   hed90ft2
+     437 000046e0     0002          .word   2
+     438 000046f0 00001980'         .long   hed90ft3
+     439 00004710     0002          .word   2
+     440 00004720 00001aa0'         .long   hed90ft4
+     441 00004740     0002          .word   2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE    9
+
+     442 00004750 00001bc0'         .long   hed90ft5
+     443 00004770     0002          .word   2
+     444 00004780 00001ce0'         .long   hed90ft6
+     445 000047a0     0002          .word   2
+     446 000047b0 00001e00'         .long   hed90ft7
+     447 000047d0     0002          .word   2
+     448 000047e0 00001f20'         .long   hed90ft8
+     449 00004800     0002          .word   2
+     450 00004810 00002040'         .long   hed90ft9
+     451 00004830     0002          .word   2
+     452 00004840 00001f20'         .long   hed90ft8
+     453 00004860     0002          .word   2
+     454 00004870 00001e00'         .long   hed90ft7
+     455 00004890     0002          .word   2
+     456 000048a0 00001ce0'         .long   hed90ft6
+     457 000048c0     0002          .word   2
+     458 000048d0 00001bc0'         .long   hed90ft5
+     459 000048f0     0002          .word   2
+     460 00004900 00001aa0'         .long   hed90ft4
+     461 00004920     0002          .word   2
+     462 00004930 00001980'         .long   hed90ft3
+     463 00004950     0002          .word   2
+     464 00004960 00001860'         .long   hed90ft2
+     465 00004980     0002          .word   2
+     466 00004990 00001980'         .long   hed90ft3
+     467 000049b0     0002          .word   2
+     468 000049c0 00001aa0'         .long   hed90ft4
+     469 000049e0     0002          .word   2
+     470 000049f0 00001bc0'         .long   hed90ft5
+     471 00004a10     0002          .word   2
+     472 00004a20 00001ce0'         .long   hed90ft6
+     473 00004a40     0002          .word   2
+     474 00004a50 00001e00'         .long   hed90ft7
+     475 00004a70     0002          .word   2
+     476 00004a80 00001f20'         .long   hed90ft8
+     477 00004aa0     0002          .word   2
+     478 00004ab0 00002040'         .long   hed90ft9
+     479 00004ad0     0002          .word   2
+     480 00004ae0 00001f20'         .long   hed90ft8
+     481 00004b00     0002          .word   2
+     482 00004b10 00001e00'         .long   hed90ft7
+     483 00004b30     0002          .word   2
+     484 00004b40 00001ce0'         .long   hed90ft6
+     485 00004b60     0002          .word   2
+     486 00004b70 00001bc0'         .long   hed90ft5
+     487 00004b90     0002          .word   2
+     488 00004ba0 00001aa0'         .long   hed90ft4
+     489 00004bc0     0002          .word   2
+     490 00004bd0 00001980'         .long   hed90ft3
+     491 00004bf0     0002          .word   2
+     492 00004c00 00001860'         .long   hed90ft2
+     493 00004c20     0002          .word   2
+     494 00004c30 00001740'         .long   hed90ft1
+     495 00004c50     0002          .word   2
+     496 00004c60 00001620'         .long   hed90ft0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   10
+
+     497 00004c80     0002          .word   2
+     498 00004c90 00003000'         .long   hed60f
+     499 00004cb0     0004          .word   4
+     500 00004cc0 00003240'         .long   hed30f
+     501 00004ce0     0004          .word   4
+     502 00004cf0 00003360'         .long   hed0
+     503 00004d10     0004          .word   4
+     504 00004d20 00003120'         .long   hed30
+     505 00004d40     0004          .word   4
+     506 00004d50 00002ee0'         .long   hed60
+     507 00004d70     0004          .word   4
+     508 00004d80                   LONGNULL
+     509 00004da0           TUNGFLXF:
+     510 00004da0 00003000'         .long   hed60f
+     511 00004dc0     0004          .word   4
+     512 00004dd0 00003240'         .long   hed30f
+     513 00004df0     0004          .word   4
+     514 00004e00 00003360'         .long   hed0
+     515 00004e20     0004          .word   4
+     516 00004e30 00003120'         .long   hed30
+     517 00004e50     0004          .word   4
+     518 00004e60 00002ee0'         .long   hed60
+     519 00004e80     0004          .word   4
+     520 00004e90 00002160'         .long   hed90t0
+     521 00004eb0     0002          .word   2
+     522 00004ec0 00002280'         .long   hed90t1
+     523 00004ee0     0002          .word   2
+     524 00004ef0 000023a0'         .long   hed90t2
+     525 00004f10     0002          .word   2
+     526 00004f20 000024c0'         .long   hed90t3
+     527 00004f40     0002          .word   2
+     528 00004f50 000025e0'         .long   hed90t4
+     529 00004f70     0002          .word   2
+     530 00004f80 00002700'         .long   hed90t5
+     531 00004fa0     0002          .word   2
+     532 00004fb0 00002820'         .long   hed90t6
+     533 00004fd0     0002          .word   2
+     534 00004fe0 00002940'         .long   hed90t7
+     535 00005000     0002          .word   2
+     536 00005010 00002a60'         .long   hed90t8
+     537 00005030     0002          .word   2
+     538 00005040 00002b80'         .long   hed90t9
+     539 00005060     0002          .word   2
+     540 00005070 00002a60'         .long   hed90t8
+     541 00005090     0002          .word   2
+     542 000050a0 00002940'         .long   hed90t7
+     543 000050c0     0002          .word   2
+     544 000050d0 00002820'         .long   hed90t6
+     545 000050f0     0002          .word   2
+     546 00005100 00002700'         .long   hed90t5
+     547 00005120     0002          .word   2
+     548 00005130 000025e0'         .long   hed90t4
+     549 00005150     0002          .word   2
+     550 00005160 000024c0'         .long   hed90t3
+     551 00005180     0002          .word   2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   11
+
+     552 00005190 000023a0'         .long   hed90t2
+     553 000051b0     0002          .word   2
+     554 000051c0 000024c0'         .long   hed90t3
+     555 000051e0     0002          .word   2
+     556 000051f0 000025e0'         .long   hed90t4
+     557 00005210     0002          .word   2
+     558 00005220 00002700'         .long   hed90t5
+     559 00005240     0002          .word   2
+     560 00005250 00002820'         .long   hed90t6
+     561 00005270     0002          .word   2
+     562 00005280 00002940'         .long   hed90t7
+     563 000052a0     0002          .word   2
+     564 000052b0 00002a60'         .long   hed90t8
+     565 000052d0     0002          .word   2
+     566 000052e0 00002b80'         .long   hed90t9
+     567 00005300     0002          .word   2
+     568 00005310 00002a60'         .long   hed90t8
+     569 00005330     0002          .word   2
+     570 00005340 00002940'         .long   hed90t7
+     571 00005360     0002          .word   2
+     572 00005370 00002820'         .long   hed90t6
+     573 00005390     0002          .word   2
+     574 000053a0 00002700'         .long   hed90t5
+     575 000053c0     0002          .word   2
+     576 000053d0 000025e0'         .long   hed90t4
+     577 000053f0     0002          .word   2
+     578 00005400 000024c0'         .long   hed90t3
+     579 00005420     0002          .word   2
+     580 00005430 000023a0'         .long   hed90t2
+     581 00005450     0002          .word   2
+     582 00005460 00002280'         .long   hed90t1
+     583 00005480     0002          .word   2
+     584 00005490 00002160'         .long   hed90t0
+     585 000054b0     0002          .word   2
+     586 000054c0 00002ee0'         .long   hed60
+     587 000054e0     0004          .word   4
+     588 000054f0 00003120'         .long   hed30
+     589 00005510     0004          .word   4
+     590 00005520 00003360'         .long   hed0
+     591 00005540     0004          .word   4
+     592 00005550 00003240'         .long   hed30f
+     593 00005570     0004          .word   4
+     594 00005580 00003000'         .long   hed60f
+     595 000055a0     0004          .word   4
+     596 000055b0                   LONGNULL
+     597                    
+     598                    
+     599 000055d0           BRECOIL:
+     600 000055d0 00003480'         .long   recoil
+     601 000055f0     0004          .word   4
+     602 00005600                   LONGNULL
+     603 00005620           BRECOILF:
+     604 00005620 000035a0'         .long   recoilf
+     605 00005640     0004          .word   4
+     606 00005650                   LONGNULL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   12
+
+     607 00005670           RRECOIL:
+     608 00005670 00003480'         .long   recoil
+     609 00005690     000f          .word   15
+     610 000056a0                   LONGNULL
+     611 000056c0           RRECOILF:
+     612 000056c0 000035a0'         .long   recoilf
+     613 000056e0     000f          .word   15
+     614 000056f0                   LONGNULL
+     615                    
+     616                    
+     617 00005710           KABOOM:
+     618 00005710 000036c0'         .long   hedblow0
+     619 00005730     0001          .word   1
+     620 00005740 000037e0'         .long   hedblow1
+     621 00005760     0001          .word   1
+     622 00005770                   LONGNULL
+     623 00005790           KABOOMF:
+     624 00005790 00003900'         .long   hedblo0f
+     625 000057b0     0001          .word   1
+     626 000057c0 00003a20'         .long   hedblo1f
+     627 000057e0     0001          .word   1
+     628 000057f0                   LONGNULL
+     629                    
+     630                    
+     631                    
+     632                    
+     633                    ************************************************************
+     634                    *** CHUNKERS
+     635                    ************************************************************
+     636 00005810           CHUNKINI:
+     637 00005810 00000000          .LONG   0,0,0,0
+     638 00005890     0000          .WORD   0,0
+     639 000058b0 00002b00"         .LONG   meat2a,0,DUMCOLL
+     640 00005910     8002          .WORD   DMAWNZ,HEADEOID|0CH
+     641 00005930 00000000          .LONG   0
+     642 00005950           CHNKTINI:
+     643 00005950 00000000          .LONG   0,0,0,0
+     644 000059d0     0000          .WORD   0,0
+     645 000059f0 00001180"         .LONG   TUNG0C,0,DUMCOLL
+     646 00005a50     8002          .WORD   DMAWNZ,HEADEOID|0CH
+     647 00005a70 00000000          .LONG   0
+     648 00005a90           BONEINI:
+     649 00005a90 00000000          .LONG   0,0,0,0
+     650 00005b10     0000          .WORD   0,0
+     651 00005b30 00002300"         .LONG   bonea0,0,DUMCOLL
+     652 00005b90     8002          .WORD   DMAWNZ,HEADEOID|0CH
+     653 00005bb0 00000000          .LONG   0
+     654                    
+     655 00005bd0           FLYSPINE:
+     656 00005bd0 00002200"         .long   spine
+     657 00005bf0     2001          .word   NEWPALET|1
+     658 00005c00 00000000!         .LONG   skelpal
+     659 00005c20 00000000          .long   0
+     660 00005c40 00002200"         .long   spine
+     661 00005c60     0001          .word   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   13
+
+     662 00005c70 00002200"         .long   spine
+     663 00005c90     0001          .word   1
+     664 00005ca0           FLYSKULL:
+     665 00005ca0 00002280"         .long   skcarc
+     666 00005cc0     0001          .word   1
+     667 00005cd0 00000000          .long   0
+     668 00005cf0 00002280"         .long   skcarc
+     669 00005d10     0001          .word   1
+     670 00005d20 00002280"         .long   skcarc
+     671 00005d40     0001          .word   1
+     672                    
+     673                    
+     674 00005d50           CHUNKA:
+     675 00005d50 00002b00"         .long   meat2a
+     676 00005d70     0001          .word   1
+     677 00005d80 00002b80"         .long   meat2b
+     678 00005da0     0001          .word   1
+     679 00005db0 00002c00"         .long   meat2c
+     680 00005dd0     0001          .word   1
+     681 00005de0 00002c80"         .long   meat2d
+     682 00005e00     0001          .word   1
+     683 00005e10 00002d00"         .long   meat2e
+     684 00005e30     0001          .word   1
+     685 00005e40 00002d80"         .long   meat2f
+     686 00005e60     0001          .word   1
+     687 00005e70 00002e00"         .long   meat2g
+     688 00005e90     0001          .word   1
+     689 00005ea0 00002e80"         .long   meat2h
+     690 00005ec0     0001          .word   1
+     691 00005ed0 00002f00"         .long   meat2i
+     692 00005ef0     0001          .word   1
+     693 00005f00 00000000          .long   0
+     694 00005f20 00002f80"         .long   meat2j
+     695 00005f40     0001          .word   1
+     696 00005f50 00002f00"         .long   meat2i
+     697 00005f70     4001          .word   FLIPBITS|1,M_FLIPV
+     698                            
+     699                    
+     700 00005f90           CHUNKAR:
+     701 00005f90 00002f00"         .long   meat2i
+     702 00005fb0     0001          .word   1
+     703 00005fc0 00002e80"         .long   meat2h
+     704 00005fe0     0001          .word   1
+     705 00005ff0 00002e00"         .long   meat2g
+     706 00006010     0001          .word   1
+     707 00006020 00002d80"         .long   meat2f
+     708 00006040     0001          .word   1
+     709 00006050 00002d00"         .long   meat2e
+     710 00006070     0001          .word   1
+     711 00006080 00002c80"         .long   meat2d
+     712 000060a0     0001          .word   1
+     713 000060b0 00002c00"         .long   meat2c
+     714 000060d0     0001          .word   1
+     715 000060e0 00002b80"         .long   meat2b
+     716 00006100     0001          .word   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   14
+
+     717 00006110 00002b00"         .long   meat2a
+     718 00006130     0001          .word   1
+     719 00006140 00000000          .long   0
+     720 00006160 00002f80"         .long   meat2j
+     721 00006180     0001          .word   1
+     722 00006190 00002f00"         .long   meat2i
+     723 000061b0     4001          .word   FLIPBITS|1,M_FLIPV
+     724                    
+     725 000061d0           CHUNKB:
+     726 000061d0 00003000"         .long   meat8a
+     727 000061f0     0001          .word   1
+     728 00006200 00003080"         .long   meat8b
+     729 00006220     0001          .word   1
+     730 00006230 00003100"         .long   meat8c
+     731 00006250     0001          .word   1
+     732 00006260 00003180"         .long   meat8d
+     733 00006280     0001          .word   1
+     734 00006290 00003200"         .long   meat8e
+     735 000062b0     0001          .word   1
+     736 000062c0 00003280"         .long   meat8f
+     737 000062e0     0001          .word   1
+     738 000062f0 00003300"         .long   meat8g
+     739 00006310     0001          .word   1
+     740 00006320 00003380"         .long   meat8h
+     741 00006340     0001          .word   1
+     742 00006350 00003400"         .long   meat8i
+     743 00006370     0001          .word   1
+     744 00006380 00000000          .long   0
+     745 000063a0 00003480"         .long   meat8j
+     746 000063c0     0001          .word   1
+     747 000063d0 00003200"         .long   meat8e
+     748 000063f0     0001          .word   1
+     749 00006400           CHUNKBR:
+     750 00006400 00003400"         .long   meat8i
+     751 00006420     0001          .word   1
+     752 00006430 00003380"         .long   meat8h
+     753 00006450     0001          .word   1
+     754 00006460 00003300"         .long   meat8g
+     755 00006480     0001          .word   1
+     756 00006490 00003280"         .long   meat8f
+     757 000064b0     0001          .word   1
+     758 000064c0 00003200"         .long   meat8e
+     759 000064e0     0001          .word   1
+     760 000064f0 00003180"         .long   meat8d
+     761 00006510     0001          .word   1
+     762 00006520 00003100"         .long   meat8c
+     763 00006540     0001          .word   1
+     764 00006550 00003080"         .long   meat8b
+     765 00006570     0001          .word   1
+     766 00006580 00003000"         .long   meat8a
+     767 000065a0     0001          .word   1
+     768 000065b0 00000000          .long   0
+     769 000065d0 00003480"         .long   meat8j
+     770 000065f0     0001          .word   1
+     771 00006600 00003200"         .long   meat8e
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   15
+
+     772 00006620     0001          .word   1
+     773                    
+     774 00006630           CHUNKC:
+     775 00006630 00003500"         .long   meat11a
+     776 00006650     0001          .word   1
+     777 00006660 00003580"         .long   meat11b
+     778 00006680     0001          .word   1
+     779 00006690 00003600"         .long   meat11c
+     780 000066b0     0001          .word   1
+     781 000066c0 00003680"         .long   meat11d
+     782 000066e0     0001          .word   1
+     783 000066f0 00003700"         .long   meat11e
+     784 00006710     0001          .word   1
+     785 00006720 00003780"         .long   meat11f
+     786 00006740     0001          .word   1
+     787 00006750 00003800"         .long   meat11g
+     788 00006770     0001          .word   1
+     789 00006780 00000000          .long   0
+     790 000067a0 00003880"         .long   meat11h
+     791 000067c0     0001          .word   1
+     792 000067d0 00003780"         .long   meat11f
+     793 000067f0     4001          .word   FLIPBITS|1,0
+     794 00006810           CHUNKCR:
+     795 00006810 00003800"         .long   meat11g
+     796 00006830     0001          .word   1
+     797 00006840 00003780"         .long   meat11f
+     798 00006860     0001          .word   1
+     799 00006870 00003700"         .long   meat11e
+     800 00006890     0001          .word   1
+     801 000068a0 00003680"         .long   meat11d
+     802 000068c0     0001          .word   1
+     803 000068d0 00003600"         .long   meat11c
+     804 000068f0     0001          .word   1
+     805 00006900 00003580"         .long   meat11b
+     806 00006920     0001          .word   1
+     807 00006930 00003500"         .long   meat11a
+     808 00006950     0001          .word   1
+     809 00006960 00000000          .long   0
+     810 00006980 00003880"         .long   meat11h
+     811 000069a0     0001          .word   1
+     812 000069b0 00003780"         .long   meat11f
+     813 000069d0     4001          .word   FLIPBITS|1,0
+     814                    
+     815 000069f0           CHUNKD:
+     816 000069f0 00003900"         .long   meat12a
+     817 00006a10     0001          .word   1
+     818 00006a20 00003980"         .long   meat12b
+     819 00006a40     0001          .word   1
+     820 00006a50 00003a00"         .long   meat12c
+     821 00006a70     0001          .word   1
+     822 00006a80 00003a80"         .long   meat12d
+     823 00006aa0     0001          .word   1
+     824 00006ab0 00003b00"         .long   meat12e
+     825 00006ad0     0001          .word   1
+     826 00006ae0 00003b80"         .long   meat12f
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   16
+
+     827 00006b00     0001          .word   1
+     828 00006b10 00003c00"         .long   meat12g
+     829 00006b30     0001          .word   1
+     830 00006b40 00003c80"         .long   meat12h
+     831 00006b60     0001          .word   1
+     832 00006b70 00000000          .long   0
+     833 00006b90 00003d00"         .long   meat12i
+     834 00006bb0     0001          .word   1
+     835 00006bc0 00003900"         .long   meat12a
+     836 00006be0     0001          .word   1
+     837 00006bf0           CHUNKDR:
+     838 00006bf0 00003c80"         .long   meat12h
+     839 00006c10     0001          .word   1
+     840 00006c20 00003c00"         .long   meat12g
+     841 00006c40     0001          .word   1
+     842 00006c50 00003b80"         .long   meat12f
+     843 00006c70     0001          .word   1
+     844 00006c80 00003b00"         .long   meat12e
+     845 00006ca0     0001          .word   1
+     846 00006cb0 00003a80"         .long   meat12d
+     847 00006cd0     0001          .word   1
+     848 00006ce0 00003a00"         .long   meat12c
+     849 00006d00     0001          .word   1
+     850 00006d10 00003980"         .long   meat12b
+     851 00006d30     0001          .word   1
+     852 00006d40 00003900"         .long   meat12a
+     853 00006d60     0001          .word   1
+     854 00006d70 00000000          .long   0
+     855 00006d90 00003d00"         .long   meat12i
+     856 00006db0     0001          .word   1
+     857 00006dc0 00003900"         .long   meat12a
+     858 00006de0     0001          .word   1
+     859                    
+     860                    
+     861 00006df0           CHUNKE:
+     862 00006df0 00002300"         .long   bonea0
+     863 00006e10     4001          .word   FLIPBITS|1,0
+     864 00006e30 00002380"         .long   bonea30
+     865 00006e50     4001          .word   FLIPBITS|1,0
+     866 00006e70 00002400"         .long   bonea60
+     867 00006e90     4001          .word   FLIPBITS|1,0
+     868 00006eb0 00002480"         .long   bonea90
+     869 00006ed0     4001          .word   FLIPBITS|1,M_FLIPV
+     870 00006ef0 00002400"         .long   bonea60
+     871 00006f10     4001          .word   FLIPBITS|1,M_FLIPV
+     872 00006f30 00002380"         .long   bonea30
+     873 00006f50     4001          .word   FLIPBITS|1,M_FLIPV
+     874 00006f70 00002300"         .long   bonea0
+     875 00006f90     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     876 00006fb0 00002380"         .long   bonea30
+     877 00006fd0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     878 00006ff0 00002400"         .long   bonea60
+     879 00007010     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     880 00007030 00002480"         .long   bonea90
+     881 00007050     4001          .word   FLIPBITS|1,M_FLIPH
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   17
+
+     882 00007070 00002400"         .long   bonea60
+     883 00007090     4001          .word   FLIPBITS|1,M_FLIPH
+     884 000070b0 00002380"         .long   bonea30
+     885 000070d0     4001          .word   FLIPBITS|1,M_FLIPH
+     886 000070f0 00000000          .long   0
+     887 00007110 00003880"         .long   meat11h
+     888 00007130     0001          .word   1
+     889 00007140 00002380"         .long   bonea30
+     890 00007160     4001          .word   FLIPBITS|1,0
+     891                    
+     892 00007180           CHUNKF:
+     893 00007180 00002580"         .long   boneb30
+     894 000071a0     4001          .word   FLIPBITS|1,M_FLIPH
+     895 000071c0 00002600"         .long   boneb60
+     896 000071e0     4001          .word   FLIPBITS|1,M_FLIPH
+     897 00007200 00002680"         .long   boneb90
+     898 00007220     4001          .word   FLIPBITS|1,M_FLIPH
+     899 00007240 00002600"         .long   boneb60
+     900 00007260     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     901 00007280 00002580"         .long   boneb30
+     902 000072a0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     903 000072c0 00002500"         .long   boneb0
+     904 000072e0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     905 00007300 00002580"         .long   boneb30
+     906 00007320     4001          .word   FLIPBITS|1,M_FLIPV
+     907 00007340 00002600"         .long   boneb60
+     908 00007360     4001          .word   FLIPBITS|1,M_FLIPV
+     909 00007380 00002680"         .long   boneb90
+     910 000073a0     4001          .word   FLIPBITS|1,M_FLIPV
+     911 000073c0 00002600"         .long   boneb60
+     912 000073e0     4001          .word   FLIPBITS|1,0
+     913 00007400 00002580"         .long   boneb30
+     914 00007420     4001          .word   FLIPBITS|1,0
+     915 00007440 00002500"         .long   boneb0
+     916 00007460     4001          .word   FLIPBITS|1,0
+     917 00007480 00000000          .long   0
+     918 000074a0 00003880"         .long   meat11h
+     919 000074c0     0001          .word   1
+     920 000074d0 00002680"         .long   boneb90
+     921 000074f0     4001          .word   FLIPBITS|1,0
+     922                    
+     923 00007510           CHUNKG:
+     924 00007510 00002700"         .long   bonec0
+     925 00007530     4001          .word   FLIPBITS|1,0
+     926 00007550 00002780"         .long   bonec30
+     927 00007570     4001          .word   FLIPBITS|1,0
+     928 00007590 00002800"         .long   bonec60
+     929 000075b0     4001          .word   FLIPBITS|1,0
+     930 000075d0 00002880"         .long   bonec90
+     931 000075f0     4001          .word   FLIPBITS|1,M_FLIPV
+     932 00007610 00002800"         .long   bonec60
+     933 00007630     4001          .word   FLIPBITS|1,M_FLIPV
+     934 00007650 00002780"         .long   bonec30
+     935 00007670     4001          .word   FLIPBITS|1,M_FLIPV
+     936 00007690 00002700"         .long   bonec0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   18
+
+     937 000076b0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     938 000076d0 00002780"         .long   bonec30
+     939 000076f0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     940 00007710 00002800"         .long   bonec60
+     941 00007730     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     942 00007750 00002880"         .long   bonec90
+     943 00007770     4001          .word   FLIPBITS|1,M_FLIPH
+     944 00007790 00002800"         .long   bonec60
+     945 000077b0     4001          .word   FLIPBITS|1,M_FLIPH
+     946 000077d0 00002780"         .long   bonec30
+     947 000077f0     4001          .word   FLIPBITS|1,M_FLIPH
+     948 00007810 00000000          .long   0
+     949 00007830 00003c80"         .long   meat12h
+     950 00007850     0001          .word   1
+     951 00007860 00002700"         .long   bonec0
+     952 00007880     4001          .word   FLIPBITS|1,0
+     953                    
+     954 000078a0           CHUNKH:
+     955 000078a0 00002900"         .long   boned0
+     956 000078c0     4001          .word   FLIPBITS|1,0
+     957 000078e0 00002980"         .long   boned30
+     958 00007900     4001          .word   FLIPBITS|1,0
+     959 00007920 00002a00"         .long   boned60
+     960 00007940     4001          .word   FLIPBITS|1,0
+     961 00007960 00002a80"         .long   boned90
+     962 00007980     4001          .word   FLIPBITS|1,M_FLIPV
+     963 000079a0 00002a00"         .long   boned60
+     964 000079c0     4001          .word   FLIPBITS|1,M_FLIPV
+     965 000079e0 00002980"         .long   boned30
+     966 00007a00     4001          .word   FLIPBITS|1,M_FLIPV
+     967 00007a20 00002900"         .long   boned0
+     968 00007a40     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     969 00007a60 00002980"         .long   boned30
+     970 00007a80     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     971 00007aa0 00002a00"         .long   boned60
+     972 00007ac0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     973 00007ae0 00002a80"         .long   boned90
+     974 00007b00     4001          .word   FLIPBITS|1,M_FLIPH
+     975 00007b20 00002a00"         .long   boned60
+     976 00007b40     4001          .word   FLIPBITS|1,M_FLIPH
+     977 00007b60 00002980"         .long   boned30
+     978 00007b80     4001          .word   FLIPBITS|1,M_FLIPH
+     979 00007ba0 00000000          .long   0
+     980 00007bc0 00002e80"         .long   meat2h
+     981 00007be0     0001          .word   1
+     982 00007bf0 00002900"         .long   boned0
+     983 00007c10     4001          .word   FLIPBITS|1,M_FLIPV
+     984                    
+     985 00007c30           CHUNKT1:
+     986 00007c30 00001280"         .long   TUNG2C
+     987 00007c50     0001          .word   1
+     988 00007c60 00001300"         .long   TUNG3C
+     989 00007c80     0001          .word   1
+     990 00007c90 00001380"         .long   TUNG4C
+     991 00007cb0     0001          .word   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   19
+
+     992 00007cc0 00001400"         .long   TUNG5C
+     993 00007ce0     0001          .word   1
+     994 00007cf0 00001480"         .long   TUNG6C
+     995 00007d10     0001          .word   1
+     996 00007d20 00001500"         .long   TUNG7C
+     997 00007d40     0001          .word   1
+     998 00007d50 00001580"         .long   TUNG8C
+     999 00007d70     0001          .word   1
+    1000 00007d80 00001600"         .long   TUNG9C
+    1001 00007da0     0001          .word   1
+    1002 00007db0 00001580"         .long   TUNG8C
+    1003 00007dd0     0001          .word   1
+    1004 00007de0 00001500"         .long   TUNG7C
+    1005 00007e00     0001          .word   1
+    1006 00007e10 00001480"         .long   TUNG6C
+    1007 00007e30     0001          .word   1
+    1008 00007e40 00001400"         .long   TUNG5C
+    1009 00007e60     0001          .word   1
+    1010 00007e70 00001380"         .long   TUNG4C
+    1011 00007e90     0001          .word   1
+    1012 00007ea0 00001300"         .long   TUNG3C
+    1013 00007ec0     0001          .word   1
+    1014 00007ed0 00000000          .long   0
+    1015 00007ef0 00001480"         .long   TUNG6C
+    1016 00007f10     0001          .word   1
+    1017                    
+    1018 00007f20           CHUNKT2:
+    1019 00007f20 00001380"         .long   TUNG4C
+    1020 00007f40     0001          .word   1
+    1021 00007f50 00001400"         .long   TUNG5C
+    1022 00007f70     0001          .word   1
+    1023 00007f80 00001480"         .long   TUNG6C
+    1024 00007fa0     0001          .word   1
+    1025 00007fb0 00001500"         .long   TUNG7C
+    1026 00007fd0     0001          .word   1
+    1027 00007fe0 00001580"         .long   TUNG8C
+    1028 00008000     0001          .word   1
+    1029 00008010 00001600"         .long   TUNG9C
+    1030 00008030     0001          .word   1
+    1031 00008040 00001580"         .long   TUNG8C
+    1032 00008060     0001          .word   1
+    1033 00008070 00001500"         .long   TUNG7C
+    1034 00008090     0001          .word   1
+    1035 000080a0 00001480"         .long   TUNG6C
+    1036 000080c0     0001          .word   1
+    1037 000080d0 00001400"         .long   TUNG5C
+    1038 000080f0     0001          .word   1
+    1039 00008100 00000000          .long   0
+    1040 00008120 00001480"         .long   TUNG6C
+    1041 00008140     0001          .word   1
+    1042                    
+    1043 00008150           CHUNKT3:
+    1044 00008150 00001300"         .long   TUNG3C
+    1045 00008170     0001          .word   1
+    1046 00008180 00001380"         .long   TUNG4C
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   20
+
+    1047 000081a0     0001          .word   1
+    1048 000081b0 00001400"         .long   TUNG5C
+    1049 000081d0     0001          .word   1
+    1050 000081e0 00001480"         .long   TUNG6C
+    1051 00008200     0001          .word   1
+    1052 00008210 00001500"         .long   TUNG7C
+    1053 00008230     0001          .word   1
+    1054 00008240 00001580"         .long   TUNG8C
+    1055 00008260     0001          .word   1
+    1056 00008270 00001500"         .long   TUNG7C
+    1057 00008290     0001          .word   1
+    1058 000082a0 00001480"         .long   TUNG6C
+    1059 000082c0     0001          .word   1
+    1060 000082d0 00001400"         .long   TUNG5C
+    1061 000082f0     0001          .word   1
+    1062 00008300 00001380"         .long   TUNG4C
+    1063 00008320     0001          .word   1
+    1064 00008330 00000000          .long   0
+    1065 00008350 00001480"         .long   TUNG6C
+    1066 00008370     0001          .word   1
+    1067                    
+    1068 00008380           CHUNKT4:
+    1069 00008380 00001300"         .long   TUNG3C
+    1070 000083a0     0001          .word   1
+    1071 000083b0 00001380"         .long   TUNG4C
+    1072 000083d0     0001          .word   1
+    1073 000083e0 00001400"         .long   TUNG5C
+    1074 00008400     0001          .word   1
+    1075 00008410 00001480"         .long   TUNG6C
+    1076 00008430     0001          .word   1
+    1077 00008440 00001500"         .long   TUNG7C
+    1078 00008460     0001          .word   1
+    1079 00008470 00001480"         .long   TUNG6C
+    1080 00008490     0001          .word   1
+    1081 000084a0 00001400"         .long   TUNG5C
+    1082 000084c0     0001          .word   1
+    1083 000084d0 00001380"         .long   TUNG4C
+    1084 000084f0     0001          .word   1
+    1085 00008500 00000000          .long   0
+    1086 00008520 00001480"         .long   TUNG6C
+    1087 00008540     0001          .word   1
+    1088                    
+    1089 00008550           CHUNKT5:
+    1090 00008550 00001300"         .long   TUNG3C
+    1091 00008570     0001          .word   1
+    1092 00008580 00001380"         .long   TUNG4C
+    1093 000085a0     0001          .word   1
+    1094 000085b0 00001400"         .long   TUNG5C
+    1095 000085d0     0001          .word   1
+    1096 000085e0 00001480"         .long   TUNG6C
+    1097 00008600     0001          .word   1
+    1098 00008610 00001500"         .long   TUNG7C
+    1099 00008630     0001          .word   1
+    1100 00008640 00001580"         .long   TUNG8C
+    1101 00008660     0001          .word   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   21
+
+    1102 00008670 00001600"         .long   TUNG9C
+    1103 00008690     0001          .word   1
+    1104 000086a0 00001580"         .long   TUNG8C
+    1105 000086c0     0001          .word   1
+    1106 000086d0 00001500"         .long   TUNG7C
+    1107 000086f0     0001          .word   1
+    1108 00008700 00001480"         .long   TUNG6C
+    1109 00008720     0001          .word   1
+    1110 00008730 00001400"         .long   TUNG5C
+    1111 00008750     0001          .word   1
+    1112 00008760 00001380"         .long   TUNG4C
+    1113 00008780     0001          .word   1
+    1114 00008790 00000000          .long   0
+    1115 000087b0 00001480"         .long   TUNG6C
+    1116 000087d0     0001          .word   1
+    1117                    
+    1118 000087e0           CHUNKT6:
+    1119 000087e0 00001400"         .long   TUNG5C
+    1120 00008800     0001          .word   1
+    1121 00008810 00001480"         .long   TUNG6C
+    1122 00008830     0001          .word   1
+    1123 00008840 00001500"         .long   TUNG7C
+    1124 00008860     0001          .word   1
+    1125 00008870 00001580"         .long   TUNG8C
+    1126 00008890     0001          .word   1
+    1127 000088a0 00001600"         .long   TUNG9C
+    1128 000088c0     0001          .word   1
+    1129 000088d0 00001580"         .long   TUNG8C
+    1130 000088f0     0001          .word   1
+    1131 00008900 00001500"         .long   TUNG7C
+    1132 00008920     0001          .word   1
+    1133 00008930 00001480"         .long   TUNG6C
+    1134 00008950     0001          .word   1
+    1135 00008960 00000000          .long   0
+    1136 00008980 00001480"         .long   TUNG6C
+    1137 000089a0     0001          .word   1
+    1138                    
+    1139 000089b0           BlowSkul:
+    1140 000089b0 00008a00'         .long   blowskul
+    1141 000089d0     0001          .word   1
+    1142 000089e0 00000000          .long   0
+    1143 00008a00           blowskul:
+    1144 00008a00 00002280"         .LONG   skcarc,spine,spine,spine
+    1145 00008a80       00          .BYTE   0,     0,    0,    0
+    1146 00008aa0       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1147 00008ab0                   .even
+    1148                    
+    1149 00008ab0           skull0:
+    1150 00008ab0 00001a00"         .LONG   skull1,0,0
+    1151 00008b10       00          .BYTE   0,     3,0
+    1152 00008b28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1153 00008b30                   .even
+    1154 00008b30           skull0f:
+    1155 00008b30 00001a00"         .LONG   skull1,0,0
+    1156 00008b90       00          .BYTE   0,     3,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   22
+
+    1157 00008ba8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1158 00008bb0                   .even
+    1159 00008bb0           skull30:
+    1160 00008bb0 00001a80"         .LONG   skull2,0,0
+    1161 00008c10       00          .BYTE   0,     3,0
+    1162 00008c28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1163 00008c30                   .even
+    1164 00008c30           skull30f:
+    1165 00008c30 00001a80"         .LONG   skull2,0,0
+    1166 00008c90       00          .BYTE   0,     3,0
+    1167 00008ca8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1168 00008cb0                   .even
+    1169 00008cb0           skull60:
+    1170 00008cb0 00001b00"         .LONG   skull3,0,0
+    1171 00008d10       00          .BYTE   0,     3,0
+    1172 00008d28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1173 00008d30                   .even
+    1174 00008d30           skull60f:
+    1175 00008d30 00001b00"         .LONG   skull3,0,0
+    1176 00008d90       00          .BYTE   0,     3,0
+    1177 00008da8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1178 00008db0                   .even
+    1179                    
+    1180 00008db0           skull90up:
+    1181 00008db0 00001900"         .LONG   tiltup,0,0
+    1182 00008e10       00          .BYTE   0,     0,0
+    1183 00008e28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1184 00008e30                   .even
+    1185 00008e30           skull90dn:
+    1186 00008e30 00001980"         .LONG   tiltdn,0,0
+    1187 00008e90       00          .BYTE   0,     0,0
+    1188 00008ea8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1189 00008eb0                   .even
+    1190 00008eb0           skull90upf:
+    1191 00008eb0 00001900"         .LONG   tiltup,0,0
+    1192 00008f10       00          .BYTE   0,     0,0
+    1193 00008f28       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1194 00008f30                   .even
+    1195 00008f30           skull90dnf:
+    1196 00008f30 00001980"         .LONG   tiltdn,0,0
+    1197 00008f90       00          .BYTE   0,     0,0
+    1198 00008fa8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1199 00008fb0                   .even
+    1200                    
+    1201 00008fb0           skull90a:
+    1202 00008fb0 00001b80"         .LONG   skull4,jaw1,0
+    1203 00009010       00          .BYTE   0,     3,0
+    1204 00009028       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1205 00009030                   .even
+    1206 00009030           skull90b:
+    1207 00009030 00001b80"         .LONG   skull4,jaw2,0
+    1208 00009090       00          .BYTE   0,     3,0
+    1209 000090a8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1210 000090b0                   .even
+    1211 000090b0           jawbite:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   23
+
+    1212 000090b0 00001b80"         .LONG   skull4,jaw2,0
+    1213 00009110       00          .BYTE   0,     3,0
+    1214 00009128       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1215 00009130                   .even
+    1216 00009130           skull90c:
+    1217 00009130 00001b80"         .LONG   skull4,jaw3,0
+    1218 00009190       00          .BYTE   0,     3,0
+    1219 000091a8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1220 000091b0                   .even
+    1221 000091b0           skull90d:
+    1222 000091b0 00001b80"         .LONG   skull4,jaw4,0
+    1223 00009210       00          .BYTE   0,     3,0
+    1224 00009228       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1225 00009230                   .even
+    1226                    
+    1227 00009230           skull90af:
+    1228 00009230 00001b80"         .LONG   skull4,jaw1,0
+    1229 00009290       00          .BYTE   0,     3,0
+    1230 000092a8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1231 000092b0                   .even
+    1232 000092b0           skull90bf:
+    1233 000092b0 00001b80"         .LONG   skull4,jaw2,0
+    1234 00009310       00          .BYTE   0,     3,0
+    1235 00009328       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1236 00009330                   .even
+    1237 00009330           jawbitef:
+    1238 00009330 00001b80"         .LONG   skull4,jaw2,0
+    1239 00009390       00          .BYTE   0,     3,0
+    1240 000093a8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1241 000093b0                   .even
+    1242 000093b0           skull90cf:
+    1243 000093b0 00001b80"         .LONG   skull4,jaw3,0
+    1244 00009410       00          .BYTE   0,     3,0
+    1245 00009428       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1246 00009430                   .even
+    1247 00009430           skull90df:
+    1248 00009430 00001b80"         .LONG   skull4,jaw4,0
+    1249 00009490       00          .BYTE   0,     3,0
+    1250 000094a8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1251 000094b0                   .even
+    1252                    
+    1253 000094b0           skult90a:
+    1254 000094b0 00001b80"         .LONG   skull4,jaw1,0
+    1255 00009510       00          .BYTE   0,     3,  -1
+    1256 00009528       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1257 00009530                   .even
+    1258 00009530           skult90b:
+    1259 00009530 00001b80"         .LONG   skull4,jaw2,TUNG0SF
+    1260 00009590       00          .BYTE   0,     3, -1
+    1261 000095a8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1262 000095b0                   .even
+    1263 000095b0           skult90c:
+    1264 000095b0 00001b80"         .LONG   skull4,jaw3,TUNG1SF
+    1265 00009610       00          .BYTE   0,     3,   -1
+    1266 00009628       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   24
+
+    1267 00009630                   .even
+    1268 00009630           skult90d:
+    1269 00009630 00001b80"         .LONG   skull4,jaw4,TUNG2SF
+    1270 00009690       00          .BYTE   0,     3,  -1
+    1271 000096a8       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1272 000096b0                   .even
+    1273                    
+    1274 000096b0           skult90af:
+    1275 000096b0 00001b80"         .LONG   skull4,jaw1,0
+    1276 00009710       00          .BYTE   0,     3,   -1
+    1277 00009728       9c          .BYTE   09CH ;flip bits - top 6 bits correspond to first 6 parts
+    1278 00009730                   .even
+    1279 00009730           skult90bf:
+    1280 00009730 00001b80"         .LONG   skull4,jaw2,TUNG0SF
+    1281 00009790       00          .BYTE   0,     3,   -1
+    1282 000097a8       9c          .BYTE   09CH ;flip bits - top 6 bits correspond to first 6 parts
+    1283 000097b0                   .even
+    1284 000097b0           skult90cf:
+    1285 000097b0 00001b80"         .LONG   skull4,jaw3,TUNG1SF
+    1286 00009810       00          .BYTE   0,     3,   -1
+    1287 00009828       9c          .BYTE   09CH ;flip bits - top 6 bits correspond to first 6 parts
+    1288 00009830                   .even
+    1289 00009830           skult90df:
+    1290 00009830 00001b80"         .LONG   skull4,jaw4,TUNG2SF
+    1291 00009890       00          .BYTE   0,     3,   -1
+    1292 000098a8       9c          .BYTE   09CH ;flip bits - top 6 bits correspond to first 6 parts
+    1293 000098b0                   .even
+    1294                    
+    1295 000098b0           skull120:
+    1296 000098b0 00001c00"         .LONG   skull5,0,0
+    1297 00009910       00          .BYTE   0,     3,0
+    1298 00009928       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1299 00009930                   .even
+    1300 00009930           skull120f:
+    1301 00009930 00001c00"         .LONG   skull5,0,0
+    1302 00009990       00          .BYTE   0,     3,0
+    1303 000099a8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1304 000099b0                   .even
+    1305 000099b0           skull150:
+    1306 000099b0 00001c80"         .LONG   skull6,0,0
+    1307 00009a10       00          .BYTE   0,     3,0
+    1308 00009a28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1309 00009a30                   .even
+    1310 00009a30           skull150f:
+    1311 00009a30 00001c80"         .LONG   skull6,0,0
+    1312 00009a90       00          .BYTE   0,     3,0
+    1313 00009aa8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1314 00009ab0                   .even
+    1315 00009ab0           skull180:
+    1316 00009ab0 00001d00"         .LONG   skull7,0,0
+    1317 00009b10       00          .BYTE   0,     3,0
+    1318 00009b28       80          .BYTE   080H ;flip bits - top 6 bits correspond to first 6 parts
+    1319 00009b30                   .even
+    1320 00009b30           skull180f:
+    1321 00009b30 00001d00"         .LONG   skull7,0,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   25
+
+    1322 00009b90       00          .BYTE   0,     3,0
+    1323 00009ba8       98          .BYTE   098H ;flip bits - top 6 bits correspond to first 6 parts
+    1324 00009bb0                   .even
+    1325                    
+    1326                    
+    1327 00009bb0           SKULL0:
+    1328 00009bb0 00008ab0'         .long   skull0
+    1329 00009bd0     0005          .word   5
+    1330 00009be0 00000000          .long   0
+    1331 00009c00           SKULL30:
+    1332 00009c00 00008bb0'         .long   skull30
+    1333 00009c20     0005          .word   5
+    1334 00009c30 00000000          .long   0
+    1335 00009c50           SKULL60:
+    1336 00009c50 00008cb0'         .long   skull60
+    1337 00009c70     0005          .word   5
+    1338 00009c80 00000000          .long   0
+    1339 00009ca0           SKULL90:
+    1340 00009ca0 00009030'         .long   skull90b
+    1341 00009cc0     0005          .word   5
+    1342 00009cd0 00000000          .long   0
+    1343 00009cf0           SKULL120:
+    1344 00009cf0 000098b0'         .long   skull120
+    1345 00009d10     0005          .word   5
+    1346 00009d20 00000000          .long   0
+    1347 00009d40           SKULL150:
+    1348 00009d40 000099b0'         .long   skull150
+    1349 00009d60     0005          .word   5
+    1350 00009d70 00000000          .long   0
+    1351 00009d90           SKULL180:
+    1352 00009d90 00009ab0'         .long   skull180
+    1353 00009db0     0005          .word   5
+    1354 00009dc0 00000000          .long   0
+    1355                    
+    1356 00009de0           SKULL0F:
+    1357 00009de0 00008b30'         .long   skull0f
+    1358 00009e00     0005          .word   5
+    1359 00009e10 00000000          .long   0
+    1360 00009e30           SKULL30F:
+    1361 00009e30 00008c30'         .long   skull30f
+    1362 00009e50     0005          .word   5
+    1363 00009e60 00000000          .long   0
+    1364 00009e80           SKULL60F:
+    1365 00009e80 00008d30'         .long   skull60f
+    1366 00009ea0     0005          .word   5
+    1367 00009eb0 00000000          .long   0
+    1368 00009ed0           SKULL90F:
+    1369 00009ed0 000092b0'         .long   skull90bf
+    1370 00009ef0     0005          .word   5
+    1371 00009f00 00000000          .long   0
+    1372 00009f20           SKULL120F:
+    1373 00009f20 00009930'         .long   skull120f
+    1374 00009f40     0005          .word   5
+    1375 00009f50 00000000          .long   0
+    1376 00009f70           SKULL150F:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   26
+
+    1377 00009f70 00009a30'         .long   skull150f
+    1378 00009f90     0005          .word   5
+    1379 00009fa0 00000000          .long   0
+    1380 00009fc0           SKULL180F:
+    1381 00009fc0 00009b30'         .long   skull180f
+    1382 00009fe0     0005          .word   5
+    1383 00009ff0 00000000          .long   0
+    1384                    
+    1385 0000a010           SKULL90UF:
+    1386 0000a010 00008eb0'         .long   skull90upf
+    1387 0000a030     0005          .word   5
+    1388 0000a040 00000000          .long   0
+    1389 0000a060           SKULL90U:
+    1390 0000a060 00008db0'         .long   skull90up
+    1391 0000a080     0005          .word   5
+    1392 0000a090 00000000          .long   0
+    1393 0000a0b0           SKULL90DF:
+    1394 0000a0b0 00008f30'         .long   skull90dnf
+    1395 0000a0d0     0005          .word   5
+    1396 0000a0e0 00000000          .long   0
+    1397 0000a100           SKULL90D:
+    1398 0000a100 00008e30'         .long   skull90dn
+    1399 0000a120     0005          .word   5
+    1400 0000a130 00000000          .long   0
+    1401                    
+    1402 0000a150           SKLBITE:
+    1403 0000a150 00009130'         .long   skull90c
+    1404 0000a170     0002          .word   2
+    1405 0000a180 000091b0'         .long   skull90d
+    1406 0000a1a0     000a          .word   10
+    1407 0000a1b0 00009130'         .long   skull90c
+    1408 0000a1d0     0002          .word   2
+    1409 0000a1e0 000090b0'         .long   jawbite
+    1410 0000a200     0002          .word   2
+    1411 0000a210 00008fb0'         .long   skull90a
+    1412 0000a230     0008          .word   8
+    1413 0000a240 00009030'         .long   skull90b
+    1414 0000a260     0002          .word   2
+    1415 0000a270 00000000          .long   0
+    1416 0000a290           SKLBITEF:
+    1417 0000a290 000093b0'         .long   skull90cf
+    1418 0000a2b0     0002          .word   2
+    1419 0000a2c0 00009430'         .long   skull90df
+    1420 0000a2e0     000a          .word   10
+    1421 0000a2f0 000093b0'         .long   skull90cf
+    1422 0000a310     0002          .word   2
+    1423 0000a320 00009330'         .long   jawbitef
+    1424 0000a340     0002          .word   2
+    1425 0000a350 00009230'         .long   skull90af
+    1426 0000a370     0008          .word   8
+    1427 0000a380 000092b0'         .long   skull90bf
+    1428 0000a3a0     0002          .word   2
+    1429 0000a3b0 00000000          .long   0
+    1430                    
+    1431 0000a3d0           SKLTUNG:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   27
+
+    1432 0000a3d0 000094b0'         .long   skult90a
+    1433 0000a3f0     0007          .word   7
+    1434 0000a400 00009530'         .long   skult90b
+    1435 0000a420     0005          .word   5
+    1436 0000a430 000095b0'         .long   skult90c
+    1437 0000a450     0005          .word   5
+    1438 0000a460 00009630'         .long   skult90d
+    1439 0000a480     000a          .word   10
+    1440 0000a490 000095b0'         .long   skult90c
+    1441 0000a4b0     0005          .word   5
+    1442 0000a4c0 00009530'         .long   skult90b
+    1443 0000a4e0     0005          .word   5
+    1444 0000a4f0 00000000          .long   0
+    1445 0000a510           SKLTUNGF:
+    1446 0000a510 000096b0'         .long   skult90af
+    1447 0000a530     0007          .word   7
+    1448 0000a540 00009730'         .long   skult90bf
+    1449 0000a560     0005          .word   5
+    1450 0000a570 000097b0'         .long   skult90cf
+    1451 0000a590     0005          .word   5
+    1452 0000a5a0 00009830'         .long   skult90df
+    1453 0000a5c0     000a          .word   10
+    1454 0000a5d0 000097b0'         .long   skult90cf
+    1455 0000a5f0     0005          .word   5
+    1456 0000a600 00009730'         .long   skult90bf
+    1457 0000a620     0005          .word   5
+    1458 0000a630 00000000          .long   0
+    1459                    
+    1460                    
+    1461 0000a650           SDIRANI:
+    1462 0000a650 00009bb0'         .LONG   SKULL0
+    1463 0000a670 00009c00'         .LONG   SKULL30
+    1464 0000a690 00009c50'         .LONG   SKULL60
+    1465 0000a6b0 00009ca0'         .LONG   SKULL90
+    1466 0000a6d0 00009cf0'         .LONG   SKULL120
+    1467 0000a6f0 00009d40'         .LONG   SKULL150
+    1468 0000a710 00009d90'         .LONG   SKULL180
+    1469 0000a730 00009f70'         .LONG   SKULL150F
+    1470 0000a750 00009f20'         .LONG   SKULL120F
+    1471 0000a770 00009ed0'         .LONG   SKULL90F
+    1472 0000a790 00009e80'         .LONG   SKULL60F
+    1473 0000a7b0 00009e30'         .LONG   SKULL30F
+    1474                    ;* the rest of this table is a kluge to access the tiltup,tiltdn frames
+    1475 0000a7d0 0000a060'         .LONG   SKULL90U        ;UP = dir + 9
+    1476 0000a7f0 0000a100'         .LONG   SKULL90D        ;DN = dir +10
+    1477 0000a810 0000a150'         .LONG   SKLBITE         ;BITE = dir + 11
+    1478 0000a830 0000a3d0'         .LONG   SKLTUNG         ;TUNG = dir + 12
+    1479 0000a850 00000000          .LONG   0
+    1480 0000a870 00000000          .LONG   0
+    1481 0000a890 0000a010'         .LONG   SKULL90UF
+    1482 0000a8b0 0000a0b0'         .LONG   SKULL90DF
+    1483 0000a8d0 0000a290'         .LONG   SKLBITEF
+    1484 0000a8f0 0000a510'         .LONG   SKLTUNGF
+    1485                    
+    1486                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   28
+
+    1487                    
+    1488                    ****************************************************************************
+    1489                    ************************** START OF TONGUE STUFF ***************************
+    1490                    ****************************************************************************
+    1491                            .GLOBAL FIRETUNG
+    1492                            .GLOBAL ZCHK,XZCNTCK
+    1493                            .GLOBAL HEADBUTT
+    1494                            .GLOBAL SWAPAL0
+    1495                    *
+    1496                    *TONGUE STARTER PROCESS
+    1497                    *A8=OBJECT TO COPY
+    1498                    *A11=PLAYER TO GO FOR
+    1499                    *A10 - 1 if tung needs to be flipped.
+    1500 0000a910           FIRETUNG:
+    1501 0000a910     098f          MMTM    SP,A8,A10,A11
+         0000a920     00b0  
+    1502 0000a930     09e0          movi    FTungSND,A0
+         0000a940 00000000' 
+    1503 0000a960     0d5f          calla   ONESND
+         0000a970 00000000! 
+    1504 0000a990     09e6          MOVI    TNGTAB,A6
+         0000a9a0 0000c290' 
+    1505 0000a9c0     09ee          MOVI    TNGINIT,A14     
+         0000a9d0 0000c290' 
+    1506 0000a9f0     b501          MOVE    *A8(OXPOS),A1,W
+         0000aa00     0090  
+    1507 0000aa10     b702          MOVE    *A8(OYVAL),A2,L
+         0000aa20     00a0  
+    1508 0000aa30     ee41          MOVY    A2,A1
+    1509 0000aa40     0d5f          CALLA   ENINITUL        
+         0000aa50 00000000! 
+    1510 0000aa70     09af          MMFM    SP,A9,A10,A11
+         0000aa80     0e00  
+    1511 0000aa90     ca80          JAEQ    SUCIDE          
+         0000aaa0 00000000! 
+    1512 0000aac0     b928          MOVE    *A9(OZPOS),*A8(OZPOS),W
+         0000aad0     00d0  
+         0000aae0     00d0  
+    1513 0000aaf0     b529          MOVE    *A9(OFLAGS),A9,W        ;SAVE FLIP
+         0000ab00     0100  
+    1514 0000ab10     4d4a          move    A10,A10
+    1515 0000ab20     ca03          jrz     SkHFlp
+    1516 0000ab30     0bc9          xori    M_FLIPH,A9
+         0000ab40 00000010  
+    1517 0000ab60           SkHFlp:
+    1518                    
+    1519 0000ab60     09c0          MOVI    02000H,A0
+         0000ab70     2000  
+    1520 0000ab80     0d5f          CALLA   RANDU
+         0000ab90 00000000! 
+    1521 0000abb0     0b00          ADDI    02000H,A0
+         0000abc0     2000  
+    1522 0000abd0     4c0a          MOVE    A0,A10          ;SAVE Z ACCEL FACTOR IN A10
+    1523 0000abe0     09c0          MOVI    500,A0
+         0000abf0     01f4  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   29
+
+    1524 0000ac00     0d5f          CALLA   RANDPER
+         0000ac10 00000000! 
+    1525 0000ac30     c801          JRC     FTUNG0
+    1526 0000ac40     574a          CLR     A10
+    1527 0000ac50           FTUNG0
+    1528 0000ac50     4d60          MOVE    A11,A0
+    1529 0000ac60     0d5f          CALLA   SHADUPD
+         0000ac70 00000000! 
+    1530 0000ac90     1f69          BTST    B_FLIPH,A9
+    1531 0000aca0     ca03          JREQ    FTUNG1
+    1532 0000acb0     0d5f          CALLA   YFLP             ;FLIP THE DUDE IF APPROPRIATE
+         0000acc0 00000000! 
+    1533 0000ace0           FTUNG1:
+    1534 0000ace0     0d3f          CALLR   TNGVEL
+         0000acf0     00c5  
+    1535 0000ad00     0b21          ADDI    -020000H,A1      ;GET Y VELOCITY
+         0000ad10 fffe0000  
+    1536 0000ad30     b228          MOVE    A1,*A8(OYVEL),L
+         0000ad40     0060  
+    1537 0000ad50     0d5f          CALLA   SHVELCPY         ;COPY VELOCITY TO SHADOW
+         0000ad60 00000000! 
+    1538 0000ad80           TNGJMP:
+    1539 0000ad80     09e9          MOVI    TNGLIK,A9        ;JUMP ON THE DUDE
+         0000ad90 0000c550' 
+    1540 0000adb0           TNGJMP0:
+    1541 0000adb0     1881          MOVK    4,A1
+    1542 0000adc0                   JSRP    FRANIM
+    1543 0000ae30     c8f4          JRC     TNGJMP
+    1544                    *FALLING GRAVITY PROCESS
+    1545 0000ae40                   SLEEP   2
+    1546 0000ae80           TNGJMP1
+    1547 0000ae80     0d5f          CALLA   ZCHK                    ;MAKE SURE Z IN BOUNDS
+         0000ae90 00000000! 
+    1548 0000aeb0     0d3f          CALLR   TNGCLCK
+         0000aec0     0059  
+    1549 0000aed0     05a0          MOVE    @WORLDTL,A0,W           ;CHECK FOR FAR OFF SCREEN
+         0000aee0 00000000! 
+    1550 0000af00     0b00          ADDI    256,A0                  ;NORMALIZE FOR SCREEN CENTER
+         0000af10     0100  
+    1551 0000af20     b501          MOVE    *A8(OXPOS),A1,W 
+         0000af30     0090  
+    1552 0000af40     4401          SUB     A0,A1
+    1553 0000af50     0381          ABS     A1
+    1554 0000af60     0b41          CMPI    300,A1
+         0000af70     fed3  
+    1555 0000af80     c207          JRLS    TNGOK                   ;NOT OFF SCREEN
+    1556 0000af90     4d00          MOVE    A8,A0
+    1557 0000afa0     0d5f          CALLA   DELENEMY                ;OFF ENEMY
+         0000afb0 00000000! 
+    1558 0000afd0     c080          JAUC    SUCIDE                  ;BAG IT...
+         0000afe0 00000000! 
+    1559                    
+    1560 0000b000           TNGOK
+    1561 0000b000     b760          MOVE    *A11(POBJ),A0,L
+         0000b010     00a0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   30
+
+    1562 0000b020     0d5f          CALLA   XZCHK
+         0000b030 00000000! 
+    1563 0000b050     4d41          MOVE    A10,A1
+    1564 0000b060     4c42          MOVE    A2,A2
+    1565 0000b070     cf01          JRNN    TNGOK1
+    1566 0000b080     03a1          NEG     A1
+    1567 0000b090           TNGOK1
+    1568 0000b090     b700          MOVE    *A8(OZVEL),A0,L
+         0000b0a0     00e0  
+    1569 0000b0b0     4020          ADD     A1,A0                   ;ADD DELTA Z
+    1570 0000b0c0     b208          MOVE    A0,*A8(OZVEL),L
+         0000b0d0     00e0  
+    1571 0000b0e0     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         0000b0f0     0060  
+    1572 0000b100     4020          ADD     A1,A0                   ;ADD DELTA Z
+    1573 0000b110     0b00          ADDI    04000H,A0
+         0000b120     4000  
+    1574 0000b130     b208          MOVE    A0,*A8(OYVEL),L
+         0000b140     0060  
+    1575 0000b150     b701          MOVE    *A8(OZVEL),A1,L
+         0000b160     00e0  
+    1576 0000b170     4420          SUB     A1,A0
+    1577 0000b180     cec2          JRN     TNGJMP0                 ;UPWARD VEL, NO LAND
+    1578                    
+    1579 0000b190     0d5f          CALLA   DFRMGRND
+         0000b1a0 00000000! 
+    1580 0000b1c0     0b41          CMPI    0,A1
+         0000b1d0     ffff  
+    1581 0000b1e0     c7bc          JRGT    TNGJMP0                 ;IN THE AIR STILL
+    1582 0000b1f0     0b69          CMPI    TNGLIK1,A9
+         0000b200 ffff398f' 
+    1583 0000b220     c20c          JRLS    TNGLAND
+    1584 0000b230     09e9          MOVI    TNGLIK,A9
+         0000b240 0000c550' 
+    1585 0000b260     1881          MOVK    4,A1
+    1586 0000b270                   JSRP    FRANIM
+    1587 0000b2e0     c0b9          JRUC    TNGJMP1
+    1588 0000b2f0           TNGLAND                                 ;CHALLENGER HAS LANDED
+    1589 0000b2f0     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+    1590 0000b300     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         0000b310 00000000! 
+    1591 0000b330     0d5f          CALLA   SHADUPD                 ;RESET YOUR SHADOW
+         0000b340 00000000! 
+    1592 0000b360     b700          MOVE    *A8(OYVEL),A0,L
+         0000b370     0060  
+    1593 0000b380     b701          MOVE    *A8(OZVEL),A1,L
+         0000b390     00e0  
+    1594 0000b3a0     4420          SUB     A1,A0
+    1595 0000b3b0     03a0          NEG     A0                      ;NEGATE Y COMPONENT
+    1596 0000b3c0     4020          ADD     A1,A0
+    1597 0000b3d0     b208          MOVE    A0,*A8(OYVEL),L
+         0000b3e0     0060  
+    1598 0000b3f0     0d5f          CALLA   SHVELCPY
+         0000b400 00000000! 
+    1599 0000b420     09e9          MOVI    TNGLIK1,A9              ;BOUNCE ANIMATION
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   31
+
+         0000b430 0000c670' 
+    1600 0000b450     c095          JRUC    TNGJMP0
+    1601                    
+    1602                    *TONGUE COLLISION CHECK
+    1603 0000b460           TNGCLCK
+    1604 0000b460     0d5f          CALLA   GETCPLY
+         0000b470 00000000! 
+    1605 0000b490     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         0000b4a0     00a0  
+    1606 0000b4b0     5621          CLR     A1
+    1607 0000b4c0     5663          CLR     A3
+    1608 0000b4d0     09c6          MOVI    15,A6
+         0000b4e0     000f  
+    1609 0000b4f0     09c5          MOVI    25,A5
+         0000b500     0019  
+    1610 0000b510     0d5f          CALLA   XZCNTCK         ;ARE WE IN POSITION
+         0000b520 00000000! 
+    1611 0000b540     c934          JRNC    TNGCLX          ;NO, GET DIRECTION
+    1612                    
+    1613 0000b550     b402          MOVE    *A0(OSIZEY),A2,W
+         0000b560     0150  
+    1614 0000b570     2fe2          SRL     1,A2
+    1615 0000b580     b401          MOVE    *A0(OYPOS),A1,W
+         0000b590     00b0  
+    1616 0000b5a0     4041          ADD     A2,A1
+    1617 0000b5b0     b504          MOVE    *A8(OSIZEY),A4,W
+         0000b5c0     0150  
+    1618 0000b5d0     2fe4          SRL     1,A4
+    1619 0000b5e0     b503          MOVE    *A8(OYPOS),A3,W
+         0000b5f0     00b0  
+    1620 0000b600     4083          ADD     A4,A3
+    1621 0000b610     4461          SUB     A3,A1
+    1622 0000b620     0381          ABS     A1
+    1623 0000b630     0b41          CMPI    30,A1
+         0000b640     ffe1  
+    1624 0000b650     c923          JRHS    TNGCLX
+    1625                    
+    1626 0000b660                   PUSH    A0
+    1627 0000b670     09e0          movi    TungHSND,A0
+         0000b680 00000040' 
+    1628 0000b6a0     0d5f          calla   ONESND
+         0000b6b0 00000000! 
+    1629 0000b6d0                   PULL    A0
+    1630                    
+    1631 0000b6f0     0d5f          CALLA   GETCPLY
+         0000b700 00000000! 
+    1632 0000b720     4c02          MOVE    A0,A2
+    1633 0000b730     0d5f          CALLA   HEADBUTT
+         0000b740 00000000! 
+    1634                    
+    1635 0000b760     09ee          MOVI    DUMCOLL,A14
+         0000b770 00000000! 
+    1636 0000b790     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         0000b7a0     01d0  
+    1637                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   32
+
+    1638 0000b7b0     0d5f          CALLA   PSTOP
+         0000b7c0 00000000! 
+    1639 0000b7e0     09e0          MOVI    020000H,A0
+         0000b7f0 00020000  
+    1640 0000b810     b208          MOVE    A0,*A8(OYVEL),L         ;INITIAL DOWNWARD THRUST
+         0000b820     0060  
+    1641 0000b830     0d5f          CALLA   SHVELCPY
+         0000b840 00000000! 
+    1642 0000b860                   PULL    A0                      ;BLOW OFF A WORD ON STACK
+    1643 0000b880     c064          JRUC    TNGDIE
+    1644 0000b890           TNGCLX
+    1645 0000b890     0960          RETS
+    1646                    
+    1647                    *COPY TO SHADOW AND FLIP OPPOSITE
+    1648 0000b8a0           SHVLFLP1
+    1649 0000b8a0     0d5f          CALLA   SHVELCPY
+         0000b8b0 00000000! 
+    1650 0000b8d0     b50e          MOVE    *A8(OXVEL+010H),A14,W           ;TEST X VELOCITY
+         0000b8e0     0050  
+    1651 0000b8f0     ce80          JAN     NOYFLP
+         0000b900 00000000! 
+    1652 0000b920     c080          JAUC    YFLP
+         0000b930 00000000! 
+    1653                    *
+    1654                    *GET TONGUE VELOCITY
+    1655                    *COMPUTE JUMP VELOCITIES
+    1656                    *A0=PDATA OF TARGET PLAYER
+    1657                    *A8=TONGUE
+    1658                    *
+    1659 0000b950           TNGVEL
+    1660 0000b950     b606          MOVE    *A0(POBJ),A6,L   ;GET TARGET
+         0000b960     00a0  
+    1661 0000b970     b6c1          MOVE    *A6(OXVAL),A1,L  ;COMPUTE X VELOCITY
+         0000b980     0080  
+    1662 0000b990     b702          MOVE    *A8(OXVAL),A2,L
+         0000b9a0     0080  
+    1663 0000b9b0     b6c3          MOVE    *A6(OXVEL),A3,L
+         0000b9c0     0040  
+    1664 0000b9d0     09c0          MOVI    03FH,A0
+         0000b9e0     003f  
+    1665 0000b9f0     0d5f          CALLA   SRAND
+         0000ba00 00000000! 
+    1666 0000ba20     4c04          MOVE    A0,A4           ;SAVE FASTBALL INDICATOR
+    1667 0000ba30     ce01          JRN     TUNGV1
+    1668 0000ba40     5663          CLR     A3
+    1669 0000ba50           TUNGV1  
+    1670 0000ba50     4002          ADD     A0,A2
+    1671 0000ba60     4441          SUB     A2,A1
+    1672 0000ba70     2b61          SRA     5,A1
+    1673 0000ba80     4c25          MOVE    A1,A5
+    1674 0000ba90     2be5          SRA     1,A5
+    1675 0000baa0     4c84          MOVE    A4,A4
+    1676 0000bab0     ce01          JRN     TUNGV11
+    1677 0000bac0     56a5          CLR     A5
+    1678 0000bad0           TUNGV11
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   33
+
+    1679 0000bad0     40a1          ADD     A5,A1
+    1680 0000bae0     4023          ADD     A1,A3
+    1681 0000baf0     b268          MOVE    A3,*A8(OXVEL),L
+         0000bb00     0040  
+    1682 0000bb10     b6c1          MOVE    *A6(OZVAL),A1,L  ;COMPUTE Z VELOCITY
+         0000bb20     00c0  
+    1683 0000bb30     b702          MOVE    *A8(OZVAL),A2,L
+         0000bb40     00c0  
+    1684 0000bb50     b6c3          MOVE    *A6(OZVEL),A3,L
+         0000bb60     00e0  
+    1685 0000bb70     09c0          MOVI    01FH,A0
+         0000bb80     001f  
+    1686 0000bb90     0d5f          CALLA   SRAND
+         0000bba0 00000000! 
+    1687 0000bbc0     ce01          JRN     TUNGV2
+    1688 0000bbd0     5663          CLR     A3
+    1689 0000bbe0           TUNGV2
+    1690 0000bbe0     4002          ADD     A0,A2
+    1691 0000bbf0     4441          SUB     A2,A1
+    1692 0000bc00     2b61          SRA     5,A1
+    1693 0000bc10     4c25          MOVE    A1,A5
+    1694 0000bc20     2be5          SRA     1,A5
+    1695 0000bc30     4c84          MOVE    A4,A4
+    1696 0000bc40     ce01          JRN     TUNGV22
+    1697 0000bc50     56a5          CLR     A5
+    1698 0000bc60           TUNGV22
+    1699 0000bc60     40a1          ADD     A5,A1
+    1700 0000bc70     4061          ADD     A3,A1
+    1701 0000bc80     b228          MOVE    A1,*A8(OZVEL),L
+         0000bc90     00e0  
+    1702 0000bca0     0960          RETS
+    1703                    *
+    1704                    *COLLISION ROUTINE
+    1705                    *A0=PTR TO TONGUE
+    1706                    *A8=PTR TO THING THAT SMASHED HIM
+    1707                    *
+    1708 0000bcb0           TNGBUL
+    1709 0000bcb0           TNGEX
+    1710 0000bcb0           TNGROK
+    1711 0000bcb0     b50b          MOVE    *A8(OID),A11,W          ;GET ENEMY ID FOR POINTS
+         0000bcc0     01a0  
+    1712 0000bcd0     4d0a           MOVE   A8,A10                  ;SAVE BULLET
+    1713 0000bce0     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+    1714 0000bcf0     0d5f          CALLA   SCRKIL
+         0000bd00 00000000! 
+    1715 0000bd20     09ee          MOVI    DUMCOLL,A14
+         0000bd30 00000000! 
+    1716 0000bd50     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         0000bd60     01d0  
+    1717                    
+    1718 0000bd70     0d5f          CALLA   PSTOP
+         0000bd80 00000000! 
+    1719 0000bda0     09e0          MOVI    020000H,A0
+         0000bdb0 00020000  
+    1720 0000bdd0     b208          MOVE    A0,*A8(OYVEL),L         ;INITIAL DOWNWARD THRUST
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   34
+
+         0000bde0     0060  
+    1721 0000bdf0     0d5f          CALLA   SHVELCPY
+         0000be00 00000000! 
+    1722 0000be20     09e7          MOVI    TNGDIE,A7
+         0000be30 0000bed0' 
+    1723 0000be50     b700          MOVE    *A8(OPLINK),A0,L
+         0000be60     01f0  
+    1724 0000be70     09c1          MOVI    0EDh,A1
+         0000be80     00ed  
+    1725 0000be90     0d5f          CALLA   XFERPROC                ;CREATE A TNGDIE
+         0000bea0 00000000! 
+    1726 0000bec0     0960          RETS
+    1727                    *
+    1728                    *TONGUE DIE
+    1729                    *A8=DYING TONGUE
+    1730                    *
+    1731 0000bed0           TNGDIE:
+    1732 0000bed0     09e9          MOVI    TNGLK1,A9               ;MAKE A FLAT TONGUE
+         0000bee0 0000c920' 
+    1733 0000bf00           TNGDIEL:
+    1734 0000bf00     1881          MOVK    4,A1
+    1735 0000bf10                   JSRP    FRANIM
+    1736 0000bf80     c8f4          JRC     TNGDIE
+    1737 0000bf90                   SLEEP   3
+    1738 0000bfd0     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         0000bfe0     0060  
+    1739 0000bff0     0b00          ADDI    07FFFH,A0
+         0000c000     7fff  
+    1740 0000c010     b208          MOVE    A0,*A8(OYVEL),L
+         0000c020     0060  
+    1741 0000c030     ceec          JRN     TNGDIEL                 ;CANT LAND WITH NEGATIVE Y VEL.
+    1742 0000c040     0d5f          CALLA   DFRMGRND
+         0000c050 00000000! 
+    1743 0000c070     cfe8          JRNN    TNGDIEL                 ;STILL GOING
+    1744                    
+    1745 0000c080     0b60          CMPI    020000H,A0
+         0000c090 fffdffff  
+    1746 0000c0b0     c208          JRLS    TNGSINK
+    1747 0000c0c0     09e1          MOVI    060000000H,A1
+         0000c0d0 60000000  
+    1748 0000c0f0     5e20          MPYU    A1,A0
+    1749 0000c100     03a0          NEG     A0
+    1750 0000c110     b208          MOVE    A0,*A8(OYVEL),L         ;CUT DOWN Y
+         0000c120     0060  
+    1751 0000c130     c0dc          JRUC    TNGDIEL
+    1752                    
+    1753 0000c140           TNGSINK:
+    1754 0000c140     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         0000c150 00000000! 
+    1755 0000c170     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+    1756 0000c180     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         0000c190 00000000! 
+    1757 0000c1b0     09e9          MOVI    [1,1],A9
+         0000c1c0 00010001  
+    1758 0000c1e0                   CREATE  0DFh,ESINK              ;CREATE THE DEADMAN SINK         
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   35
+
+    1759 0000c260     c080          JAUC    SUCIDE                  ;DIE
+         0000c270 00000000! 
+    1760                    
+    1761 0000c290           TNGTAB: 
+    1762 0000c290           TNGINIT:
+    1763 0000c290 00000000          .LONG   0,0,0,0
+    1764 0000c310     0000          .WORD   0,0
+    1765 0000c330 00001200"         .LONG   TUNG1C,LOFZ,TNGCOLL
+    1766 0000c390     8002          .WORD   DMAWNZ,0E01H
+    1767 0000c3b0 00000000          .LONG   0
+    1768                    
+    1769                    *COLLISION TABLE
+    1770 0000c3d0           TNGCOLL 
+    1771 0000c3d0     0b10          .WORD   B1OID|BULLETID
+    1772 0000c3e0 0000bcb0'         .LONG   TNGBUL
+    1773 0000c400     0b12          .WORD   B1OID|EXPLODID
+    1774 0000c410 0000bcb0'         .LONG   TNGEX
+    1775 0000c430     0b14          .WORD   B1OID|ROCKETID
+    1776 0000c440 0000bcb0'         .LONG   TNGROK
+    1777 0000c460     0b20          .WORD   B2OID|BULLETID
+    1778 0000c470 0000bcb0'         .LONG   TNGBUL
+    1779 0000c490     0b22          .WORD   B2OID|EXPLODID
+    1780 0000c4a0 0000bcb0'         .LONG   TNGEX
+    1781 0000c4c0     0b24          .WORD   B2OID|ROCKETID
+    1782 0000c4d0 0000bcb0'         .LONG   TNGROK
+    1783 0000c4f0     0be2          .WORD   BEOID|EXPLODID
+    1784 0000c500 0000bcb0'         .LONG   TNGEX
+    1785 0000c520     0000          .WORD   0
+    1786 0000c530 00000000!         .LONG   DUMRTSG
+    1787                    *
+    1788                    *TONGUE ANIMATION
+    1789                    *
+    1790                    *LICKING
+    1791 0000c550           TNGLIK:
+    1792 0000c550 00001480"         .LONG   TUNG6C
+    1793 0000c570     0004          .word   4
+    1794 0000c580 00001500"         .LONG   TUNG7C
+    1795 0000c5a0     0004          .word   4
+    1796 0000c5b0 00001580"         .LONG   TUNG8C
+    1797 0000c5d0     0004          .word   4
+    1798 0000c5e0 00001600"         .LONG   TUNG9C
+    1799 0000c600     0006          .word   6
+    1800 0000c610 00001580"         .LONG   TUNG8C
+    1801 0000c630     0004          .word   4
+    1802 0000c640 00001500"         .LONG   TUNG7C
+    1803 0000c660     0004          .word   4
+    1804 0000c670           TNGLIK1
+    1805 0000c670 00001480"         .LONG   TUNG6C
+    1806 0000c690     0004          .word   4
+    1807 0000c6a0 00001400"         .LONG   TUNG5C
+    1808 0000c6c0     0004          .word   4
+    1809 0000c6d0 00001380"         .LONG   TUNG4C
+    1810 0000c6f0     0004          .word   4
+    1811 0000c700 00001300"         .LONG   TUNG3C
+    1812 0000c720     0007          .word   7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   36
+
+    1813 0000c730 00001380"         .LONG   TUNG4C
+    1814 0000c750     0004          .word   4
+    1815 0000c760 00001400"         .LONG   TUNG5C
+    1816 0000c780     0004          .word   4
+    1817 0000c790 00000000           .LONG  0
+    1818                    *       
+    1819                    *TONGUE ANIMATION STICK IN AND OUT
+    1820                    *
+    1821 0000c7b0           TNGSTK
+    1822 0000c7b0 00001180"         .LONG   TUNG0C
+    1823 0000c7d0     0004          .word   4
+    1824 0000c7e0 00001200"         .LONG   TUNG1C
+    1825 0000c800     0004          .word   4
+    1826 0000c810 00001280"         .LONG   TUNG2C
+    1827 0000c830     0007          .word   7
+    1828 0000c840 00001400"         .LONG   TUNG5C
+    1829 0000c860     0004          .word   4
+    1830 0000c870 00001280"         .LONG   TUNG2C
+    1831 0000c890     0004          .word   4
+    1832 0000c8a0 00001200"         .LONG   TUNG1C
+    1833 0000c8c0     0004          .word   4
+    1834 0000c8d0 00001180"         .LONG   TUNG0C
+    1835 0000c8f0     0004          .word   4
+    1836 0000c900 00000000           .LONG  0
+    1837 0000c920           TNGLK1:
+    1838 0000c920 00001500"         .LONG   TUNG7C
+    1839 0000c940     0004          .word   4
+    1840 0000c950 00001580"         .LONG   TUNG8C
+    1841 0000c970     0004          .word   4
+    1842 0000c980 00001600"         .LONG   TUNG9C
+    1843 0000c9a0     0006          .word   6
+    1844 0000c9b0 00001580"         .LONG   TUNG8C
+    1845 0000c9d0     0004          .word   4
+    1846 0000c9e0 00000000          .LONG   0
+    1847                    
+    1848                    
+    1849 0000ca00           baseflsh:
+    1850 0000ca00     00f3          .word   243
+    1851 0000ca10     0000          .word   00H,00H,020H,0400H,0404H,0424H,0824H,0428H
+    1852 0000ca90     0828          .word   0828H,0444H,0448H,0844H,0848H,0868H,0C48H,0C68H
+    1853 0000cb10     084c          .word   084CH,086CH,0C4CH,0C6CH,0C70H,0C8CH,0C90H,0106CH
+    1854 0000cb90     1070          .word   01070H,0108CH,01090H,01490H,01094H,01494H,010B0H,010B4H
+    1855 0000cc10     14b0          .word   014B0H,014B4H,014D4H,014B8H,014D8H,01CB4H,01CB8H,01CD4H
+    1856 0000cc90     1cd8          .word   01CD8H,01CF8H,01CD8H,01CF8H,01CDCH,01CFCH,01CDCH,01CFCH
+    1857 0000cd10     1cff          .word   01CFFH,01D3CH,01D3FH,024FCH,024FFH,0253CH,0253FH,0253FH
+    1858 0000cd90     255f          .word   0255FH,0255FH,0253FH,0255FH,0253FH,0253FH,0255FH,0255FH
+    1859 0000ce10     257f          .word   0257FH,0257FH,02D3FH,02D5FH,02D5FH,02D5FH,02D7FH,02D7FH
+    1860 0000ce90     2d9f          .word   02D9FH,02D7FH,02D9FH,02D7FH,02D9FH,02D7FH,02D9FH,0359FH
+    1861 0000cf10     2d9f          .word   02D9FH,0359FH,095FH,02DBFH,02DBFH,035BFH,035BFH,035DFH
+    1862 0000cf90     35bf          .word   035BFH,035DFH,035BFH,035DFH,035BFH,035DFH,035DFH,035FFH
+    1863 0000d010     35ff          .word   035FFH,03DDFH,03DDFH,03DFFH,03DFFH,03DFFH,03DFFH,03DFFH
+    1864 0000d090     3e1f          .word   03E1FH,03E1FH,03E1FH,03E1FH,03E5FH,03E1FH,03E5FH,04E1FH
+    1865 0000d110     461f          .word   0461FH,0461FH,0465FH,0465FH,0465FH,0467FH,0467FH,0465FH
+    1866 0000d190     465f          .word   0465FH,0467FH,0467FH,0469FH,04E7FH,04E9FH,0467FH,0469FH
+    1867 0000d210     4e7f          .word   04E7FH,04E9FH,04E9FH,04E9FH,04E9FH,04EBFH,04EBFH,04EBFH
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   37
+
+    1868 0000d290     4ebf          .word   04EBFH,04EBFH,04EDFH,04EDFH,04EFFH,056BFH,056DFH,056BFH
+    1869 0000d310     56df          .word   056DFH,056DFH,056DFH,056DFH,05EDFH,056FFH,056FFH,056FFH
+    1870 0000d390     56ff          .word   056FFH,056FFH,0571FH,0571FH,0571FH,0573FH,05EFFH,05EFFH
+    1871 0000d410     5f1f          .word   05F1FH,05F1FH,05F3FH,05F1FH,05F3FH,05F1FH,05F3FH,05F1FH
+    1872 0000d490     5f3f          .word   05F3FH,05F3FH,0673FH,0673FH,05F7FH,0677FH,05F7FH,0677FH
+    1873 0000d510     677f          .word   0677FH,0679FH,0679FH,0677FH,0677FH,0679FH,0679FH,06F9FH
+    1874 0000d590     679f          .word   0679FH,06F9FH,067BFH,067BFH,06FBFH,06FBFH,06FDFH,06FBFH
+    1875 0000d610     6fdf          .word   06FDFH,06FBFH,06FDFH,06FBFH,06FDFH,06FDFH,06FFFH,06FFFH
+    1876 0000d690     77bf          .word   077BFH,077DFH,077DFH,077FFH,077FFH,077FFH,077FFH,077FFH
+    1877 0000d710     77ff          .word   077FFH,077FFH,077FFH,077FFH,077FFH,077FFH,077FFH,07FFFH
+    1878 0000d790     7fff          .word   07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH,07FFFH
+    1879 0000d810     7fff          .word   07FFFH,07FFFH,07FDFH,07FDFH,07FFFH,07FFFH,07FFFH,07FFFH
+    1880 0000d890     7fff          .word   07FFFH,07FFFH,07FFFH,07FFFH,05F1FH,067BFH,06F9FH,0769FH
+    1881 0000d910     7edf          .word   07EDFH,0567FH,06E7FH
+    1882                    
+    1883                    
+    1884                    
+    1885                    ****************************************************************************
+    1886 0000d940           MkNuke:
+    1887                    ;*** PROCESS TO CREATE A NUCLEAR BURST
+    1888                    ;A8 - ptr to obj to position air burst at
+    1889                    ;A10 - X pos offset
+    1890                    ;A11 - Y pos offset
+    1891                    
+    1892              0180  expltiks        .set    ETEMP1
+    1893                    
+    1894 0000d940     0d5f          calla   GETOBJ
+         0000d950 00000000! 
+    1895 0000d970     ca00          jrz     NoBomObj
+         0000d980     00b5  
+    1896 0000d990     4c06          move    A0,A6
+    1897                    
+    1898 0000d9a0     4cc0          move    A6,A0
+    1899 0000d9b0     09ee          movi    NUKEINI,A14
+         0000d9c0 0000e510' 
+    1900 0000d9e0     0d5f          calla   STFOBJ
+         0000d9f0 00000000! 
+    1901                    
+    1902 0000da10     09e0          movi    newbom,A0
+         0000da20 00000000! 
+    1903 0000da40     0d5f          calla   GETFPAL
+         0000da50 00000000! 
+    1904 0000da70     ca00          jrz     NoBomPal
+         0000da80     00a1  
+    1905 0000da90     b006          move    A0,*A6(OPAL),W
+         0000daa0     0160  
+    1906                    
+    1907 0000dab0     b4c0          MOVE    *A6(OFLAGS),A0,W
+         0000dac0     0100  
+    1908 0000dad0     0b80          ANDNI   M_PIXSCAN|M_FLIPV,A0
+         0000dae0 00000420  
+    1909 0000db00     b006          MOVE    A0,*A6(OFLAGS),W        ;UPDATE FOR NO PIXEL SCAN, no VFLIP
+         0000db10     0100  
+    1910                    
+    1911 0000db20     4cc0          move    A6,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   38
+
+    1912                    ;A8 ptr to BASE OBJ
+    1913                    ;A0 ptr to obj which is to have its position set so that its anim pt
+    1914 0000db30     bb00          move    *A8(OXVEL),*A0(OXVEL),L
+         0000db40     0040  
+         0000db50     0040  
+    1915 0000db60     bb00          move    *A8(OYVEL),*A0(OYVEL),L
+         0000db70     0060  
+         0000db80     0060  
+    1916 0000db90     bb00          move    *A8(OZVEL),*A0(OZVEL),L
+         0000dba0     00e0  
+         0000dbb0     00e0  
+    1917 0000dbc0     b900          move    *A8(OZPOS),*A0(OZPOS),W
+         0000dbd0     00d0  
+         0000dbe0     00d0  
+    1918 0000dbf0     0d5f          calla   SetAniP
+         0000dc00 00000000! 
+    1919 0000dc20     4cc8          move    A6,A8
+    1920                    
+    1921 0000dc30     b500          move    *A8(OXPOS),A0,W
+         0000dc40     0090  
+    1922 0000dc50     4140          add     A10,A0
+    1923 0000dc60     b008          move    A0,*A8(OXPOS),W
+         0000dc70     0090  
+    1924 0000dc80     b500          move    *A8(OYPOS),A0,W
+         0000dc90     00b0  
+    1925 0000dca0     4160          add     A11,A0
+    1926 0000dcb0     b008          move    A0,*A8(OYPOS),W
+         0000dcc0     00b0  
+    1927 0000dcd0     b500          move    *A8(OZPOS),A0,W
+         0000dce0     00d0  
+    1928 0000dcf0     10a0          addk    5,A0
+    1929 0000dd00     b008          move    A0,*A8(OZPOS),W
+         0000dd10     00d0  
+    1930                    
+    1931                            ;* insert on proper lists
+    1932 0000dd20     4d00          move    A8,A0
+    1933 0000dd30     09e1          movi    EXPLOSIONS,A1
+         0000dd40 00000000! 
+    1934 0000dd60     0d5f          calla   ADDSUPP
+         0000dd70 00000000! 
+    1935 0000dd90     0d5f          calla   INSOBJ
+         0000dda0 00000000! 
+    1936                    
+    1937                    
+    1938 0000ddc0     09e9          movi    AIRB1,A9
+         0000ddd0 0000e650' 
+    1939 0000ddf0     09ea          movi    AIRB2,A10
+         0000de00 0000e700' 
+    1940 0000de20     0d5f          calla   DFRMGRND
+         0000de30 00000000! 
+    1941 0000de50     0b41          cmpi    10,A1
+         0000de60     fff5  
+    1942 0000de70     c510          jrge    GOTEXP
+    1943                            ;**** Do a Ground Nuke
+    1944 0000de80     0d5f          calla   ClrVel
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   39
+
+         0000de90 00000000! 
+    1945                            ;set ani pt on the ground
+    1946 0000deb0     b500          move    *A8(OYPOS),A0,W
+         0000dec0     00b0  
+    1947 0000ded0     4020          add     A1,A0
+    1948 0000dee0     0b00          addi    15,A0
+         0000def0     000f  
+    1949 0000df00     b008          move    A0,*A8(OYPOS),W
+         0000df10     00b0  
+    1950 0000df20     09e9          movi    GRNDB1,A9
+         0000df30 0000e8a0' 
+    1951 0000df50     09ea          movi    GRNDB2,A10
+         0000df60 0000e9b0' 
+    1952 0000df80           GOTEXP:
+    1953                    
+    1954 0000df80     09e0          movi    BOMBSND,A0
+         0000df90 00000000! 
+    1955 0000dfb0     0d5f          calla   ONESND
+         0000dfc0 00000000! 
+    1956                    
+    1957 0000dfe0     09e0          movi    [5,5],A0
+         0000dff0 00050005  
+    1958 0000e010     b208          move    A0,*A8(OZSIZ),L
+         0000e020     01b0  
+    1959 0000e030     1820          movk    1,A0
+    1960 0000e040     ac0d          movb    A0,*A13(expltiks)
+         0000e050     0180  
+    1961 0000e060           NxtFrm:
+    1962 0000e060     afa0          movb    *A13(expltiks),A0
+         0000e070     0180  
+    1963 0000e080     1420          dec     A0
+    1964 0000e090     cb10          jrnz    SkVDamp
+    1965 0000e0a0     b700          move    *A8(OXVEL),A0,L
+         0000e0b0     0040  
+    1966 0000e0c0     2be0          sra     1,A0
+    1967 0000e0d0     b208          move    A0,*A8(OXVEL),L
+         0000e0e0     0040  
+    1968 0000e0f0     b700          move    *A8(OYVEL),A0,L
+         0000e100     0060  
+    1969 0000e110     2be0          sra     1,A0
+    1970 0000e120     b208          move    A0,*A8(OYVEL),L
+         0000e130     0060  
+    1971 0000e140     b700          move    *A8(OZVEL),A0,L
+         0000e150     00e0  
+    1972 0000e160     2be0          sra     1,A0
+    1973 0000e170     b208          move    A0,*A8(OZVEL),L
+         0000e180     00e0  
+    1974 0000e190     1860          movk    3,A0
+    1975 0000e1a0           SkVDamp:
+    1976 0000e1a0     ac0d          movb    A0,*A13(expltiks)
+         0000e1b0     0180  
+    1977                    
+    1978 0000e1c0     1881          movk    4,A1
+    1979 0000e1d0                   jsrp    FRANIM
+    1980 0000e240     c90c          jrnc    AdjZ
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   40
+
+    1981                            ;do second half of explosion??
+    1982 0000e250     4d49          move    A10,A9
+    1983 0000e260     ca19          jrz     XploDone
+    1984 0000e270     574a          clr     A10
+    1985 0000e280     4c07          move    A0,A7
+    1986 0000e290     4d00          move    A8,A0
+    1987 0000e2a0     09e1          movi    EXPLOSIONS,A1
+         0000e2b0 00000000! 
+    1988 0000e2d0     0d5f          calla   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         0000e2e0 00000000! 
+    1989 0000e300     4ce0          move    A7,A0
+    1990                    
+    1991 0000e310           AdjZ:
+    1992 0000e310     b501          move    *A8(OZPOS),A1,W         ;move explosion forward
+         0000e320     00d0  
+    1993 0000e330     4001          add     A0,A1
+    1994 0000e340     b028          move    A1,*A8(OZPOS),W
+         0000e350     00d0  
+    1995 0000e360     b501          move    *A8(OZSIZ),A1,W         ;grow Zminus thickness
+         0000e370     01b0  
+    1996 0000e380     4001          add     A0,A1
+    1997 0000e390     4001          add     A0,A1
+    1998 0000e3a0     b028          move    A1,*A8(OZSIZ),W
+         0000e3b0     01b0  
+    1999 0000e3c0     0d5f          CALLA   PRCSLP
+         0000e3d0 00000000! 
+    2000 0000e3f0     c0c6          jruc    NxtFrm
+    2001 0000e400           XploDone:
+    2002 0000e400     4d00          move    A8,A0                   ;GET THE BLOCK
+    2003 0000e410     0d5f          CALLA   DELPAL
+         0000e420 00000000! 
+    2004 0000e440     0d5f          calla   DELOBJ                  ;ZAP IT
+         0000e450 00000000! 
+    2005 0000e470                   DIE
+    2006                    
+    2007 0000e4a0           NoBomPal:
+    2008 0000e4a0     4cc0          move    A6,A0
+    2009 0000e4b0     0d5f          calla   FREEOBJ
+         0000e4c0 00000000! 
+    2010 0000e4e0           NoBomObj:
+    2011 0000e4e0                   DIE
+    2012                    ****************************************************************************
+    2013                    
+    2014 0000e510           NUKEINI:
+    2015 0000e510 00000000          .LONG   0,0,0,0
+    2016 0000e590     0000          .WORD   0,0
+    2017 0000e5b0 00000000!         .LONG   nb1,0,DUMCOLL
+    2018 0000e610     8002          .WORD   DMAWNZ,BEOID|EXPLODID
+    2019 0000e630 00000000          .LONG   0
+    2020                    
+    2021 0000e650           AIRB1:
+    2022 0000e650 00000000!         .long   nb1
+    2023 0000e670     0004          .word   4
+    2024 0000e680 00000000!         .long   nb2a
+    2025 0000e6a0     0006          .word   6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:23 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+<<< N  A  R  C  --  HEADMAN  Animations >>>                          PAGE   41
+
+    2026 0000e6b0 00000000!         .long   nb3a
+    2027 0000e6d0     0005          .word   5
+    2028 0000e6e0                   LONGNULL
+    2029 0000e700           AIRB2:
+    2030 0000e700 00000000!         .long   nb4
+    2031 0000e720     0004          .word   4
+    2032 0000e730 00000000!         .long   nb5
+    2033 0000e750     0003          .word   3
+    2034 0000e760 00000000!         .long   nb6
+    2035 0000e780     0003          .word   3
+    2036 0000e790 00000000!         .long   nb7
+    2037 0000e7b0     0003          .word   3
+    2038 0000e7c0 00000000!         .long   nb8
+    2039 0000e7e0     0003          .word   3
+    2040 0000e7f0 00000000!         .long   hiro9air
+    2041 0000e810     0003          .word   3
+    2042 0000e820 00000000!         .long   hiro10air
+    2043 0000e840     0003          .word   3
+    2044 0000e850 00000000!         .long   hiro11air
+    2045 0000e870     0003          .word   3
+    2046 0000e880                   LONGNULL
+    2047                    
+    2048 0000e8a0           GRNDB1:                         ;GROUND BLAST ON EXPLOSION LIST
+    2049 0000e8a0 00000000!         .long   nb1grnd
+    2050 0000e8c0     0003          .word   3
+    2051 0000e8d0 00000000!         .long   hiro1
+    2052 0000e8f0     0005          .word   5
+    2053 0000e900 00000000!         .long   hiro2
+    2054 0000e920     0005          .word   5
+    2055 0000e930 00000000!         .long   hiro3
+    2056 0000e950     0005          .word   5
+    2057 0000e960 00000000!         .long   hiro4
+    2058 0000e980     0004          .word   4
+    2059 0000e990                   LONGNULL
+    2060 0000e9b0           GRNDB2:                         ;GROUND BLAST OFF EXPLO LIST
+    2061 0000e9b0 00000000!         .long   hiro5
+    2062 0000e9d0     0003          .word   3
+    2063 0000e9e0 00000000!         .long   hiro6
+    2064 0000ea00     0003          .word   3
+    2065 0000ea10 00000000!         .long   nb5grnd
+    2066 0000ea30     0003          .word   3
+    2067 0000ea40 00000000!         .long   nb6grnd
+    2068 0000ea60     0003          .word   3
+    2069 0000ea70 00000000!         .long   nb7grnd
+    2070 0000ea90     0003          .word   3
+    2071 0000eaa0 00000000!         .long   nb8grnd
+    2072 0000eac0     0003          .word   3
+    2073 0000ead0 00000000!         .long   hiro9
+    2074 0000eaf0     0003          .word   3
+    2075 0000eb00 00000000!         .long   hiro10
+    2076 0000eb20     0003          .word   3
+    2077 0000eb30 00000000!         .long   hiro11
+    2078 0000eb50     0003          .word   3
+    2079 0000eb60                   LONGNULL
+
+ No Errors,  No Warnings

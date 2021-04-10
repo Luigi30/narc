@@ -1,0 +1,1089 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCDYNA.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST        
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      10                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      11                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      12                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      13                    *       LOCAL STUFF
+      14                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      15                            .INCLUDE        "NARCTEQU.ASM"          ;TODD JIZZ
+      16                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      17                    
+      18 00000000                   .EVEN
+      19 00000000                   .TEXT
+      20                    
+      21                    ;* stick this stuff into narcequ someday..
+      22          000c000c  DYNAZSIZ        EQU     [12,12] 
+      23              0be7  DYNABOID        EQU     00BE0H|DYNAID
+      24                    
+      25                    ;* OFFSETS into process block.
+      26              00e0  rot             .set    ESWTCH
+      27              00e8  fanimct .set    ESWTCH+8
+      28              00f0  fuselen .set    ESWTCH+16
+      29              00f8  rotdir  .set    ESWTCH+24
+      30                    
+      31              0180  rottiks .set    ETEMP1
+      32              0180  expltiks        .set    ETEMP1          ;* not needed until bomb is exploding
+      33              0190  fusetiks        .set    ETEMP1+16
+      34              0198  OnGrnd  .set ETEMP1+24
+      35                    
+      36              01a0  ROTTIKS .set    ETEMP2
+      37                    
+      38                    ;* CONSTANTS
+      39                    
+      40                    
+      41                    
+      42                    **************************************************************************
+      43                    *INIT TABLE
+      44                    *       .LONG   OXVEL,OYVEL,OXVAL,XYVAL
+      45                    *       .WORD   OZPOS,OZVEL
+      46                    *       .LONG   OIMG,OZSIZ,OCVECT
+      47                    *       .WORD   OFLAGS,OID
+      48 00000000           StckInit:
+      49 00000000 00000000          .LONG   0,0,0,0
+      50 00000080     0000          .WORD   0,0
+      51 000000a0 00000000!         .LONG   dstk90,DYNAZSIZ,StckColl
+      52 00000100     8002          .WORD   DMAWNZ,DYNABOID
+      53 00000120 00000000          .LONG   0
+      54 00000140           FuseInit:
+      55 00000140 00000000          .LONG   0,0,0,0
+      56 000001c0     0000          .WORD   0,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    2
+
+      57 000001e0 00000000!         .LONG   spk90a,DYNAZSIZ,DUMCOLL
+      58 00000240     8002          .WORD   DMAWNZ,DYNABOID
+      59 00000260 00000000          .LONG   0
+      60                    **************************************************************************
+      61                    
+      62                    
+      63                    **************************************************************************
+      64 00000280           StckColl:
+      65 00000280     0be2          .WORD   BEOID|EXPLODID
+      66 00000290 00000400'         .LONG   bullcol
+      67 000002b0     0b10          .WORD   B1OID|BULLETID
+      68 000002c0 00000400'         .LONG   bullcol
+      69 000002e0     0b12          .WORD   B1OID|EXPLODID
+      70 000002f0 00000400'         .LONG   bullcol
+      71 00000310     0b14          .WORD   B1OID|ROCKETID
+      72 00000320 00000400'         .LONG   bullcol
+      73 00000340     0b20          .WORD   B2OID|BULLETID
+      74 00000350 00000400'         .LONG   bullcol
+      75 00000370     0b22          .WORD   B2OID|EXPLODID
+      76 00000380 00000400'         .LONG   bullcol
+      77 000003a0     0b24          .WORD   B2OID|ROCKETID
+      78 000003b0 00000400'         .LONG   bullcol
+      79 000003d0     0000          .WORD   0
+      80 000003e0 00000000!         .LONG   DUMRTSG
+      81                    
+      82                    **************************************************************************
+      83                    
+      84                    **************************************************************************
+      85 00000400           bullcol:
+      86 00000400     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+      87                    
+      88 00000410     09ee          MOVI    DUMCOLL,A14
+         00000420 00000000! 
+      89 00000440     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER
+         00000450     01d0  
+      90                    
+      91 00000460     b600          MOVE    *A0(OPLINK),A0,L
+         00000470     01f0  
+      92 00000480     0d5f          calla   GETA10
+         00000490 00000000! 
+      93 000004b0     0d5f          CALLA   KILL                    ;KILL CONTROL
+         000004c0 00000000! 
+      94                            
+      95 000004e0     09c1          MOVI    0EDh,A1
+         000004f0     00ed  
+      96 00000500     09e7          MOVI    ExpDyna,A7
+         00000510 00001b60' 
+      97 00000530     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00000540 00000000! 
+      98                    
+      99 00000560     09c0          movi    1,A0    ;stop coll scan
+         00000570     0001  
+     100 00000580     0320          CLRC            ;Don't delete in Coll routine
+     101 00000590     0960          RETS
+     102                    *************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    3
+
+     103                    
+     104                    
+     105                    **************************** DYNAMITE PROCESS ****************************
+     106 000005a0           dynamite:
+     107                    ;* PARMS
+     108                    ;       ETEMP1 - Xvel
+     109                    ;       ETEMP2 - Yvel
+     110                    ;       ETEMP3 - Zvel
+     111                    ;       ETEMP4 - Ypos:Xpos
+     112                    ;       rotdir - rotation direction
+     113                    ;       fuselen - Fuse Length  (-7:7)
+     114                    
+     115 000005a0     4d07          move    A8,A7
+     116 000005b0     0d5f          calla   GETOBJ
+         000005c0 00000000! 
+     117 000005e0     ca30          jrz     NoStck
+     118 000005f0     09ee          movi            StckInit,A14
+         00000600 00000000' 
+     119 00000620     0d5f          calla   STFOBJ
+         00000630 00000000! 
+     120 00000650     b3a0          move    A13,*A0(OPLINK),L
+         00000660     01f0  
+     121 00000670     0d5f          calla   INSOBJ
+         00000680 00000000! 
+     122 000006a0     4c08          move    A0,A8
+     123                    
+     124 000006b0     0d5f          calla   GETOBJ
+         000006c0 00000000! 
+     125 000006e0     ca1c          jrz     NoFuse
+     126 000006f0     09ee          movi            FuseInit,A14
+         00000700 00000140' 
+     127 00000720     0d5f          calla   STFOBJ
+         00000730 00000000! 
+     128 00000750     b3a0          move    A13,*A0(OPLINK),L
+         00000760     01f0  
+     129 00000770     0d5f          calla   INSOBJ
+         00000780 00000000! 
+     130 000007a0     4c0a          move    A0,A10
+     131                    
+     132                            ;* allocate palette
+     133 000007b0     09e0          MOVI    NARCS,A0
+         000007c0 00000000! 
+     134 000007e0     0d5f          CALLA   GETFPAL                 ;GET A COLOR MAP ASSIGNMENT
+         000007f0 00000000! 
+     135 00000810     ca05          jrz     NoPal
+     136 00000820     b008          MOVE    A0,*A8(OPAL),W
+         00000830     0160  
+     137 00000840     b00a          MOVE    A0,*A10(OPAL),W
+         00000850     0160  
+     138                    
+     139 00000860     c00b          jruc    GoDyna
+     140                    
+     141 00000870           NoPal:
+     142                            ;* must free the fuse obj
+     143 00000870     4d40          move    A10,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    4
+
+     144 00000880     0d5f          calla   DELOBJ
+         00000890 00000000! 
+     145 000008b0           NoFuse:
+     146                            ;* must free the stick obj
+     147 000008b0     4d00          move    A8,A0
+     148 000008c0     0d5f          calla   DELOBJ
+         000008d0 00000000! 
+     149 000008f0           NoStck:
+     150 000008f0                   DIE
+     151                    
+     152 00000920           GoDyna:                                 ;* Yay, we got all the stuff..
+     153 00000920     b8e8          MOVE    *A7(OZPOS),*A8(OZPOS),W         
+         00000930     00d0  
+         00000940     00d0  
+     154 00000950     bba8          move    *A13(ETEMP1),*A8(OXVEL),L
+         00000960     0180  
+         00000970     0040  
+     155 00000980     bba8          move    *A13(ETEMP2),*A8(OYVEL),L
+         00000990     01a0  
+         000009a0     0060  
+     156 000009b0     bba8          move    *A13(ETEMP3),*A8(OZVEL),L
+         000009c0     01c0  
+         000009d0     00e0  
+     157                    
+     158 000009e0     098f          MMTM    SP,A1,A2,A4
+         000009f0     6800  
+     159 00000a00     b701          MOVE    *A8(OIMG),A1,L
+         00000a10     0180  
+     160 00000a20     b702          MOVE    *A8(OSIZE),A2,L
+         00000a30     0140  
+     161 00000a40     b504          MOVE    *A8(OFLAGS),A4,W
+         00000a50     0100  
+     162 00000a60     0d5f          CALLA   GANIOF
+         00000a70 00000000! 
+     163 00000a90     09af          MMFM    SP,A1,A2,A4
+         00000aa0     0016  
+     164                            
+     165 00000ab0     2a06          sra     16,A6   ;*A6=X ANIMATION OFFSET X 64K
+     166 00000ac0     2e07          srl     16,A7   ;*A7=Y ANIMATION OFFSET X 64K
+     167 00000ad0     2607          sll     16,A7
+     168 00000ae0     b7a1          move    *A13(ETEMP4),A1,L
+         00000af0     01e0  
+     169 00000b00     40c1          add     A6,A1
+     170 00000b10     40e1          add     A7,A1
+     171 00000b20     b028          move    A1,*A8(OXPOS),W
+         00000b30     0090  
+     172 00000b40     2a01          sra     16,A1
+     173 00000b50     b028          move    A1,*A8(OYPOS),W
+         00000b60     00b0  
+     174                    
+     175 00000b70     09e1          movi    ENEMY_BULLETS,A1
+         00000b80 00000000! 
+     176 00000ba0     4d00          move    A8,A0
+     177 00000bb0     0d5f          calla   ADDSUPP                 ;ADD TO SUPPLEMENTAL List
+         00000bc0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    5
+
+     178 00000be0     0d5f          calla   SHADST
+         00000bf0 00000000! 
+     179 00000c10                   SWAP    A8,A10
+     180 00000c40     0d5f          calla   SHADST
+         00000c50 00000000! 
+     181 00000c70                   SWAP    A8,A10
+     182                    
+     183                            ;initialize a dynamite stick
+     184 00000ca0     5600          clr     A0
+     185 00000cb0     ac0d          movb    A0,*A13(rot)
+         00000cc0     00e0  
+     186 00000cd0     ac0d          movb    A0,*A13(OnGrnd)
+         00000ce0     0198  
+     187 00000cf0     1860          movk    3,A0
+     188 00000d00     ac0d          movb    A0,*A13(fanimct)
+         00000d10     00e8  
+     189                    
+     190 00000d20     09c0          movi    FUSETIKS,A0
+         00000d30     000a  
+     191 00000d40     ac0d          movb    A0,*A13(fusetiks)
+         00000d50     0190  
+     192 00000d60     1860          movk    3,A0
+     193 00000d70     ac0d          movb    A0,*A13(ROTTIKS)
+         00000d80     01a0  
+     194 00000d90     1820          movk    1,A0
+     195 00000da0     ac0d          movb    A0,*A13(rottiks)
+         00000db0     0180  
+     196                    
+     197                    
+     198                    ;* Main Loop For Dyanmite
+     199 00000dc0           DynaLp: 
+     200                    
+     201                    ;***** Process Trajectory for dynamite stick *****
+     202 00000dc0     afa0          movb    *A13(OnGrnd),A0
+         00000dd0     0198  
+     203 00000de0     cb59          jrnz    Grounded        
+     204                    
+     205 00000df0     b500          move    *A8(OZPOS),A0,W
+         00000e00     00d0  
+     206 00000e10     05a1          move    @PLZMIN,A1,W
+         00000e20 00000000! 
+     207 00000e40     4820          cmp     A1,A0
+     208 00000e50     c70c          jrgt FlyZOk
+     209 00000e60     b700          move    *A8(OZVEL),A0,L
+         00000e70     00e0  
+     210 00000e80     c109          jrp     FlyZOk
+     211 00000e90     2be0          sra     1,A0
+     212 00000ea0     03a0          neg     A0
+     213 00000eb0     b208          move    A0,*A8(OZVEL),L
+         00000ec0     00e0  
+     214 00000ed0     b700          move    *A8(OYVEL),A0,L
+         00000ee0     0060  
+     215 00000ef0     2bc0          sra     2,A0
+     216 00000f00     b208          move    A0,*A8(OYVEL),L
+         00000f10     0060  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    6
+
+     217 00000f20           FlyZOk:
+     218                    
+     219 00000f20           BVEL_ADJ:
+     220 00000f20     0d5f          CALLA   DFRMGRND        ;A1
+         00000f30 00000000! 
+     221 00000f50     0d5f          calla   BnceHght        ;A0
+         00000f60 000026b0' 
+     222 00000f80     4801          cmp     A0,A1
+     223 00000f90     c737          jrgt    BFLYING
+     224 00000fa0     b500          move    *A8(OYVEL+16),A0,W      ;* if bomb is going up don't bounce
+         00000fb0     0070  
+     225 00000fc0     ce34          jrn     BFLYING
+     226 00000fd0     0d5f          calla   SCRTST                  ;OFFSCREEN?
+         00000fe0 00000000! 
+     227 00001000     cb00          jrnz    BOMBSCRX
+         00001010     014c  
+     228                            ;* make the bomb bounce ?
+     229 00001020     b700          move    *A8(OXVEL),A0,L
+         00001030     0040  
+     230 00001040     cb07          jrnz    BOMBBNCE
+     231                            ;* the bomb has come to a halt
+     232 00001050     1820          movk    1,A0
+     233 00001060     ac0d          movb    A0,*A13(OnGrnd)
+         00001070     0198  
+     234 00001080     5600          clr     A0
+     235 00001090     b208          move    A0,*A8(OZVEL),L
+         000010a0     00e0  
+     236 000010b0     c02c          jruc    Grounded
+     237                    
+     238 000010c0           BOMBBNCE:
+     239 000010c0     09e0          movi    025000H,A0
+         000010d0 00025000  
+     240 000010f0     0d5f          calla   RANDU
+         00001100 00000000! 
+     241 00001120     0be0          subi    03000H,A0
+         00001130     cfff  
+     242 00001140     4c01          move    A0,A1
+     243 00001150     b700          move    *A8(OXVEL),A0,L
+         00001160     0040  
+     244 00001170     0d5f          CALLA   ABSSUB
+         00001180 00000000! 
+     245 000011a0     b208          move    A0,*A8(OXVEL),L
+         000011b0     0040  
+     246 000011c0     b700          move    *A8(OYVEL),A0,L
+         000011d0     0060  
+     247 000011e0     2be0          sra     1,A0
+     248 000011f0     03a0          neg     A0
+     249 00001200     b208          move    A0,*A8(OYVEL),L
+         00001210     0060  
+     250 00001220     b700          move    *A8(OZVEL),A0,L
+         00001230     00e0  
+     251 00001240     2be0          sra     1,A0
+     252 00001250     b208          move    A0,*A8(OZVEL),L
+         00001260     00e0  
+     253                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    7
+
+     254 00001270     1880          movk    4,A0
+     255 00001280     0d5f          calla   RANDU
+         00001290 00000000! 
+     256 000012b0     1020          inc     A0
+     257 000012c0     ac0d          movb    A0,*A13(ROTTIKS)        ;set time between rotations from 2-5
+         000012d0     01a0  
+     258                    
+     259 000012e0     0d3f          callr   SetRotD
+         000012f0     0131  
+     260                            
+     261 00001300     c016          jruc    UpdVels
+     262 00001310           BFLYING:
+     263 00001310     b700          move    *A8(OYVEL),A0,L
+         00001320     0060  
+     264 00001330     0b00          addi    04000H,A0
+         00001340     4000  
+     265 00001350     b208          move    A0,*A8(OYVEL),L
+         00001360     0060  
+     266 00001370     c00f          jruc    UpdVels
+     267                    
+     268 00001380           Grounded:
+     269 00001380     0d5f          CALLA   DFRMGRND        ;A1
+         00001390 00000000! 
+     270 000013b0     c102          jrp     Falling
+     271 000013c0     5600          clr     A0
+     272 000013d0     c006          jruc    SetFallV
+     273                    
+     274 000013e0           Falling:
+     275 000013e0     b500          move    *A8(OYVEL+16),A0,W
+         000013f0     0070  
+     276 00001400     1040          addk    2,A0
+     277 00001410     4820          cmp     A1,A0
+     278 00001420     c401          jrlt    SetFallV
+     279 00001430     4c20          move    A1,A0
+     280 00001440           SetFallV:
+     281 00001440     2600          sll     16,A0
+     282 00001450     b208          move    A0,*A8(OYVEL),L
+         00001460     0060  
+     283                    
+     284 00001470           UpdVels:
+     285 00001470     0d5f          CALLA   UpdShadV
+         00001480 00000000! 
+     286                    
+     287                    ;***** Update Fuse Velocity *****
+     288 000014a0     bb0a          move    *A8(OXVEL),*A10(OXVEL),L
+         000014b0     0040  
+         000014c0     0040  
+     289 000014d0     bb0a          move    *A8(OYVEL),*A10(OYVEL),L
+         000014e0     0060  
+         000014f0     0060  
+     290 00001500     bb0a          move    *A8(OZVEL),*A10(OZVEL),L
+         00001510     00e0  
+         00001520     00e0  
+     291                    
+     292                    ;***** Do Stick Animation *****
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    8
+
+     293 00001530     afa0          movb    *A13(rottiks),A0
+         00001540     0180  
+     294 00001550     1420          dec     A0
+     295 00001560     cb2c          jrnz    SkSAnim
+     296                    
+     297 00001570     afa0          movb    *A13(OnGrnd),A0
+         00001580     0198  
+     298 00001590     ca0a          jrz     InAir
+     299 000015a0     09c0          movi    255,A0          ;reset rottiks
+         000015b0     00ff  
+     300 000015c0     afa1          movb    *A13(rot),A1
+         000015d0     00e0  
+     301 000015e0     0b41          cmpi    3,A1
+         000015f0     fffc  
+     302 00001600     ca22          jreq    SkSAnim
+     303 00001610     0b41          cmpi    9,A1
+         00001620     fff6  
+     304 00001630     ca1f          jreq    SkSAnim
+     305 00001640           InAir:
+     306                      ;* Bump Rotation counter
+     307 00001640     afa0          movb    *A13(rotdir),A0
+         00001650     00f8  
+     308 00001660     ca07          jrz     RotCW   
+     309                    
+     310                            ;***** ROTATE Counter Clockwise
+     311 00001670     afa0          movb    *A13(rot),A0
+         00001680     00e0  
+     312 00001690     cb02          jrnz    DecRot
+     313 000016a0     1960          movk    11,A0
+     314 000016b0     c009          jruc    RotX
+     315 000016c0           DecRot:
+     316 000016c0     1420          dec     A0
+     317 000016d0     c007          jruc    RotX
+     318 000016e0           RotCW:
+     319                            ;***** ROTATE Clockwise
+     320 000016e0     afa0          movb    *A13(rot),A0
+         000016f0     00e0  
+     321 00001700     1020          inc     A0
+     322 00001710     0b40          cmpi    12,A0
+         00001720     fff3  
+     323 00001730     c401          jrlt    RotX
+     324 00001740     5600          clr     A0
+     325 00001750           RotX:
+     326 00001750     ac0d          movb    A0,*A13(rot)
+         00001760     00e0  
+     327                    
+     328 00001770     0d3f          callr   StckFrm
+         00001780     00e1  
+     329 00001790     1881          movk    4,A1                    ;* one frame, no sleepin
+     330 000017a0                   jsrp    FRANIM
+     331 00001810     afa0          movb    *A13(ROTTIKS),A0
+         00001820     01a0  
+     332 00001830           SkSAnim:
+     333 00001830     ac0d          movb    A0,*A13(rottiks)
+         00001840     0180  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE    9
+
+     334                    
+     335                    ;***** Do Fuse Animation *****
+     336                            ;* Bump Fuse Animation counter
+     337 00001850     afa0          movb    *A13(fanimct),A0
+         00001860     00e8  
+     338 00001870     1020          inc     A0
+     339 00001880     0b40          cmpi 3,A0
+         00001890     fffc  
+     340 000018a0     c401          jrlt    SkRstFCt
+     341 000018b0     5600          clr     A0
+     342 000018c0           SkRstFCt:
+     343 000018c0     ac0d          movb    A0,*A13(fanimct)
+         000018d0     00e8  
+     344                    
+     345 000018e0     0d3f          callr   FuseFrm
+         000018f0     00f2  
+     346 00001900                   SWAP    A8,A10
+     347 00001930     1881          movk    4,A1                    ;* one frame, no sleepin
+     348 00001940                   jsrp    FRANIM
+     349 000019b0                   SWAP    A8,A10
+     350                    
+     351                    ;***** Update Fuse Position ******
+     352 000019e0     0d3f          callr   MoveFuse
+         000019f0     00f0  
+     353                    
+     354                    ;***** SLEEP Since Animation is Done
+     355 00001a00     1820          movk    1,A0
+     356 00001a10     0d5f          calla   PRCSLP
+         00001a20 00000000! 
+     357                    
+     358                    ;***** Burn Down Fuse Length - check for explosion *****
+     359 00001a40     afa0          movb    *A13(fusetiks),A0
+         00001a50     0190  
+     360 00001a60     1420          dec     A0
+     361 00001a70     cb0a          jrnz    SkFuseDc
+     362 00001a80     afa0          movb    *A13(fuselen),A0
+         00001a90     00f0  
+     363 00001aa0     0b40          cmpi    -7,A0
+         00001ab0     0006  
+     364 00001ac0     ca09          jreq    ExpDyna
+     365 00001ad0     1420          dec     A0
+     366 00001ae0     ac0d          movb    A0,*A13(fuselen)
+         00001af0     00f0  
+     367 00001b00     09c0          movi    FUSETIKS,A0
+         00001b10     000a  
+     368 00001b20           SkFuseDc:
+     369 00001b20     ac0d          movb    A0,*A13(fusetiks)
+         00001b30     0190  
+     370                    
+     371 00001b40     c000          jruc    DynaLp
+         00001b50     ff26  
+     372                    
+     373                    
+     374                    *************************************************************************
+     375 00001b60           ExpDyna:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   10
+
+     376 00001b60     4d40          move    A10,A0          ;* Free the Fuse Obj
+     377 00001b70     0d5f          calla   DELSOBJ
+         00001b80 00000000! 
+     378 00001ba0     4d00          move    A8,A0           ;* delete stick's shadow
+     379 00001bb0     0d5f          calla   DELSHAD
+         00001bc0 00000000! 
+     380                            ;get stick off bullet list
+     381 00001be0     09e1          movi    ENEMY_BULLETS,A1
+         00001bf0 00000000! 
+     382 00001c10     0d5f          calla   DELSUPP           
+         00001c20 00000000! 
+     383                            ;* insert on proper list
+     384 00001c40     09e1          movi    EXPLOSIONS,A1
+         00001c50 00000000! 
+     385 00001c70     0d5f          calla   ADDSUPP
+         00001c80 00000000! 
+     386                    
+     387 00001ca0     09e0          MOVI    DUMCOLL,A0
+         00001cb0 00000000! 
+     388 00001cd0     b208          MOVE    A0,*A8(OCVECT),L        ;MAKE IT DO NOTHING IF IT HITS
+         00001ce0     01d0  
+     389 00001cf0     b500          MOVE    *A8(OID),A0,W
+         00001d00     01a0  
+     390 00001d10     2f80          SRL     4,A0
+     391 00001d20     2480          SLL     4,A0
+     392 00001d30     1040          ADDK    EXPLODID,A0
+     393 00001d40     b008          MOVE    A0,*A8(OID),W           ;UPDATE I.D. TO EXPLOSION
+         00001d50     01a0  
+     394 00001d60     b500          MOVE    *A8(OFLAGS),A0,W
+         00001d70     0100  
+     395 00001d80     0b80          ANDNI   M_PIXSCAN|M_FLIPV,A0
+         00001d90 00000420  
+     396 00001db0     b008          MOVE    A0,*A8(OFLAGS),W        ;UPDATE FOR NO PIXEL SCAN, no VFLIP
+         00001dc0     0100  
+     397 00001dd0     4d00          move    A8,A0
+     398                    
+     399 00001de0     09e9          movi    AIRB1,A9
+         00001df0 00002c40' 
+     400 00001e10     09ea          movi    AIRB2,A10
+         00001e20 00002d10' 
+     401 00001e40     0d5f          calla   DFRMGRND
+         00001e50 00000000! 
+     402 00001e70     0b41          cmpi    10,A1
+         00001e80     fff5  
+     403 00001e90     c512          jrge    GOTEXP
+     404                            ;**** Do a Ground Nuke
+     405 00001ea0     0d5f          calla   ClrVel
+         00001eb0 00000000! 
+     406                            ;set ani pt on the ground
+     407 00001ed0     b500          move    *A8(OYPOS),A0,W
+         00001ee0     00b0  
+     408 00001ef0     4020          add     A1,A0
+     409 00001f00     b501          move    *A8(OSIZEY),A1,W
+         00001f10     0150  
+     410 00001f20     2fe1          srl     1,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   11
+
+     411 00001f30     4020          add     A1,A0
+     412 00001f40     b008          move    A0,*A8(OYPOS),W
+         00001f50     00b0  
+     413 00001f60     09e9          movi    GRNDB1,A9
+         00001f70 00002eb0' 
+     414 00001f90     09ea          movi    GRNDB2,A10
+         00001fa0 00002fe0' 
+     415 00001fc0           GOTEXP:
+     416                    
+     417 00001fc0     09e0          movi    BOMBSND,A0
+         00001fd0 00000000! 
+     418 00001ff0     0d5f          calla   ONESND
+         00002000 00000000! 
+     419                    
+     420 00002020     09e0          movi    [5,5],A0
+         00002030 00050005  
+     421 00002050     b208          move    A0,*A8(OZSIZ),L
+         00002060     01b0  
+     422 00002070     1820          movk    1,A0
+     423 00002080     ac0d          movb    A0,*A13(expltiks)
+         00002090     0180  
+     424 000020a0           NxtFrm:
+     425 000020a0     afa0          movb    *A13(expltiks),A0
+         000020b0     0180  
+     426 000020c0     1420          dec     A0
+     427 000020d0     cb10          jrnz    SkVDamp
+     428 000020e0     b700          move    *A8(OXVEL),A0,L
+         000020f0     0040  
+     429 00002100     2be0          sra     1,A0
+     430 00002110     b208          move    A0,*A8(OXVEL),L
+         00002120     0040  
+     431 00002130     b700          move    *A8(OYVEL),A0,L
+         00002140     0060  
+     432 00002150     2be0          sra     1,A0
+     433 00002160     b208          move    A0,*A8(OYVEL),L
+         00002170     0060  
+     434 00002180     b700          move    *A8(OZVEL),A0,L
+         00002190     00e0  
+     435 000021a0     2be0          sra     1,A0
+     436 000021b0     b208          move    A0,*A8(OZVEL),L
+         000021c0     00e0  
+     437 000021d0     1860          movk    3,A0
+     438 000021e0           SkVDamp:
+     439 000021e0     ac0d          movb    A0,*A13(expltiks)
+         000021f0     0180  
+     440                    
+     441 00002200     1881          movk    4,A1
+     442 00002210                   jsrp    FRANIM
+     443 00002280     c90c          jrnc    AdjZ
+     444                            ;do second half of explosion??
+     445 00002290     4d49          move    A10,A9
+     446 000022a0     ca19          jrz     XploDone
+     447 000022b0     574a          clr     A10
+     448 000022c0     4c07          move    A0,A7
+     449 000022d0     4d00          move    A8,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   12
+
+     450 000022e0     09e1          movi    EXPLOSIONS,A1
+         000022f0 00000000! 
+     451 00002310     0d5f          calla   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         00002320 00000000! 
+     452 00002340     4ce0          move    A7,A0
+     453                    
+     454 00002350           AdjZ:
+     455 00002350     b501          move    *A8(OZPOS),A1,W         ;move explosion forward
+         00002360     00d0  
+     456 00002370     4001          add     A0,A1
+     457 00002380     b028          move    A1,*A8(OZPOS),W
+         00002390     00d0  
+     458 000023a0     b501          move    *A8(OZSIZ),A1,W         ;grow Zminus thickness
+         000023b0     01b0  
+     459 000023c0     4001          add     A0,A1
+     460 000023d0     4001          add     A0,A1
+     461 000023e0     b028          move    A1,*A8(OZSIZ),W
+         000023f0     01b0  
+     462 00002400     0d5f          CALLA   PRCSLP
+         00002410 00000000! 
+     463 00002430     c0c6          jruc    NxtFrm
+     464 00002440           XploDone:
+     465 00002440           BOMBDONE:
+     466 00002440     4d00          move    A8,A0                   ;GET THE BLOCK
+     467 00002450     0d5f          CALLA   DELPAL
+         00002460 00000000! 
+     468 00002480     0d5f          calla   DELSOBJ                 ;ZAP IT
+         00002490 00000000! 
+     469 000024b0                   DIE
+     470                    
+     471 000024e0           BOMBSCRX:
+     472                            ;* Free the Fuse Obj
+     473 000024e0     4d40          move    A10,A0
+     474 000024f0     0d5f          calla   DELSOBJ
+         00002500 00000000! 
+     475 00002520     4d00          move    A8,A0                   ;GET THE BLOCK
+     476 00002530     09e1          movi    ENEMY_BULLETS,A1
+         00002540 00000000! 
+     477 00002560     0d5f          calla   DELSUPP           
+         00002570 00000000! 
+     478 00002590     c0ea          jruc    BOMBDONE
+     479                    
+     480                    ***********************  Stick Frame  ***********************************
+     481 000025a0           StckFrm:
+     482                    ;* stuff the appropriate dynamite stick frame into A9 based on the
+     483                    ;* current value of "rot"
+     484                    
+     485 000025a0     afa9          movb    *A13(rot),A9
+         000025b0     00e0  
+     486 000025c0     24c9          sll     6,A9            ;* value is a 2 longword (64 bit) offset
+     487 000025d0     0b29          addi    StckTbl,A9
+         000025e0 000031b0' 
+     488 00002600     0960          rets
+     489                    *************************************************************************
+     490                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   13
+
+     491                    ***********************  Set Rotatation Direction  **********************
+     492 00002610           SetRotD:
+     493                    ;* generate new direction of rotation based on the
+     494                    ;* current value of "rot" (turn toward closest horizontal pos)
+     495                    
+     496 00002610     afa0          movb    *A13(rot),A0
+         00002620     00e0  
+     497 00002630     2460          sll     3,A0            ;* value is a 2 longword (64 bit) offset
+     498 00002640     0b20          addi    RotDTbl,A0
+         00002650 000034d0' 
+     499 00002670     bc0d          movb    *A0(0),*A13(rotdir)
+         00002680     0000  
+         00002690     00f8  
+     500 000026a0     0960          rets
+     501                    *************************************************************************
+     502                    
+     503                    **************************  BnceHght  ***********************************
+     504 000026b0           BnceHght:
+     505                    ;* put height at which stick strikes the ground into A0
+     506                    
+     507 000026b0     098f          mmtm    SP,A1,A2,A3
+         000026c0     7000  
+     508 000026d0     1860          movk    3,A0
+     509 000026e0     afa1          movb    *A13(rot),A1
+         000026f0     00e0  
+     510 00002700     24a1          sll     5,A1            ;Long word ptr  into CircleOff
+     511 00002710     0b21          addi    CircleOff+16,A1         ;16 is to skip X offset
+         00002720 00003e80' 
+     512 00002740     9423          move    *A1+,A3,W               ;multiplier for Y offset
+     513 00002750     ca09          jrz     SkFuseHt
+     514 00002760     ce08          jrn     SkFuseHt
+     515 00002770     afa2          movb    *A13(fuselen),A2                ;# pixels of fuse exposed..
+         00002780     00f0  
+     516 00002790     1102          addk    8,A2
+     517 000027a0     5c43          mpys    A2,A3
+     518 000027b0     0b03          addi    04000H,A3
+         000027c0     4000  
+     519 000027d0     2a23          sra     15,A3
+     520 000027e0     4060          add     A3,A0
+     521 000027f0           SkFuseHt:
+     522 000027f0     09af          mmfm    SP,A1,A2,A3
+         00002800     000e  
+     523 00002810     0960          rets
+     524                    *************************************************************************
+     525                    
+     526                    ***********************  Fuse Frame  ***********************************
+     527 00002820           FuseFrm:
+     528                    ;* stuff the appropriate dynamite stick frame into A9 based on the
+     529                    ;*      current value of "rot"
+     530                    ;*      current value of Fuse Animation counter "fanimct"
+     531                    
+     532 00002820     afa9          movb    *A13(rot),A9
+         00002830     00e0  
+     533 00002840     4d20          move    A9,A0
+     534 00002850     24e9          sll     7,A9
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   14
+
+     535 00002860     24c0          sll     6,A0    
+     536 00002870     4009          add     A0,A9   ;* value is a 6 longword (192 bit) offset
+     537 00002880     afa0          movb    *A13(fanimct),A0
+         00002890     00e8  
+     538 000028a0     24c0          sll     6,A0            ;* fanimct is a 2 longword offset
+     539 000028b0     4009          add     A0,A9
+     540 000028c0     0b29          addi    FuseTbl,A9
+         000028d0 00003550' 
+     541 000028f0     0960          rets
+     542                    *************************************************************************
+     543                    
+     544                    *************************  Move Fuse  ***********************************
+     545 00002900           MoveFuse:
+     546                    ;* Update the position of the Fuse, based on:
+     547                    ;       The location of the animation point of the stick
+     548                    ;       The Rotation of the stick
+     549                    ;       The Length of the Fuse
+     550                    ;       The animation point of the Fuse
+     551                    
+     552                            ;Set Z position
+     553 00002900     b500          move    *A8(OZPOS),A0,W
+         00002910     00d0  
+     554 00002920     1420          dec     A0
+     555 00002930     b00a          move    A0,*A10(OZPOS),W
+         00002940     00d0  
+     556                    
+     557                            ;* Get animation point of the stick X,Y in A2,A3
+     558 00002950     0d5f          calla   GETANIXY
+         00002960 00000000! 
+     559 00002980     2a02          sra     16,A2   ;A2 was APOINT OYVAL, 32 BITS
+     560 00002990     2a03          sra     16,A3   ;A3 was APOINT OXVAL, 32 BITS
+     561                    
+     562                            ;* Generate offset from Stick anim pt to Fuse anim pt.
+     563                            ;*   based on the rotation of the stick
+     564 000029a0     afa0          movb    *A13(rot),A0
+         000029b0     00e0  
+     565 000029c0     24a0          sll     5,A0            ;Long word ptr  into CircleOff
+     566 000029d0     0b20          addi    CircleOff,A0
+         000029e0 00003e70' 
+     567 00002a00     afa4          movb    *A13(fuselen),A4                ;# pixels of fuse exposed..
+         00002a10     00f0  
+     568 00002a20     9405          move    *A0+,A5,W               ;multiplier for X offset
+     569 00002a30     9407          move    *A0+,A7,W               ;multiplier for Y offset
+     570 00002a40     5c85          mpys    A4,A5
+     571 00002a50     5c87          mpys    A4,A7
+     572 00002a60     0b05          addi    04000H,A5
+         00002a70     4000  
+     573 00002a80     0b07          addi    04000H,A7
+         00002a90     4000  
+     574 00002aa0     2a25          sra     15,A5           ;A5 = X offset
+     575 00002ab0     2a27          sra     15,A7           ;A7 = Y offset
+     576 00002ac0     40a3          add     A5,A3           ;A3 = desired X coor of Fuse Anim Pt
+     577 00002ad0     40e2          add     A7,A2           ;A2 = desired Y coor of Fuse Anim Pt
+     578                    
+     579                            ;* Get the offset from the fuse anim pt to the top left corner
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   15
+
+     580 00002ae0     098f          MMTM    SP,A1,A2,A4
+         00002af0     6800  
+     581 00002b00     b741          MOVE    *A10(OIMG),A1,L
+         00002b10     0180  
+     582 00002b20     b742          MOVE    *A10(OSIZE),A2,L
+         00002b30     0140  
+     583 00002b40     b544          MOVE    *A10(OFLAGS),A4,W
+         00002b50     0100  
+     584 00002b60     0d5f          CALLA   GANIOF
+         00002b70 00000000! 
+     585 00002b90     09af          MMFM    SP,A1,A2,A4
+         00002ba0     0016  
+     586                            
+     587 00002bb0     2a06          sra     16,A6   ;*A6=X ANIMATION OFFSET X 64K
+     588 00002bc0     2a07          sra     16,A7   ;*A7=Y ANIMATION OFFSET X 64K
+     589 00002bd0     44c3          sub     A6,A3   ;A3 = Top Left X of Fuse
+     590 00002be0     44e2          sub     A7,A2   ;A2 = Top Left Y of Fuse
+     591 00002bf0     b06a          move    A3,*A10(OXPOS),W
+         00002c00     0090  
+     592 00002c10     b04a          move    A2,*A10(OYPOS),W
+         00002c20     00b0  
+     593                    
+     594 00002c30     0960          rets
+     595                    *********************************************************************
+     596                    
+     597 00002c40           AIRB1:
+     598 00002c40 00000000!         .long   nb1
+     599 00002c60     2004          .word   NEWPALET|4
+     600 00002c70 00000000!         .long   newbom
+     601 00002c90 00000000!         .long   nb2a
+     602 00002cb0     0006          .word   6
+     603 00002cc0 00000000!         .long   nb3a
+     604 00002ce0     0005          .word   5
+     605 00002cf0                   LONGNULL
+     606 00002d10           AIRB2:
+     607 00002d10 00000000!         .long   nb4
+     608 00002d30     0004          .word   4
+     609 00002d40 00000000!         .long   nb5
+     610 00002d60     0003          .word   3
+     611 00002d70 00000000!         .long   nb6
+     612 00002d90     0003          .word   3
+     613 00002da0 00000000!         .long   nb7
+     614 00002dc0     0003          .word   3
+     615 00002dd0 00000000!         .long   nb8
+     616 00002df0     0003          .word   3
+     617 00002e00 00000000!         .long   hiro9air
+     618 00002e20     0003          .word   3
+     619 00002e30 00000000!         .long   hiro10air
+     620 00002e50     0003          .word   3
+     621 00002e60 00000000!         .long   hiro11air
+     622 00002e80     0003          .word   3
+     623 00002e90                   LONGNULL
+     624                    
+     625 00002eb0           GRNDB1:                         ;GROUND BLAST ON EXPLOSION LIST
+     626 00002eb0 00000000!         .long   nb1grnd
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   16
+
+     627 00002ed0     2003          .word   NEWPALET|3
+     628 00002ee0 00000000!         .long   newbom
+     629 00002f00 00000000!         .long   hiro1
+     630 00002f20     0005          .word   5
+     631 00002f30 00000000!         .long   hiro2
+     632 00002f50     0005          .word   5
+     633 00002f60 00000000!         .long   hiro3
+     634 00002f80     0005          .word   5
+     635 00002f90 00000000!         .long   hiro4
+     636 00002fb0     0004          .word   4
+     637 00002fc0                   LONGNULL
+     638 00002fe0           GRNDB2:                         ;GROUND BLAST OFF EXPLO LIST
+     639 00002fe0 00000000!         .long   hiro5
+     640 00003000     0003          .word   3
+     641 00003010 00000000!         .long   hiro6
+     642 00003030     0003          .word   3
+     643 00003040 00000000!         .long   nb5grnd
+     644 00003060     0003          .word   3
+     645 00003070 00000000!         .long   nb6grnd
+     646 00003090     0003          .word   3
+     647 000030a0 00000000!         .long   nb7grnd
+     648 000030c0     0003          .word   3
+     649 000030d0 00000000!         .long   nb8grnd
+     650 000030f0     0003          .word   3
+     651 00003100 00000000!         .long   hiro9
+     652 00003120     0003          .word   3
+     653 00003130 00000000!         .long   hiro10
+     654 00003150     0003          .word   3
+     655 00003160 00000000!         .long   hiro11
+     656 00003180     0003          .word   3
+     657 00003190                   LONGNULL
+     658                    
+     659 000031b0           StckTbl:
+     660 000031b0 00000000!         .long   dstk0
+     661 000031d0     4001          .word   FLIPBITS|1,0
+     662 000031f0 00000000!         .long   dstk30
+     663 00003210     4001          .word   FLIPBITS|1,0
+     664 00003230 00000000!         .long   dstk60
+     665 00003250     4001          .word   FLIPBITS|1,0
+     666 00003270 00000000!         .long   dstk90
+     667 00003290     4001          .word   FLIPBITS|1,0
+     668 000032b0 00000000!         .long   dstk60
+     669 000032d0     4001          .word   FLIPBITS|1,(M_FLIPV)
+     670 000032f0 00000000!         .long   dstk30
+     671 00003310     4001          .word   FLIPBITS|1,(M_FLIPV)
+     672 00003330 00000000!         .long   dstk0
+     673 00003350     4001          .word   FLIPBITS|1,(M_FLIPV)
+     674 00003370 00000000!         .long   dstk30
+     675 00003390     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     676 000033b0 00000000!         .long   dstk60
+     677 000033d0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     678 000033f0 00000000!         .long   dstk90
+     679 00003410     4001          .word   FLIPBITS|1,(M_FLIPH)
+     680 00003430 00000000!         .long   dstk60
+     681 00003450     4001          .word   FLIPBITS|1,(M_FLIPH)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   17
+
+     682 00003470 00000000!         .long   dstk30
+     683 00003490     4001          .word   FLIPBITS|1,(M_FLIPH)
+     684 000034b0                   LONGNULL
+     685                    
+     686 000034d0           RotDTbl:
+     687                    ;* 0 - clockwise,  1 - CCW
+     688 000034d0       00          .byte   0,0,0,0,1,1,1,0,0,1,1,1 
+     689 00003530                   LONGNULL
+     690                    
+     691 00003550           FuseTbl:
+     692 00003550 00000000!         .long   spk0a
+     693 00003570     4001          .word   FLIPBITS|1,0
+     694 00003590 00000000!         .long   spk0b
+     695 000035b0     4001          .word   FLIPBITS|1,0
+     696 000035d0 00000000!         .long   spk0c
+     697 000035f0     4001          .word   FLIPBITS|1,0
+     698 00003610 00000000!         .long   spk30a
+     699 00003630     4001          .word   FLIPBITS|1,0
+     700 00003650 00000000!         .long   spk30b
+     701 00003670     4001          .word   FLIPBITS|1,0
+     702 00003690 00000000!         .long   spk30c
+     703 000036b0     4001          .word   FLIPBITS|1,0
+     704 000036d0 00000000!         .long   spk60a
+     705 000036f0     4001          .word   FLIPBITS|1,0
+     706 00003710 00000000!         .long   spk60b
+     707 00003730     4001          .word   FLIPBITS|1,0
+     708 00003750 00000000!         .long   spk60c
+     709 00003770     4001          .word   FLIPBITS|1,0
+     710 00003790 00000000!         .long   spk90a
+     711 000037b0     4001          .word   FLIPBITS|1,0
+     712 000037d0 00000000!         .long   spk90b
+     713 000037f0     4001          .word   FLIPBITS|1,0
+     714 00003810 00000000!         .long   spk90c
+     715 00003830     4001          .word   FLIPBITS|1,0
+     716 00003850 00000000!         .long   spk60a
+     717 00003870     4001          .word   FLIPBITS|1,(M_FLIPV)
+     718 00003890 00000000!         .long   spk60b
+     719 000038b0     4001          .word   FLIPBITS|1,(M_FLIPV)
+     720 000038d0 00000000!         .long   spk60c
+     721 000038f0     4001          .word   FLIPBITS|1,(M_FLIPV)
+     722 00003910 00000000!         .long   spk30a
+     723 00003930     4001          .word   FLIPBITS|1,(M_FLIPV)
+     724 00003950 00000000!         .long   spk30b
+     725 00003970     4001          .word   FLIPBITS|1,(M_FLIPV)
+     726 00003990 00000000!         .long   spk30c
+     727 000039b0     4001          .word   FLIPBITS|1,(M_FLIPV)
+     728 000039d0 00000000!         .long   spk0a
+     729 000039f0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     730 00003a10 00000000!         .long   spk0b
+     731 00003a30     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     732 00003a50 00000000!         .long   spk0c
+     733 00003a70     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     734 00003a90 00000000!         .long   spk30a
+     735 00003ab0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     736 00003ad0 00000000!         .long   spk30b
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   18
+
+     737 00003af0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     738 00003b10 00000000!         .long   spk30c
+     739 00003b30     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     740 00003b50 00000000!         .long   spk60a
+     741 00003b70     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     742 00003b90 00000000!         .long   spk60b
+     743 00003bb0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     744 00003bd0 00000000!         .long   spk60c
+     745 00003bf0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     746 00003c10 00000000!         .long   spk90a
+     747 00003c30     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     748 00003c50 00000000!         .long   spk90b
+     749 00003c70     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     750 00003c90 00000000!         .long   spk90c
+     751 00003cb0     4001          .word   FLIPBITS|1,(M_FLIPH+M_FLIPV)
+     752 00003cd0 00000000!         .long   spk60a
+     753 00003cf0     4001          .word   FLIPBITS|1,(M_FLIPH)
+     754 00003d10 00000000!         .long   spk60b
+     755 00003d30     4001          .word   FLIPBITS|1,(M_FLIPH)
+     756 00003d50 00000000!         .long   spk60c
+     757 00003d70     4001          .word   FLIPBITS|1,(M_FLIPH)
+     758 00003d90 00000000!         .long   spk30a
+     759 00003db0     4001          .word   FLIPBITS|1,(M_FLIPH)
+     760 00003dd0 00000000!         .long   spk30b
+     761 00003df0     4001          .word   FLIPBITS|1,(M_FLIPH)
+     762 00003e10 00000000!         .long   spk30c
+     763 00003e30     4001          .word   FLIPBITS|1,(M_FLIPH)
+     764 00003e50                   LONGNULL
+     765                    
+     766                    
+     767                    ;* The following #'s are 2's comp left shifted 15 bits
+     768              0000  sin00   .set    0
+     769              4000  sin30   .set    04000H
+     770              6ed9  sin60   .set    06ED9H
+     771              7fff  sin90   .set 07FFFH
+     772              c000  nsin30  .set    0C000H
+     773              9127  nsin60  .set    09127H
+     774                            ;could go for 08000H but may as well have -1 be same magnitude as 1
+     775              8001  nsin90  .set    08001H
+     776                    
+     777                    
+     778 00003e70           CircleOff:
+     779 00003e70     0000          .word   sin00,nsin90    ;0 degree rotation
+     780 00003e90     4000          .word   sin30,nsin60    ;30
+     781 00003eb0     6ed9          .word   sin60,nsin30    ;60
+     782 00003ed0     7fff          .word   sin90,sin00     ;90
+     783 00003ef0     6ed9          .word   sin60,sin30     ;120
+     784 00003f10     4000          .word   sin30,sin60     ;150
+     785 00003f30     0000          .word   sin00,sin90     ;180
+     786 00003f50     c000          .word   nsin30,sin60    ;210
+     787 00003f70     9127          .word   nsin60,sin30    ;240
+     788 00003f90     8001          .word   nsin90,sin00    ;270
+     789 00003fb0     9127          .word   nsin60,nsin30   ;300
+     790 00003fd0     c000          .word   nsin30,nsin60   ;330
+     791                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:57 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- DYNAMITE >>>                                     PAGE   19
+
+     792                    
+     793                            .END
+
+ No Errors,  No Warnings

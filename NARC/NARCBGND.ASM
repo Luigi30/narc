@@ -1,4 +1,4 @@
-	.FILE	'NARCBGND.ASM'
+	.FILE	"NARCBGND.ASM"
 	.TITLE	" <<< N  A  R  C  -- BACKGROUND HANDLERS >>>"
 
 **************************************************************************
@@ -722,7 +722,7 @@ WHIPT1
 	CMPI	[100,0],A1		;LINE TO START SLOW DOWN
 	JRGT	WHIPT1B			;BR = O.K. TO STILL SPEED UP
 
-	SUBI	>6000,A2
+	SUBI	6000H,A2
        	CMPI	[10H,0],A2		;ONLY THIS LOW ON CHOPPER
 	JRLT	WHIPT1A			;BR = UNDERFLOW, DON'T STUFF
 	JRUC	WHIPT1C
@@ -735,12 +735,12 @@ WHIPNRM
 	CMPI	[694,0],A1		;LINE TO START SLOW DOWN
 	JRGT	WHIPT1B			;BR = O.K. TO STILL SPEED UP
 
-	SUBI	>6000,A2
+	SUBI	6000H,A2
 	CMPI	[1,0],A2
 	JRLT	WHIPT1A			;BR = UNDERFLOW, DON'T STUFF
 	JRUC	WHIPT1C
 WHIPT1B
-	ADDI	>6000,A2
+	ADDI	6000H,A2
 	CMPI	[23,0],A2
 	JRGT	WHIPT1A			;BR = OVERFLOW, DON'T STUFF	
 WHIPT1C
@@ -2565,7 +2565,7 @@ SCEBK9
 	RETS
 
 ************* Local Constants for UPD **************
-DISP_PAD    	.set	>00300030	  ; Y:X
+DISP_PAD    	.set	00300030H	  ; Y:X
 WIDEST_BLOCK	.set	250
 
 ;* Must keep the size of these structures a multiple of 16
@@ -2577,7 +2577,7 @@ map_x		.set 16		;size 16
 map_y		.set 32		;size 16
 map_hdr		.set 48		;size 16 - offset in long words from block_hdr_tbl
 				; bits 12-15 are bits 4-7 of pal
-				; map_hdr set to >FFFF if block is not allocated
+				; map_hdr set to 0FFFFH if block is not allocated
 block_size	.set 64		;* if changed must get rid of shifts by 6
 
 ;* Offsets for a BLOCK HDR structure
@@ -2607,7 +2607,7 @@ BGNDHGHT:
 	move	@BAKMODS,A0,L		;* A0- ptr to the module list
 ModLp0:	
 	move	*A0+,A8,L		;load module ptr
-	cmpi	>FFFFFFFF,A8
+	cmpi	0FFFFFFFFH,A8
 	jrz	ModX0			;end of the module tbl
 	move	*A8+,A9,L		;load packed y:x size
 
@@ -2754,7 +2754,7 @@ BAK_END:
 	clr	A11
 WEModLp:	
 	move	*A0+,A8,L		;load module ptr
-	cmpi	>FFFFFFFF,A8
+	cmpi	0FFFFFFFFH,A8
 	jrz	WEModX			;end of the module tbl
 	move	*A8+,A9,L		;load packed y:x size
 
@@ -2809,7 +2809,7 @@ BAK_STRT:
 
 	clr	A11
 	move	*A0+,A8,L		;load module ptr
-	cmpi	>FFFFFFFF,A8
+	cmpi	0FFFFFFFFH,A8
 	jrz	WSModX			;end of the module tbl
 	move	*A8+,A9,L		;load packed y:x size
 
@@ -2941,7 +2941,7 @@ ModLp:
 SkDAdd:
 	move	A6,A7
 	move	*A0+,A8,L		;load module ptr
-	cmpi	>FFFFFFFF,A8
+	cmpi	0FFFFFFFFH,A8
 	jrz	ModX			;end of the module tbl
 	move	*A8+,A10,L		;load y:x size
 
@@ -3158,7 +3158,7 @@ ADDBLOCK:
 
 	;* set bit in bitmap for block on list
 	movb	*A8,A14
-	ori	>80,A14
+	ori		80H,A14
 	movb	A14,*A8
 	move	A8,*A0(OPLINK),L ;set OPLINK to be a ptr to the disp list bit
 	
@@ -3200,7 +3200,7 @@ BSetPal:
 	move	A0,*A2(OPAL),W
 	move	A2,A0		;restore A0
 
-	movi	>8002,A4	;>8000 DMA GO, 2
+	movi	8002H,A4	;08000H DMA GO, 2
 	srl	4,A3	;* remove palette bits
 	sll	30,A3		
 	jrc	SKIP0	;* carry bit is the transparency bit
@@ -3216,7 +3216,7 @@ SKIP0:
 *A3=RETURNED WITH NEW SAG
 *A4=RETURNED WITH NEW OFFSET:OFLAGS
 	move	A0,A1
-	addi	OSIZE+>20,A1
+	addi	OSIZE+20H,A1
 	mmtm	A1,A2,A3,A4		;Stuff OSIZE,OSAG,OFFSET,OFLAGS
 
 	call	B0
@@ -3285,7 +3285,7 @@ NoFreeP:
 	;* unset the on display list bit
 	move	*A8(OPLINK),A0,L
 	movb	*A0,A7
-	andi	>7F,A7
+	andi	7FH,A7
 	movb	A7,*A0
 		
 	move	*A8,*A9,L  	; put NEXT link in PREV obj

@@ -1,4 +1,4 @@
-	.FILE	'NARC1.ASM'
+	.FILE	"NARC1.ASM"
 	.TITLE	" <<< NARC GENERAL PURPOSE SUBROUTINES >>>"
 
 **************************************************************************
@@ -13,11 +13,11 @@
 	.MNOLIST
 
 *	GET THE SYSTEM STUFF
-	.INCLUDE	"\video\MPROCEQU.ASM"	;MPROC equates
-	.INCLUDE	"\video\DISPEQU.ASM"	;Display processor equates
-	.INCLUDE	"\video\GSP.INC"	;GSP assembler equates
-	.INCLUDE	"\video\SYS.INC"	;Zunit system equates
-	.INCLUDE	"\video\MACROS.HDR"	;Macros, Yeah!
+	.INCLUDE	"video\MPROCEQU.ASM"	;MPROC equates
+	.INCLUDE	"video\DISPEQU.ASM"	;Display processor equates
+	.INCLUDE	"video\GSP.INC"	;GSP assembler equates
+	.INCLUDE	"video\SYS.INC"	;Zunit system equates
+	.INCLUDE	"video\MACROS.HDR"	;Macros, Yeah!
 *	LOCAL STUFF
 	.INCLUDE	"NARCEQU.ASM"		;NARC Equates
 	.INCLUDE	"NARCTEQU.ASM"		;NARC Todd Equates
@@ -103,7 +103,7 @@ SHVLCPX:
 *A3=OXVEL
 SHVELFLP:
 	CALLR	SHVELCPY
-	MOVE	*A8(OXVEL+>10),A14,W		;TEST X VELOCITY
+	MOVE	*A8(OXVEL+10H),A14,W		;TEST X VELOCITY
 *FLIPDUDE
 *A8=OBJECT, N=SIGN OF XVEL
 FLP:
@@ -1819,7 +1819,7 @@ CLRLP	MOVE	A0,*A1+,L
 *****	mmtm	sp,b13,b12,B4,B3
 *****	move	b13,a13			; save in A file 
 *****	movi	SCRN_PTCH*2,B3 	;Get Screen Pitch
-*****	movi	>12,b12
+*****	movi	12H,b12
 *****	move	b12,@CONVDP		;Move to CONVDP io register
 *****
 ****** Set SRT=1.  This converts pixel accesses to VRAM SR transfer cycles.
@@ -2265,8 +2265,8 @@ SLIDC1
 *
 GETCPLY:
 	MMTM	SP,A1,A2,A3,A4,A5
-	MOVI	>FFFF,A1		;PLAYER 1 DISTANCE
-	MOVI	>FFFF,A2		;PLAYER 2 DISTANCE
+	MOVI	0FFFFH,A1		;PLAYER 1 DISTANCE
+	MOVI	0FFFFH,A2		;PLAYER 2 DISTANCE
 	MOVI	P1DATA,A0		;LOOKING FOR PLAYER 1
 	MOVE	*A0(POBJ),A3,L		;GET PLAYERS OBJECT	
 	JRZ	GETCP2			;ZERO INDICATES INACTIVE
@@ -2836,7 +2836,7 @@ GBUSTL:
 	JRUC	GBUSTL
 
 GBUST1:
-	ADDK	>10,A12		;PULL CRUD OF STACK
+	ADDK	10H,A12		;PULL CRUD OF STACK
 	MOVI	DUMCOLL,A14
 	MOVE	A14,*A8(OCVECT),L	;COLLISION POINTER NULL FOR NOW
 	MOVE	A11,A10	
@@ -2850,7 +2850,7 @@ BUSTMT
 	SETC				;HE IS TRULY DEAD
 	RETP
 BUSTX:
-	ADDK	>10,A12		;PULL CRUD OF STACK
+	ADDK	10H,A12		;PULL CRUD OF STACK
 	CLRC	       		;HE IS FREE
 	RETP
 *
@@ -2858,7 +2858,7 @@ BUSTX:
 *
 BSTSNDTAB:
 	.LONG	SPRDSND,SPRDSND,YBUSTSND,POLSND,FREZSND,YBUSTSND
-POLSND	.WORD	>F400|SPEAKPRI,>1F,>8029,0	;"POLICE"
+POLSND	.WORD	0F400H|SPEAKPRI,1FH,8029H,0	;"POLICE"
 *
 *DROPSTUF - DROP ALL YOUR STUFF
 *A8=ENEMY OBJECT POINTER
@@ -3021,7 +3021,7 @@ WFLp
 	move	*A9,A1,L
 	jrnz	LISTLEFT
 	move	A2,A9			;KEEP LAST FRAME
-;	movi	>FFFFFFFF,A0,L		;fall without any more FRANIM
+;	movi	0FFFFFFFFH,A0,L		;fall without any more FRANIM
 LISTLEFT:
 	move	A0,A10
 SkAnim
@@ -3034,7 +3034,7 @@ SkAnim
 	jrlt	HitGRND
 	move	*A8(OYVEL),A0,L
 GOINGUP:
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	UpdShadV
 	jruc	WFLp

@@ -1,0 +1,3197 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCDOOR.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .OPTION B,D,L
+      12                            .MNOLIST
+      13                    
+      14                    *       GET THE SYSTEM STUFF
+      15                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      16                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      17                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      18                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      19                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      20                    *       LOCAL STUFF
+      21                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      22                            .INCLUDE        "NARCAUDN.ASM"
+      23                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      24                    
+      25                    *
+      26                    *GLOBALS IN THIS FILE
+      27                            .GLOBAL GRNHSCOL,DENDCOLS,DOGRMCOL,DENDCOLR,BUGRMCOL
+      28                            .GLOBAL DMPRMCOL,DENDCOLB,SENDCOLB,SENDCOLS,SENDCOLR,SAFECOLL
+      29                            .GLOBAL SAFECOLL,SLOTCOLS,SLOTCOLR,SLOTCNDG,SLOTCNDS,LABCOL
+      30                            .GLOBAL SLOTCOLB,SLOTCOLG,SLOTCOLGR,SUBRMCOL,REDDP,SILVDP,GOLDDP
+      31                            .GLOBAL GETSUBDR,SUBOPEN,SLOTCOLH,HEADDP,BLUEDP
+      32                            .GLOBAL SENDCOLGR,CLWRMCOL,CHOPWCOL,DENDCOLGR
+      33                    *
+      34                    *EXTERNALS
+      35                            .GLOBAL BIGOBAK,BIGODSP,LOFHDSP,GRNHSDSP,GRNHSBAK,LABBAK,CHOPBAK
+      36                            .GLOBAL DOGRBAK,DOGRDSP,DRUGRDSP,CHOPDSP
+      37                            .GLOBAL BUGRDSP,DMPRDSP,DMPRBAK,BUGRBAK
+      38                            .GLOBAL SUBBAK,CLWRDSP,CLWRBAK
+      39                            .GLOBAL SILVBAK,REDBAK,BLUEBAK,GOLDBAK,HEADBAK
+      40                            .GLOBAL REDDSP,BLUEDSP,SILVDSP,GOLDDSP,HEADDSP
+      41                            .GLOBAL AUD,AUD1,BOTHPON
+      42                    
+      43 00000000                   .TEXT
+      44                    
+      45                    **************************************************************************
+      46                    *                                                                        *
+      47                    * DOOROP - ATTEMPT TO OPEN THE DOOR THAT THE OBJECT IS AT.               *
+      48                    * A0 = SOUND TO MAKE 0 = NO SOUND                                        *
+      49                    * A8 = PTR DOOR                                                          *
+      50                    * A10 = PTR PLAYER                                                       *
+      51                    * RETURNS:                                                               *
+      52                    * CARRY SET = OBJECT OPENED DOOR SUCCESSFULLY                            *
+      53                    * CARRY CLR = DOOR DID NOT OPEN                                          *
+      54                    * A8 & A10 INTACT, THE REST ?                                            *
+      55                    * NOTE: CALL WITH JSRP                                                   *
+      56                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    2
+
+      57                    **************************************************************************
+      58 00000000           DOOROP
+      59 00000000     0d3f          CALLR   CKPLDOOR                ;CHECK TO SEE IF THE PLAYER IS OPENING
+         00000010     0022  
+      60 00000020     c91d          JRNC    DOOROPX
+      61 00000030     b503          MOVE    *A8(OID),A3,W
+         00000040     01a0  
+      62 00000050     2f83          SRL     4,A3
+      63 00000060     2483          SLL     4,A3                    ;STRIP DOOR I.D.
+      64 00000070     0b43          CMPI    BGDOID,A3
+         00000080     faef  
+      65 00000090     ca12          JREQ    DOOROP5                 ;BR = IT'S ALREADY OPEN
+      66 000000a0     0b43          CMPI    BGDO1ID,A3
+         000000b0     fabf  
+      67 000000c0     ca0f          JREQ    DOOROP5                 ;BR = IT'S ALREADY OPEN
+      68 000000d0     0b43          CMPI    BGDCID,A3
+         000000e0     faff  
+      69 000000f0     cb10          JRNE    DOOROPX                 ;BR = IT'S NOT CLOSED
+      70 00000100     4c00          MOVE    A0,A0
+      71 00000110     ca03          JRZ     DOOROP4A
+      72 00000120     0d5f          CALLA   ONESND                  ;MAKE A SOUND IF WANTED
+         00000130 00000000! 
+      73                    ****    SLEEP   20H
+      74 00000150           DOOROP4A
+      75 00000150                   JSRP    DOOROPEN
+      76 000001c0           DOOROP5
+      77 000001c0     0de0          SETC
+      78 000001d0                   RETP
+      79 00000200           DOOROPX
+      80 00000200     0320          CLRC
+      81 00000210                   RETP
+      82                    
+      83                    **************************************************************************
+      84                    *                                                                        *
+      85                    * CKPLDOOR - CHECK THE PLAYER AGAINST A DOOR TO SEE IF HE IS ORIENTED    *
+      86                    *               TO OPEN IT.                                              *
+      87                    * A8 = DOOR PTR                                                          *
+      88                    * A10 = PLAYER PTR                                                       *
+      89                    * RETURNS                                                                *
+      90                    *       C CLR = NOT READY                                                *
+      91                    *       C SET = READY                                                    *
+      92                    *                                                                        *
+      93                    **************************************************************************
+      94 00000240           CKPLDOOR
+      95 00000240     098f          MMTM    SP,A1,A2,A3
+         00000250     7000  
+      96 00000260     4d03          MOVE    A8,A3
+      97 00000270     4d48          MOVE    A10,A8
+      98 00000280     0d5f          CALLA   GPLAYERD                ;GET THE PLAYER DATA STRUCTURE
+         00000290 00000000! 
+      99 000002b0     4c68          MOVE    A3,A8
+     100 000002c0     4c42          MOVE    A2,A2
+     101 000002d0     ca25          JRZ     CKPLDF                  ;NO PLAYER
+     102 000002e0     b443          MOVE    *A2(PIRQFLAG),A3,W
+         000002f0     0080  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    3
+
+     103 00000300     0b83          ANDI    MDRIVER|MPASSEN|MJUMP1|MJUMP2,A3
+         00000310 ffffe7f9  
+     104 00000330     cb1f          JRNE    CKPLDF                  ;GUYS ARE IN THE CAR
+     105 00000340     b443          MOVE    *A2(PSWTCH),A3
+         00000350     00c0  
+     106 00000360     1f83          BTST    BPRYTE,A3
+     107 00000370     cb1b          JRNE    CKPLDF
+     108 00000380     1fa3          BTST    BPLEFT,A3
+     109 00000390     cb19          JRNE    CKPLDF                  ;BR = MUST GO STRAIGHT UP
+     110 000003a0     1fe3          BTST    BPUP,A3
+     111 000003b0     ca17          JREQ    CKPLDF
+     112 000003c0     b502          MOVE    *A8(OXPOS),A2,W         ;JUST CHECK AGAINST THE FULL DOOR
+         000003d0     0090  
+     113 000003e0     b503          MOVE    *A8(OSIZEX),A3,W
+         000003f0     0140  
+     114 00000400     4043          ADD     A2,A3
+     115 00000410                   SWAP    A10,A8
+     116 00000440     0d5f          CALLA   GETCPNT
+         00000450 00000000! 
+     117 00000470                   SWAP    A10,A8
+     118 000004a0     0521          ZEXT    A1
+     119 000004b0     0d5f          CALLA   CHKRANGE
+         000004c0 00000000! 
+     120 000004e0     c904          JRNC    CKPLDF                  ;NOT IN RANGE
+     121 000004f0     0de0          SETC
+     122 00000500     09af          MMFM    SP,A1,A2,A3
+         00000510     000e  
+     123 00000520     0960          RETS
+     124 00000530           CKPLDF
+     125 00000530     0320          CLRC
+     126 00000540     09af          MMFM    SP,A1,A2,A3
+         00000550     000e  
+     127 00000560     0960          RETS
+     128                    
+     129                    
+     130                    **************************************************************************
+     131                    *                                                                        *
+     132                    * DOORIN - ATTEMPT TO WALK THE OBJECT INTO A DOOR                        *
+     133                    * A8 = PTR TO DOOR                                                       *
+     134                    * A10 = PTR TO OBJECT                                                    *
+     135                    *                                                                        *
+     136                    **************************************************************************
+     137                    *ENTRANCE TO LOFFREDO HIDEOUT
+     138 00000570           DOORLOFH
+     139 00000570     09eb          MOVI    DOGRBAK,A11
+         00000580 00000000! 
+     140 000005a0     09e9          MOVI    LOFHCOLL,A9
+         000005b0 0000aeb0' 
+     141 000005d0     09ee          MOVI    ROOM1DP,A14
+         000005e0 00000f20' 
+     142 00000600     0d3f          CALLR   GETOSND
+         00000610     01f7  
+     143 00000620     c076          JRUC    DOORIN
+     144                    *DOOR ENTRANCE TO MR. BIG'S OFFICE
+     145 00000630           DOOREBIG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    4
+
+     146 00000630     09eb          MOVI    BIGOBAK,A11
+         00000640 00000000! 
+     147 00000660     09e9          MOVI    BIGINCOL,A9
+         00000670 0000af40' 
+     148 00000690     09ee          MOVI    BIGODP,A14
+         000006a0 00000f80' 
+     149 000006c0     5600          CLR     A0
+     150 000006d0     c06b          JRUC    DOORIN
+     151                    *DOOR ENTRANCE TO DOGGY ROOM
+     152 000006e0           DOOREDOG
+     153 000006e0     09eb          MOVI    DOGRBAK,A11
+         000006f0 00000000! 
+     154 00000710     09e9          MOVI    DOGRMCOL,A9
+         00000720 0000b060' 
+     155 00000740     09ee          MOVI    DOGRDP,A14
+         00000750 00000fe0' 
+     156 00000770     09e0          MOVI    KNOCKSND,A0
+         00000780 00000000! 
+     157 000007a0     c05e          JRUC    DOORIN
+     158                    *DOOR ENTRANCE TO SUBWAY?
+     159 000007b0           DOORESUB
+     160 000007b0     09eb          MOVI    SUBBAK,A11
+         000007c0 00000000! 
+     161 000007e0     09e9          MOVI    SUBRMCOL,A9
+         000007f0 0000b0f0' 
+     162 00000810     09ee          MOVI    ROOM1DP,A14     
+         00000820 00000f20' 
+     163 00000840     5600          CLR     A0
+     164 00000850     c053          JRUC    DOORIN
+     165                    *DOOR ENTRANCE TO BUG ROOM
+     166 00000860           DOOREBUG
+     167 00000860     09eb          MOVI    BUGRBAK,A11
+         00000870 00000000! 
+     168 00000890     09e9          MOVI    BUGRMCOL,A9
+         000008a0 0000b180' 
+     169 000008c0     09ee          MOVI    BUGRDP,A14
+         000008d0 00001040' 
+     170 000008f0     09e0          MOVI    KNOCKSND,A0
+         00000900 00000000! 
+     171 00000920     c046          JRUC    DOORIN
+     172                    *DOOR ENTRANCE TO CLOWN ROOM
+     173 00000930           DOORECLW
+     174 00000930     09eb          MOVI    CLWRBAK,A11
+         00000940 00000000! 
+     175 00000960     09e9          MOVI    CLWRMCOL,A9
+         00000970 0000b210' 
+     176 00000990     09ee          MOVI    CLWRDP,A14
+         000009a0 000010a0' 
+     177 000009c0     09e0          MOVI    KNOCKSND,A0
+         000009d0 00000000! 
+     178 000009f0     c039          JRUC    DOORIN
+     179                    *DOOR ENTRANCE TO DUMPSTER MAN ROOM
+     180 00000a00           DOOREDMP
+     181 00000a00     09eb          MOVI    DMPRBAK,A11
+         00000a10 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    5
+
+     182 00000a30     09e9          MOVI    DMPRMCOL,A9
+         00000a40 0000b2a0' 
+     183 00000a60     09ee          MOVI    DMPRDP,A14
+         00000a70 00001100' 
+     184 00000a90     09e0          MOVI    KNOCKSND,A0
+         00000aa0 00000000! 
+     185 00000ac0     c02c          JRUC    DOORIN
+     186                    *DOOR ENTRANCE TO SKYHIGHS'S GREENHOUSE
+     187 00000ad0           DOOREGHS
+     188 00000ad0     09eb          MOVI    GRNHSBAK,A11
+         00000ae0 00000000! 
+     189 00000b00     09e9          MOVI    GRNHSCOL,A9
+         00000b10 0000b330' 
+     190 00000b30     09ee          MOVI    GRNHSDP,A14
+         00000b40 00001160' 
+     191 00000b60     5600          CLR     A0
+     192 00000b70     c021          JRUC    DOORIN
+     193                    *DOOR ENTRANCE TO THE CHEMICAL LABRATORY
+     194 00000b80           DOORELAB
+     195 00000b80     09eb          MOVI    LABBAK,A11
+         00000b90 00000000! 
+     196 00000bb0     09e9          MOVI    LABCOL,A9
+         00000bc0 0000b3c0' 
+     197 00000be0     09ee          MOVI    LABDP,A14
+         00000bf0 000011c0' 
+     198 00000c10     5600          CLR     A0
+     199 00000c20     c016          JRUC    DOORIN
+     200                    
+     201                    *DOOR ENTRANCE TO THE CHOPPER WAVE
+     202 00000c30           DOORECHP
+     203 00000c30     09eb          MOVI    CHOPBAK,A11
+         00000c40 00000000! 
+     204 00000c60     09e9          MOVI    CHOPWCOL,A9
+         00000c70 0000b450' 
+     205 00000c90     09ee          MOVI    CHOPDP,A14
+         00000ca0 00001220' 
+     206 00000cc0     5600          CLR     A0
+     207 00000cd0     c00b          JRUC    DOORIN
+     208                    
+     209                    *GENERIC DOOR ROOM
+     210 00000ce0           DOOR1W1
+     211 00000ce0     09eb          MOVI    DOGRBAK,A11
+         00000cf0 00000000! 
+     212 00000d10     09e9          MOVI    CHINACOLL,A9
+         00000d20 0000ae20' 
+     213 00000d40     09ee          MOVI    ROOM1DP,A14
+         00000d50 00000f20' 
+     214 00000d70     5600          CLR     A0
+     215 00000d80     0300          JRUC    DOORIN
+     216                    *GENERIC DOOR ENTRY FOR PLAYERS
+     217                    *A0 = SOUND TO MAKE ON DOOR OPEN, 0 = NO SOUND
+     218                    *A9 = COLLISION VECTOR TO RE-STUFF ON FAILURE
+     219                    *A10= PTR TO PLAYER OBJECT
+     220                    *A11= PTR TO NEW BGND
+     221                    *A14= PTR TO DISPATCH PROCESS 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    6
+
+     222 00000d90           DOORIN
+     223 00000d90                   PUSHP   A14
+     224 00000da0                   JSRP    DOOROP
+     225 00000e10                   PULLP   A14
+     226 00000e30     c906          JRNC    DOORIN1
+     227 00000e40     4d49          MOVE    A10,A9
+     228 00000e50     4d6a          MOVE    A11,A10
+     229 00000e60     4dcb          MOVE    A14,A11
+     230 00000e70     c080          JAUC    NEWBGND         
+         00000e80 00000000! 
+     231 00000ea0           DOORIN1
+     232 00000ea0     b328          MOVE    A9,*A8(OCVECT),L
+         00000eb0     01d0  
+     233 00000ec0     5729          CLR     A9
+     234 00000ed0     b328          MOVE    A9,*A8(OPLINK),L
+         00000ee0     01f0  
+     235 00000ef0                   DIE
+     236                    *ROOM DISPATCH PROCESS
+     237 00000f20           ROOM1DP
+     238 00000f20     09e2          MOVI    LOFHDSP,A2
+         00000f30 00000000! 
+     239 00000f50     c080          JAUC    MASTERG 
+         00000f60 00000000! 
+     240                    *MR. BIG OFFICE DISPATCH PROCESS
+     241 00000f80           BIGODP
+     242 00000f80     09e2          MOVI    BIGODSP,A2
+         00000f90 00000000! 
+     243 00000fb0     c080          JAUC    MASTERG
+         00000fc0 00000000! 
+     244                    *DOGGY ROOM DISPATCH PROC
+     245 00000fe0           DOGRDP
+     246 00000fe0     09e2          MOVI    DOGRDSP,A2
+         00000ff0 00000000! 
+     247 00001010     c080          JAUC    MASTERG
+         00001020 00000000! 
+     248                    *BUG ROOM DISPATCH PROC
+     249 00001040           BUGRDP
+     250 00001040     09e2          MOVI    BUGRDSP,A2
+         00001050 00000000! 
+     251 00001070     c080          JAUC    MASTERG
+         00001080 00000000! 
+     252                    *CLOWN ROOM DISPATCH PROC
+     253 000010a0           CLWRDP
+     254 000010a0     09e2          MOVI    CLWRDSP,A2
+         000010b0 00000000! 
+     255 000010d0     c080          JAUC    MASTERG
+         000010e0 00000000! 
+     256                    *DUMPSTER MAN ROOM DISPATCH
+     257 00001100           DMPRDP
+     258 00001100     09e2          MOVI    DMPRDSP,A2
+         00001110 00000000! 
+     259 00001130     c080          JAUC    MASTERG
+         00001140 00000000! 
+     260                    *SKYHIGH'S GREENHOUSE DISPATCH
+     261 00001160           GRNHSDP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    7
+
+     262 00001160     09e2          MOVI    GRNHSDSP,A2
+         00001170 00000000! 
+     263 00001190     c080          JAUC    MASTERG
+         000011a0 00000000! 
+     264                    *CHEMICAL LABRATORY DISPATCH
+     265 000011c0           LABDP
+     266 000011c0     09e2          MOVI    DRUGRDSP,A2
+         000011d0 00000000! 
+     267 000011f0     c080          JAUC    MASTERG
+         00001200 00000000! 
+     268                    *CHOPPER WAVE DISPATCH
+     269 00001220           CHOPDP
+     270 00001220     09e2          MOVI    CHOPDSP,A2
+         00001230 00000000! 
+     271 00001250     c080          JAUC    MASTERG
+         00001260 00000000! 
+     272                    
+     273                    **************************************************************************
+     274                    *                                                                        *
+     275                    * DOORPOP - ATTEMPT TO WALK THE OBJECT INTO A DOOR AND POP A ROOM        *
+     276                    * A8 = PTR TO DOOR                                                       *
+     277                    * A10 = PTR TO OBJECT                                                    *
+     278                    *                                                                        *
+     279                    **************************************************************************
+     280 00001280           DOORPOP
+     281 00001280     5600          CLR     A0
+     282 00001290                   JSRP    DOOROP
+     283 00001300     c904          JRNC    DOORPOP1
+     284 00001310     4d49          MOVE    A10,A9
+     285 00001320     c080          JAUC    OLDBGND         
+         00001330 00000000! 
+     286 00001350           DOORPOP1
+     287 00001350     09e9          MOVI    DORNCOLL,A9
+         00001360 0000afd0' 
+     288 00001380     b328          MOVE    A9,*A8(OCVECT),L
+         00001390     01d0  
+     289 000013a0     5729          CLR     A9
+     290 000013b0     b328          MOVE    A9,*A8(OPLINK),L
+         000013c0     01f0  
+     291 000013d0                   DIE
+     292                    
+     293                    **************************************************************************
+     294                    *                                                                        *
+     295                    * DOOREND - ATTEMPT TO WALK THROUGH THE END OF WAVE DOOR.                *
+     296                    * A8 = PTR TO DOOR                                                       *
+     297                    * A9 = COLLISION PTR TO RE-STUFF                                         *
+     298                    * A10 = PTR TO OBJECT                                                    *
+     299                    *                                                                        *
+     300                    **************************************************************************
+     301 00001400           DOOREND
+     302 00001400     09e9          MOVI    DENDCOLL,A9
+         00001410 0000b4e0' 
+     303 00001430     c010          JRUC    DOORENDG
+     304 00001440           DOORENDS
+     305 00001440     09e9          MOVI    DENDCOLS,A9
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    8
+
+         00001450 0000b570' 
+     306 00001470     c00c          JRUC    DOORENDG
+     307 00001480           DOORENDR
+     308 00001480     09e9          MOVI    DENDCOLR,A9
+         00001490 0000b600' 
+     309 000014b0     c008          JRUC    DOORENDG
+     310 000014c0           DOORENDB
+     311 000014c0     09e9          MOVI    DENDCOLB,A9
+         000014d0 0000b690' 
+     312 000014f0     c004          JRUC    DOORENDG
+     313 00001500           DOORENDGR
+     314 00001500     09e9          MOVI    DENDCOLGR,A9
+         00001510 0000b720' 
+     315 00001530     0300          JRUC    DOORENDG
+     316 00001540           DOORENDG
+     317 00001540     5600          CLR     A0
+     318 00001550                   JSRP    DOOREOP
+     319 000015c0     c937          JRNC    DOOREND3                ;DOOR DIDN'T OPEN
+     320 000015d0     5610          CLR     B0
+     321 000015e0     b543          MOVE    *A10(OID),A3,W
+         000015f0     01a0  
+     322 00001600     0b43          CMPI    P1OID,A3
+         00001610     efff  
+     323 00001620     cb08          JRNE    DOOREND1
+     324 00001630     1830          MOVK    1,B0    
+     325 00001640     09e2          MOVI    P1DATA,A2
+         00001650 00000000! 
+     326 00001670     09e3          MOVI    P1CTRL,A3
+         00001680 00000000! 
+     327 000016a0     c00a          JRUC    DOOREND2
+     328 000016b0           DOOREND1
+     329 000016b0     0b43          CMPI    P2OID,A3
+         000016c0     dfff  
+     330 000016d0     cb07          JRNE    DOOREND2                ;BR = WASN'T A PLAYER
+     331 000016e0     1850          MOVK    2,B0
+     332 000016f0     09e2          MOVI    P2DATA,A2
+         00001700 00000000! 
+     333 00001720     09e3          MOVI    P2CTRL,A3
+         00001730 00000000! 
+     334 00001750           DOOREND2
+     335 00001750     09c0          MOVI    INGAME,A0
+         00001760     0010  
+     336 00001770     0580          MOVE    A0,@GAMSTATE,W
+         00001780 00000000! 
+     337 000017a0     09c0          MOVI    PUP,A0
+         000017b0     0001  
+     338 000017c0     8003          MOVE    A0,*A3,W
+     339 000017d0     098c          MMTM    A12,A2,A3
+         000017e0     3000  
+     340 000017f0                   SLEEP   10
+     341 00001830     09ac          MMFM    A12,A2,A3
+         00001840     000c  
+     342 00001850     5600          CLR     A0
+     343 00001860     8003          MOVE    A0,*A3,W
+     344 00001870     b640          MOVE    *A2(POBJ),A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE    9
+
+         00001880     00a0  
+     345 00001890     0d5f          CALLA   PULLSOBJ
+         000018a0 00000000! 
+     346 000018c0     b640          MOVE    *A2(PLOBJ),A0,L
+         000018d0     0120  
+     347 000018e0     0d5f          CALLA   PULLSOBJ
+         000018f0 00000000! 
+     348 00001910     c080          JAUC    WAVEEND                 ;MUST JUMP HERE NOW BUDDY
+         00001920 00000000! 
+     349 00001940           DOOREND3
+     350 00001940     b328          MOVE    A9,*A8(OCVECT),L
+         00001950     01d0  
+     351 00001960     5729          CLR     A9
+     352 00001970     b328          MOVE    A9,*A8(OPLINK),L
+         00001980     01f0  
+     353 00001990                   DIE
+     354                    
+     355                    **************************************************************************
+     356                    *                                                                        *
+     357                    * DOOREOP - ENDING WAVE DOOR OPENING ROUTINE                             *
+     358                    * A8 = PTR TO DOOR                                                       *
+     359                    * A10 = PTR TO PLAYER                                                    *
+     360                    * NOTE: CALL WITH JSRP                                                   *
+     361                    *                                                                        *
+     362                    **************************************************************************
+     363 000019c0           DOOREOP
+     364 000019c0     0d3f          CALLR   CKPLDOOR                ;CHECK TO SEE IF THE PLAYER IS OPENING
+         000019d0     fe86  
+     365 000019e0     c923          JRNC    DOOREOPX
+     366                    
+     367 000019f0     b503          MOVE    *A8(OID),A3,W
+         00001a00     01a0  
+     368 00001a10     4c64          MOVE    A3,A4                   ;KEEP
+     369 00001a20     2f83          SRL     4,A3
+     370 00001a30     2483          SLL     4,A3                    ;STRIP DOOR I.D.
+     371 00001a40     0b43          CMPI    BGDOID,A3
+         00001a50     faef  
+     372 00001a60     ca17          JREQ    DOOREOP5                ;BR = IT'S ALREADY OPEN
+     373 00001a70     0b43          CMPI    BGDO1ID,A3
+         00001a80     fabf  
+     374 00001a90     ca14          JREQ    DOOREOP5                ;BR = IT'S ALREADY OPEN
+     375 00001aa0     0b43          CMPI    BGDCID,A3
+         00001ab0     faff  
+     376 00001ac0     cb15          JRNE    DOOREOPX                ;BR = IT'S NOT CLOSED
+     377                    
+     378 00001ad0     2784          SLL     28,A4
+     379 00001ae0     2c84          SRL     28,A4                   ;KEEP DOOR SUB-TYPE
+     380 00001af0     0b04          ADDI    BGDOMID,A4
+         00001b00     0520  
+     381 00001b10     b088          MOVE    A4,*A8(OID),W           ;MARK DOOR AS OPENING AHEAD-O-TIME
+         00001b20     01a0  
+     382 00001b30     4f00          MOVE    A8,B0
+     383 00001b40     0d3f          CALLR   PUTOPENI
+         00001b50     0080  
+     384 00001b60     4e18          MOVE    B0,A8
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   10
+
+     385 00001b70                   JSRP    DOOROPEN
+     386                    ***     SLEEP   10
+     387 00001be0           DOOREOP5
+     388 00001be0     0de0          SETC
+     389 00001bf0                   RETP
+     390 00001c20           DOOREOPX
+     391 00001c20     0320          CLRC
+     392 00001c30                   RETP
+     393                    
+     394                    
+     395                    **************************************************************************
+     396                    *                                                                        *
+     397                    * DOORBYSLT - OPEN A WAVE END DOOR BY WAY OF THE CARD SLOT.              *
+     398                    *                                                                        *
+     399                    **************************************************************************
+     400 00001c60           DOORBYSLT
+     401 00001c60     b503          MOVE    *A8(OID),A3,W
+         00001c70     01a0  
+     402 00001c80     4c64          MOVE    A3,A4                   ;KEEP
+     403 00001c90     2f83          SRL     4,A3
+     404 00001ca0     2483          SLL     4,A3                    ;STRIP DOOR I.D.
+     405 00001cb0     0b43          CMPI    BGDOID,A3
+         00001cc0     faef  
+     406 00001cd0     ca29          JREQ    DOORBS5                 ;BR = IT'S ALREADY OPEN
+     407 00001ce0     0b43          CMPI    BGDO1ID,A3
+         00001cf0     fabf  
+     408 00001d00     ca26          JREQ    DOORBS5                 ;BR = IT'S ALREADY OPEN
+     409 00001d10     0b43          CMPI    BGDCID,A3
+         00001d20     faff  
+     410 00001d30     cb27          JRNE    DOORBSX                 ;BR = IT'S NOT CLOSED
+     411                    
+     412 00001d40     2784          SLL     28,A4
+     413 00001d50     2c84          SRL     28,A4                   ;KEEP DOOR SUB-TYPE
+     414 00001d60     0b04          ADDI    BGDOMID,A4
+         00001d70     0520  
+     415 00001d80     b088          MOVE    A4,*A8(OID),W           ;MARK DOOR AS OPENING AHEAD-O-TIME
+         00001d90     01a0  
+     416                    
+     417 00001da0                   SOUND1  OPENBEEP
+     418 00001e00                   SLEEP   20H
+     419 00001e40     4f00          MOVE    A8,B0
+     420 00001e50     0d3f          CALLR   PUTOPENI
+         00001e60     004f  
+     421 00001e70     4e18          MOVE    B0,A8
+     422 00001e80                   JSRP    DOOROPEN
+     423 00001ef0     b504          MOVE    *A8(OID),A4,W
+         00001f00     01a0  
+     424 00001f10     2784          SLL     28,A4
+     425 00001f20     2c84          SRL     28,A4                   ;KEEP DOOR SUB-TYPE
+     426 00001f30     0b04          ADDI    BGDO1ID,A4
+         00001f40     0540  
+     427 00001f50     b088          MOVE    A4,*A8(OID),W           ;MARK THIS DOOR SPECIALLY
+         00001f60     01a0  
+     428                    ****    SLEEP   10
+     429 00001f70           DOORBS5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   11
+
+     430 00001f70     0de0          SETC
+     431 00001f80                   RETP
+     432 00001fb0           DOORBSX
+     433 00001fb0     0320          CLRC
+     434 00001fc0                   RETP
+     435                    
+     436                    **************************************************************************
+     437                    *                                                                        *
+     438                    * SLOTFLSH - FLASH THE CARD SLOT "INSERT" MESSAGE                        *
+     439                    *                                                                        *
+     440                    **************************************************************************
+     441 00001ff0           SLOTFLSH
+     442 00001ff0     09c0          MOVI    SFLSHPID,A0
+         00002000     26f0  
+     443 00002010     b00d          MOVE    A0,*A13(PROCID),W       ;MAKE US ONE OF THESE
+         00002020     0020  
+     444 00002030     09c0          MOVI    INTXTOID,A0
+         00002040     0a30  
+     445 00002050     09e1          MOVI    BACKSLST,A1     
+         00002060 00000000! 
+     446 00002080     0d5f          CALLA   ISSUPPID
+         00002090 00000000! 
+     447 000020b0     ca80          JAEQ    SUCIDE                  ;THERE'S NO FUCKING TEXT
+         000020c0 00000000! 
+     448 000020e0     4c28          MOVE    A1,A8
+     449 000020f0     b700          MOVE    *A8(OPLINK),A0,L
+         00002100     01f0  
+     450 00002110     cb80          JANZ    SUCIDE
+         00002120 00000000! 
+     451 00002140     b3a8          MOVE    A13,*A8(OPLINK),L
+         00002150     01f0  
+     452 00002160     4d00          MOVE    A8,A0
+     453 00002170     0d5f          CALLA   OBJOFF
+         00002180 00000000! 
+     454 000021a0                   SLEEP   8
+     455 000021e0     4d00          MOVE    A8,A0
+     456 000021f0     0d5f          CALLA   OBJON
+         00002200 00000000! 
+     457 00002220                   SOUND1  INSRTSND                ;MAKE A NOISE
+     458 00002280                   SLEEP   8
+     459 000022c0     5600          CLR     A0
+     460 000022d0     b208          MOVE    A0,*A8(OPLINK),L
+         000022e0     01f0  
+     461 000022f0                   DIE
+     462                    
+     463 00002320     f300  INSRTSND .WORD  0F300H,01H,080ABH,0             ;INSERT INFO NOISE
+     464                    
+     465                    **************************************************************************
+     466                    *                                                                        *
+     467                    * PUTOPENI - PUT "OPEN" IN PLACE OF "INSERT" IN THE CARD SLOT            *
+     468                    *          ALSO KILLS THE ATTACHED PROCESS.                              *
+     469                    * RETURNS:                                                               *
+     470                    *       Z BIT SET = FAILURE, A8 = 0                                      *
+     471                    *       Z BIT CLR = SUCCESS, A8 = PTR TO TEXT                            *
+     472                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   12
+
+     473                    **************************************************************************
+     474 00002360           PUTOPENI
+     475 00002360     098f          MMTM    SP,A0,A1,A4
+         00002370     c800  
+     476 00002380     09c0          MOVI    INTXTOID,A0
+         00002390     0a30  
+     477 000023a0     09e1          MOVI    BACKSLST,A1     
+         000023b0 00000000! 
+     478 000023d0     0d5f          CALLA   ISSUPPID
+         000023e0 00000000! 
+     479 00002400     4c28          MOVE    A1,A8
+     480 00002410     ca14          JREQ    PUTOIX                  ;THERE'S NO FUCKING TEXT
+     481 00002420     b700          MOVE    *A8(OPLINK),A0,L
+         00002430     01f0  
+     482 00002440     ca03          JRZ     PUTOI1
+     483 00002450     0d5f          CALLA   KILL                    ;KILL US A PROCESS
+         00002460 00000000! 
+     484 00002480           PUTOI1
+     485 00002480     09c0          MOVI    OPTXTOID,A0
+         00002490     0a40  
+     486 000024a0     b008          MOVE    A0,*A8(OID),W           ;STUFF THE NEW I.D.
+         000024b0     01a0  
+     487 000024c0     09e1          MOVI    OPENTYPE,A1
+         000024d0 00000000! 
+     488 000024f0     09e4          MOVI    DMAWAL,A4
+         00002500 00008003  
+     489 00002520     0d5f          CALLA   ANI                     ;ANIMATE IT IN
+         00002530 00000000! 
+     490 00002550     4d08          MOVE    A8,A8
+     491 00002560           PUTOIX
+     492 00002560     09af          MMFM    SP,A0,A1,A4
+         00002570     0013  
+     493 00002580     0960          RETS
+     494                    
+     495                    **************************************************************************
+     496                    *                                                                        *
+     497                    * GETOSND - SELECT RANDOM OPEN UP SOUND                                  *
+     498                    * RETURNS                                                                *
+     499                    * A0 = PTR TO SOUND                                                      *
+     500                    *                                                                        *
+     501                    **************************************************************************
+     502 00002590           GETOSND
+     503 00002590     18a0          MOVK    5,A0
+     504 000025a0     0d5f          CALLA   RANDU
+         000025b0 00000000! 
+     505 000025d0     1420          DEC     A0
+     506 000025e0     24a0          SLL     5,A0
+     507 000025f0     0b20          ADDI    SNDOTAB,A0
+         00002600 00002640' 
+     508 00002620     8600          MOVE    *A0,A0,L                ;GET THE SOUND PTR
+     509 00002630     0960          RETS
+     510 00002640           SNDOTAB
+     511 00002640 00000000!         .LONG   OPENSD1,OPENSD2,OPENSD3,OPENSD4,OPENSD5
+     512                    **************************************************************************
+     513                    *                                                                        *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   13
+
+     514                    * DOORCOLP - DOOR COLLISION WITH A PLAYER                                *
+     515                    * A0 = PTR TO DOOR                                                       *
+     516                    * A8 = PTR TO PLAYER                                                     *
+     517                    *                                                                        *
+     518                    **************************************************************************
+     519 000026e0           DOOR1W1C
+     520 000026e0     09e7          MOVI    DOOR1W1,A7
+         000026f0 00000ce0' 
+     521 00002710     c06f          JRUC    DOORCOLG
+     522 00002720           DOORLFHC
+     523 00002720     09e7          MOVI    DOORLOFH,A7
+         00002730 00000570' 
+     524 00002750     c06b          JRUC    DOORCOLG
+     525                    *MR.BIG DOOR ENTRANCE COL
+     526 00002760           DOOR1BIG
+     527 00002760     09e7          MOVI    DOOREBIG,A7
+         00002770 00000630' 
+     528 00002790     c067          JRUC    DOORCOLG
+     529                    *DOGGY ROOM ENTRANCE
+     530 000027a0           DOOR1DOG
+     531 000027a0     09e7          MOVI    DOOREDOG,A7
+         000027b0 000006e0' 
+     532 000027d0     c063          JRUC    DOORCOLG
+     533                    *SUBWAY DOOR ENTRANCE
+     534 000027e0           DOOR1SUB
+     535 000027e0     09e7          MOVI    DOORESUB,A7
+         000027f0 000007b0' 
+     536 00002810     c05f          JRUC    DOORCOLG
+     537                    *BUG TRAP ROOM ENTRANCE
+     538 00002820           DOOR1BUG
+     539 00002820     09e7          MOVI    DOOREBUG,A7
+         00002830 00000860' 
+     540 00002850     c05b          JRUC    DOORCOLG
+     541                    *CLOWN TRAP ROOM ENTRANCE
+     542 00002860           DOOR1CLW
+     543 00002860     09e7          MOVI    DOORECLW,A7
+         00002870 00000930' 
+     544 00002890     c057          JRUC    DOORCOLG
+     545                    *DUMPSTER MAN TRAP ROOM ENTRANCE
+     546 000028a0           DOOR1DMP
+     547 000028a0     09e7          MOVI    DOOREDMP,A7
+         000028b0 00000a00' 
+     548 000028d0     c053          JRUC    DOORCOLG
+     549                    *SKYHIGH'S GREEN HOUSE ENTRANCE
+     550 000028e0           DOOR1GHS
+     551 000028e0     09e7          MOVI    DOOREGHS,A7
+         000028f0 00000ad0' 
+     552 00002910     c04f          JRUC    DOORCOLG
+     553                    *CHEMICAL LABRATORY ENTRANCE
+     554 00002920           DOOR1LAB
+     555 00002920     09e7          MOVI    DOORELAB,A7
+         00002930 00000b80' 
+     556 00002950     c04b          JRUC    DOORCOLG
+     557                    
+     558                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   14
+
+     559                    *LAST DOOR COLLISION NEEDING A "SAFE" CARD TO EXIT
+     560                    *A0 = PTR TO DOOR
+     561                    *A8 = PTR TO PLAYER
+     562                    *SILVER
+     563 00002960           DOORCOLS
+     564 00002960     09c3          MOVI    PSCARD,A3
+         00002970     0300  
+     565 00002980     09e7          MOVI    DOORENDS,A7
+         00002990 00001440' 
+     566 000029b0     c018          JRUC    DOORCOLC
+     567                    *RED    
+     568 000029c0           DOORCOLR
+     569 000029c0     09c3          MOVI    PRCARD,A3
+         000029d0     0310  
+     570 000029e0     09e7          MOVI    DOORENDR,A7
+         000029f0 00001480' 
+     571 00002a10     c012          JRUC    DOORCOLC
+     572                    *BLUE
+     573 00002a20           DOORCOLB
+     574 00002a20     09c3          MOVI    PBCARD,A3
+         00002a30     0308  
+     575 00002a40     09e7          MOVI    DOORENDB,A7
+         00002a50 000014c0' 
+     576 00002a70     c00c          JRUC    DOORCOLC
+     577                    *BLUE
+     578 00002a80           DOORCOLGR
+     579 00002a80     09c3          MOVI    PGRCARD,A3
+         00002a90     0320  
+     580 00002aa0     09e7          MOVI    DOORENDGR,A7
+         00002ab0 00001500' 
+     581 00002ad0     c006          JRUC    DOORCOLC
+     582                    *CHOPPER WAVE ENTRANCE
+     583 00002ae0           DOOR1CHP
+     584 00002ae0     09e7          MOVI    DOORECHP,A7
+         00002af0 00000c30' 
+     585 00002b10     09c3          MOVI    PGRCARD,A3
+         00002b20     0320  
+     586 00002b30     0300          JRUC    DOORCOLC
+     587 00002b40           DOORCOLC
+     588 00002b40     b402          MOVE    *A0(OID),A2,W
+         00002b50     01a0  
+     589 00002b60     2b82          SRA     4,A2
+     590 00002b70     2482          SLL     4,A2
+     591 00002b80     0b42          CMPI    BGDO1ID,A2
+         00002b90     fabf  
+     592 00002ba0     ca26          JREQ    DOORCOLG        ;THIS DOOR HAS ALREADY BEEN OPENED BY A CARD
+     593 00002bb0     05a2          MOVE    @NPLYRS,A2,W
+         00002bc0 00000000! 
+     594 00002be0     1422          DEC     A2              ;NOW MANY PLAYERS?
+     595 00002bf0     c70a          JRGT    DOORCNRM        ;THERE ARE TWO, NORMAL CARD SLOT CHECK
+     596                    *CARD CHECK FOR SINGLE PLAYER, IF EITHER PLAYER DATA STRUCTURE SHOWS THE 
+     597                    * PRESENCE OF THE CORRECT CARD, THE DOOR WILL OPEN
+     598 00002c00     09e2          MOVI    P1DATA,A2
+         00002c10 00000000! 
+     599 00002c30     4062          ADD     A3,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   15
+
+     600 00002c40     8e41          MOVB    *A2,A1
+     601 00002c50     cb1b          JRNZ    DOORCOLG        ;BR = P1 IS SHOWING THE PROPER CARD 
+     602 00002c60     09e2          MOVI    P2DATA,A2
+         00002c70 00000000! 
+     603 00002c90     c003          JRUC    DOORCWPD
+     604                    *CARD CHECK FOR TWO PLAYERS, ONLY THE PLAYER WITH THE CARD CAN OPEN THE DOOR
+     605 00002ca0           DOORCNRM
+     606 00002ca0     0d5f          CALLA   GPLAYERD        ;GET THE PLAYER DATA BLOCK
+         00002cb0 00000000! 
+     607 00002cd0           DOORCWPD
+     608 00002cd0     4062          ADD     A3,A2
+     609 00002ce0     8e43          MOVB    *A2,A3          ;CHECK THE "SAFE" CARD COUNTER
+     610 00002cf0     cb11          JRNZ    DOORCOLG        ;BR = HE'S GOT ONE      
+     611                    
+     612 00002d00     09c1          MOVI    SFLSHPID,A1
+         00002d10     26f0  
+     613 00002d20     09e7          MOVI    SLOTFLSH,A7     ;FLASH THE CARD SLOT
+         00002d30 00001ff0' 
+     614 00002d50     0d5f          CALLA   GETPRC
+         00002d60 00000000! 
+     615 00002d80     c01f          JRUC    DOORCOLX
+     616                    **************************************************************************
+     617                    *                                                                        *
+     618                    * DOORCOLE - LAST DOOR COLLISION WITH A PLAYER                           *
+     619                    * A0 = PTR TO DOOR                                                       *
+     620                    * A8 = PTR TO PLAYER                                                     *
+     621                    *                                                                        *
+     622                    **************************************************************************
+     623 00002d90           DOORCOLE
+     624 00002d90     09e7          MOVI    DOOREND,A7
+         00002da0 00001400' 
+     625 00002dc0     c004          JRUC    DOORCOLG
+     626 00002dd0           DOORCOLN
+     627 00002dd0     09e7          MOVI    DOORPOP,A7
+         00002de0 00001280' 
+     628 00002e00     0300          JRUC    DOORCOLG
+     629                    *
+     630                    *A7 = PROCESS TO CREATE IF POSSIBLE
+     631 00002e10           DOORCOLG
+     632 00002e10     4d0a          MOVE    A8,A10
+     633 00002e20     4c08          MOVE    A0,A8
+     634 00002e30     05a0          MOVE    @GAMSTATE,A0,W
+         00002e40 00000000! 
+     635 00002e60     0b40          CMPI    INAMODE,A0
+         00002e70     ffcf  
+     636 00002e80     ca0f          JREQ    DOORCOLX                ;NO DOOR OPENINGS DURING ATTRACT MODE
+     637 00002e90     b700          MOVE    *A8(OPLINK),A0,L
+         00002ea0     01f0  
+     638 00002eb0     cb0c          JRNZ    DOORCOLX
+     639 00002ec0     09e3          MOVI    DUMCOLL,A3
+         00002ed0 00000000! 
+     640 00002ef0     b268          MOVE    A3,*A8(OCVECT),L
+         00002f00     01d0  
+     641 00002f10     09c1          MOVI    0DD1H,A1
+         00002f20     0dd1  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   16
+
+     642 00002f30     0d5f          CALLA   GETPRC
+         00002f40 00000000! 
+     643 00002f60     b208          MOVE    A0,*A8(OPLINK),L
+         00002f70     01f0  
+     644 00002f80           DOORCOLX
+     645 00002f80     5600          CLR     A0      
+     646 00002f90     0960          RETS
+     647                    
+     648                    *
+     649                    *LAST SLOT COLLISION NEEDING A "SAFE" CARD TO EXIT
+     650                    *A0 = PTR TO SLOT
+     651                    *A8 = PTR TO PLAYER
+     652                    *SILVER
+     653 00002fa0           SLTCOLS
+     654 00002fa0     09c3          MOVI    PSCARD,A3
+         00002fb0     0300  
+     655 00002fc0     09e7          MOVI    SLOTENDS,A7
+         00002fd0 000037b0' 
+     656 00002ff0     c042          JRUC    SLTCOLC
+     657                    *RED    
+     658 00003000           SLTCOLR
+     659 00003000     09c3          MOVI    PRCARD,A3
+         00003010     0310  
+     660 00003020     09e7          MOVI    SLOTENDR,A7
+         00003030 000037f0' 
+     661 00003050     c03c          JRUC    SLTCOLC
+     662                    *BLUE
+     663 00003060           SLTCOLB
+     664 00003060     09c3          MOVI    PBCARD,A3
+         00003070     0308  
+     665 00003080     09e7          MOVI    SLOTENDB,A7
+         00003090 00003830' 
+     666 000030b0     c036          JRUC    SLTCOLC
+     667                    *GREEN
+     668 000030c0           SLTCOLGR
+     669 000030c0     09c3          MOVI    PGRCARD,A3
+         000030d0     0320  
+     670 000030e0     09e7          MOVI    SLOTENDGR,A7
+         000030f0 00003870' 
+     671 00003110     c030          JRUC    SLTCOLC
+     672                    *SAFE DOOR SLOT COLLISIONS
+     673                    *SILVER
+     674 00003120           SLOTSAFS
+     675 00003120     09c3          MOVI    PSCARD,A3
+         00003130     0300  
+     676 00003140     09e7          MOVI    SAFOPENS,A7
+         00003150 000043d0' 
+     677 00003170     c02a          JRUC    SLTCOLC
+     678                    *RED    
+     679 00003180           SLOTSAFR
+     680 00003180     09c3          MOVI    PRCARD,A3
+         00003190     0310  
+     681 000031a0     09e7          MOVI    SAFOPENR,A7
+         000031b0 000044a0' 
+     682 000031d0     c024          JRUC    SLTCOLC
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   17
+
+     683                    *BLUE
+     684 000031e0           SLOTSAFB
+     685 000031e0     09c3          MOVI    PBCARD,A3
+         000031f0     0308  
+     686 00003200     09e7          MOVI    SAFOPENB,A7
+         00003210 00004570' 
+     687 00003230     c01e          JRUC    SLTCOLC
+     688                    *GOLD TO VAULT
+     689 00003240           SLOTSAFG
+     690 00003240     09c3          MOVI    PGCARD,A3
+         00003250     0318  
+     691 00003260     09e7          MOVI    SAFOPENG,A7
+         00003270 00004640' 
+     692 00003290     c018          JRUC    SLTCOLC
+     693                    *GOLD TO HEAD ROOM
+     694 000032a0           SLOTSAFH
+     695 000032a0     09c3          MOVI    PGCARD,A3
+         000032b0     0318  
+     696 000032c0     09e7          MOVI    SAFOPENH,A7
+         000032d0 00004710' 
+     697 000032f0     c012          JRUC    SLTCOLC
+     698                    *SILVER END
+     699 00003300           SLOTSNDS
+     700 00003300     09c3          MOVI    PSCARD,A3
+         00003310     0300  
+     701 00003320     09e7          MOVI    SAFNDENS,A7
+         00003330 000047e0' 
+     702 00003350     c00c          JRUC    SLTCOLC
+     703                    *GOLD END
+     704 00003360           SLOTSNDG
+     705 00003360     09c3          MOVI    PGCARD,A3
+         00003370     0318  
+     706 00003380     09e7          MOVI    SAFNDENG,A7
+         00003390 000048c0' 
+     707 000033b0     c006          JRUC    SLTCOLC
+     708                    *GREEN
+     709 000033c0           SLOTSAFGR
+     710 000033c0     09c3          MOVI    PGRCARD,A3
+         000033d0     0320  
+     711 000033e0     09e7          MOVI    SAFOPENGR,A7
+         000033f0 000049a0' 
+     712 00003410     0300          JRUC    SLTCOLC
+     713                    
+     714                    *SLOT COLLISION CHECK, MAKE SURE SLICK HAS A CARD
+     715 00003420           SLTCOLC
+     716 00003420     05a2          MOVE    @NPLYRS,A2,W
+         00003430 00000000! 
+     717 00003450     1422          DEC     A2              ;NOW MANY PLAYERS?
+     718 00003460     c70a          JRGT    SLTCNRM         ;THERE ARE TWO, NORMAL CARD SLOT CHECK
+     719                    *CARD CHECK FOR SINGLE PLAYER, IF EITHER PLAYER DATA STRUCTURE SHOWS THE 
+     720                    * PRESENCE OF THE CORRECT CARD, THE DOOR WILL OPEN
+     721 00003470     09e2          MOVI    P1DATA,A2
+         00003480 00000000! 
+     722 000034a0     4062          ADD     A3,A2
+     723 000034b0     8e41          MOVB    *A2,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   18
+
+     724 000034c0     cb17          JRNZ    SLTCOLG         ;BR = P1 IS SHOWING THE PROPER CARD 
+     725 000034d0     09e2          MOVI    P2DATA,A2
+         000034e0 00000000! 
+     726 00003500     c003          JRUC    SLTCWPD
+     727                    *CARD CHECK FOR TWO PLAYERS, ONLY THE PLAYER WITH THE CARD CAN OPEN THE DOOR
+     728 00003510           SLTCNRM
+     729 00003510     0d5f          CALLA   GPLAYERD        ;GET THE PLAYER DATA BLOCK
+         00003520 00000000! 
+     730 00003540           SLTCWPD
+     731 00003540     4062          ADD     A3,A2
+     732 00003550     8e43          MOVB    *A2,A3          ;CHECK THE "SAFE" CARD COUNTER
+     733 00003560     cb0d          JRNZ    SLTCOLG ;BR = HE'S GOT ONE      
+     734 00003570     09c1          MOVI    SFLSHPID,A1
+         00003580     26f0  
+     735 00003590     09e7          MOVI    SLOTFLSH,A7     ;FLASH THE CARD SLOT
+         000035a0 00001ff0' 
+     736 000035c0     0d5f          CALLA   GETPRC
+         000035d0 00000000! 
+     737 000035f0     c015          JRUC    SLTCOLX
+     738                    **************************************************************************
+     739                    *                                                                        *
+     740                    * SLTCOLE - LAST SLOT COLLISION WITH A PLAYER                            *
+     741                    * A0 = PTR TO SLOT                                                       *
+     742                    * A8 = PTR TO PLAYER                                                     *
+     743                    *                                                                        *
+     744                    **************************************************************************
+     745 00003600           SLTCOLE
+     746 00003600     09e7          MOVI    SLOTEND,A7
+         00003610 00003770' 
+     747 00003630     0300          JRUC    SLTCOLG
+     748                    *
+     749                    *A7 = PROCESS TO CREATE IF POSSIBLE
+     750 00003640           SLTCOLG
+     751 00003640     4d0a          MOVE    A8,A10
+     752 00003650     4c08          MOVE    A0,A8
+     753 00003660     b700          MOVE    *A8(OPLINK),A0,L
+         00003670     01f0  
+     754 00003680     cb0c          JRNZ    SLTCOLX
+     755 00003690     09e3          MOVI    DUMCOLL,A3
+         000036a0 00000000! 
+     756 000036c0     b268          MOVE    A3,*A8(OCVECT),L
+         000036d0     01d0  
+     757 000036e0     09c1          MOVI    0DD2H,A1
+         000036f0     0dd2  
+     758 00003700     0d5f          CALLA   GETPRC
+         00003710 00000000! 
+     759 00003730     b208          MOVE    A0,*A8(OPLINK),L
+         00003740     01f0  
+     760 00003750           SLTCOLX
+     761 00003750     5600          CLR     A0      
+     762 00003760     0960          RETS
+     763                    
+     764                    **************************************************************************
+     765                    *                                                                        *
+     766                    * SLOTEND - ATTEMPT OPEN DOOR WITH THE END OF WAVE SLOT.                 *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   19
+
+     767                    * A8 = PTR TO SLOT                                                       *
+     768                    * A9 = PTR TO COLLISION VECTOR TO RE-STUFF                               *
+     769                    * A10 = PTR TO OBJECT                                                    *
+     770                    *                                                                        *
+     771                    **************************************************************************
+     772 00003770           SLOTEND
+     773 00003770     09e9          MOVI    SENDCOLL,A9
+         00003780 0000b7b0' 
+     774 000037a0     c010          JRUC    SLOTENDG
+     775 000037b0           SLOTENDS
+     776 000037b0     09e9          MOVI    SENDCOLS,A9
+         000037c0 0000b840' 
+     777 000037e0     c00c          JRUC    SLOTENDG
+     778 000037f0           SLOTENDR
+     779 000037f0     09e9          MOVI    SENDCOLR,A9
+         00003800 0000b8d0' 
+     780 00003820     c008          JRUC    SLOTENDG
+     781 00003830           SLOTENDB
+     782 00003830     09e9          MOVI    SENDCOLB,A9
+         00003840 0000b960' 
+     783 00003860     c004          JRUC    SLOTENDG
+     784 00003870           SLOTENDGR
+     785 00003870     09e9          MOVI    SENDCOLGR,A9
+         00003880 0000b9f0' 
+     786 000038a0     0300          JRUC    SLOTENDG
+     787                    *ENTRYPOINT
+     788 000038b0           SLOTENDG
+     789 000038b0     5600          CLR     A0
+     790 000038c0     0d3f          CALLR   CKPLSLOT                ;SEE IF THE PLAYER IS IN PROX
+         000038d0     001d  
+     791 000038e0     c914          JRNC    SLOTEND3                ;SLOT DIDN'T OPEN
+     792 000038f0     09e0          MOVI    EXITBLIP,A0
+         00003900 00000000! 
+     793 00003920     09e1          MOVI    BACKSLST,A1
+         00003930 00000000! 
+     794 00003950     0d3f          CALLR   ISSUPBLP        
+         00003960     0051  
+     795 00003970     ca0b          JREQ    SLOTEND3                ;THE DOOR DOESN'T EXIST
+     796 00003980                   PUSHP   A8
+     797 00003990     4c28          MOVE    A1,A8
+     798 000039a0                   JSRP    DOORBYSLT               ;OPEN THE DAMN DOOR
+     799 00003a10                   PULLP   A8
+     800 00003a30           SLOTEND3
+     801 00003a30     b328          MOVE    A9,*A8(OCVECT),L
+         00003a40     01d0  
+     802 00003a50     5729          CLR     A9
+     803 00003a60     b328          MOVE    A9,*A8(OPLINK),L
+         00003a70     01f0  
+     804 00003a80                   DIE
+     805                    
+     806                    **************************************************************************
+     807                    *                                                                        *
+     808                    * CKPLSLOT - CHECK THE PLAYER AGAINST A CARD SLOT TO SEE IF HE IS        *
+     809                    *               ORIENTED TO OPERATE IT.                                  *
+     810                    * A8 = SLOT PTR                                                          *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   20
+
+     811                    * A10 = PLAYER PTR                                                       *
+     812                    * RETURNS                                                                *
+     813                    *       C CLR = NOT READY                                                *
+     814                    *       C SET = READY                                                    *
+     815                    *                                                                        *
+     816                    **************************************************************************
+     817 00003ab0           CKPLSLOT
+     818 00003ab0     098f          MMTM    SP,A1,A2,A3,A4
+         00003ac0     7800  
+     819 00003ad0     4d03          MOVE    A8,A3
+     820 00003ae0     4d48          MOVE    A10,A8
+     821 00003af0     0d5f          CALLA   GPLAYERD                ;GET THE PLAYER DATA STRUCTURE
+         00003b00 00000000! 
+     822 00003b20     4c68          MOVE    A3,A8
+     823 00003b30     4c42          MOVE    A2,A2
+     824 00003b40     ca2f          JRZ     CKPLSF                  ;NO PLAYER
+     825 00003b50     b443          MOVE    *A2(PIRQFLAG),A3,W
+         00003b60     0080  
+     826 00003b70     0b83          ANDI    MDRIVER|MPASSEN,A3
+         00003b80 ffffe7ff  
+     827 00003ba0     cb29          JRNE    CKPLSF                  ;GUYS ARE IN THE CAR
+     828 00003bb0     b443          MOVE    *A2(PSWTCH),A3
+         00003bc0     00c0  
+     829                    
+     830 00003bd0     1f83          BTST    BPRYTE,A3
+     831 00003be0     cb25          JRNE    CKPLSF
+     832 00003bf0     1fa3          BTST    BPLEFT,A3
+     833 00003c00     cb23          JRNE    CKPLSF                  ;BR = MUST GO STRAIGHT UP
+     834 00003c10     1fe3          BTST    BPUP,A3
+     835 00003c20     ca21          JREQ    CKPLSF
+     836 00003c30     b502          MOVE    *A8(OXPOS),A2,W         ;JUST CHECK AGAINST THE FULL DOOR
+         00003c40     0090  
+     837 00003c50     b503          MOVE    *A8(OSIZEX),A3,W
+         00003c60     0140  
+     838 00003c70     4043          ADD     A2,A3
+     839 00003c80                   SWAP    A10,A8
+     840 00003cb0     0d5f          CALLA   GETCPNT
+         00003cc0 00000000! 
+     841 00003ce0                   SWAP    A10,A8
+     842 00003d10     b544          MOVE    *A10(OSIZEX),A4,W
+         00003d20     0140  
+     843 00003d30     2be4          SRA     1,A4
+     844 00003d40     0521          ZEXT    A1
+     845 00003d50     4481          SUB     A4,A1
+     846 00003d60     0d5f          CALLA   CHKRANGE
+         00003d70 00000000! 
+     847 00003d90     c806          JRC     CKPLSH                  ;IN RANGE, HIT IT
+     848 00003da0     2424          SLL     1,A4
+     849 00003db0     4081          ADD     A4,A1
+     850 00003dc0     0d5f          CALLA   CHKRANGE
+         00003dd0 00000000! 
+     851 00003df0     c904          JRNC    CKPLSF                  ;NOT IN RANGE AT ALL
+     852 00003e00           CKPLSH
+     853 00003e00     0de0          SETC
+     854 00003e10     09af          MMFM    SP,A1,A2,A3,A4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   21
+
+         00003e20     001e  
+     855 00003e30     0960          RETS
+     856 00003e40           CKPLSF
+     857 00003e40     0320          CLRC
+     858 00003e50     09af          MMFM    SP,A1,A2,A3,A4
+         00003e60     001e  
+     859 00003e70     0960          RETS
+     860                    
+     861                    **************************************************************************
+     862                    *                                                                        *
+     863                    * ISSUPBLP - IS AN OBJECT ON A SUPPLEMENTAL LIST(SEARCH BY SCANNER BLIP.)*
+     864                    * A0 = OBLIPIMG PTR                                                      *
+     865                    * A1 = MEMORY LOCATION OF SUPPLEMENTAL LIST HEADER                       *
+     866                    * RETURNS:                                                               *
+     867                    *  Z BIT SET = NOT ON                                                    *
+     868                    *              A1 = ZERO                                                 *
+     869                    *  Z BIT CLR = IS ON                                                     *
+     870                    *              A1 = PTR TO OBJECT                                        *       
+     871                    *                                                                        *
+     872                    **************************************************************************
+     873 00003e80           ISSUPBLP
+     874 00003e80                   PUSH    A2      
+     875 00003e90     8621          MOVE    *A1,A1,L        ;SPECIAL CASE THE HEADER
+     876 00003ea0     ca05          JREQ    ISENDBP
+     877 00003eb0     b622          MOVE    *A1(OBLIPIMG),A2,L
+         00003ec0     0260  
+     878 00003ed0     4840          CMP     A2,A0
+     879 00003ee0     cb04          JRNE    ISSRCHBP
+     880 00003ef0           ISFNDBP
+     881 00003ef0     4c21          MOVE    A1,A1           ;SET Z BIT
+     882 00003f00           ISENDBP
+     883 00003f00                   PULL    A2
+     884 00003f20     0960          RETS
+     885 00003f30           ISSRCHBP
+     886 00003f30     b621          MOVE    *A1(OSLINK),A1,L        ;SEARCHING FOR THE ELEMENT IN THE LIST
+         00003f40     0020  
+     887 00003f50     cafa          JREQ    ISENDBP                 ;ELEMENT DOES NOT EXIST
+     888 00003f60     b622          MOVE    *A1(OBLIPIMG),A2,L
+         00003f70     0260  
+     889 00003f80     4840          CMP     A2,A0
+     890 00003f90     cbf9          JRNE    ISSRCHBP                ;NOT FOUND KEEP LOOKING
+     891 00003fa0     c0f4          JRUC    ISFNDBP                 ;FOUND RETURN
+     892                    
+     893                    **************************************************************************
+     894                    *                                                                        *
+     895                    * CLRGOAL - CLEAR THE CURRENT TOP LEVEL GOAL DOOR                        *
+     896                    *                                                                        *
+     897                    **************************************************************************
+     898 00003fb0           CLRGOAL
+     899 00003fb0     098f          MMTM    SP,A0,A1,A3,A4,A10
+         00003fc0     d820  
+     900 00003fd0     09ea          MOVI    GOALDOOR,A10
+         00003fe0 00000000! 
+     901 00004000     8544          MOVE    *A10,A4,W
+     902 00004010     ce27          JRN     NOCLRGOL                ;NO GOAL DOOR TO CLEAR
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   22
+
+     903 00004020     09e3          MOVI    DUMCOLL,A3
+         00004030 00000000! 
+     904 00004050     b26a          MOVE    A3,*A10(INITCVEC),L     ;NULL COLLISION
+         00004060     00e0  
+     905 00004070     5684          CLR     A4
+     906 00004080     0584          MOVE    A4,@XSCROLLS,W          ;CLEAR THE SCROLL STOPPER
+         00004090 00000000! 
+     907 000040b0     b28a          MOVE    A4,*A10(INITBLIP),L     ;BLOW THE BLIP  
+         000040c0     0120  
+     908 000040d0     03e4          NOT     A4                      
+     909 000040e0     b08a          MOVE    A4,*A10(INITSIZE),W     ;BLOCK THE ARROW
+         000040f0     0140  
+     910 00004100     09e0          MOVI    GOALBLIP,A0
+         00004110 00000000! 
+     911 00004130     0d5f          CALLA   ISBBBLP                 ;LOOK FOR GOAL BLIP ON BBLIST
+         00004140 00000000! 
+     912 00004160     ca07          JREQ    CLRARRW                 ;NO DOOR TO FREEZE      
+     913 00004170     b608          MOVE    *A0(NPTR),A8,L          ;GET THE IMAGE PTR
+         00004180     0020  
+     914 00004190     0d5f          CALLA   BLIPOFF                 ;TURN THIS DUDES BLIP OFF
+         000041a0 00000000! 
+     915 000041c0     b268          MOVE    A3,*A8(OCVECT),L        ;CAN THE COLLISION VECTOR
+         000041d0     01d0  
+     916 000041e0           CLRARRW
+     917 000041e0     09c0          MOVI    ARROWOID,A0
+         000041f0     0a10  
+     918 00004200     5621          CLR     A1
+     919 00004210     03e1          NOT     A1
+     920 00004220     0d5f          CALLA   ISBBID                  ;LOOK FOR ARROW MARKER OBJECT
+         00004230 00000000! 
+     921 00004250     ca03          JREQ    NOCLRGOL                ;NO ARROW TO DOG
+     922 00004260     0d5f          CALLA   DELBBOBJ                ;FULLY DELETE A BBLIST OBJECT
+         00004270 00000000! 
+     923 00004290           NOCLRGOL
+     924 00004290     09af          MMFM    SP,A0,A1,A3,A4,A10
+         000042a0     041b  
+     925 000042b0     0960          RETS
+     926                    
+     927                    **************************************************************************
+     928                    *                                                                        *
+     929                    * SAFE DOOR ROUTINES                                                     *
+     930                    *                                                                        *
+     931                    **************************************************************************
+     932                    *
+     933                    *PLAYER COLLISION WITH A SAFE DOOR
+     934                    *A0 = PTR TO SAFE DOOR
+     935                    *A8 = PTR TO PLAYER
+     936 000042c0           SAFECOL
+     937 000042c0     b401          MOVE    *A0(OID),A1,W
+         000042d0     01a0  
+     938 000042e0     2f81          SRL     4,A1
+     939 000042f0     2481          SLL     4,A1
+     940 00004300     0b41          CMPI    BGDCID,A1
+         00004310     faff  
+     941 00004320     cb08          JRNE    SAFECOLX        ;NO BEEPY FOR CLOSED DOOR
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   23
+
+     942 00004330     09c1          MOVI    SFLSHPID,A1
+         00004340     26f0  
+     943 00004350     09e7          MOVI    SLOTFLSH,A7     ;FLASH THE CARD SLOT
+         00004360 00001ff0' 
+     944 00004380     0d5f          CALLA   GETPRC
+         00004390 00000000! 
+     945 000043b0           SAFECOLX
+     946 000043b0     5600          CLR     A0      
+     947 000043c0     0960          RETS
+     948                            
+     949                    **************************************************************************
+     950                    *                                                                        *
+     951                    * SLOTEND - ATTEMPT OPEN DOOR WITH THE END OF WAVE SLOT.                 *
+     952                    * A8 = PTR TO SLOT                                                       *
+     953                    * A9 = PTR TO COLLISION VECTOR TO RE-STUFF                               *
+     954                    * A10 = PTR TO OBJECT                                                    *
+     955                    *                                                                        *
+     956                    **************************************************************************
+     957 000043d0           SAFOPENS
+     958 000043d0     09e9          MOVI    SLOTCOLS,A9
+         000043e0 0000ba80' 
+     959 00004400     09e5          MOVI    SILVMESS,A5
+         00004410 0000adf0' 
+     960 00004430     09e6          MOVI    SILVDP,A6
+         00004440 00004a70' 
+     961 00004460     09e7          MOVI    SILVBAK,A7
+         00004470 00000000! 
+     962 00004490     c07b          JRUC    SAFEOPEN
+     963 000044a0           SAFOPENR
+     964 000044a0     09e9          MOVI    SLOTCOLR,A9
+         000044b0 0000bb10' 
+     965 000044d0     09e5          MOVI    REDMESS,A5
+         000044e0 0000a5c0' 
+     966 00004500     09e6          MOVI    REDDP,A6
+         00004510 00004ad0' 
+     967 00004530     09e7          MOVI    REDBAK,A7
+         00004540 00000000! 
+     968 00004560     c06e          JRUC    SAFEOPEN
+     969 00004570           SAFOPENB
+     970 00004570     09e9          MOVI    SLOTCOLB,A9
+         00004580 0000bba0' 
+     971 000045a0     09e5          MOVI    BLUEMESS,A5
+         000045b0 0000adc0' 
+     972 000045d0     09e6          MOVI    BLUEDP,A6
+         000045e0 00004b30' 
+     973 00004600     09e7          MOVI    BLUEBAK,A7
+         00004610 00000000! 
+     974 00004630     c061          JRUC    SAFEOPEN
+     975 00004640           SAFOPENG
+     976 00004640     09e9          MOVI    SLOTCOLG,A9
+         00004650 0000bc30' 
+     977 00004670     09e5          MOVI    DUMRETP,A5
+         00004680 00000000! 
+     978 000046a0     09e6          MOVI    GOLDDP,A6
+         000046b0 00004b90' 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   24
+
+     979 000046d0     09e7          MOVI    GOLDBAK,A7
+         000046e0 00000000! 
+     980 00004700     c054          JRUC    SAFEOPEN
+     981                    *GOLD SAFE DOORS TO HEAD ROOM
+     982 00004710           SAFOPENH
+     983 00004710     09e9          MOVI    SLOTCOLH,A9
+         00004720 0000bcc0' 
+     984 00004740     09e5          MOVI    DUMRETP,A5
+         00004750 00000000! 
+     985 00004770     09e6          MOVI    HEADDP,A6
+         00004780 00004bf0' 
+     986 000047a0     09e7          MOVI    HEADBAK,A7
+         000047b0 00000000! 
+     987 000047d0     c047          JRUC    SAFEOPEN
+     988                    
+     989                    *SILVER SAFE OPEN TO END OF WAVE
+     990 000047e0           SAFNDENS
+     991 000047e0     09e9          MOVI    SLOTCNDS,A9
+         000047f0 0000bde0' 
+     992 00004810     09e5          MOVI    SILVMESS,A5
+         00004820 0000adf0' 
+     993 00004840     09e6          MOVI    SILVDP,A6
+         00004850 00004a70' 
+     994 00004870     09e7          MOVI    SILVBAK,A7
+         00004880 00000000! 
+     995 000048a0     c000          JRUC    SAFENDEN
+         000048b0     0284  
+     996                    *GOLD SAFE OPEN TO END OF WAVE
+     997 000048c0           SAFNDENG
+     998 000048c0     09e9          MOVI    SLOTCNDG,A9
+         000048d0 0000be70' 
+     999 000048f0     09e5          MOVI    DUMRETP,A5
+         00004900 00000000! 
+    1000 00004920     09e6          MOVI    GOLDDP,A6
+         00004930 00004b90' 
+    1001 00004950     09e7          MOVI    GOLDBAK,A7
+         00004960 00000000! 
+    1002 00004980     c000          JRUC    SAFENDEN
+         00004990     0276  
+    1003                    
+    1004 000049a0           SAFOPENGR
+    1005 000049a0     09e9          MOVI    SLOTCOLGR,A9
+         000049b0 0000bd50' 
+    1006 000049d0     09e5          MOVI    DUMRETP,A5
+         000049e0 00000000! 
+    1007 00004a00     09e6          MOVI    ROOM1DP,A6
+         00004a10 00000f20' 
+    1008 00004a30     09e7          MOVI    REDBAK,A7
+         00004a40 00000000! 
+    1009 00004a60     c01e          JRUC    SAFEOPEN
+    1010                    *
+    1011                    *SAFE DISPATCH PROCS
+    1012                    *SILVER
+    1013 00004a70           SILVDP
+    1014 00004a70     09e2          MOVI    SILVDSP,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   25
+
+         00004a80 00000000! 
+    1015 00004aa0     c080          JAUC    MASTERG
+         00004ab0 00000000! 
+    1016                    *RED
+    1017 00004ad0           REDDP
+    1018 00004ad0     09e2          MOVI    REDDSP,A2
+         00004ae0 00000000! 
+    1019 00004b00     c080          JAUC    MASTERG
+         00004b10 00000000! 
+    1020                    *BLUE
+    1021 00004b30           BLUEDP
+    1022 00004b30     09e2          MOVI    BLUEDSP,A2
+         00004b40 00000000! 
+    1023 00004b60     c080          JAUC    MASTERG
+         00004b70 00000000! 
+    1024                    *GOLD VAULT
+    1025 00004b90           GOLDDP
+    1026 00004b90     09e2          MOVI    GOLDDSP,A2
+         00004ba0 00000000! 
+    1027 00004bc0     c080          JAUC    MASTERG
+         00004bd0 00000000! 
+    1028                    *GOLD HEAD ROOM
+    1029 00004bf0           HEADDP
+    1030 00004bf0     09e2          MOVI    HEADDSP,A2
+         00004c00 00000000! 
+    1031 00004c20     c080          JAUC    MASTERG
+         00004c30 00000000! 
+    1032                    
+    1033                    *ENTRYPOINT FOR OPENING THE SAFE AND WALKING IN
+    1034                    *A5 = SUBROUTINE TO CALL BEFORE EXPANDING TO THE NEW SAFE
+    1035                    *A6 = DISPATCH PROC TO START
+    1036                    *A7 = NEW BACKGROUND TO FIRE UP
+    1037                    *A9 = COLLISION VECTOR TO RE-STUFF ON FAILURE.
+    1038 00004c50           SAFEOPEN
+    1039 00004c50     5600          CLR     A0
+    1040 00004c60     0d3f          CALLR   CKPLSLOT                ;SEE IF THE PLAYER IS IN PROX
+         00004c70     fee3  
+    1041 00004c80     c900          JRNC    SAFEOP3                 ;SLOT DIDN'T OPEN
+         00004c90     023e  
+    1042 00004ca0                   PUSHP   A8
+    1043 00004cb0     b2ad          MOVE    A5,*A13(PDATA+40H),L    ;SAVE THE ADDRESS HERE
+         00004cc0     00a0  
+    1044 00004cd0     09c0          MOVI    BGDCID|SAFEDRL,A0
+         00004ce0     0504  
+    1045 00004cf0     09e1          MOVI    BACKSLST,A1
+         00004d00 00000000! 
+    1046 00004d20     0d5f          CALLA   ISSUPPID                ;LOOK FOR LEFT SAFE DOOR        
+         00004d30 00000000! 
+    1047 00004d50     ca00          JRZ     SAFEOP2                 ;NO DOOR, NO OPEN, JOE
+         00004d60     022f  
+    1048 00004d70     4c28          MOVE    A1,A8
+    1049 00004d80     07a2          MOVE    @SCRNTL,A2,L            ;GET SCREEN TOP LEFT
+         00004d90 00000000! 
+    1050 00004db0     07a3          MOVE    @SCRNLR,A3,L            ;GET SCREEN LOWER RT.
+         00004dc0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   26
+
+    1051 00004de0     0b02          ADDI    50,A2
+         00004df0     0032  
+    1052 00004e00     0be3          SUBI    50,A3                   ;MAKE MY OWN BOUNDRIES
+         00004e10     ffcd  
+    1053 00004e20     0d5f          CALLA   SCRTSTG
+         00004e30 00000000! 
+    1054 00004e50     cb00          JRNZ    SAFEOP2                 ;BR = DOOR IS NOT ON SCREEN
+         00004e60     021f  
+    1055 00004e70     4d0b          MOVE    A8,A11
+    1056 00004e80     b700          MOVE    *A8(OPLINK),A0,L        ;ANYTHING GOIN' DOWN
+         00004e90     01f0  
+    1057 00004ea0     ca03          JRZ     SAFEOP1                 ;BR = NO DUDE
+    1058 00004eb0     0d5f          CALLA   KILL
+         00004ec0 00000000! 
+    1059 00004ee0           SAFEOP1
+    1060 00004ee0     09c0          MOVI    BGDCID|SAFEDRR,A0
+         00004ef0     0505  
+    1061 00004f00     09e1          MOVI    BACKSLST,A1
+         00004f10 00000000! 
+    1062 00004f30     0d5f          CALLA   ISSUPPID                ;LOOK FOR RIGHT SAFE DOOR       
+         00004f40 00000000! 
+    1063 00004f60     4c28          MOVE    A1,A8
+    1064 00004f70     07a2          MOVE    @SCRNTL,A2,L            ;GET SCREEN TOP LEFT
+         00004f80 00000000! 
+    1065 00004fa0     07a3          MOVE    @SCRNLR,A3,L            ;GET SCREEN LOWER RT.
+         00004fb0 00000000! 
+    1066 00004fd0     0b02          ADDI    50,A2
+         00004fe0     0032  
+    1067 00004ff0     0be3          SUBI    50,A3
+         00005000     ffcd  
+    1068 00005010     0d5f          CALLA   SCRTSTG
+         00005020 00000000! 
+    1069 00005040     cb00          JRNZ    SAFEOP2                 ;BR = RIGHT DOOR IS NOT ON THE SCREEN
+         00005050     0200  
+    1070 00005060     b700          MOVE    *A8(OPLINK),A0,L        ;KILL OFF OTHER RIGHT DOOR PROC
+         00005070     01f0  
+    1071 00005080     ca03          JRZ     SAFEOP1B                ;BR = NONE TO WASTE
+    1072 00005090     0d5f          CALLA   KILL
+         000050a0 00000000! 
+    1073 000050c0           SAFEOP1B
+    1074 000050c0     4f00          MOVE    A8,B0
+    1075 000050d0     4d48          MOVE    A10,A8
+    1076 000050e0     0d5f          CALLA   GPLAYERD
+         000050f0 00000000! 
+    1077                    
+    1078                    *CHECK TO SEE IF PLAYER CAN WALK AFTER OPENING SAFE, ESCAPE IF UNABLE.
+    1079 00005110     b440          MOVE    *A2(PEXEFLAG),A0,W
+         00005120     0090  
+    1080 00005130     0b80          ANDI    MFHOLD|MDHOLD|MDYING|MDEAD,A0   
+         00005140 ffffff39  
+    1081 00005160     cb00          JRNE    SAFEOP2                 ;BR = PLAYER IS IN NO SHAPE TO OPEN
+         00005170     01ee  
+    1082 00005180     b440          MOVE    *A2(PIRQFLAG),A0,W
+         00005190     0080  
+    1083 000051a0     0b80          ANDI    MJUMP1|MJUMP2|MDRIVER|MPASSEN,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   27
+
+         000051b0 ffffe7f9  
+    1084 000051d0     cb00          JRNE    SAFEOP2                 ;BR = MORE DISQUALS
+         000051e0     01e7  
+    1085                    
+    1086                    *PROTECTION BOY, PROTECTION
+    1087 000051f0     1820          MOVK    1,A0
+    1088 00005200     0580          MOVE    A0,@PUPDATE,W
+         00005210 00000000! 
+    1089                    
+    1090 00005230     b440          MOVE    *A2(PEXEFLAG),A0,W
+         00005240     0090  
+    1091 00005250     0ba0          ORI     MINVINC,A0      
+         00005260 00000010  
+    1092 00005280     b002          MOVE    A0,*A2(PEXEFLAG),W      
+         00005290     0090  
+    1093 000052a0     b440          MOVE    *A2(PPID),A0,W
+         000052b0     0240  
+    1094 000052c0     0b00          ADDI    PIPID,A0
+         000052d0     0030  
+    1095 000052e0     5621          CLR     A1
+    1096 000052f0     03e1          NOT     A1
+    1097 00005300     0d5f          CALLA   KILALL                  ;KILL PLAYER INVINCIBLE PROC.
+         00005310 00000000! 
+    1098                            
+    1099 00005330     b24d          MOVE    A2,*A13(PDATA),L
+         00005340     0060  
+    1100 00005350     b648          MOVE    *A2(POBJ),A8,L
+         00005360     00a0  
+    1101 00005370     0d5f          CALLA   PSTOP
+         00005380 00000000! 
+    1102 000053a0     b648          MOVE    *A2(PLOBJ),A8,L
+         000053b0     0120  
+    1103 000053c0     0d5f          CALLA   PSTOP                   ;STOP BOTH PLAYER PARTS
+         000053d0 00000000! 
+    1104 000053f0     0d3f          CALLR   PUTOPENI
+         00005400     fcf5  
+    1105 00005410     4e18          MOVE    B0,A8
+    1106 00005420     b3a8          MOVE    A13,*A8(OPLINK),L       ;THIS IS THE ONE
+         00005430     01f0  
+    1107 00005440     098c          MMTM    A12,A6,A7
+         00005450     0300  
+    1108 00005460     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE SAFE MIDDLE X
+         00005470     0090  
+    1109 00005480     1300          ADDK    24,A0                   ;FUDGER BOY
+    1110 00005490     b00d          MOVE    A0,*A13(PDATA+20H),W    ;SAVE IT HERE
+         000054a0     0080  
+    1111 000054b0           SAFEOPWW
+    1112 000054b0     09c0          MOVI    4000H,A0
+         000054c0     4000  
+    1113 000054d0     4c01          MOVE    A0,A1
+    1114 000054e0     0d5f          CALLA   EXISTP                  ;WAVE END WAIT?
+         000054f0 00000000! 
+    1115 00005510     ca07          JRZ     SAFEOPW1                ;BR = NO
+    1116 00005520                   SLOOP   1,SAFEOPWW              ;GIVE THEM TIME TO COMPLETE
+    1117 00005590           SAFEOPW1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   28
+
+    1118 00005590     0d5f          CALLA   KILLWAVE
+         000055a0 00000000! 
+    1119 000055c0                   SOUND1  MUSICOFF
+    1120 00005620     5600          CLR     A0
+    1121 00005630     0580          MOVE    A0,@PUPDATE,W
+         00005640 00000000! 
+    1122 00005660                   SWAP    A8,A10                  ;GET THE PLAYER PTR
+    1123 00005690     0d5f          CALLA   GPLAYERD        
+         000056a0 00000000! 
+    1124 000056c0                   SWAP    A8,A10
+    1125 000056f0     0d5f          CALLA   BOTHPON
+         00005700 00000000! 
+    1126 00005720     1820          MOVK    1,A0
+    1127 00005730     0580          MOVE    A0,@GAMERASE,W          ;TURN ON FULL SCREEN AUTOERASE
+         00005740 00000000! 
+    1128 00005760                   SLEEP   2
+    1129 000057a0                   SOUND1  OPENBEEP
+    1130 00005800                   SLEEP   18H
+    1131 00005840                   SOUND1  SAFEMOTR                ;START THE SAFE MOTOR
+    1132 000058a0                   SWAP    A11,A8
+    1133 000058d0                   CREATE  SAFOLPID,OPENSAFL       ;OPEN THE LEFT DOOR
+    1134 00005950     b208          MOVE    A0,*A8(OPLINK),L
+         00005960     01f0  
+    1135 00005970                   SWAP    A11,A8
+    1136 000059a0                   JSRP    SLIDOPR                 ;AND THE RIGHT DOOR     
+    1137 00005a10     5600          CLR     A0
+    1138 00005a20     b208          MOVE    A0,*A8(OPLINK),L
+         00005a30     01f0  
+    1139 00005a40                   SOUND1  YAMOFF                  ;ESCALATOR OFF
+    1140 00005aa0                   SOUND1  SAFEHIT
+    1141                    
+    1142 00005b00     098f          MMTM    SP,A9,A10,A11
+         00005b10     0070  
+    1143 00005b20     b540          MOVE    *A10(OID),A0,W
+         00005b30     01a0  
+    1144 00005b40     0b40          CMPI    P1OID,A0
+         00005b50     efff  
+    1145 00005b60     cb0a          JRNE    SAFEOPP2
+    1146 00005b70     09e3          MOVI    P1CTRL,A3
+         00005b80 00000000! 
+    1147 00005ba0     09e9          MOVI    P2DATA,A9
+         00005bb0 00000000! 
+    1148 00005bd0     09ea          MOVI    P2CTRL,A10
+         00005be0 00000000! 
+    1149 00005c00     c009          JRUC    SAFEOPPX
+    1150 00005c10           SAFEOPP2
+    1151 00005c10     09e3          MOVI    P2CTRL,A3
+         00005c20 00000000! 
+    1152 00005c40     09e9          MOVI    P1DATA,A9
+         00005c50 00000000! 
+    1153 00005c70     09ea          MOVI    P1CTRL,A10
+         00005c80 00000000! 
+    1154 00005ca0           SAFEOPPX
+    1155 00005ca0     b5ab          MOVE    *A13(PDATA+20H),A11,W   ;GET THE STORED X POS
+         00005cb0     0080  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   29
+
+    1156 00005cc0                   CREATE  INDPID,PTOSAFE          ;MAKE THE OTHER PLAYER GET THERE
+    1157 00005d40     09af          MMFM    SP,A9,A10,A11
+         00005d50     0e00  
+    1158 00005d60     09c0          MOVI    PLEFT,A0
+         00005d70     0004  
+    1159 00005d80     8003          MOVE    A0,*A3,W
+    1160 00005d90     098c          MMTM    A12,A3,A8,A11
+         00005da0     1090  
+    1161 00005db0     b5ab          MOVE    *A13(PDATA+20H),A11,W   ;GET THE STORED X POS
+         00005dc0     0080  
+    1162 00005dd0     4d48          MOVE    A10,A8
+    1163 00005de0     09c2          MOVI    150,A2                  ;MAXIMUM WAIT TIME * 4
+         00005df0     0096  
+    1164 00005e00           SAFEWLP
+    1165 00005e00     0d5f          CALLA   GETANIX 
+         00005e10 00000000! 
+    1166 00005e30     4960          CMP     A11,A0
+    1167 00005e40     c211          JRLS    SAFEWCP
+    1168 00005e50                   PUSHP   A2
+    1169 00005e60                   SLEEP   4
+    1170 00005ea0                   PULLP   A2
+    1171 00005ec0     3da2          DSJS    A2,SAFEWLP
+    1172 00005ed0     09ac          MMFM    A12,A3,A8,A11
+         00005ee0     0908  
+    1173 00005ef0     b7a2          MOVE    *A13(PDATA),A2,L        ;GET THIS PTR BACK
+         00005f00     0060  
+    1174 00005f10     b64a          MOVE    *A2(POBJ),A10,L         ;JUST TO MAKE CERTAIN
+         00005f20     00a0  
+    1175 00005f30     b644          MOVE    *A2(PLOBJ),A4,L
+         00005f40     0120  
+    1176 00005f50     c019          JRUC    SAFEWESC
+    1177 00005f60           SAFEWCP
+    1178 00005f60     09ac          MMFM    A12,A3,A8,A11
+         00005f70     0908  
+    1179 00005f80     b7a2          MOVE    *A13(PDATA),A2,L        ;GET THIS PTR BACK
+         00005f90     0060  
+    1180 00005fa0     b64a          MOVE    *A2(POBJ),A10,L         ;JUST TO MAKE CERTAIN
+         00005fb0     00a0  
+    1181 00005fc0     b644          MOVE    *A2(PLOBJ),A4,L
+         00005fd0     0120  
+    1182 00005fe0     b540          MOVE    *A10(OZPOS),A0,W
+         00005ff0     00d0  
+    1183 00006000     1400          SUBK    32,A0
+    1184 00006010     b00a          MOVE    A0,*A10(OZPOS),W
+         00006020     00d0  
+    1185 00006030     b004          MOVE    A0,*A4(OZPOS),W
+         00006040     00d0  
+    1186 00006050     09c0          MOVI    PUP,A0  
+         00006060     0001  
+    1187 00006070     8003          MOVE    A0,*A3,W
+    1188 00006080                   PUSHP   A3
+    1189 00006090                   SLEEP   16
+    1190 000060d0                   PULLP   A3
+    1191 000060f0           SAFEWESC
+    1192 000060f0     5600          CLR     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   30
+
+    1193 00006100     8003          MOVE    A0,*A3,W
+    1194 00006110                   SWAP    A11,A8
+    1195 00006140                   CREATE  SAFCLPID,CLOSSAFL       ;CLOSE THE DAMN DOOR
+    1196 000061c0     b208          MOVE    A0,*A8(OPLINK),L
+         000061d0     01f0  
+    1197 000061e0                   SWAP    A11,A8
+    1198 00006210                   SOUND1  SAFEMOTR                ;START THE SAFE MOTOR
+    1199 00006270                   JSRP    SLIDCLR 
+    1200 000062e0     5600          CLR     A0
+    1201 000062f0     b208          MOVE    A0,*A8(OPLINK),L
+         00006300     01f0  
+    1202 00006310                   SOUND1  YAMOFF                  ;ESCALATOR OFF
+    1203 00006370                   SOUND1  SAFEHIT
+    1204                    *SHRINK AND COME UP IN THE NEXT ROOM
+    1205                    ***     MOVK    1,A0
+    1206                    ***     MOVE    A0,@GAMERASE,W          ;TURN ON FULL SCREEN AUTOERASE
+    1207 000063d0     098c          MMTM    A12,A8,A9,A10,A11
+         000063e0     00f0  
+    1208 000063f0     5729          CLR     A9
+    1209 00006400     0589          MOVE    A9,@IRQSKYE,W           ;CLEAR AUTO-ERASE COLOR
+         00006410 00000000! 
+    1210                    
+    1211 00006430     4d60          MOVE    A11,A0
+    1212 00006440     0d5f          CALLA   GSCRNREL                ;GET THE SCREEN RELATIVE SAFE DOOR
+         00006450 00000000! 
+    1213 00006470     2e01          SRL     16,A1
+    1214 00006480     ec2a          MOVX    A1,A10
+    1215 00006490     ee4a          MOVY    A2,A10
+    1216 000064a0     4d00          MOVE    A8,A0
+    1217 000064b0     0d5f          CALLA   GSCRNREL
+         000064c0 00000000! 
+    1218 000064e0     2e01          SRL     16,A1
+    1219 000064f0     b50b          MOVE    *A8(OSIZEX),A11,W
+         00006500     0140  
+    1220 00006510     402b          ADD     A1,A11
+    1221 00006520     b501          MOVE    *A8(OSIZEY),A1,W
+         00006530     0150  
+    1222 00006540     2601          SLL     16,A1
+    1223 00006550     4041          ADD     A2,A1
+    1224 00006560     ee2b          MOVY    A1,A11
+    1225 00006570     1800          MOVK    32,A0                   ;IN A HALF SECOND
+    1226 00006580                   JSRP    SCREXP32
+    1227 000065f0     e34b          SUBXY   A10,A11                 ;GET THE DISTANCE
+    1228 00006600     ef61          MOVY    A11,A1
+    1229 00006610     260b          SLL     16,A11
+    1230 00006620     2deb          SRL     17,A11
+    1231 00006630     2de1          SRL     17,A1
+    1232 00006640     2601          SLL     16,A1
+    1233 00006650     ee2b          MOVY    A1,A11
+    1234 00006660     e16a          ADDXY   A11,A10                 ;SAFE CENTER POINT IS CALCULATED
+    1235 00006670     4d4b          MOVE    A10,A11
+    1236 00006680     1a00          MOVK    16,A0                   ;IN A HALF SECOND
+    1237 00006690                   JSRP    SCREXP32                ;NOW GO THE CENTER
+    1238 00006700     5600          CLR     A0
+    1239 00006710     0580          MOVE    A0,@DISPLAYON,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   31
+
+         00006720 00000000! 
+    1240 00006740     0d5f          CALLA   DMAQWAIT
+         00006750 00000000! 
+    1241 00006770     0d5f          CALLA   MYOINIT
+         00006780 00000000! 
+    1242 000067a0     078a          MOVE    A10,@SCRNTL,L           ;RESTORE
+         000067b0 00000000! 
+    1243 000067d0     078b          MOVE    A11,@SCRNLR,L
+         000067e0 00000000! 
+    1244 00006800     09ac          MMFM    A12,A8,A9,A10,A11
+         00006810     0f00  
+    1245 00006820     0d5f          CALLA   WRAMINIT                ;INITIALIZE WAVE RAM
+         00006830 00000000! 
+    1246 00006850     0d5f          CALLA   GETWAVE                 ;SET UP WAVE DIFFICULTY PARAMS
+         00006860 00000000! 
+    1247                    
+    1248 00006880     1820          MOVK    1,A0
+    1249 00006890     0580          MOVE    A0,@PUPDATE,W
+         000068a0 00000000! 
+    1250                    
+    1251                    ***     MMFM    A12,A7,A10              ;GET THE DISPATCH,AND THE BACKGROUND
+    1252 000068c0                   PULLP   A10
+    1253                    ***     MOVI    MASTERID,A1
+    1254                    ***     CALLA   GETPRC
+    1255                    
+    1256 000068e0     b740          MOVE    *A10(0E0H),A0,L         ;FIX THIS SOUND KLUDGE
+         000068f0     00e0  
+    1257 00006900     0d5f          CALLA   ONESND                  ;START ROOM MUSIC
+         00006910 00000000! 
+    1258                    
+    1259 00006930     0d5f          CALLA   BBINIT
+         00006940 00000000! 
+    1260 00006960     0d5f          CALLA   INITBGND
+         00006970 00000000! 
+    1261 00006990     1820          MOVK    1,A0
+    1262 000069a0     0580          MOVE    A0,@DISPLAYON,W         ;TURN THE DISPLAY PROC ON
+         000069b0 00000000! 
+    1263                    *LOAD THE SAFE ENTRANCE SUBROUTINE
+    1264 000069d0                   SLEEP   1
+    1265 00006a10     b7a0          MOVE    *A13(PDATA+40H),A0,L    ;GET THE ROUTINE
+         00006a20     00a0  
+    1266 00006a30                   JSRPR   A0
+    1267                    
+    1268                    *TIME TO RE-INITIALIZE PLAYER 1
+    1269 00006a80     09e2          MOVI    P1DATA,A2
+         00006a90 00000000! 
+    1270 00006ab0     09ee          MOVI    P1INITTL,A14
+         00006ac0 00000000! 
+    1271 00006ae0     0d5f          CALLA   PLWAVEST
+         00006af0 00000000! 
+    1272                    *TIME TO RESET PLAYER 2
+    1273 00006b10     09e2          MOVI    P2DATA,A2
+         00006b20 00000000! 
+    1274 00006b40     09ee          MOVI    P2INITT,A14
+         00006b50 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   32
+
+    1275 00006b70     0d5f          CALLA   PLWAVEST
+         00006b80 00000000! 
+    1276 00006ba0     0d5f          CALLA   SCORAREA                ;OUTPUT THE SCORE AREA
+         00006bb0 00000000! 
+    1277                    
+    1278 00006bd0     5600          CLR     A0
+    1279 00006be0     0580          MOVE    A0,@PUPDATE,W
+         00006bf0 00000000! 
+    1280                    
+    1281 00006c10                   PULLP   A7                      ;GET THE DISPATCH PROC
+    1282 00006c30     09c1          MOVI    MASTERID,A1
+         00006c40     0d37  
+    1283 00006c50     0d5f          CALLA   GETPRC                  ;AND MAKE IT
+         00006c60 00000000! 
+    1284                    
+    1285 00006c80                   CREATE  BUPDPID,BBOFSCRN        ;CREATE THE BACKGROUND UPDATE PROCESS
+    1286                    
+    1287 00006d00     09c0          MOVI    INPLAY,A0
+         00006d10     0020  
+    1288 00006d20     0580          MOVE    A0,@GAMSTATE,W          ;START YOUR ENGINES
+         00006d30 00000000! 
+    1289                    
+    1290 00006d50     098c          MMTM    A12,A8,A9,A10,A11
+         00006d60     00f0  
+    1291 00006d70     1800          MOVK    32,A0
+    1292 00006d80     09ea          MOVI    SCRNST,A10
+         00006d90 00500000  
+    1293 00006db0     09eb          MOVI    SCRNEND,A11
+         00006dc0 01900200  
+    1294 00006de0                   JSRP    SCREXP32                ;BLOW UP THE SCREEN AGAIN
+    1295 00006e50     09ac          MMFM    A12,A8,A9,A10,A11
+         00006e60     0f00  
+    1296 00006e70                   SOUND1  ALLOFF
+    1297 00006ed0                   SOUND1  YAMOFF
+    1298 00006f30     1840          MOVK    2,A0
+    1299 00006f40     0580          MOVE    A0,@GAMERASE,W          ;TURN ON HALF SCREEN AUTOERASE
+         00006f50 00000000! 
+    1300                    
+    1301 00006f70                   CREATE  0BACH,BSCHKG            ;START THE SCROLL CHECKER
+    1302                    ***     MOVI    INPLAY,A0
+    1303                    ***     MOVE    A0,@GAMSTATE,W          ;START YOUR ENGINES
+    1304 00006ff0                   SLEEP   10
+    1305 00007030                   DIE
+    1306 00007060           SAFEOP2
+    1307 00007060                   PULLP   A8
+    1308 00007080           SAFEOP3
+    1309 00007080     b328          MOVE    A9,*A8(OCVECT),L
+         00007090     01d0  
+    1310 000070a0     5729          CLR     A9
+    1311 000070b0     b328          MOVE    A9,*A8(OPLINK),L
+         000070c0     01f0  
+    1312 000070d0                   DIE
+    1313                    
+    1314                    *
+    1315                    *ENTRYPOINT FOR OPENING THE SAFE AND WALKING IN TO THE END OF A WAVE
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   33
+
+    1316                    *A6 = DISPATCH PROC TO START
+    1317                    *A7 = NEW BACKGROUND TO FIRE UP
+    1318                    *A9 = COLLISION VECTOR TO RE-STUFF ON FAILURE.
+    1319 00007100           SAFENDEN
+    1320 00007100     5600          CLR     A0
+    1321 00007110     0d3f          CALLR   CKPLSLOT                ;SEE IF THE PLAYER IS IN PROX
+         00007120     fc98  
+    1322 00007130     c900          JRNC    SAFEND3                 ;SLOT DIDN'T OPEN
+         00007140     018a  
+    1323 00007150                   PUSHP   A8
+    1324 00007160     09c0          MOVI    BGDCID|SAFEDRL,A0
+         00007170     0504  
+    1325 00007180     09e1          MOVI    BACKSLST,A1
+         00007190 00000000! 
+    1326 000071b0     0d5f          CALLA   ISSUPPID                ;LOOK FOR LEFT SAFE DOOR        
+         000071c0 00000000! 
+    1327 000071e0     ca00          JRZ     SAFEND2                 ;NO DOOR, NO OPEN, JOE
+         000071f0     017d  
+    1328 00007200     4c28          MOVE    A1,A8
+    1329 00007210     07a2          MOVE    @SCRNTL,A2,L            ;GET SCREEN TOP LEFT
+         00007220 00000000! 
+    1330 00007240     07a3          MOVE    @SCRNLR,A3,L            ;GET SCREEN LOWER RT.
+         00007250 00000000! 
+    1331 00007270     0b02          ADDI    50,A2
+         00007280     0032  
+    1332 00007290     0be3          SUBI    50,A3                   ;MAKE MY OWN BOUNDRIES
+         000072a0     ffcd  
+    1333 000072b0     0d5f          CALLA   SCRTSTG
+         000072c0 00000000! 
+    1334 000072e0     cb00          JRNZ    SAFEND2                 ;BR = DOOR IS NOT ON SCREEN
+         000072f0     016d  
+    1335 00007300     4d0b          MOVE    A8,A11
+    1336 00007310     b700          MOVE    *A8(OPLINK),A0,L        ;ANYTHING GOIN' DOWN
+         00007320     01f0  
+    1337 00007330     ca03          JRZ     SAFEND1                 ;BR = NO DUDE
+    1338 00007340     0d5f          CALLA   KILL
+         00007350 00000000! 
+    1339 00007370           SAFEND1
+    1340 00007370     09c0          MOVI    BGDCID|SAFEDRR,A0
+         00007380     0505  
+    1341 00007390     09e1          MOVI    BACKSLST,A1
+         000073a0 00000000! 
+    1342 000073c0     0d5f          CALLA   ISSUPPID                ;LOOK FOR RIGHT SAFE DOOR       
+         000073d0 00000000! 
+    1343 000073f0     4c28          MOVE    A1,A8
+    1344 00007400     07a2          MOVE    @SCRNTL,A2,L            ;GET SCREEN TOP LEFT
+         00007410 00000000! 
+    1345 00007430     07a3          MOVE    @SCRNLR,A3,L            ;GET SCREEN LOWER RT.
+         00007440 00000000! 
+    1346 00007460     0b02          ADDI    50,A2
+         00007470     0032  
+    1347 00007480     0be3          SUBI    50,A3
+         00007490     ffcd  
+    1348 000074a0     0d5f          CALLA   SCRTSTG
+         000074b0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   34
+
+    1349 000074d0     cb00          JRNZ    SAFEND2                 ;BR = RIGHT DOOR IS NOT ON THE SCREEN
+         000074e0     014e  
+    1350 000074f0     b700          MOVE    *A8(OPLINK),A0,L        ;KILL OFF OTHER RIGHT DOOR PROC
+         00007500     01f0  
+    1351 00007510     ca03          JRZ     SAFEND1B                ;BR = NONE TO WASTE
+    1352 00007520     0d5f          CALLA   KILL
+         00007530 00000000! 
+    1353 00007550           SAFEND1B
+    1354 00007550     4f00          MOVE    A8,B0
+    1355 00007560     4d48          MOVE    A10,A8
+    1356 00007570     0d5f          CALLA   GPLAYERD
+         00007580 00000000! 
+    1357                    
+    1358                    *CHECK TO SEE IF PLAYER CAN WALK AFTER OPENING SAFE, ESCAPE IF UNABLE.
+    1359 000075a0     b440          MOVE    *A2(PEXEFLAG),A0,W
+         000075b0     0090  
+    1360 000075c0     0b80          ANDI    MFHOLD|MDHOLD|MDYING|MDEAD,A0   
+         000075d0 ffffff39  
+    1361 000075f0     cb00          JRNE    SAFEND2                 ;BR = PLAYER IS IN NO SHAPE TO OPEN
+         00007600     013c  
+    1362 00007610     b440          MOVE    *A2(PIRQFLAG),A0,W
+         00007620     0080  
+    1363 00007630     0b80          ANDI    MJUMP1|MJUMP2|MDRIVER|MPASSEN,A0
+         00007640 ffffe7f9  
+    1364 00007660     cb00          JRNE    SAFEND2                 ;BR = MORE DISQUALS
+         00007670     0135  
+    1365                    
+    1366                    *STOP ALL PLAYER ACTION, DUDE.
+    1367 00007680     1820          MOVK    1,A0
+    1368 00007690     0580          MOVE    A0,@PUPDATE,W
+         000076a0 00000000! 
+    1369 000076c0     b440          MOVE    *A2(PEXEFLAG),A0,W
+         000076d0     0090  
+    1370 000076e0     0ba0          ORI     MINVINC,A0      
+         000076f0 00000010  
+    1371 00007710     b002          MOVE    A0,*A2(PEXEFLAG),W      
+         00007720     0090  
+    1372 00007730     b440          MOVE    *A2(PPID),A0,W
+         00007740     0240  
+    1373 00007750     0b00          ADDI    PIPID,A0
+         00007760     0030  
+    1374 00007770     5621          CLR     A1
+    1375 00007780     03e1          NOT     A1
+    1376 00007790     0d5f          CALLA   KILALL                  ;KILL PLAYER INVINCIBLE PROC.
+         000077a0 00000000! 
+    1377 000077c0     0d5f          CALLA   BOTHPON
+         000077d0 00000000! 
+    1378 000077f0     b24d          MOVE    A2,*A13(PDATA),L
+         00007800     0060  
+    1379 00007810     b648          MOVE    *A2(POBJ),A8,L
+         00007820     00a0  
+    1380 00007830     0d5f          CALLA   PSTOP
+         00007840 00000000! 
+    1381 00007860     b648          MOVE    *A2(PLOBJ),A8,L
+         00007870     0120  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   35
+
+    1382 00007880     0d5f          CALLA   PSTOP                   ;STOP BOTH PLAYER PARTS
+         00007890 00000000! 
+    1383                    
+    1384 000078b0     0d3f          CALLR   PUTOPENI
+         000078c0     faa9  
+    1385 000078d0     4e18          MOVE    B0,A8
+    1386 000078e0     b3a8          MOVE    A13,*A8(OPLINK),L       ;THIS IS THE ONE
+         000078f0     01f0  
+    1387 00007900     098c          MMTM    A12,A6,A7
+         00007910     0300  
+    1388 00007920     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE SAFE MIDDLE X
+         00007930     0090  
+    1389 00007940     1300          ADDK    24,A0                   ;FUDGER BOY
+    1390 00007950     b00d          MOVE    A0,*A13(PDATA+20H),W    ;SAVE IT HERE
+         00007960     0080  
+    1391 00007970           SAFENDWW
+    1392 00007970     09c0          MOVI    4000H,A0
+         00007980     4000  
+    1393 00007990     4c01          MOVE    A0,A1
+    1394 000079a0     0d5f          CALLA   EXISTP                  ;WAVE END WAIT?
+         000079b0 00000000! 
+    1395 000079d0     ca07          JRZ     SAFENDW1                ;BR = NO
+    1396 000079e0                   SLOOP   1,SAFENDWW              ;GIVE THEM TIME TO COMPLETE
+    1397 00007a50           SAFENDW1
+    1398 00007a50     0d5f          CALLA   KILLWAVE
+         00007a60 00000000! 
+    1399 00007a80                   SOUND1  MUSICOFF
+    1400 00007ae0     5600          CLR     A0
+    1401 00007af0     0580          MOVE    A0,@PUPDATE,W
+         00007b00 00000000! 
+    1402 00007b20                   SWAP    A8,A10                  ;GET THE PLAYER PTR
+    1403 00007b50     0d5f          CALLA   GPLAYERD        
+         00007b60 00000000! 
+    1404 00007b80                   SWAP    A8,A10
+    1405 00007bb0     0d5f          CALLA   BOTHPON
+         00007bc0 00000000! 
+    1406 00007be0     1820          MOVK    1,A0
+    1407 00007bf0     0580          MOVE    A0,@GAMERASE,W          ;TURN ON FULL SCREEN AUTOERASE
+         00007c00 00000000! 
+    1408 00007c20                   SLEEP   2
+    1409 00007c60                   SOUND1  OPENBEEP
+    1410 00007cc0                   SLEEP   18H
+    1411 00007d00                   SOUND1  SAFEMOTR                ;START THE SAFE MOTOR
+    1412 00007d60                   SWAP    A11,A8
+    1413 00007d90                   CREATE  SAFOLPID,OPENSAFL       ;OPEN THE LEFT DOOR
+    1414 00007e10     b208          MOVE    A0,*A8(OPLINK),L
+         00007e20     01f0  
+    1415 00007e30                   SWAP    A11,A8
+    1416 00007e60                   JSRP    SLIDOPR                 ;AND THE RIGHT DOOR     
+    1417 00007ed0     5600          CLR     A0
+    1418 00007ee0     b208          MOVE    A0,*A8(OPLINK),L
+         00007ef0     01f0  
+    1419 00007f00                   SOUND1  YAMOFF                  ;ESCALATOR OFF
+    1420 00007f60                   SOUND1  SAFEHIT
+    1421                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   36
+
+    1422 00007fc0     098f          MMTM    SP,A9,A10,A11
+         00007fd0     0070  
+    1423 00007fe0     b540          MOVE    *A10(OID),A0,W
+         00007ff0     01a0  
+    1424 00008000     0b40          CMPI    P1OID,A0
+         00008010     efff  
+    1425 00008020     cb0a          JRNE    SAFENDP2
+    1426 00008030     09e3          MOVI    P1CTRL,A3
+         00008040 00000000! 
+    1427 00008060     09e9          MOVI    P2DATA,A9
+         00008070 00000000! 
+    1428 00008090     09ea          MOVI    P2CTRL,A10
+         000080a0 00000000! 
+    1429 000080c0     c009          JRUC    SAFENDPX
+    1430 000080d0           SAFENDP2
+    1431 000080d0     09e3          MOVI    P2CTRL,A3
+         000080e0 00000000! 
+    1432 00008100     09e9          MOVI    P1DATA,A9
+         00008110 00000000! 
+    1433 00008130     09ea          MOVI    P1CTRL,A10
+         00008140 00000000! 
+    1434 00008160           SAFENDPX
+    1435 00008160     b5ab          MOVE    *A13(PDATA+20H),A11,W   ;GET THE STORED X POS
+         00008170     0080  
+    1436 00008180                   CREATE  INDPID,PTOSAFE          ;MAKE THE OTHER PLAYER GET THERE
+    1437 00008200     09af          MMFM    SP,A9,A10,A11
+         00008210     0e00  
+    1438                    
+    1439 00008220     09c0          MOVI    PLEFT,A0
+         00008230     0004  
+    1440 00008240     8003          MOVE    A0,*A3,W
+    1441 00008250     098c          MMTM    A12,A3,A8,A11
+         00008260     1090  
+    1442 00008270     b5ab          MOVE    *A13(PDATA+20H),A11,W   ;GET THE STORED X POS
+         00008280     0080  
+    1443 00008290     4d48          MOVE    A10,A8
+    1444 000082a0     09c2          MOVI    150,A2          ;MAXIMUM WAIT TIME * 4
+         000082b0     0096  
+    1445 000082c0           SAFNDWLP
+    1446 000082c0     0d5f          CALLA   GETANIX 
+         000082d0 00000000! 
+    1447 000082f0     4960          CMP     A11,A0
+    1448 00008300     c211          JRLS    SAFNDWCP
+    1449 00008310                   PUSHP   A2
+    1450 00008320                   SLEEP   4
+    1451 00008360                   PULLP   A2
+    1452 00008380     3da2          DSJS    A2,SAFNDWLP
+    1453 00008390     09ac          MMFM    A12,A3,A8,A11
+         000083a0     0908  
+    1454 000083b0     b7a2          MOVE    *A13(PDATA),A2,L        ;GET THIS PTR BACK
+         000083c0     0060  
+    1455 000083d0     b64a          MOVE    *A2(POBJ),A10,L         ;JUST TO MAKE CERTAIN
+         000083e0     00a0  
+    1456 000083f0     b644          MOVE    *A2(PLOBJ),A4,L
+         00008400     0120  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   37
+
+    1457 00008410     c019          JRUC    SAFNDESC
+    1458 00008420           SAFNDWCP
+    1459 00008420     09ac          MMFM    A12,A3,A8,A11
+         00008430     0908  
+    1460 00008440     b7a2          MOVE    *A13(PDATA),A2,L        ;GET THIS PTR BACK
+         00008450     0060  
+    1461 00008460     b64a          MOVE    *A2(POBJ),A10,L         ;JUST TO MAKE CERTAIN
+         00008470     00a0  
+    1462 00008480     b644          MOVE    *A2(PLOBJ),A4,L
+         00008490     0120  
+    1463 000084a0     b540          MOVE    *A10(OZPOS),A0,W
+         000084b0     00d0  
+    1464 000084c0     1400          SUBK    32,A0
+    1465 000084d0     b00a          MOVE    A0,*A10(OZPOS),W
+         000084e0     00d0  
+    1466 000084f0     b004          MOVE    A0,*A4(OZPOS),W
+         00008500     00d0  
+    1467 00008510     09c0          MOVI    PUP,A0  
+         00008520     0001  
+    1468 00008530     8003          MOVE    A0,*A3,W
+    1469 00008540                   PUSHP   A3
+    1470 00008550                   SLEEP   16
+    1471 00008590                   PULLP   A3
+    1472 000085b0           SAFNDESC
+    1473 000085b0     5600          CLR     A0
+    1474 000085c0     8003          MOVE    A0,*A3,W
+    1475 000085d0                   SWAP    A11,A8
+    1476 00008600                   CREATE  SAFCLPID,CLOSSAFL       ;CLOSE THE DAMN DOOR
+    1477 00008680     b208          MOVE    A0,*A8(OPLINK),L
+         00008690     01f0  
+    1478 000086a0                   SWAP    A11,A8
+    1479 000086d0                   SOUND1  SAFEMOTR                ;START THE SAFE MOTOR
+    1480 00008730                   JSRP    SLIDCLR 
+    1481 000087a0     5600          CLR     A0
+    1482 000087b0     b208          MOVE    A0,*A8(OPLINK),L
+         000087c0     01f0  
+    1483 000087d0                   SOUND1  YAMOFF                  ;ESCALATOR OFF
+    1484 00008830                   SOUND1  SAFEHIT
+    1485 00008890     09c0          MOVI    INGAME,A0
+         000088a0     0010  
+    1486 000088b0     0580          MOVE    A0,@GAMSTATE,W
+         000088c0 00000000! 
+    1487 000088e0                   SLEEP   20H
+    1488 00008920     05a0          MOVE    @WAVE,A0,W
+         00008930 00000000! 
+    1489 00008950     0b40          CMPI    NWAVES,A0
+         00008960     fff7  
+    1490 00008970     c880          JALO    WAVEEND                 ;JUST END THE WAVE
+         00008980 00000000! 
+    1491 000089a0     c080          JAUC    GAMEEND                 ;ME THINKS TO END THE GAME
+         000089b0 00000000! 
+    1492 000089d0           SAFEND2
+    1493 000089d0                   PULLP   A8
+    1494 000089f0           SAFEND3
+    1495 000089f0     b328          MOVE    A9,*A8(OCVECT),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   38
+
+         00008a00     01d0  
+    1496 00008a10           SAFENDX
+    1497 00008a10     5600          CLR     A0
+    1498 00008a20     b208          MOVE    A0,*A8(OPLINK),L
+         00008a30     01f0  
+    1499 00008a40                   DIE
+    1500                    *                                              
+    1501                    * OPENSAFL - OPEN THE LEFT SAFE DOOR PROCESS.  
+    1502                    * A8 = PTR TO DOOR                                  
+    1503                    *                                              
+    1504 00008a70           OPENSAFL
+    1505 00008a70                   JSRP    SLIDOPL 
+    1506 00008ae0     c0f2          JRUC    SAFENDX
+    1507                    *                                              
+    1508                    * CLOSSAFL - CLOSE THE LEFT SAFE DOOR PROCESS. 
+    1509                    * A8 = PTR TO DOOR                                      
+    1510                    *                                               
+    1511 00008af0           CLOSSAFL
+    1512 00008af0                   JSRP    SLIDCLL 
+    1513 00008b60     c0ea          JRUC    SAFENDX
+    1514                    * OPENSAFL - OPEN THE LEFT SUBWAY DOOR PROCESS.  
+    1515                    * A8 = PTR TO DOOR                                  
+    1516                    *                                              
+    1517 00008b70           OPENSUBL
+    1518 00008b70                   JSRP    SLIDOPLL        
+    1519 00008be0     c0e2          JRUC    SAFENDX
+    1520                    *                                              
+    1521                    * CLOSSUBL - CLOSE THE LEFT SUBWAY DOOR PROCESS. 
+    1522                    * A8 = PTR TO DOOR                                      
+    1523                    *                                               
+    1524 00008bf0           CLOSSUBL
+    1525 00008bf0                   JSRP    SLIDCLLL        
+    1526 00008c60     c0da          JRUC    SAFENDX
+    1527                    *
+    1528                    *SOUNDS OF THE SAFE
+    1529 00008c70           SAFEMOTR
+    1530 00008c70     f331          .WORD   0F331H,01H,080AAH,0             ;START THE SAFE MOTOR
+    1531 00008cb0           SAFEHIT 
+    1532 00008cb0     f031          .WORD   0F031H,03CH,08081H,0            ;SOUND OF BIG METAL     
+    1533                    *
+    1534                    *SOUNDS OF THE SUBWAY
+    1535                    *
+    1536 00008cf0           SUBDOOR
+    1537 00008cf0     f30f          .WORD   0F30FH,020H,08088H,0
+    1538 00008d30           SUBOFF  
+    1539 00008d30     f30f          .WORD   0F30FH,01H,0807FH,0
+    1540                    *
+    1541                    *GETSUBDR - GET A SUBWAY DOOR ON SCREEN
+    1542                    *A8 RET WITH LEFT DOOR OBJECT POINTER
+    1543                    *A6 RET WITH RITE DOOR OBJECT POINTER
+    1544                    *EQ MEANS NO DOOR FOUND
+    1545                    *
+    1546 00008d70           GETSUBDR:
+    1547 00008d70     098f          MMTM    SP,A0,A7
+         00008d80     8100  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   39
+
+    1548 00008d90     56e7          CLR     A7
+    1549 00008da0     56c6          CLR     A6
+    1550 00008db0     07a8          MOVE    @BACKSLST,A8,L          ;LOOK THROUGH THE BACKGROUND
+         00008dc0 00000000! 
+    1551 00008de0     ca18          JREQ    GSBDRF                  ;NOBODY HOME
+    1552 00008df0           GSBDRL0:
+    1553 00008df0     b500          MOVE    *A8(OID),A0,W           ;CHECK THIS GUY
+         00008e00     01a0  
+    1554 00008e10     0b40          CMPI    BGDCID|SUBDOORL,A0      ;IS IT A DOOR
+         00008e20     faf9  
+    1555 00008e30     cb05          JRNE    GSBDRL1
+    1556 00008e40     0d5f          CALLA   SCRTST
+         00008e50 00000000! 
+    1557 00008e70     cb09          JRNE    GSBDRLP
+    1558 00008e80     4d07          MOVE    A8,A7
+    1559 00008e90           GSBDRL1
+    1560 00008e90     0b40          CMPI    BGDCID|SUBDOORR,A0      ;IS IT A DOOR
+         00008ea0     faf8  
+    1561 00008eb0     cb05          JRNE    GSBDRLP
+    1562 00008ec0     0d5f          CALLA   SCRTST  
+         00008ed0 00000000! 
+    1563 00008ef0     cb01          JRNE    GSBDRLP
+    1564 00008f00     4d06          MOVE    A8,A6
+    1565 00008f10           GSBDRLP
+    1566 00008f10     b708          MOVE    *A8(OSLINK),A8,L        ;LET'S SEARCH FOR A DOOR
+         00008f20     0020  
+    1567 00008f30     cbeb          JRNE    GSBDRL0
+    1568 00008f40     4ce8          MOVE    A7,A8
+    1569 00008f50     ca01          JREQ    GSBDRF
+    1570 00008f60     4cc6          MOVE    A6,A6
+    1571 00008f70           GSBDRF
+    1572 00008f70     09af          MMFM    SP,A0,A7
+         00008f80     0081  
+    1573 00008f90     0960          RETS
+    1574                    *
+    1575                    *OPEN A SUBWAY DOOR
+    1576                    *A8=LEFT DOOR
+    1577                    *A9=RIGHT DOOR
+    1578 00008fa0           SUBOPEN
+    1579 00008fa0     4d0a          MOVE    A8,A10
+    1580 00008fb0                   SOUND1  SUBDOOR
+    1581 00009010                   CREATE  INDPID,OPENSUBL
+    1582 00009090     4d28          MOVE    A9,A8
+    1583 000090a0     1820          MOVK    1,A0
+    1584 000090b0                   JSRP    SLIDOPRR
+    1585 00009120                   SOUND1  SUBOFF
+    1586 00009180                   SLEEP   30
+    1587 000091c0     4d48          MOVE    A10,A8
+    1588                    *
+    1589                    *OPEN A SUBWAY DOOR
+    1590                    *A8=LEFT DOOR
+    1591                    *A9=RIGHT DOOR
+    1592 000091d0           SUBCLOSE
+    1593 000091d0                   SOUND1  SUBDOOR
+    1594 00009230                   CREATE  INDPID,CLOSSUBL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   40
+
+    1595 000092b0     4d28          MOVE    A9,A8
+    1596 000092c0     1820          MOVK    1,A0
+    1597 000092d0                   JSRP    SLIDCLRR
+    1598 00009340                   SOUND1  SUBOFF
+    1599 000093a0                   DIE
+    1600                    **************************************************************************
+    1601                    *                                                                        *
+    1602                    * SLIDOPR - SLIDE OPEN A DOOR TO THE RIGHT.                              *
+    1603                    * A0 = SLEEP TIME
+    1604                    * A8 = OBLOCK OF DOOR                                                    *
+    1605                    * NOTE: CALL WITH JSRP                                                   *
+    1606                    *                                                                        *
+    1607                    **************************************************************************
+    1608 000093d0           SLIDOPR
+    1609 000093d0     1840          MOVK    2,A0
+    1610 000093e0           SLIDOPRR
+    1611 000093e0     098c          MMTM    A12,A9,A10
+         000093f0     0060  
+    1612 00009400     4c0a          MOVE    A0,A10
+    1613 00009410     b500          MOVE    *A8(OID),A0,W
+         00009420     01a0  
+    1614 00009430     2780          SLL     28,A0
+    1615 00009440     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1616 00009450     0b00          ADDI    BGDOMID,A0
+         00009460     0520  
+    1617 00009470     b008          MOVE    A0,*A8(OID),W
+         00009480     01a0  
+    1618                    
+    1619 00009490     b509          MOVE    *A8(OSIZEX),A9,W
+         000094a0     0140  
+    1620 000094b0     1429          DEC     A9                      ;THIS IS HOW MANY TO CLIP
+    1621 000094c0           SLIDOPR1
+    1622 000094c0     09c2          MOVI    [0,1],A2
+         000094d0     0001  
+    1623 000094e0     5663          CLR     A3
+    1624 000094f0     0d5f          CALLA   CLIPOBJ                 ;CLIP ONE OFF THE RIGHT SIDE
+         00009500 00000000! 
+    1625 00009520     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE CURRENT XPOS
+         00009530     0090  
+    1626 00009540     1020          INC     A0                      ;AND MOVE FORWARD
+    1627 00009550     b008          MOVE    A0,*A8(OXPOS),W         
+         00009560     0090  
+    1628 00009570     4d40          MOVE    A10,A0
+    1629 00009580     0d5f          CALLA   PRCSLP
+         00009590 00000000! 
+    1630 000095b0     3e09          DSJS    A9,SLIDOPR1
+    1631 000095c0     c01f          JRUC    SLIDOPLX
+    1632                    **************************************************************************
+    1633                    *                                                                        *
+    1634                    * SLIDOPL - SLIDE OPEN A DOOR TO THE LEFT.                               *
+    1635                    * A8 = OBLOCK OF DOOR                                                    *
+    1636                    * A0 = SLEEP TIME
+    1637                    * NOTE: CALL WITH JSRP                                                   *
+    1638                    *                                                                        *
+    1639                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   41
+
+    1640 000095d0           SLIDOPL
+    1641 000095d0     1840          MOVK    2,A0
+    1642 000095e0           SLIDOPLL
+    1643 000095e0     098c          MMTM    A12,A9,A10
+         000095f0     0060  
+    1644 00009600     4c0a          MOVE    A0,A10
+    1645 00009610     b500          MOVE    *A8(OID),A0,W
+         00009620     01a0  
+    1646 00009630     2780          SLL     28,A0
+    1647 00009640     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1648 00009650     0b00          ADDI    BGDOMID,A0
+         00009660     0520  
+    1649 00009670     b008          MOVE    A0,*A8(OID),W
+         00009680     01a0  
+    1650                    
+    1651 00009690     b509          MOVE    *A8(OSIZEX),A9,W
+         000096a0     0140  
+    1652 000096b0     1429          DEC     A9                      ;THIS IS HOW MANY TO CLIP
+    1653 000096c0           SLIDOPL1
+    1654 000096c0     5642          CLR     A2
+    1655 000096d0     09c3          MOVI    [0,1],A3
+         000096e0     0001  
+    1656 000096f0     0d5f          CALLA   CLIPOBJ                 ;CLIP ONE OFF THE LEFT SIDE
+         00009700 00000000! 
+    1657 00009720     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE CURRENT XPOS
+         00009730     0090  
+    1658 00009740     1420          DEC     A0                      ;AND MOVE BACK
+    1659 00009750     b008          MOVE    A0,*A8(OXPOS),W         
+         00009760     0090  
+    1660 00009770     4d40          MOVE    A10,A0
+    1661 00009780     0d5f          CALLA   PRCSLP
+         00009790 00000000! 
+    1662 000097b0     3e09          DSJS    A9,SLIDOPL1
+    1663 000097c0           SLIDOPLX
+    1664 000097c0     b500          MOVE    *A8(OID),A0,W
+         000097d0     01a0  
+    1665 000097e0     2780          SLL     28,A0
+    1666 000097f0     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1667 00009800     0b00          ADDI    BGDOID,A0
+         00009810     0510  
+    1668 00009820     b008          MOVE    A0,*A8(OID),W
+         00009830     01a0  
+    1669 00009840     09ac                  MMFM    A12,A9,A10
+         00009850     0600  
+    1670 00009860                   RETP
+    1671                    
+    1672                    **************************************************************************
+    1673                    *                                                                        *
+    1674                    * SLIDCLR - SLIDE CLOSED A DOOR TO THE RIGHT.                            *
+    1675                    * A8 = OBLOCK OF DOOR                                                    *
+    1676                    * NOTE: CALL WITH JSRP                                                   *
+    1677                    *                                                                        *
+    1678                    **************************************************************************
+    1679 00009890           SLIDCLR
+    1680 00009890     1840          MOVK    2,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   42
+
+    1681 000098a0           SLIDCLRR
+    1682 000098a0     098c          MMTM    A12,A9,A10
+         000098b0     0060  
+    1683 000098c0     4c0a          MOVE    A0,A10
+    1684 000098d0     b500          MOVE    *A8(OID),A0,W
+         000098e0     01a0  
+    1685 000098f0     2780          SLL     28,A0
+    1686 00009900     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1687 00009910     0b00          ADDI    BGDCMID,A0
+         00009920     0530  
+    1688 00009930     b008          MOVE    A0,*A8(OID),W
+         00009940     01a0  
+    1689                    
+    1690 00009950     b700          MOVE    *A8(OIMG),A0,L
+         00009960     0180  
+    1691 00009970     b409          MOVE    *A0(ISIZEX),A9,W
+         00009980     0000  
+    1692 00009990     1069          ADDK    3,A9
+    1693 000099a0     2fc9          SRL     2,A9
+    1694 000099b0     2449          SLL     2,A9
+    1695 000099c0     b500          MOVE    *A8(OSIZEX),A0,W
+         000099d0     0140  
+    1696 000099e0     4409          SUB     A0,A9                   ;CLIP THIS MANY
+    1697 000099f0           SLIDCLR1
+    1698 000099f0     09e2          MOVI    [0,-1],A2
+         00009a00 0000ffff  
+    1699 00009a20     5663          CLR     A3
+    1700 00009a30     0d5f          CALLA   CLIPOBJ                 ;CLIP NEG ONE OFF THE RIGHT SIDE
+         00009a40 00000000! 
+    1701 00009a60     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE CURRENT XPOS
+         00009a70     0090  
+    1702 00009a80     1420          DEC     A0                      ;AND MOVE BACK
+    1703 00009a90     b008          MOVE    A0,*A8(OXPOS),W         
+         00009aa0     0090  
+    1704 00009ab0     4d40          MOVE    A10,A0
+    1705 00009ac0     0d5f          CALLA   PRCSLP
+         00009ad0 00000000! 
+    1706 00009af0     3e29          DSJS    A9,SLIDCLR1
+    1707 00009b00     c027          JRUC    SLIDCLLX
+    1708                    **************************************************************************
+    1709                    *                                                                        *
+    1710                    * SLIDCLL - SLIDE CLOSED A DOOR TO THE LEFT.                             *
+    1711                    * A8 = OBLOCK OF DOOR                                                    *
+    1712                    * NOTE: CALL WITH JSRP                                                   *
+    1713                    *                                                                        *
+    1714                    **************************************************************************
+    1715 00009b10           SLIDCLL
+    1716 00009b10     1840          MOVK    2,A0
+    1717 00009b20           SLIDCLLL
+    1718 00009b20     098c          MMTM    A12,A9,A10
+         00009b30     0060  
+    1719 00009b40     4c0a          MOVE    A0,A10
+    1720 00009b50     b500          MOVE    *A8(OID),A0,W
+         00009b60     01a0  
+    1721 00009b70     2780          SLL     28,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   43
+
+    1722 00009b80     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1723 00009b90     0b00          ADDI    BGDCMID,A0
+         00009ba0     0530  
+    1724 00009bb0     b008          MOVE    A0,*A8(OID),W
+         00009bc0     01a0  
+    1725                    
+    1726 00009bd0     b700          MOVE    *A8(OIMG),A0,L
+         00009be0     0180  
+    1727 00009bf0     b409          MOVE    *A0(ISIZEX),A9,W
+         00009c00     0000  
+    1728 00009c10     1069          ADDK    3,A9
+    1729 00009c20     2fc9          SRL     2,A9
+    1730 00009c30     2449          SLL     2,A9
+    1731 00009c40     b500          MOVE    *A8(OSIZEX),A0,W
+         00009c50     0140  
+    1732 00009c60     4409          SUB     A0,A9                   ;CLIP THIS MANY
+    1733 00009c70           SLIDCLL1
+    1734 00009c70     09e3          MOVI    [0,-1],A3
+         00009c80 0000ffff  
+    1735 00009ca0     5642          CLR     A2
+    1736 00009cb0     0d5f          CALLA   CLIPOBJ                 ;CLIP NEG ONE OFF THE LEFT SIDE
+         00009cc0 00000000! 
+    1737 00009ce0     b500          MOVE    *A8(OXPOS),A0,W         ;GET THE CURRENT YPOS
+         00009cf0     0090  
+    1738 00009d00     1020          INC     A0                      ;AND MOVE FORWARD
+    1739 00009d10     b008          MOVE    A0,*A8(OXPOS),W         
+         00009d20     0090  
+    1740 00009d30     4d40          MOVE    A10,A0
+    1741 00009d40     0d5f          CALLA   PRCSLP
+         00009d50 00000000! 
+    1742 00009d70     3e29          DSJS    A9,SLIDCLL1
+    1743 00009d80           SLIDCLLX
+    1744 00009d80     b500          MOVE    *A8(OID),A0,W
+         00009d90     01a0  
+    1745 00009da0     2780          SLL     28,A0
+    1746 00009db0     2c80          SRL     28,A0                   ;KEEP DOOR I.D.
+    1747 00009dc0     0b00          ADDI    BGDCID,A0
+         00009dd0     0500  
+    1748 00009de0     b008          MOVE    A0,*A8(OID),W
+         00009df0     01a0  
+    1749 00009e00     09ac          MMFM    A12,A9,A10
+         00009e10     0600  
+    1750 00009e20                   RETP
+    1751                    
+    1752                    **************************************************************************
+    1753                    *                                                                        *
+    1754                    * PTOSAFE - PROCESS TO MAKE A PLAYER WALK TO A SAFE DOOR OBJECT.         *
+    1755                    * A8 = PTR TO SAFE DOOR                                                  *
+    1756                    * A9 = PLAYER DATA STRUCTURE                                             *
+    1757                    * A10 = PLAYER CPU JOYSTICK LOCATION                                     *
+    1758                    * A11 = SAFE MIDDLE X (16 BITS)                                          *
+    1759                    *                                                                        *
+    1760                    **************************************************************************
+    1761 00009e50           PTOSAFE
+    1762 00009e50     0d5f          CALLA   GETANIXY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   44
+
+         00009e60 00000000! 
+    1763 00009e80     ee4b          MOVY    A2,A11
+    1764 00009e90     0beb          SUBI    25,A11                  ;MAKE THIS PLAYER END UP TO THE LEFT
+         00009ea0     ffe6  
+    1765 00009eb0     4d64          MOVE    A11,A4
+    1766 00009ec0     0d0b          SUBI    [40,0],A11              ;FUDGE OFFSET FOR SAFE DOOR Y
+         00009ed0 ffd7ffff  
+    1767 00009ef0     b728          MOVE    *A9(POBJ),A8,L
+         00009f00     00a0  
+    1768 00009f10     ca67          JRZ     PTOSAFEX                ;THIS LITTLE PLAYER IS NON-EXISTANT
+    1769 00009f20     0d5f          CALLA   GETANIXY
+         00009f30 00000000! 
+    1770 00009f50     2e03          SRL     16,A3
+    1771 00009f60     ec62          MOVX    A3,A2
+    1772 00009f70     4c83          MOVE    A4,A3
+    1773 00009f80     ee43          MOVY    A2,A3                   ;MATCH THE Y'S
+    1774 00009f90     4c68          MOVE    A3,A8
+    1775 00009fa0     09c4          MOVI    60,A4
+         00009fb0     003c  
+    1776 00009fc0     0d5f          CALLA   SLINEVEL
+         00009fd0 00000000! 
+    1777 00009ff0     5663          CLR     A3
+    1778 0000a000     2be1          SRA     1,A1
+    1779 0000a010     ca08          JRZ     PTOSAFE2
+    1780 0000a020     ce04          JRN     PTOSAFE1
+    1781 0000a030     0ba3          ORI     PRYTE,A3
+         0000a040 00000008  
+    1782 0000a060     c003          JRUC    PTOSAFE2
+    1783 0000a070           PTOSAFE1
+    1784 0000a070     0ba3          ORI     PLEFT,A3
+         0000a080 00000004  
+    1785 0000a0a0           PTOSAFE2
+    1786 0000a0a0     2be2          SRA     1,A2
+    1787 0000a0b0     0381          ABS     A1
+    1788 0000a0c0     0382          ABS     A2
+    1789 0000a0d0     b229          MOVE    A1,*A9(PXVEL),L
+         0000a0e0     0350  
+    1790 0000a0f0     b249          MOVE    A2,*A9(PYVEL),L
+         0000a100     0370  
+    1791 0000a110     806a          MOVE    A3,*A10,W
+    1792 0000a120                   SLEEP   60
+    1793 0000a170     5663          CLR     A3
+    1794 0000a180     806a          MOVE    A3,*A10,W               ;CLEAR THE SWITCHES
+    1795                    
+    1796 0000a190     05a0          MOVE    @WAVE,A0,W
+         0000a1a0 00000000! 
+    1797 0000a1c0     0b40          CMPI    NWAVES,A0               ;LAST WAVE?
+         0000a1d0     fff7  
+    1798 0000a1e0     cb11          JRNE    PTOSAFE5
+    1799 0000a1f0     4f00          MOVE    A8,B0
+    1800 0000a200     b728          MOVE    *A9(POBJ),A8,L
+         0000a210     00a0  
+    1801 0000a220     ca36          JRZ     PTOSAFEX                ;THIS LITTLE PLAYER IS NON-EXISTANT
+    1802 0000a230     0d5f          CALLA   GETANIX
+         0000a240 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   45
+
+    1803 0000a260     4e18          MOVE    B0,A8
+    1804 0000a270     4c01          MOVE    A0,A1
+    1805 0000a280     ed02          MOVX    A8,A2
+    1806 0000a290     4c43          MOVE    A2,A3
+    1807 0000a2a0     1003          ADDK    32,A3
+    1808 0000a2b0     1402          SUBK    32,A2                   ;HIT WINDOW
+    1809 0000a2c0     0d5f          CALLA   CHKRANGE
+         0000a2d0 00000000! 
+    1810 0000a2f0     c929          JRNC    PTOSAFEX                ;HE DIDN'T MAKE IT
+    1811 0000a300           PTOSAFE5
+    1812 0000a300     4d02          MOVE    A8,A2
+    1813 0000a310     4d63          MOVE    A11,A3
+    1814 0000a320     ec43          MOVX    A2,A3                   ;MATCH THE X'S
+    1815 0000a330     09c4          MOVI    40,A4
+         0000a340     0028  
+    1816 0000a350     0d5f          CALLA   SLINEVEL
+         0000a360 00000000! 
+    1817 0000a380     5663          CLR     A3
+    1818 0000a390     2be1          SRA     1,A1
+    1819 0000a3a0     2be2          SRA     1,A2
+    1820 0000a3b0     ca08          JRZ     PTOSAFE4
+    1821 0000a3c0     ce04          JRN     PTOSAFE3
+    1822 0000a3d0     0ba3          ORI     PDOWN,A3
+         0000a3e0 00000002  
+    1823 0000a400     c003          JRUC    PTOSAFE4
+    1824 0000a410           PTOSAFE3
+    1825 0000a410     0ba3          ORI     PUP,A3
+         0000a420 00000001  
+    1826 0000a440           PTOSAFE4
+    1827 0000a440     0381          ABS     A1
+    1828 0000a450     0382          ABS     A2
+    1829 0000a460     b229          MOVE    A1,*A9(PXVEL),L
+         0000a470     0350  
+    1830 0000a480     b249          MOVE    A2,*A9(PYVEL),L
+         0000a490     0370  
+    1831 0000a4a0     806a          MOVE    A3,*A10,W
+    1832 0000a4b0                   SLEEP   40
+    1833 0000a500     09c3          MOVI    PLEFT,A3
+         0000a510     0004  
+    1834 0000a520     806a          MOVE    A3,*A10,W               ;LEFT FACE
+    1835 0000a530                   SLEEP   3
+    1836 0000a570     5663          CLR     A3
+    1837 0000a580     806a          MOVE    A3,*A10,W
+    1838 0000a590           PTOSAFEX
+    1839 0000a590                   DIE
+    1840                    **************************************************************************
+    1841                    *                                                                        *
+    1842                    * REDMESS - MESSAGE TO PRINT OUT BEFORE RED SAFE IS EXPANDED             *
+    1843                    *                                                                        *
+    1844                    **************************************************************************
+    1845 0000a5c0           REDMESS
+    1846 0000a5c0     098c          MMTM    A12,A8,A9,A10,A11
+         0000a5d0     00f0  
+    1847                    
+    1848                    ***     CALLA   CLRBUYIN
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   46
+
+    1849                    ***     AUDITCNT AUDRED,NPLYRS
+    1850                    
+    1851 0000a5e0     5600          CLR     A0
+    1852 0000a5f0     0580          MOVE    A0,@GAMERASE,W          ;TURN OFF THE AUTO-ERASE DUDE
+         0000a600 00000000! 
+    1853 0000a620     0d5f          CALLA   AUTOEOFF
+         0000a630 00000000! 
+    1854 0000a650     0d5f          CALLA   SYNCHALF
+         0000a660 00000000! 
+    1855 0000a680     0d5f          CALLA   SYNCFULL
+         0000a690 00000000! 
+    1856                            
+    1857 0000a6b0     1860          MOVK    3,A0            ;DON'T BLOW YOUR WADSWORTH
+    1858 0000a6c0     09e6          MOVI    0F3F3H,A6
+         0000a6d0 0000f3f3  
+    1859 0000a6f0     09e8          MOVI    NARC1MSG,A8
+         0000a700 0000bf90' 
+    1860 0000a720     09e9          MOVI    [50+SKYTOPOF,256],A9    ;POSITION
+         0000a730 00820100  
+    1861 0000a750     09eb          MOVI    RD20FONT,A11    ;BIG OLD LETTERS
+         0000a760 00000000! 
+    1862 0000a780     182a          MOVK    1,A10           ;ONE SPACE BETWEEN LETTERS
+    1863 0000a790                   JSRP    STRCNRM         ;"NARC ONE ..."
+    1864 0000a800                   SLEEP   10
+    1865                    
+    1866 0000a840     184a          MOVK    2,A10           ;NEW SPACING
+    1867 0000a850     1840          MOVK    2,A0
+    1868 0000a860     09e6          MOVI    0F2F2H,A6
+         0000a870 0000f2f2  
+    1869 0000a890     09e9          MOVI    [100+SKYTOPOF,256],A9   ;POSITION
+         0000a8a0 00b40100  
+    1870 0000a8c0     09eb          MOVI    RD15FONT,A11    ;BIG OLD LETTERS
+         0000a8d0 00000000! 
+    1871 0000a8f0                   JSRP    STRCNRM         ;"EARLY INTELLIGENCE REPORTS,"  
+    1872                    
+    1873 0000a960     09e9          MOVI    [150+SKYTOPOF,65],A9    ;POSITION
+         0000a970 00e60041  
+    1874 0000a990                   JSRP    STRLNRM         ;""MR. BIG'S OFFICE IS "        
+    1875 0000aa00                   SLEEP   20
+    1876                    
+    1877 0000aa40     1880          MOVK    4,A0
+    1878 0000aa50     09e6          MOVI    0F5F5H,A6
+         0000aa60 0000f5f5  
+    1879 0000aa80                   JSRP    STRLNRM         ;"IMPENETRABLE!""       
+    1880 0000aaf0                   SLEEP   20
+    1881                    
+    1882 0000ab30     1840          MOVK    2,A0
+    1883 0000ab40     09e6          MOVI    0F0F0H,A6
+         0000ab50 0000f0f0  
+    1884 0000ab70     09e9          MOVI    [210+SKYTOPOF,256],A9   ;POSITION
+         0000ab80 01220100  
+    1885 0000aba0                   JSRP    STRCNRM         ;"YOU'RE ON YOUR OWN FROM HERE."
+    1886                    
+    1887 0000ac10     182a          MOVK    1,A10
+    1888 0000ac20     09e6          MOVI    0F3F3H,A6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   47
+
+         0000ac30 0000f3f3  
+    1889 0000ac50     09e9          MOVI    [240+SKYTOPOF,256],A9   ;POSITION
+         0000ac60 01400100  
+    1890 0000ac80     09eb          MOVI    RD20FONT,A11    ;BIG OLD LETTERS
+         0000ac90 00000000! 
+    1891 0000acb0                   JSRP    STRCNRM         ;"GOOD LUCK!"
+    1892                    
+    1893 0000ad20                   SLEEP   120             ;MAGNA VIDEO
+    1894 0000ad70     09ac          MMFM    A12,A8,A9,A10,A11
+         0000ad80     0f00  
+    1895 0000ad90                   RETP
+    1896                    
+    1897                    **************************************************************************
+    1898                    *                                                                        *
+    1899                    * BLUEMESS - ROUTINE CALLED UPON ENTERING THE BLUE SAFE                  *
+    1900                    *                                                                        *
+    1901                    **************************************************************************
+    1902 0000adc0           BLUEMESS
+    1903                    ***     AUDITCNT AUDBLUE,NPLYRS
+    1904 0000adc0                   RETP
+    1905                    
+    1906                    **************************************************************************
+    1907                    *                                                                        *
+    1908                    * SILVMESS - ROUTINE CALLED UPON ENTERING THE SILVER SAFE                *
+    1909                    *                                                                        *
+    1910                    **************************************************************************
+    1911 0000adf0           SILVMESS
+    1912                    ***     AUDITCNT AUDSILV,NPLYRS
+    1913 0000adf0                   RETP
+    1914                    
+    1915                    *
+    1916                    *COLLISION VECTORS FOR DOORS AND SLOTS
+    1917 0000ae20           CHINACOLL
+    1918 0000ae20     1000          .WORD   P1OID
+    1919 0000ae30 000026e0'         .LONG   DOOR1W1C
+    1920 0000ae50     2000          .WORD   P2OID
+    1921 0000ae60 000026e0'         .LONG   DOOR1W1C
+    1922 0000ae80     0000          .WORD   0
+    1923 0000ae90 00000000!         .LONG   DUMRTSG
+    1924                    
+    1925 0000aeb0           LOFHCOLL
+    1926 0000aeb0     1000          .WORD   P1OID
+    1927 0000aec0 00002720'         .LONG   DOORLFHC
+    1928 0000aee0     2000          .WORD   P2OID
+    1929 0000aef0 00002720'         .LONG   DOORLFHC
+    1930 0000af10     0000          .WORD   0
+    1931 0000af20 00000000!         .LONG   DUMRTSG
+    1932                    
+    1933 0000af40           BIGINCOL
+    1934 0000af40     1000          .WORD   P1OID
+    1935 0000af50 00002760'         .LONG   DOOR1BIG
+    1936 0000af70     2000          .WORD   P2OID
+    1937 0000af80 00002760'         .LONG   DOOR1BIG
+    1938 0000afa0     0000          .WORD   0
+    1939 0000afb0 00000000!         .LONG   DUMRTSG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   48
+
+    1940                    
+    1941 0000afd0           DORNCOLL
+    1942 0000afd0     1000          .WORD   P1OID
+    1943 0000afe0 00002dd0'         .LONG   DOORCOLN
+    1944 0000b000     2000          .WORD   P2OID
+    1945 0000b010 00002dd0'         .LONG   DOORCOLN
+    1946 0000b030     0000          .WORD   0
+    1947 0000b040 00000000!         .LONG   DUMRTSG
+    1948                    
+    1949 0000b060           DOGRMCOL                                ;ENTRANCE TO DOGGY TRAP ROOM
+    1950 0000b060     1000          .WORD   P1OID
+    1951 0000b070 000027a0'         .LONG   DOOR1DOG
+    1952 0000b090     2000          .WORD   P2OID
+    1953 0000b0a0 000027a0'         .LONG   DOOR1DOG
+    1954 0000b0c0     0000          .WORD   0
+    1955 0000b0d0 00000000!         .LONG   DUMRTSG
+    1956                    
+    1957 0000b0f0           SUBRMCOL                                ;ENTRANCE TO SUBWAY ROOM
+    1958 0000b0f0     1000          .WORD   P1OID
+    1959 0000b100 000027e0'         .LONG   DOOR1SUB
+    1960 0000b120     2000          .WORD   P2OID
+    1961 0000b130 000027e0'         .LONG   DOOR1SUB
+    1962 0000b150     0000          .WORD   0
+    1963 0000b160 00000000!         .LONG   DUMRTSG
+    1964                    
+    1965 0000b180           BUGRMCOL                                ;ENTRANCE TO BUG TRAP ROOM
+    1966 0000b180     1000          .WORD   P1OID
+    1967 0000b190 00002820'         .LONG   DOOR1BUG
+    1968 0000b1b0     2000          .WORD   P2OID
+    1969 0000b1c0 00002820'         .LONG   DOOR1BUG
+    1970 0000b1e0     0000          .WORD   0
+    1971 0000b1f0 00000000!         .LONG   DUMRTSG
+    1972                    
+    1973 0000b210           CLWRMCOL                                ;ENTRANCE TO CLOWN TRAP ROOM
+    1974 0000b210     1000          .WORD   P1OID
+    1975 0000b220 00002860'         .LONG   DOOR1CLW
+    1976 0000b240     2000          .WORD   P2OID
+    1977 0000b250 00002860'         .LONG   DOOR1CLW
+    1978 0000b270     0000          .WORD   0
+    1979 0000b280 00000000!         .LONG   DUMRTSG
+    1980                    
+    1981 0000b2a0           DMPRMCOL                                ;ENTRANCE TO DUMPSTER MAN TRAP ROOM
+    1982 0000b2a0     1000          .WORD   P1OID
+    1983 0000b2b0 000028a0'         .LONG   DOOR1DMP
+    1984 0000b2d0     2000          .WORD   P2OID
+    1985 0000b2e0 000028a0'         .LONG   DOOR1DMP
+    1986 0000b300     0000          .WORD   0
+    1987 0000b310 00000000!         .LONG   DUMRTSG
+    1988                    
+    1989 0000b330           GRNHSCOL                                ;ENTRANCE TO SKYHIGH'S GREENHOUSE
+    1990 0000b330     1000          .WORD   P1OID
+    1991 0000b340 000028e0'         .LONG   DOOR1GHS
+    1992 0000b360     2000          .WORD   P2OID
+    1993 0000b370 000028e0'         .LONG   DOOR1GHS
+    1994 0000b390     0000          .WORD   0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   49
+
+    1995 0000b3a0 00000000!         .LONG   DUMRTSG
+    1996                    
+    1997 0000b3c0           LABCOL                                  ;ENTRANCE TO THE CHEMICAL LABRATORY
+    1998 0000b3c0     1000          .WORD   P1OID
+    1999 0000b3d0 00002920'         .LONG   DOOR1LAB
+    2000 0000b3f0     2000          .WORD   P2OID
+    2001 0000b400 00002920'         .LONG   DOOR1LAB
+    2002 0000b420     0000          .WORD   0
+    2003 0000b430 00000000!         .LONG   DUMRTSG
+    2004                    
+    2005 0000b450           CHOPWCOL                                ;ENTRANCE TO THE CHOPPER WAVE
+    2006 0000b450     1000          .WORD   P1OID
+    2007 0000b460 00002ae0'         .LONG   DOOR1CHP
+    2008 0000b480     2000          .WORD   P2OID
+    2009 0000b490 00002ae0'         .LONG   DOOR1CHP
+    2010 0000b4b0     0000          .WORD   0
+    2011 0000b4c0 00000000!         .LONG   DUMRTSG
+    2012                    
+    2013                    *
+    2014                    *DOORS AT END OF WAVE COLLISION STUFF
+    2015 0000b4e0           DENDCOLL
+    2016 0000b4e0     1000          .WORD   P1OID
+    2017 0000b4f0 00002d90'         .LONG   DOORCOLE
+    2018 0000b510     2000          .WORD   P2OID
+    2019 0000b520 00002d90'         .LONG   DOORCOLE
+    2020 0000b540     0000          .WORD   0
+    2021 0000b550 00000000!         .LONG   DUMRTSG
+    2022 0000b570           DENDCOLS                                ;END DOOR COLLISION WITH SILVER CARD
+    2023 0000b570     1000          .WORD   P1OID
+    2024 0000b580 00002960'         .LONG   DOORCOLS
+    2025 0000b5a0     2000          .WORD   P2OID
+    2026 0000b5b0 00002960'         .LONG   DOORCOLS
+    2027 0000b5d0     0000          .WORD   0
+    2028 0000b5e0 00000000!         .LONG   DUMRTSG
+    2029 0000b600           DENDCOLR                                ;END DOOR COLLISION WITH RED CARD
+    2030 0000b600     1000          .WORD   P1OID
+    2031 0000b610 000029c0'         .LONG   DOORCOLR
+    2032 0000b630     2000          .WORD   P2OID
+    2033 0000b640 000029c0'         .LONG   DOORCOLR
+    2034 0000b660     0000          .WORD   0
+    2035 0000b670 00000000!         .LONG   DUMRTSG
+    2036 0000b690           DENDCOLB                                ;END DOOR COLLISION WITH BLUE CARD
+    2037 0000b690     1000          .WORD   P1OID
+    2038 0000b6a0 00002a20'         .LONG   DOORCOLB
+    2039 0000b6c0     2000          .WORD   P2OID
+    2040 0000b6d0 00002a20'         .LONG   DOORCOLB
+    2041 0000b6f0     0000          .WORD   0
+    2042 0000b700 00000000!         .LONG   DUMRTSG
+    2043 0000b720           DENDCOLGR                               ;END DOOR COLLISION WITH GREEN CARD
+    2044 0000b720     1000          .WORD   P1OID
+    2045 0000b730 00002a80'         .LONG   DOORCOLGR
+    2046 0000b750     2000          .WORD   P2OID
+    2047 0000b760 00002a80'         .LONG   DOORCOLGR
+    2048 0000b780     0000          .WORD   0
+    2049 0000b790 00000000!         .LONG   DUMRTSG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   50
+
+    2050                    
+    2051                    *
+    2052                    *SLOT FOR END OF WAVE EXIT STUFF
+    2053 0000b7b0           SENDCOLL
+    2054 0000b7b0     1000          .WORD   P1OID
+    2055 0000b7c0 00003600'         .LONG   SLTCOLE
+    2056 0000b7e0     2000          .WORD   P2OID
+    2057 0000b7f0 00003600'         .LONG   SLTCOLE
+    2058 0000b810     0000          .WORD   0
+    2059 0000b820 00000000!         .LONG   DUMRTSG
+    2060 0000b840           SENDCOLS                                ;END SLOT COLLISION WITH SILVER CARD
+    2061 0000b840     1000          .WORD   P1OID
+    2062 0000b850 00002fa0'         .LONG   SLTCOLS
+    2063 0000b870     2000          .WORD   P2OID
+    2064 0000b880 00002fa0'         .LONG   SLTCOLS
+    2065 0000b8a0     0000          .WORD   0
+    2066 0000b8b0 00000000!         .LONG   DUMRTSG
+    2067 0000b8d0           SENDCOLR                                ;END SLOT COLLISION WITH RED CARD
+    2068 0000b8d0     1000          .WORD   P1OID
+    2069 0000b8e0 00003000'         .LONG   SLTCOLR
+    2070 0000b900     2000          .WORD   P2OID
+    2071 0000b910 00003000'         .LONG   SLTCOLR
+    2072 0000b930     0000          .WORD   0
+    2073 0000b940 00000000!         .LONG   DUMRTSG
+    2074 0000b960           SENDCOLB                                ;END SLOT COLLISION WITH BLUE CARD
+    2075 0000b960     1000          .WORD   P1OID
+    2076 0000b970 00003060'         .LONG   SLTCOLB
+    2077 0000b990     2000          .WORD   P2OID
+    2078 0000b9a0 00003060'         .LONG   SLTCOLB
+    2079 0000b9c0     0000          .WORD   0
+    2080 0000b9d0 00000000!         .LONG   DUMRTSG
+    2081 0000b9f0           SENDCOLGR                               ;END SLOT COLLISION WITH GREEN CARD
+    2082 0000b9f0     1000          .WORD   P1OID
+    2083 0000ba00 000030c0'         .LONG   SLTCOLGR
+    2084 0000ba20     2000          .WORD   P2OID
+    2085 0000ba30 000030c0'         .LONG   SLTCOLGR
+    2086 0000ba50     0000          .WORD   0
+    2087 0000ba60 00000000!         .LONG   DUMRTSG
+    2088                    
+    2089                    *
+    2090                    *SAFE SLOT COLLISION STUFF
+    2091 0000ba80           SLOTCOLS                                ;END SLOT COLLISION WITH SILVER CARD
+    2092 0000ba80     1000          .WORD   P1OID
+    2093 0000ba90 00003120'         .LONG   SLOTSAFS
+    2094 0000bab0     2000          .WORD   P2OID
+    2095 0000bac0 00003120'         .LONG   SLOTSAFS
+    2096 0000bae0     0000          .WORD   0
+    2097 0000baf0 00000000!         .LONG   DUMRTSG
+    2098 0000bb10           SLOTCOLR                                ;END SLOT COLLISION WITH RED CARD
+    2099 0000bb10     1000          .WORD   P1OID
+    2100 0000bb20 00003180'         .LONG   SLOTSAFR
+    2101 0000bb40     2000          .WORD   P2OID
+    2102 0000bb50 00003180'         .LONG   SLOTSAFR
+    2103 0000bb70     0000          .WORD   0
+    2104 0000bb80 00000000!         .LONG   DUMRTSG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   51
+
+    2105 0000bba0           SLOTCOLB                                ;END SLOT COLLISION WITH BLUE CARD
+    2106 0000bba0     1000          .WORD   P1OID
+    2107 0000bbb0 000031e0'         .LONG   SLOTSAFB
+    2108 0000bbd0     2000          .WORD   P2OID
+    2109 0000bbe0 000031e0'         .LONG   SLOTSAFB
+    2110 0000bc00     0000          .WORD   0
+    2111 0000bc10 00000000!         .LONG   DUMRTSG
+    2112                    
+    2113 0000bc30           SLOTCOLG                                ;END SLOT COLLISION WITH GOLD CARD
+    2114 0000bc30     1000          .WORD   P1OID
+    2115 0000bc40 00003240'         .LONG   SLOTSAFG
+    2116 0000bc60     2000          .WORD   P2OID
+    2117 0000bc70 00003240'         .LONG   SLOTSAFG
+    2118 0000bc90     0000          .WORD   0
+    2119 0000bca0 00000000!         .LONG   DUMRTSG
+    2120                    
+    2121 0000bcc0           SLOTCOLH                                ;END GOLD CARD SLOT TO BIG HEAD ROOM
+    2122 0000bcc0     1000          .WORD   P1OID
+    2123 0000bcd0 000032a0'         .LONG   SLOTSAFH
+    2124 0000bcf0     2000          .WORD   P2OID
+    2125 0000bd00 000032a0'         .LONG   SLOTSAFH
+    2126 0000bd20     0000          .WORD   0
+    2127 0000bd30 00000000!         .LONG   DUMRTSG
+    2128                    
+    2129 0000bd50           SLOTCOLGR                               ;END SLOT COLLISION WITH GREEN CARD
+    2130 0000bd50     1000          .WORD   P1OID
+    2131 0000bd60 000033c0'         .LONG   SLOTSAFGR
+    2132 0000bd80     2000          .WORD   P2OID
+    2133 0000bd90 000033c0'         .LONG   SLOTSAFGR
+    2134 0000bdb0     0000          .WORD   0
+    2135 0000bdc0 00000000!         .LONG   DUMRTSG
+    2136                    
+    2137 0000bde0           SLOTCNDS
+    2138 0000bde0     1000          .WORD   P1OID
+    2139 0000bdf0 00003300'         .LONG   SLOTSNDS
+    2140 0000be10     2000          .WORD   P2OID
+    2141 0000be20 00003300'         .LONG   SLOTSNDS
+    2142 0000be40     0000          .WORD   0
+    2143 0000be50 00000000!         .LONG   DUMRTSG
+    2144                    
+    2145 0000be70           SLOTCNDG
+    2146 0000be70     1000          .WORD   P1OID
+    2147 0000be80 00003360'         .LONG   SLOTSNDG
+    2148 0000bea0     2000          .WORD   P2OID
+    2149 0000beb0 00003360'         .LONG   SLOTSNDG
+    2150 0000bed0     0000          .WORD   0
+    2151 0000bee0 00000000!         .LONG   DUMRTSG
+    2152                    
+    2153                    *
+    2154                    *SAFE DOOR COLLISION ROUTINES
+    2155 0000bf00           SAFECOLL
+    2156 0000bf00     1000          .WORD   P1OID
+    2157 0000bf10 000042c0'         .LONG   SAFECOL
+    2158 0000bf30     2000          .WORD   P2OID
+    2159 0000bf40 000042c0'         .LONG   SAFECOL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   52
+
+    2160 0000bf60     0000          .WORD   0
+    2161 0000bf70 00000000!         .LONG   DUMRTSG
+    2162                    
+    2163 0000bf90           NARC1MSG
+    2164 0000bf90       4e          .STRING "NARC  ONE:"
+         0000bf98       41  
+         0000bfa0       52  
+         0000bfa8       43  
+         0000bfb0       20  
+         0000bfb8       20  
+         0000bfc0       4f  
+         0000bfc8       4e  
+         0000bfd0       45  
+         0000bfd8       3a  
+    2165 0000bfe0       00          .BYTE   0
+    2166 0000bfe8       49          .STRING "INTELLIGENCE REPORTS,"
+         0000bff0       4e  
+         0000bff8       54  
+         0000c000       45  
+         0000c008       4c  
+         0000c010       4c  
+         0000c018       49  
+         0000c020       47  
+         0000c028       45  
+         0000c030       4e  
+         0000c038       43  
+         0000c040       45  
+         0000c048       20  
+         0000c050       52  
+         0000c058       45  
+         0000c060       50  
+         0000c068       4f  
+         0000c070       52  
+         0000c078       54  
+         0000c080       53  
+         0000c088       2c  
+    2167 0000c090       00          .BYTE   0
+    2168 0000c098       22          .BYTE   22H
+    2169 0000c0a0       4d          .STRING "MR. BIG'S OFFICE IS "
+         0000c0a8       52  
+         0000c0b0       2e  
+         0000c0b8       20  
+         0000c0c0       42  
+         0000c0c8       49  
+         0000c0d0       47  
+         0000c0d8       27  
+         0000c0e0       53  
+         0000c0e8       20  
+         0000c0f0       4f  
+         0000c0f8       46  
+         0000c100       46  
+         0000c108       49  
+         0000c110       43  
+         0000c118       45  
+         0000c120       20  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   53
+
+         0000c128       49  
+         0000c130       53  
+         0000c138       20  
+    2170 0000c140       00          .BYTE   0
+    2171 0000c148       49          .STRING "IMPENETRABLE !"
+         0000c150       4d  
+         0000c158       50  
+         0000c160       45  
+         0000c168       4e  
+         0000c170       45  
+         0000c178       54  
+         0000c180       52  
+         0000c188       41  
+         0000c190       42  
+         0000c198       4c  
+         0000c1a0       45  
+         0000c1a8       20  
+         0000c1b0       21  
+    2172 0000c1b8       81          .BYTE   F15RQUOT
+    2173 0000c1c0       00          .BYTE   0
+    2174 0000c1c8       59          .STRING "YOU'RE ON YOUR OWN FROM HERE."
+         0000c1d0       4f  
+         0000c1d8       55  
+         0000c1e0       27  
+         0000c1e8       52  
+         0000c1f0       45  
+         0000c1f8       20  
+         0000c200       4f  
+         0000c208       4e  
+         0000c210       20  
+         0000c218       59  
+         0000c220       4f  
+         0000c228       55  
+         0000c230       52  
+         0000c238       20  
+         0000c240       4f  
+         0000c248       57  
+         0000c250       4e  
+         0000c258       20  
+         0000c260       46  
+         0000c268       52  
+         0000c270       4f  
+         0000c278       4d  
+         0000c280       20  
+         0000c288       48  
+         0000c290       45  
+         0000c298       52  
+         0000c2a0       45  
+         0000c2a8       2e  
+    2175 0000c2b0       00          .BYTE   0
+    2176 0000c2b8       47          .STRING "GOOD  LUCK!"
+         0000c2c0       4f  
+         0000c2c8       4f  
+         0000c2d0       44  
+         0000c2d8       20  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:09 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- WE HAVE DOORS OF ALL TYPES >>>                   PAGE   54
+
+         0000c2e0       20  
+         0000c2e8       4c  
+         0000c2f0       55  
+         0000c2f8       43  
+         0000c300       4b  
+         0000c308       21  
+    2177 0000c310       00          .BYTE   0
+    2178                    
+    2179 0000c320                   .EVEN
+    2180                            .END
+
+ No Errors,  No Warnings

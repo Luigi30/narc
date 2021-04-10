@@ -1,587 +1,587 @@
 	.DATA
 RD200:
 	.word	16,20,0,0
-	.long	>2002D00,NARCS
+	.long	02002D00H,NARCS
 RD201:
 	.word	13,20,0,0
-	.long	>2003700,NARCS
+	.long	02003700H,NARCS
 RD202:
 	.word	15,20,0,0
-	.long	>2004100,NARCS
+	.long	02004100H,NARCS
 RD203:
 	.word	16,20,0,0
-	.long	>2004B00,NARCS
+	.long	02004B00H,NARCS
 RD204:
 	.word	16,20,0,0
-	.long	>2005500,NARCS
+	.long	02005500H,NARCS
 RD205:
 	.word	15,20,0,0
-	.long	>2005F00,NARCS
+	.long	02005F00H,NARCS
 RD206:
 	.word	15,20,0,0
-	.long	>2006900,NARCS
+	.long	02006900H,NARCS
 RD207:
 	.word	15,20,0,0
-	.long	>2007300,NARCS
+	.long	02007300H,NARCS
 RD208:
 	.word	16,20,0,0
-	.long	>2007D00,NARCS
+	.long	02007D00H,NARCS
 RD209:
 	.word	15,20,0,0
-	.long	>2008700,NARCS
+	.long	02008700H,NARCS
 RD20A:
 	.word	25,20,0,0
-	.long	>2009100,NARCS
+	.long	02009100H,NARCS
 RD20AND:
 	.word	23,20,0,0
-	.long	>200A280,NARCS
+	.long	0200A280H,NARCS
 RD20ASTR:
 	.word	11,13,0,-3
-	.long	>200B180,NARCS
+	.long	0200B180H,NARCS
 RD20AT:
 	.word	21,20,0,1
-	.long	>200B660,NARCS
+	.long	0200B660H,NARCS
 RD20B:
 	.word	23,20,0,0
-	.long	>200C560,NARCS
+	.long	0200C560H,NARCS
 RD20C:
 	.word	19,20,0,0
-	.long	>200D460,NARCS
+	.long	0200D460H,NARCS
 RD20COL:
 	.word	7,18,0,-1
-	.long	>200E0E0,NARCS
+	.long	0200E0E0H,NARCS
 RD20COM:
 	.word	7,11,0,-13
-	.long	>200E560,NARCS
+	.long	0200E560H,NARCS
 RD20D:
 	.word	23,20,0,0
-	.long	>200E820,NARCS
+	.long	0200E820H,NARCS
 RD20DASH:
 	.word	7,3,0,-8
-	.long	>200F720,NARCS
+	.long	0200F720H,NARCS
 RD20DOLL:
 	.word	15,25,0,2
-	.long	>200F7E0,NARCS
+	.long	0200F7E0H,NARCS
 RD20E:
 	.word	21,20,0,0
-	.long	>2010460,NARCS
+	.long	02010460H,NARCS
 RD20EQL:
 	.word	7,9,0,-5
-	.long	>2011360,NARCS
+	.long	02011360H,NARCS
 RD20EXP:
 	.word	7,20,0,0
-	.long	>20115A0,NARCS
+	.long	020115A0H,NARCS
 RD20F:
 	.word	21,20,0,0
-	.long	>2011AA0,NARCS
+	.long	02011AA0H,NARCS
 RD20G:
 	.word	21,20,0,0
-	.long	>20129A0,NARCS
+	.long	020129A0H,NARCS
 RD20GRTR:
 	.word	7,13,0,-3
-	.long	>20138A0,NARCS
+	.long	020138A0H,NARCS
 RD20H:
 	.word	27,20,0,0
-	.long	>2013BE0,NARCS
+	.long	02013BE0H,NARCS
 RD20I:
 	.word	14,20,0,0
-	.long	>2014D60,NARCS
+	.long	02014D60H,NARCS
 RD20J:
 	.word	20,20,0,0
-	.long	>2015760,NARCS
+	.long	02015760H,NARCS
 RD20K:
 	.word	27,20,0,0
-	.long	>20163E0,NARCS
+	.long	020163E0H,NARCS
 RD20L:
 	.word	19,20,0,0
-	.long	>2017560,NARCS
+	.long	02017560H,NARCS
 RD20LESS:
 	.word	7,13,0,-3
-	.long	>20181E0,NARCS
+	.long	020181E0H,NARCS
 RD20LPAR:
 	.word	11,30,0,0
-	.long	>2018520,NARCS
+	.long	02018520H,NARCS
 RD20M:
 	.word	30,20,0,0
-	.long	>2019060,NARCS
+	.long	02019060H,NARCS
 RD20N:
 	.word	23,20,0,0
-	.long	>201A460,NARCS
+	.long	0201A460H,NARCS
 RD20O:
 	.word	20,20,0,0
-	.long	>201B360,NARCS
+	.long	0201B360H,NARCS
 RD20P:
 	.word	22,20,0,0
-	.long	>201BFE0,NARCS
+	.long	0201BFE0H,NARCS
 RD20PCNT:
 	.word	20,20,0,0
-	.long	>201CEE0,NARCS
+	.long	0201CEE0H,NARCS
 RD20PER:
 	.word	7,7,0,-13
-	.long	>201DB60,NARCS
+	.long	0201DB60H,NARCS
 RD20PLUS:
 	.word	9,9,0,-6
-	.long	>201DD20,NARCS
+	.long	0201DD20H,NARCS
 RD20PND:
 	.word	18,17,0,0
-	.long	>201E080,NARCS
+	.long	0201E080H,NARCS
 RD20Q:
 	.word	21,25,0,0
-	.long	>201EB20,NARCS
+	.long	0201EB20H,NARCS
 RD20QUES:
 	.word	15,20,0,0
-	.long	>201FDE0,NARCS
+	.long	0201FDE0H,NARCS
 RD20QUOT:
 	.word	16,11,0,0
-	.long	>20207E0,NARCS
+	.long	020207E0H,NARCS
 RD20R:
 	.word	25,20,0,0
-	.long	>2020D60,NARCS
+	.long	02020D60H,NARCS
 RD20RPAR:
 	.word	11,30,0,0
-	.long	>2021EE0,NARCS
+	.long	02021EE0H,NARCS
 RD20S:
 	.word	17,20,0,0
-	.long	>2022A20,NARCS
+	.long	02022A20H,NARCS
 RD20SCOL:
 	.word	7,22,0,-2
-	.long	>20236A0,NARCS
+	.long	020236A0H,NARCS
 RD20SLSH:
 	.word	7,19,0,0
-	.long	>2023C20,NARCS
+	.long	02023C20H,NARCS
 RD20SQOT:
 	.word	7,11,0,0
-	.long	>20240E0,NARCS
+	.long	020240E0H,NARCS
 RD20T:
 	.word	20,20,0,0
-	.long	>20243A0,NARCS
+	.long	020243A0H,NARCS
 RD20U:
 	.word	21,20,0,0
-	.long	>2025020,NARCS
+	.long	02025020H,NARCS
 RD20V:
 	.word	23,20,0,0
-	.long	>2025F20,NARCS
+	.long	02025F20H,NARCS
 RD20W:
 	.word	33,20,0,0
-	.long	>2026E20,NARCS
+	.long	02026E20H,NARCS
 RD20X:
 	.word	23,20,0,0
-	.long	>20284A0,NARCS
+	.long	020284A0H,NARCS
 RD20Y:
 	.word	24,20,0,0
-	.long	>20293A0,NARCS
+	.long	020293A0H,NARCS
 RD20Z:
 	.word	17,20,0,0
-	.long	>202A2A0,NARCS
+	.long	0202A2A0H,NARCS
 FON15A:
 	.word	11,15,0,0
-	.long	>202AF20,NARCS
+	.long	0202AF20H,NARCS
 FON15B:
 	.word	11,15,0,0
-	.long	>202B4C0,NARCS
+	.long	0202B4C0H,NARCS
 FON15C:
 	.word	11,15,0,0
-	.long	>202BA60,NARCS
+	.long	0202BA60H,NARCS
 FON15D:
 	.word	12,15,0,0
-	.long	>202C000,NARCS
+	.long	0202C000H,NARCS
 FON15E:
 	.word	11,15,0,0
-	.long	>202C5A0,NARCS
+	.long	0202C5A0H,NARCS
 FON15F:
 	.word	11,15,0,0
-	.long	>202CB40,NARCS
+	.long	0202CB40H,NARCS
 FON15G:
 	.word	12,15,0,0
-	.long	>202D0E0,NARCS
+	.long	0202D0E0H,NARCS
 FON15H:
 	.word	12,15,0,0
-	.long	>202D680,NARCS
+	.long	0202D680H,NARCS
 FON15I:
 	.word	3,15,0,0
-	.long	>202DC20,NARCS
+	.long	0202DC20H,NARCS
 FON15J:
 	.word	10,15,0,0
-	.long	>202DE00,NARCS
+	.long	0202DE00H,NARCS
 FON15K:
 	.word	12,15,0,0
-	.long	>202E3A0,NARCS
+	.long	0202E3A0H,NARCS
 FON15L:
 	.word	10,15,0,0
-	.long	>202E940,NARCS
+	.long	0202E940H,NARCS
 FON15M:
 	.word	16,15,0,0
-	.long	>202EEE0,NARCS
+	.long	0202EEE0H,NARCS
 FON15N:
 	.word	12,15,0,0
-	.long	>202F660,NARCS
+	.long	0202F660H,NARCS
 FON15O:
 	.word	12,15,0,0
-	.long	>202FC00,NARCS
+	.long	0202FC00H,NARCS
 FON15P:
 	.word	11,15,0,0
-	.long	>20301A0,NARCS
+	.long	020301A0H,NARCS
 FON15Q:
 	.word	13,17,0,0
-	.long	>2030740,NARCS
+	.long	02030740H,NARCS
 FON15R:
 	.word	11,15,0,0
-	.long	>2030FC0,NARCS
+	.long	02030FC0H,NARCS
 FON15S:
 	.word	12,15,0,0
-	.long	>2031560,NARCS
+	.long	02031560H,NARCS
 FON15T:
 	.word	11,15,0,0
-	.long	>2031B00,NARCS
+	.long	02031B00H,NARCS
 FON15U:
 	.word	11,15,0,0
-	.long	>20320A0,NARCS
+	.long	020320A0H,NARCS
 FON15V:
 	.word	14,15,0,0
-	.long	>2032640,NARCS
+	.long	02032640H,NARCS
 FON15W:
 	.word	16,15,0,0
-	.long	>2032DC0,NARCS
+	.long	02032DC0H,NARCS
 FON15X:
 	.word	15,15,0,0
-	.long	>2033540,NARCS
+	.long	02033540H,NARCS
 FON15Y:
 	.word	13,15,0,0
-	.long	>2033CC0,NARCS
+	.long	02033CC0H,NARCS
 FON15Z:
 	.word	13,15,0,0
-	.long	>2034440,NARCS
+	.long	02034440H,NARCS
 FON151:
 	.word	6,15,0,0
-	.long	>2034BC0,NARCS
+	.long	02034BC0H,NARCS
 FON152:
 	.word	12,15,0,0
-	.long	>2034F80,NARCS
+	.long	02034F80H,NARCS
 FON153:
 	.word	12,15,0,0
-	.long	>2035520,NARCS
+	.long	02035520H,NARCS
 FON154:
 	.word	13,15,0,0
-	.long	>2035AC0,NARCS
+	.long	02035AC0H,NARCS
 FON155:
 	.word	12,15,0,0
-	.long	>2036240,NARCS
+	.long	02036240H,NARCS
 FON156:
 	.word	13,15,0,0
-	.long	>20367E0,NARCS
+	.long	020367E0H,NARCS
 FON157:
 	.word	13,15,0,0
-	.long	>2036F60,NARCS
+	.long	02036F60H,NARCS
 FON158:
 	.word	12,15,0,0
-	.long	>20376E0,NARCS
+	.long	020376E0H,NARCS
 FON159:
 	.word	13,15,0,0
-	.long	>2037C80,NARCS
+	.long	02037C80H,NARCS
 FON150:
 	.word	12,15,0,0
-	.long	>2038400,NARCS
+	.long	02038400H,NARCS
 FON15apos1:
 	.word	4,6,0,0
-	.long	>20389A0,NARCS
+	.long	020389A0H,NARCS
 FON15excla:
 	.word	3,15,0,0
-	.long	>2038A60,NARCS
+	.long	02038A60H,NARCS
 FON15poun:
 	.word	12,10,0,-2
-	.long	>2038C40,NARCS
+	.long	02038C40H,NARCS
 OFON15doll:
 	.word	11,20,0,2
-	.long	>2039000,NARCS
+	.long	02039000H,NARCS
 FON15perc:
 	.word	13,15,0,0
-	.long	>2039780,NARCS
+	.long	02039780H,NARCS
 FON15carr:
 	.word	9,5,0,0
-	.long	>2039F00,NARCS
+	.long	02039F00H,NARCS
 FON15and:
 	.word	13,15,0,0
-	.long	>203A0E0,NARCS
+	.long	0203A0E0H,NARCS
 FON15ast:
 	.word	7,7,-2,-3
-	.long	>203A860,NARCS
+	.long	0203A860H,NARCS
 FON15parenl:
 	.word	6,17,0,1
-	.long	>203AA20,NARCS
+	.long	0203AA20H,NARCS
 FON15parenr:
 	.word	6,17,0,1
-	.long	>203AE60,NARCS
+	.long	0203AE60H,NARCS
 FON15dash:
 	.word	7,3,0,-6
-	.long	>203B2A0,NARCS
+	.long	0203B2A0H,NARCS
 FON15line:
 	.word	11,3,0,-12
-	.long	>203B360,NARCS
+	.long	0203B360H,NARCS
 FON15equal:
 	.word	7,8,-2,-4
-	.long	>203B480,NARCS
+	.long	0203B480H,NARCS
 FON15plus:
 	.word	7,8,-2,-4
-	.long	>203B680,NARCS
+	.long	0203B680H,NARCS
 FON15brackl:
 	.word	5,19,0,0
-	.long	>203B880,NARCS
+	.long	0203B880H,NARCS
 FON15brackr:
 	.word	5,19,0,0
-	.long	>203BD40,NARCS
+	.long	0203BD40H,NARCS
 FON15paren2l:
 	.word	7,19,0,2
-	.long	>203C200,NARCS
+	.long	0203C200H,NARCS
 FON15paren2r:
 	.word	7,19,0,2
-	.long	>203C6C0,NARCS
+	.long	0203C6C0H,NARCS
 FON15backsp:
 	.word	9,15,0,0
-	.long	>203CB80,NARCS
+	.long	0203CB80H,NARCS
 FON15break:
 	.word	2,15,0,0
-	.long	>203D120,NARCS
+	.long	0203D120H,NARCS
 FON15semicol:
 	.word	4,13,0,-2
-	.long	>203D300,NARCS
+	.long	0203D300H,NARCS
 FON15colon:
 	.word	4,11,0,-2
-	.long	>203D4A0,NARCS
+	.long	0203D4A0H,NARCS
 FON15apos:
 	.word	4,6,0,0
-	.long	>203D600,NARCS
+	.long	0203D600H,NARCS
 FON15quote:
 	.word	10,6,0,1
-	.long	>203D6C0,NARCS
+	.long	0203D6C0H,NARCS
 FON15comma:
 	.word	4,6,0,-10
-	.long	>203D900,NARCS
+	.long	0203D900H,NARCS
 FON15less:
 	.word	6,9,-2,-4
-	.long	>203D9C0,NARCS
+	.long	0203D9C0H,NARCS
 FON15period:
 	.word	4,4,0,-11
-	.long	>203DC00,NARCS
+	.long	0203DC00H,NARCS
 FON15more:
 	.word	6,9,-3,-4
-	.long	>203DC80,NARCS
+	.long	0203DC80H,NARCS
 FON15forsp:
 	.word	9,15,0,0
-	.long	>203DEC0,NARCS
+	.long	0203DEC0H,NARCS
 FON15quest:
 	.word	10,15,0,0
-	.long	>203E460,NARCS
+	.long	0203E460H,NARCS
 FON15rquote:
 	.word	10,6,0,1
-	.long	>203EA00,NARCS
+	.long	0203EA00H,NARCS
 FON15doll:
 	.word	11,20,0,2
-	.long	>203EC40,NARCS
+	.long	0203EC40H,NARCS
 FON15engPOUN:
 	.word	11,15,0,0
-	.long	>203F3C0,NARCS
+	.long	0203F3C0H,NARCS
 FON15CR:
 	.word	15,11,0,0
-	.long	>203F960,NARCS
+	.long	0203F960H,NARCS
 FONT7A:
 	.word	6,8,0,0
-	.long	>203FEE0,NARCS
+	.long	0203FEE0H,NARCS
 FONT7B:
 	.word	6,8,0,0
-	.long	>20400E0,NARCS
+	.long	020400E0H,NARCS
 FONT7C:
 	.word	6,8,0,0
-	.long	>20402E0,NARCS
+	.long	020402E0H,NARCS
 FONT7D:
 	.word	6,8,0,0
-	.long	>20404E0,NARCS
+	.long	020404E0H,NARCS
 FONT7E:
 	.word	6,8,0,0
-	.long	>20406E0,NARCS
+	.long	020406E0H,NARCS
 FONT7F:
 	.word	6,8,0,0
-	.long	>20408E0,NARCS
+	.long	020408E0H,NARCS
 FONT7G:
 	.word	6,8,0,0
-	.long	>2040AE0,NARCS
+	.long	02040AE0H,NARCS
 FONT7H:
 	.word	6,8,0,0
-	.long	>2040CE0,NARCS
+	.long	02040CE0H,NARCS
 FONT7I:
 	.word	2,8,0,0
-	.long	>2040EE0,NARCS
+	.long	02040EE0H,NARCS
 FONT7J:
 	.word	6,8,0,0
-	.long	>2040FE0,NARCS
+	.long	02040FE0H,NARCS
 FONT7K:
 	.word	6,8,0,0
-	.long	>20411E0,NARCS
+	.long	020411E0H,NARCS
 FONT7L:
 	.word	5,8,0,0
-	.long	>20413E0,NARCS
+	.long	020413E0H,NARCS
 FONT7M:
 	.word	10,8,0,0
-	.long	>20415E0,NARCS
+	.long	020415E0H,NARCS
 FONT7N:
 	.word	7,8,0,0
-	.long	>20418E0,NARCS
+	.long	020418E0H,NARCS
 FONT7O:
 	.word	7,8,0,0
-	.long	>2041AE0,NARCS
+	.long	02041AE0H,NARCS
 FONT7P:
 	.word	6,8,0,0
-	.long	>2041CE0,NARCS
+	.long	02041CE0H,NARCS
 FONT7Q:
 	.word	7,10,0,0
-	.long	>2041EE0,NARCS
+	.long	02041EE0H,NARCS
 FONT7R:
 	.word	6,8,0,0
-	.long	>2042160,NARCS
+	.long	02042160H,NARCS
 FONT7S:
 	.word	6,8,0,0
-	.long	>2042360,NARCS
+	.long	02042360H,NARCS
 FONT7T:
 	.word	6,8,0,0
-	.long	>2042560,NARCS
+	.long	02042560H,NARCS
 FONT7U:
 	.word	6,8,0,0
-	.long	>2042760,NARCS
+	.long	02042760H,NARCS
 FONT7V:
 	.word	7,8,0,0
-	.long	>2042960,NARCS
+	.long	02042960H,NARCS
 FONT7W:
 	.word	11,8,0,0
-	.long	>2042B60,NARCS
+	.long	02042B60H,NARCS
 FONT7X:
 	.word	7,8,0,0
-	.long	>2042E60,NARCS
+	.long	02042E60H,NARCS
 FONT7Y:
 	.word	6,8,0,0
-	.long	>2043060,NARCS
+	.long	02043060H,NARCS
 FONT7Z:
 	.word	6,8,0,0
-	.long	>2043260,NARCS
+	.long	02043260H,NARCS
 FONT71:
 	.word	4,8,0,0
-	.long	>2043460,NARCS
+	.long	02043460H,NARCS
 FONT72:
 	.word	6,8,0,0
-	.long	>2043560,NARCS
+	.long	02043560H,NARCS
 FONT73:
 	.word	6,8,0,0
-	.long	>2043760,NARCS
+	.long	02043760H,NARCS
 FONT74:
 	.word	6,8,0,0
-	.long	>2043960,NARCS
+	.long	02043960H,NARCS
 FONT75:
 	.word	6,8,0,0
-	.long	>2043B60,NARCS
+	.long	02043B60H,NARCS
 FONT76:
 	.word	6,8,0,0
-	.long	>2043D60,NARCS
+	.long	02043D60H,NARCS
 FONT77:
 	.word	6,8,0,0
-	.long	>2043F60,NARCS
+	.long	02043F60H,NARCS
 FONT78:
 	.word	6,8,0,0
-	.long	>2044160,NARCS
+	.long	02044160H,NARCS
 FONT79:
 	.word	6,8,0,0
-	.long	>2044360,NARCS
+	.long	02044360H,NARCS
 FONT70:
 	.word	6,8,0,0
-	.long	>2044560,NARCS
+	.long	02044560H,NARCS
 FONT7excla:
 	.word	2,8,0,0
-	.long	>2044760,NARCS
+	.long	02044760H,NARCS
 FONT7pound:
 	.word	10,8,0,0
-	.long	>2044860,NARCS
+	.long	02044860H,NARCS
 FONT7doll:
 	.word	6,9,0,1
-	.long	>2044B60,NARCS
+	.long	02044B60H,NARCS
 FONT7percen:
 	.word	11,8,0,0
-	.long	>2044DA0,NARCS
+	.long	02044DA0H,NARCS
 FONT7and:
 	.word	7,8,0,0
-	.long	>20450A0,NARCS
+	.long	020450A0H,NARCS
 FONT7ast:
 	.word	7,8,1,-1
-	.long	>20452A0,NARCS
+	.long	020452A0H,NARCS
 FONT7parenl:
 	.word	3,10,0,1
-	.long	>20454A0,NARCS
+	.long	020454A0H,NARCS
 FONT7parenr:
 	.word	3,10,0,1
-	.long	>20455E0,NARCS
+	.long	020455E0H,NARCS
 FONT7dash:
 	.word	5,2,0,-4
-	.long	>2045720,NARCS
+	.long	02045720H,NARCS
 FONT7line:
 	.word	6,2,0,-6
-	.long	>20457A0,NARCS
+	.long	020457A0H,NARCS
 FONT7equal:
 	.word	5,5,0,-3
-	.long	>2045820,NARCS
+	.long	02045820H,NARCS
 FONT7plus:
 	.word	6,6,0,-2
-	.long	>2045960,NARCS
+	.long	02045960H,NARCS
 FONT7bracl:
 	.word	3,10,0,0
-	.long	>2045AE0,NARCS
+	.long	02045AE0H,NARCS
 FONT7bracr:
 	.word	3,10,0,0
-	.long	>2045C20,NARCS
+	.long	02045C20H,NARCS
 FONT7backsp:
 	.word	5,8,0,0
-	.long	>2045D60,NARCS
+	.long	02045D60H,NARCS
 FONT7paren2l:
 	.word	4,10,0,0
-	.long	>2045F60,NARCS
+	.long	02045F60H,NARCS
 FONT7paren2r:
 	.word	4,10,0,0
-	.long	>20460A0,NARCS
+	.long	020460A0H,NARCS
 FONT7break:
 	.word	2,8,0,0
-	.long	>20461E0,NARCS
+	.long	020461E0H,NARCS
 FONT7semicol:
 	.word	2,8,0,0
-	.long	>20462E0,NARCS
+	.long	020462E0H,NARCS
 FONT7apost:
 	.word	2,4,0,0
-	.long	>20463E0,NARCS
+	.long	020463E0H,NARCS
 FONT7colon:
 	.word	2,6,0,-1
-	.long	>2046460,NARCS
+	.long	02046460H,NARCS
 FONT7quote:
 	.word	6,4,0,0
-	.long	>2046520,NARCS
+	.long	02046520H,NARCS
 FONT7comma:
 	.word	2,4,0,-5
-	.long	>2046620,NARCS
+	.long	02046620H,NARCS
 FONT7period:
 	.word	2,2,0,-6
-	.long	>20466A0,NARCS
+	.long	020466A0H,NARCS
 FONT7forsp:
 	.word	5,8,0,0
-	.long	>20466E0,NARCS
+	.long	020466E0H,NARCS
 FONT7less:
 	.word	4,7,0,0
-	.long	>20468E0,NARCS
+	.long	020468E0H,NARCS
 FONT7more:
 	.word	4,7,0,0
-	.long	>20469C0,NARCS
+	.long	020469C0H,NARCS
 FONT7quest:
 	.word	6,8,0,0
-	.long	>2046AA0,NARCS
+	.long	02046AA0H,NARCS
 RD15SP:
 	.word	13,13,0,0
-	.long	>3142D00,NARCS
+	.long	03142D00H,NARCS
 RD15RUB:
 	.word	20,16,0,0
-	.long	>3143380,NARCS
+	.long	03143380H,NARCS
 RD15END:
 	.word	21,16,0,0
-	.long	>3143D80,NARCS
+	.long	03143D80H,NARCS
 	.TEXT

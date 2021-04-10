@@ -1,4 +1,4 @@
-	.FILE	'NARC1A.ASM'
+	.FILE	"NARC1A.ASM"
 	.TITLE	" <<< NARC GENERAL PURPOSE SUBROUTINES PART II >>>"
 
 **************************************************************************
@@ -784,7 +784,7 @@ POUTOFRK
 	SOUND1	OUTOROCK		;SOUND OFF
 	DIE
 
-OUTOROCK .WORD	>F3A0,>01,>80A7,0	;OUT OF ROCKETS SOUND
+OUTOROCK .WORD	0F3A0H,01H,80A7H,0	;OUT OF ROCKETS SOUND
 
 **************************************************************************
 *                                                                        *
@@ -1858,9 +1858,9 @@ BUYWAITLP
 	DIE
 
 BUYMUSIC
-	.WORD	>F3FE,>01,>8041,0
+	.WORD	0F3FEH,01H,8041H,0
 BUYMOFF
-	.WORD	>F3FE,>01,>8042,0
+	.WORD	0F3FEH,01H,8042H,0
 **************************************************************************
 *                                                                        *
 * INIBMESS - INITIALIZE THE BUY IN MESSAGE				 *

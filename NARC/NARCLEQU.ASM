@@ -446,7 +446,7 @@ MESS_MAC $MACRO  FONT,SPACING,X,Y,COLOR,ROUTINE,SLEEP
          .LONG   :COLOR:
          .LONG   :ROUTINE:
 *         .LONG   :SLEEP:
-         $END
+         $ENDM
 
 SPACING20        EQU     00000002H
 SPACING07        EQU     1

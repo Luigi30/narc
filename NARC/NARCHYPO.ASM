@@ -1,4 +1,4 @@
- 	.FILE	'NARCHYPO.ASM'
+ 	.FILE	"NARCHYPO.ASM"
 	.TITLE	" <<< N  A  R  C  -- J.R. HYPOMAN >>>"
 
 **************************************************************************
@@ -43,12 +43,12 @@
 	.bss	hypocol,16,1
 
 ;EXTRA OBJECT VARS
-HEADOBJ	.set	>0	;long, ptr to Head object block, 0->no Head
-SFIRTIKS .set	>20	;"spinning fire" word ctr
-MODE	.set	>30	;current Action - byte
-LIFECTR	.set	>40	;WORD
-sfirrate .set  	>50	;word
-firerate .set	>60	;word
+HEADOBJ	.set	00H	;long, ptr to Head object block, 0->no Head
+SFIRTIKS .set	020H	;"spinning fire" word ctr
+MODE	.set	030H	;current Action - byte
+LIFECTR	.set	040H	;WORD
+sfirrate .set  	050H	;word
+firerate .set	060H	;word
 
 ;* values for MODE field
 NoMode	.set	0
@@ -105,7 +105,7 @@ JR_FUNCS:
 	.long	BOOF
 	.long	GoDestV
 	.long	GetXVel
-	.long	>B000	;MaxXZAngle
+	.long	0B000H	;MaxXZAngle
 	.long	30	;FlipTiks
 ********************************************************************
 
@@ -148,7 +148,7 @@ HYPOCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -201,7 +201,7 @@ CkPalX:
 HYPOMAN:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 	INCW	@SLPHYPOS
@@ -263,7 +263,7 @@ GotDoor:
 	callr	CkPal
 
 	move	A11,*A8(OID),W
-	movi	->20000,A2	;X VELOCITY
+	movi	-020000H,A2	;X VELOCITY
 	movi	WALKOUT,A9     	;GET ANIMATION SCRIPT
 	JSRP	OUTDOOR
 	jruc	InitEnmy
@@ -698,7 +698,7 @@ DO_JUMP:
 SkJLeft:
 	move	A0,*A8(OXVEL+16),W
 	calla	UpdShadV
-	movi	->90000,A0
+	movi	-090000H,A0
 	move	A0,*A8(OYVEL),L
 
 	move	*A13(COLLOBJ),A0,L
@@ -729,7 +729,7 @@ JRFLY0:
 	jrgt	JRFLY1a
 	move	*A8(OYVEL),A0,L
 	jrp	JRFLY1a
-	addi	>C000,A0
+	addi	0C000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	JRFLY0
 JRFLY1a:
@@ -743,7 +743,7 @@ JRFLY1:
 	jrgt	JRFLY2a
 	move	*A8(OYVEL),A0,L
 	jrp	JRFLY2a
-	addi	>A000,A0
+	addi	0A000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	JRFLY1
 JRFLY2a:
@@ -753,7 +753,7 @@ JRFLY2:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>A000,A0
+	addi	0A000H,A0
 	move	A0,*A8(OYVEL),L
 	jrn	JRFLY2
 ;* Peak altitude hit
@@ -767,7 +767,7 @@ JRFLY3:
 	cmpi	50,A1
 	jrlt	JRFLY4a
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	jruc	JRFLY3
 JRFLY4a:
@@ -777,7 +777,7 @@ JRFLY4:
 	movk	1,A0
 	calla	PRCSLP
 	move	*A8(OYVEL),A0,L
-	addi	>8000,A0
+	addi	08000H,A0
 	move	A0,*A8(OYVEL),L
 	calla	DFRMGRND
 ;	subk	5,A1
@@ -1158,7 +1158,7 @@ SkDestDc:
 
 	movb	*A13(BUSTTIKS),A1
 	jrz	SkBustDc
-	andi	>FF,A1	;No o' this sign extended byte shit
+	andi	0FFH,A1	;No o' this sign extended byte shit
 	sub	A5,A1
 	jrp	SkClrBst
 	clr	A1
@@ -1169,7 +1169,7 @@ SkBustDc:
 MoveSlp:
 	movb	*A13(FLIPTIKS),A1
 	jrz	SkFlipDc
-	andi	>FF,A1	;No o' this sign extended byte shit
+	andi	0FFH,A1	;No o' this sign extended byte shit
 	sub	A5,A1
 	jrp	SkClrFlp
 	clr	A1
@@ -1530,15 +1530,15 @@ GetXVel:
 	jrge	NoXvel
 	cmpi	WALKMED,A9
 	jrge	NotSlow
-	movi	SLOWVEL->1000,A0
+	movi	SLOWVEL-01000H,A0
 	jruc	GotXvel
 NotSlow:
 	cmpi	WALKFAST,A9
 	jrge	NotMed
-	movi	MEDVEL+>1000,A0
+	movi	MEDVEL+01000H,A0
 	jruc	GotXvel
 NotMed:
-	movi	FASTVEL+>1000,A0
+	movi	FASTVEL+01000H,A0
 	jruc	GotXvel
 NoXvel:
 	clr	A0
@@ -1984,7 +1984,7 @@ JR_DIE1:
 	DIE
 JRBUSTED:
 	move	A11,A2
-	movi	>5000,A1
+	movi	05000H,A1
 	calla	SCORE
 	calla	PUT5K
 
@@ -2010,11 +2010,11 @@ CARCOL0
 	move	*A8(OXVEL),A1,L
 	sub	A1,A0
 	abs	A0
-	cmpi	>70000,A0
+	cmpi	070000H,A0
 	jrlt	NotHurt
-	movi	>60000,A0
+	movi	060000H,A0
 	calla	RANDU
-	subi	>30000,A0
+	subi	030000H,A0
 	move	*A6(OXVEL),A1,L
 	sra	1,A1
 	move	A1,A2
@@ -2130,9 +2130,9 @@ JRTAB	.LONG	JROFF
 * 	FAFRAME	FRAME,SLEEPT,XOFFSET,YOFFSET,PROCID,PROCESS_ADDRESS,CW
 
 WALKDIST	.set	9+13+16+11+6+7+17+8	
-SLOWVEL	.set	->12000
-MEDVEL	.set	>1A000
-FASTVEL	.set	>26000
+SLOWVEL	.set	-012000H
+MEDVEL	.set	01A000H
+FASTVEL	.set	026000H
 
 FRANMIN:
 MOVETBL:
@@ -2478,31 +2478,31 @@ CRM1X:
 
 redhypo:	;PAL #0
 	.word	247	;pal size
-	.word >402,>402,>422,>403,>404,>423,>424,>444,>445,>402
-	.word >403,>422,>423,>C03,>C23,>443,>C43,>424,>C24,>444
-	.word >445,>C44,>C45,>C23,>C43,>1443,>C24,>C44,>1444,>C45
-	.word >1445,>463,>464,>C63,>C64,>465,>C65,>C62,>C63,>C64
-	.word >C65,>1462,>1463,>1464,>1465,>C83,>C83,>C84,>C84,>1483
-	.word >1484,>C85,>C85,>1485,>CA5,>CA5,>CE4,>14A5,>446,>426
-	.word >446,>447,>466,>467,>C26,>C27,>C46,>C47,>C66,>C67
-	.word >C46,>C47,>C66,>C67,>1446,>1447,>1466,>1467,>486,>487
-	.word >C86,>C87,>C86,>C87,>1486,>1487,>4A6,>CA6,>CA7,>CA6
-	.word >CA7,>14A6,>14A7,>14C7,>C48,>C48,>C68,>46A,>C69,>C6A
-	.word >1448,>1468,>1469,>146A,>488,>C88,>C88,>CA8,>1488,>14A8
-	.word >14C8,>C89,>C89,>1489,>14A9,>C8A,>C8B,>CAA,>CCD,>1443
-	.word >1444,>1462,>1463,>1464,>1445,>1465,>1446,>1447,>1466,>1467
-	.word >1484,>1485,>14A5,>14C5,>1486,>1487,>14A6,>14A7,>14C6,>1C44
-	.word >1C63,>1C65,>1C47,>1C67,>1C67,>1C84,>1C85,>1CA4,>1C86,>1C87
-	.word >1C86,>1CA7,>1CA7,>1CC7,>2463,>2466,>2C66,>24A4,>2CC4,>24A7
-	.word >2CE6,>340B,>340B,>340B,>340E,>480C,>482D,>580C,>680D,>1448
-	.word >1468,>1488,>1449,>1469,>1489,>146A,>148A,>146B,>1C48,>1C68
-	.word >1C88,>2488,>1C69,>1C89,>1C8A,>248A,>14A8,>1CA9,>14C9,>1CC9
-	.word >2CC9,>1CCA,>1CCB,>250E,>340F,>3813,>4811,>4430,>5050,>4855
-	.word >5410,>5834,>6831,>68B4,>78D5,>7D36,>303B,>3C3A,>3CB8,>60BA
-	.word >597F,>715F,>7D19,>7D5A,>7D3D,>7D7D,>7D9B,>7DBD,>7DBF,>7DBF
-	.word >4A9,>50C,>56E,>591,>5D1,>635,>15F,>280A,>3C09,>3C0C
-	.word >640A,>250A,>CF0,>580F,>641F,>1D70,>1E79,>16BA,>2E7F,>3DD2
-	.word >4D9A,>563A,>4E5A,>340D,>154E,>2D6F,>7EBA
+	.word 0402H,0402H,0422H,0403H,0404H,0423H,0424H,0444H,0445H,0402H
+	.word 0403H,0422H,0423H,0C03H,0C23H,0443H,0C43H,0424H,0C24H,0444H
+	.word 0445H,0C44H,0C45H,0C23H,0C43H,01443H,0C24H,0C44H,01444H,0C45H
+	.word 01445H,0463H,0464H,0C63H,0C64H,0465H,0C65H,0C62H,0C63H,0C64H
+	.word 0C65H,01462H,01463H,01464H,01465H,0C83H,0C83H,0C84H,0C84H,01483H
+	.word 01484H,0C85H,0C85H,01485H,0CA5H,0CA5H,0CE4H,014A5H,0446H,0426H
+	.word 0446H,0447H,0466H,0467H,0C26H,0C27H,0C46H,0C47H,0C66H,0C67H
+	.word 0C46H,0C47H,0C66H,0C67H,01446H,01447H,01466H,01467H,0486H,0487H
+	.word 0C86H,0C87H,0C86H,0C87H,01486H,01487H,04A6H,0CA6H,0CA7H,0CA6H
+	.word 0CA7H,014A6H,014A7H,014C7H,0C48H,0C48H,0C68H,046AH,0C69H,0C6AH
+	.word 01448H,01468H,01469H,0146AH,0488H,0C88H,0C88H,0CA8H,01488H,014A8H
+	.word 014C8H,0C89H,0C89H,01489H,014A9H,0C8AH,0C8BH,0CAAH,0CCDH,01443H
+	.word 01444H,01462H,01463H,01464H,01445H,01465H,01446H,01447H,01466H,01467H
+	.word 01484H,01485H,014A5H,014C5H,01486H,01487H,014A6H,014A7H,014C6H,01C44H
+	.word 01C63H,01C65H,01C47H,01C67H,01C67H,01C84H,01C85H,01CA4H,01C86H,01C87H
+	.word 01C86H,01CA7H,01CA7H,01CC7H,02463H,02466H,02C66H,024A4H,02CC4H,024A7H
+	.word 02CE6H,0340BH,0340BH,0340BH,0340EH,0480CH,0482DH,0580CH,0680DH,01448H
+	.word 01468H,01488H,01449H,01469H,01489H,0146AH,0148AH,0146BH,01C48H,01C68H
+	.word 01C88H,02488H,01C69H,01C89H,01C8AH,0248AH,014A8H,01CA9H,014C9H,01CC9H
+	.word 02CC9H,01CCAH,01CCBH,0250EH,0340FH,03813H,04811H,04430H,05050H,04855H
+	.word 05410H,05834H,06831H,068B4H,078D5H,07D36H,0303BH,03C3AH,03CB8H,060BAH
+	.word 0597FH,0715FH,07D19H,07D5AH,07D3DH,07D7DH,07D9BH,07DBDH,07DBFH,07DBFH
+	.word 04A9H,050CH,056EH,0591H,05D1H,0635H,015FH,0280AH,03C09H,03C0CH
+	.word 0640AH,0250AH,0CF0H,0580FH,0641FH,01D70H,01E79H,016BAH,02E7FH,03DD2H
+	.word 04D9AH,0563AH,04E5AH,0340DH,0154EH,02D6FH,07EBAH
 HYPOPALS:
 	.long	JRwalk
 	.long	redhypo

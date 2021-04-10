@@ -1,4 +1,4 @@
- 	.FILE	'NARCHOOK.ASM'
+ 	.FILE	"NARCHOOK.ASM"
 	.TITLE	" <<< N  A  R  C  -- HOOKER >>>"
 
 **************************************************************************
@@ -12,10 +12,10 @@
 	.OPTION	B,D,L
 	.MNOLIST
 
-OOHSND1	.WORD	>F020|NINTEQ,>40,>80bA,0 ;Marilyn ooh
-OOHSND2	.WORD	>F020|NINTEQ,>40,>80bb,0 ;Slow ooh
-HELPSND	.WORD	>F021|NINTEQ,>60,>8037,0 ;SCREAM
-MOAN	.WORD	>F060,>60,>80CF,0	 ;death by bullet
+OOHSND1	.WORD	0F020H|NINTEQ,040H,080bAH,0 ;Marilyn ooh
+OOHSND2	.WORD	0F020H|NINTEQ,040H,080bbH,0 ;Slow ooh
+HELPSND	.WORD	0F021H|NINTEQ,060H,08037H,0 ;SCREAM
+MOAN	.WORD	0F060H,060H,080CFH,0	 ;death by bullet
 
 *
 *EXTERNALS
@@ -59,7 +59,7 @@ HK_FUNCS:
 	.long	BOOF
 	.long	GoDestD
 	.long	GetXVel
-	.long	>6000	;MaxXZAngle
+	.long	06000H	;MaxXZAngle
 	.long	60	;FlipTiks
 ********************************************************************
 
@@ -103,7 +103,7 @@ HOOKCOLD:
 ;* PARMS
 ; A5  - Y:X
 ; A6  - 0:Z	;if A5 and A6=0 then Random Position
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 
 	mmtm	SP,A0,A1,A2,A7,A9,A10,A11
 	callr	VARINIT
@@ -135,7 +135,7 @@ ColdX:
 HOOKER:
 * A9  - Y:X
 * A10 - 0:Z	;if A9,A10 = 0 generate random start pos.
-* A11 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+* A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 ;based on sub-type, jump to appropriate routine
 
 MaxWait:
@@ -219,7 +219,7 @@ GotDoor:
 	move	A11,*A8(OID),W
 	move	A8,A0
 ***	calla	DELSHAD
-	movi	->10000,A2	;X VELOCITY
+	movi	-010000H,A2	;X VELOCITY
 	movi	WALKOUT,A9     	;GET ANIMATION SCRIPT
 	JSRP	OUTDOOR
 	move	A8,A0
@@ -301,8 +301,8 @@ InitEnmy:
 	move	A0,*A13(FUNCS),L
 
 	move	*A8(OID),A0,W
-	andi	>F,A0
-	cmpi	>F,A0
+	andi	0FH,A0
+	cmpi	0FH,A0
 	jrnz	SkTits
 	callr	ZCHECK
 	movi	HK_TITS,A9
@@ -502,7 +502,7 @@ ListLeft:
 AnimX:
 
 **** Find Next Event ****
-	movi	>FF,A7
+	movi	0FFH,A7
 	movb	*A13(BRAINTIKS),A1
 	and	A7,A1
 	jrnz	BTok
@@ -614,7 +614,7 @@ GetXVel:
 	move	*A13(ANIMPTR),A0,L
 	cmpi	HK_WALK,A0
 	jrnz	NoXvel
-	movi	>8000,A0
+	movi	08000H,A0
 	zext	A0,W
 	jruc	GotXvel
 NoXvel:
@@ -1026,10 +1026,10 @@ PlyrCol:
 
 	move	@PIMPCNT,A0
 	jrnz	SkHelp
-; A14 - 0.8:#.4:rand#.4:>0E.8:OIDtype.4:OIDsubtype.4
+; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
 	clr	A5
 	clr	A6
-	movi	>00100000|PIMPEOID|1,A14
+	movi	000100000H|PIMPEOID|1,A14
 	calla	PIMPCOLD
 	movi	HELPSND,A0
 	calla	ONESND
@@ -1088,7 +1088,7 @@ StrtGoos:
 	move	A7,A0
 	calla	PUTA9
 SkGoos:
-	movi	>250,A1
+	movi	0250H,A1
 	calla	SCORE
 	movi	90,A0
 	movb	A0,*A7(GOOSETIK)
@@ -1103,7 +1103,7 @@ NoGoose:
 * FIRE FRAME TABLE ENTRY:		    
 * 	FAFRAME	FRAME,SLEEPT,XOFFSET,YOFFSET,PROCID,PROCESS_ADDRESS,CW
 
-WALKVEL	.set	>8000
+WALKVEL	.set	08000H
 MOVETBL:
 HK_WALK:	  ;* sleep is 200% of delta
 	.long	hkwlk1

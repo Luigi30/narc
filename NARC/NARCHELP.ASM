@@ -1,4 +1,4 @@
-	.FILE	'NARCHELP.ASM'
+	.FILE	"NARCHELP.ASM"
 	.TITLE	"Audits and Adjustments"
 	.WIDTH	132
 	.OPTION	B,D,L,T
@@ -2137,7 +2137,7 @@ PROMPT_PROC
          CMP     A0,A1
          JRLO    PP2                  ;NOT ENOUGH.....PRINT 1.
 *
-*        >1 = READY FOR 2 PLAYERS.  PRESS START.
+*        01H = READY FOR 2 PLAYERS.  PRESS START.
 *
 RF2      MOVI    MESS_READY_2,A1
          JRUC    RED_1
@@ -2184,7 +2184,7 @@ BL2      SLEEP   10H
 * 	SOUND(S?)							 *
 *                                                                        *
 **************************************************************************
-COINSND	.WORD	>F3FE,>10,>8085,0		;"COIN" SOUND
+COINSND	.WORD	0F3FEH,010H,08085H,0		;"COIN" SOUND
 
 **************************************************************************
 *                                                                        *
@@ -2427,7 +2427,7 @@ WB2      NOT     A1                   ;LAST = 0 AND NOW = 1 MEANS EDGE!
          SOUND1  BEEP_1                ;MAKE A BEEP
          RETP
 
-BEEP_1   .WORD	>F3DF,>10,>80A2,0		;LOW BEEP 
+BEEP_1   .WORD	0F3DFH,010H,080A2H,0		;LOW BEEP 
 
 DUMP_DONE
          RETP                         ;AND RETURN TO CALLER!

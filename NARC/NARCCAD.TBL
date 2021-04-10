@@ -1,122 +1,122 @@
 	.DATA
 CADDY1:
 	.word	242,45,130,-139
-	.long	>235F060,caddy
+	.long	0235F060H,caddy
 CAD1WIN1:
 	.word	35,26,-10,-123
-	.long	>2374780,caddy
+	.long	02374780H,caddy
 CAD1WIN2:
 	.word	31,14,-14,-135
-	.long	>23764C0,caddy
+	.long	023764C0H,caddy
 CAD1WHL1:
 	.word	29,33,-60,-159
-	.long	>23772C0,caddy
+	.long	023772C0H,caddy
 CAD1WHL2:
 	.word	29,33,-60,-159
-	.long	>23793C0,caddy
+	.long	023793C0H,caddy
 CAD1WHL3:
 	.word	29,33,-60,-159
-	.long	>237B4C0,caddy
+	.long	0237B4C0H,caddy
 CAD1WHL4:
 	.word	29,33,-60,-159
-	.long	>237D5C0,caddy
+	.long	0237D5C0H,caddy
 CAD1WHL1C:
 	.word	29,33,76,-160
-	.long	>23772C0,caddy
+	.long	023772C0H,caddy
 CAD1WHL2C:
 	.word	29,33,76,-160
-	.long	>23793C0,caddy
+	.long	023793C0H,caddy
 CAD1WHL3C:
 	.word	29,33,76,-160
-	.long	>237B4C0,caddy
+	.long	0237B4C0H,caddy
 CAD1WHL4C:
 	.word	29,33,76,-160
-	.long	>237D5C0,caddy
+	.long	0237D5C0H,caddy
 CAD1WHL1CC:
 	.word	29,33,14,16
-	.long	>23772C0,caddy
+	.long	023772C0H,caddy
 CAD1WHL2CC:
 	.word	29,33,14,16
-	.long	>23793C0,caddy
+	.long	023793C0H,caddy
 CAD1WHL3CC:
 	.word	29,33,14,16
-	.long	>237B4C0,caddy
+	.long	0237B4C0H,caddy
 CAD1WHL4CC:
 	.word	29,33,14,16
-	.long	>237D5C0,caddy
+	.long	0237D5C0H,caddy
 CADSHAT1:
 	.word	43,26,-2,-123
-	.long	>237F6C0,caddy
+	.long	0237F6C0H,caddy
 CADSHAT2:
 	.word	93,37,44,-113
-	.long	>2381A80,caddy
+	.long	02381A80H,caddy
 CADSHAT3:
 	.word	122,33,67,-116
-	.long	>2388980,caddy
+	.long	02388980H,caddy
 CADSHAT4:
 	.word	31,14,-14,-135
-	.long	>2390960,caddy
+	.long	02390960H,caddy
 CADSHAT5:
 	.word	31,9,-14,-140
-	.long	>2391760,caddy
+	.long	02391760H,caddy
 CAD1TNK1:
 	.word	58,11,119,-141
-	.long	>2392060,caddy
+	.long	02392060H,caddy
 CAD1TNK2:
 	.word	61,26,122,-126
-	.long	>2393500,caddy
+	.long	02393500H,caddy
 CAD1TNK3:
 	.word	58,35,119,-117
-	.long	>2396900,caddy
+	.long	02396900H,caddy
 CAD1TNK4:
 	.word	58,43,119,-109
-	.long	>239AAA0,caddy
+	.long	0239AAA0H,caddy
 CADFORS60:
 	.word	161,76,88,-125
-	.long	>239FB40,caddy
+	.long	0239FB40H,caddy
 CADFORS90:
 	.word	88,75,43,-126
-	.long	>23B80C0,caddy
+	.long	023B80C0H,caddy
 CADREVS60:
 	.word	158,75,91,-123
-	.long	>23C4F00,caddy
+	.long	023C4F00H,caddy
 CADREVS90:
 	.word	85,77,41,-124
-	.long	>23DC600,caddy
+	.long	023DC600H,caddy
 CRYTEWHL1:
 	.word	27,33,-61,-164
-	.long	>23E99C0,caddy
+	.long	023E99C0H,caddy
 CRYTEWHL2:
 	.word	27,33,-61,-164
-	.long	>23EB6A0,caddy
+	.long	023EB6A0H,caddy
 CRYTEWHL3:
 	.word	27,33,-61,-164
-	.long	>23ED380,caddy
+	.long	023ED380H,caddy
 CRYTEWHL4:
 	.word	27,33,-61,-164
-	.long	>23EF060,caddy
+	.long	023EF060H,caddy
 CRYTEWIN1:
 	.word	40,27,-1,-127
-	.long	>23F0D40,caddy
+	.long	023F0D40H,caddy
 CRYTEWIN2:
 	.word	40,16,-1,-138
-	.long	>23F2F00,caddy
+	.long	023F2F00H,caddy
 CLEFTWHL1:
 	.word	27,33,-61,-164
-	.long	>23F4300,caddy
+	.long	023F4300H,caddy
 CLEFTWHL2:
 	.word	27,33,-61,-164
-	.long	>23F5FE0,caddy
+	.long	023F5FE0H,caddy
 CLEFTWHL3:
 	.word	27,33,-62,-163
-	.long	>23F7CC0,caddy
+	.long	023F7CC0H,caddy
 CLEFTWHL4:
 	.word	27,33,-62,-163
-	.long	>23F99A0,caddy
+	.long	023F99A0H,caddy
 CLEFTWIN1:
 	.word	41,26,0,-122
-	.long	>23FB680,caddy
+	.long	023FB680H,caddy
 CLEFTWIN2:
 	.word	33,15,-8,-133
-	.long	>23FDA40,caddy
+	.long	023FDA40H,caddy
 	.TEXT

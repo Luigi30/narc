@@ -33,81 +33,81 @@ LAST_OPERATOR    EQU     15       ;NO OPERATOR GREATER THAN THIS
 S_DY     $MACRO DY
          .BYTE   DELTA_Y
          .LONG   :DY:
-         $END
+         $ENDM
 
 S_COLOR  $MACRO COLOR     ;SET FOR PAINTING ON BLACK
          .BYTE   COLOR_FOR_BLACK
          .BYTE   :COLOR:
-         $END
+         $ENDM
 
 S_WALL   $MACRO COLOR_TABLE
          .BYTE   COLOR_FOR_WALL
          .LONG   :COLOR_TABLE:
-         $END
+         $ENDM
 
 S_CALL   $MACRO ADDRESS
          .BYTE   CALL_SCRIPT
          .LONG   :ADDRESS:
-         $END
+         $ENDM
 
 S_CHAR   $MACRO  CHARACTER
          .BYTE   SPRAY_CHAR
          .BYTE   :CHARACTER:
-         $END
+         $ENDM
 
 S_END    $MACRO
          .BYTE   END_OF_SCRIPT
-         $END
+         $ENDM
 
 S_X      $MACRO  X
          .BYTE   PROCESS_LONG
          .WORD   SPR_X
          .LONG   STRUCT_X_UNIT*:X:
-         $END
+         $ENDM
 
 S_Y      $MACRO  Y
          .BYTE   PROCESS_LONG
          .WORD   SPR_Y
          .LONG   STRUCT_Y_UNIT*:Y:
-         $END
+         $ENDM
 
 S_RATE   $MACRO  TIME
          .BYTE   PROCESS_WORD
          .WORD   SPR_SLEEP
          .WORD   :TIME:
-         $END
+         $ENDM
 
 S_SCALER $MACRO    SCALE
          .BYTE   PROCESS_WORD
          .WORD   SPR_SCALER
          .WORD   :SCALE:
-         $END
+         $ENDM
 
 S_BRUSH  $MACRO   BRUSH_POINTER
          .BYTE   PROCESS_LONG
          .WORD   SPR_POINTER
          .LONG   :BRUSH_POINTER:
-         $END
+         $ENDM
 
 S_PAL    $MACRO   PALETTE
          .BYTE   PROCESS_WORD
          .WORD   SPR_PALETTE
          .WORD   :PALETTE:
-         $END
+         $ENDM
 
 S_FORK   $MACRO  SCRIPT
          .BYTE   SPRAY_FORK
          .LONG   :SCRIPT:
-         $END
+         $ENDM
 
 S_SLEEP  $MACRO  TIME
          .BYTE   SPRAY_SLEEP
          .BYTE   :TIME:
-         $END
+         $ENDM
 
 S_ENTRY  $MACRO
          .BYTE   SPRAY_ENTRY
-         $END
+         $ENDM
 
 S_NEW_C  $MACRO  COLOR
          .BYTE   PROCESS_WORD
@@ -116,19 +116,19 @@ S_NEW_C  $MACRO  COLOR
          .BYTE   PROCESS_WORD
          .WORD   SPR_COL_MAX
          .WORD   (:COLOR:*32)+31
-         $END
+         $ENDM
 
 S_ON_WAL $MACRO  BLOB_R
          .BYTE   BLOB_ON_WALL
-         $END
+         $ENDM
 
 S_ON_BLK $MACRO  BLOB_R
          .BYTE   BLOB_ON_BLACK
-         $END
+         $ENDM
 
 S_GPAL   $MACRO  
          .BYTE   GLOBAL_PALETTE
-         $END
+         $ENDM
 
 
 

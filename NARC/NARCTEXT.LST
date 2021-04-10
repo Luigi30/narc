@@ -1,0 +1,166 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCTEXT.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L,T
+       5                            .MNOLIST
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      10                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      11                    *       LOCAL STUFF
+      12                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      13                            .INCLUDE        "NARCTEXT.TBL"          ;IMAGE TABLES
+      14                            .INCLUDE        "IMGTBL.GLO"            ;GLOBALS
+      15 00000000                   .EVEN
+      16 00006180                   .DATA
+      17                    *
+      18                    *FONT TABLES ASCII $21 - WHATEVER
+      19                    *
+      20                    *7 POINT FONT(PLAYER MESSAGE, GAME ADJUSTS, ETC.)
+      21 00006180           RD7FONT
+      22 00006180 00005200"         .LONG  FONT7excla,FONT7quote,FONT7pound,FONT7doll,FONT7percen
+      23 00006220 00005400"         .LONG  FONT7and
+      24 00006240 00005b80"         .LONG  FONT7apost,FONT7parenl,FONT7parenr,FONT7ast,FONT7plus
+      25 000062e0 00005d00"         .LONG  FONT7comma,FONT7dash,FONT7period,FONT7forsp,FONT70,FONT71
+      26 000063a0 00004d80"         .LONG  FONT72,FONT73,FONT74,FONT75,FONT76,FONT77,FONT78,FONT79
+      27 000064a0 00005c00"         .LONG  FONT7colon,FONT7semicol,FONT7less,FONT7equal,FONT7more
+      28 00006540 00005f80"         .LONG  FONT7quest,FONT7line
+      29 00006580 00004000"         .LONG  FONT7A,FONT7B,FONT7C,FONT7D,FONT7E,FONT7F,FONT7G,FONT7H
+      30 00006680 00004400"         .LONG  FONT7I,FONT7J,FONT7K,FONT7L,FONT7M,FONT7N,FONT7O,FONT7P
+      31 00006780 00004800"         .LONG  FONT7Q,FONT7R,FONT7S,FONT7T,FONT7U,FONT7V,FONT7W,FONT7X
+      32 00006880 00004c00"         .LONG  FONT7Y,FONT7Z
+      33 000068c0 00005800"         .LONG  FONT7bracl,FONT7backsp,FONT7bracr,FONT7break,FONT7line
+      34 00006960 00005b80"         .LONG  FONT7apost       
+      35 00006980 00004000"         .LONG  FONT7A,FONT7B,FONT7C,FONT7D,FONT7E,FONT7F,FONT7G,FONT7H
+      36 00006a80 00004400"         .LONG  FONT7I,FONT7J,FONT7K,FONT7L,FONT7M,FONT7N,FONT7O,FONT7P
+      37 00006b80 00004800"         .LONG  FONT7Q,FONT7R,FONT7S,FONT7T,FONT7U,FONT7V,FONT7W,FONT7X
+      38 00006c80 00004c00"         .LONG  FONT7Y,FONT7Z
+      39 00006cc0 00005980"         .LONG  FONT7paren2l,FONT7break,FONT7paren2r
+      40 00006d20 00006000"         .LONG  RD15SP,RD15RUB,RD15END,FON15rquote       ;Replace these 7 pnt
+      41                    *15 POINT FONT STARTING AT ASCII $21. @ is missing (GNP 10/20/88)
+      42 00006da0           RD15FONT
+      43 00006da0 00002f80"         .LONG  FON15excla,FON15quote,FON15poun,FON15doll,FON15perc,FON15and
+      44 00006e60 00003a00"         .LONG  FON15apos,FON15parenl,FON15parenr,FON15ast,FON15plus
+      45 00006f00 00003b00"         .LONG  FON15comma,FON15dash,FON15period,FON15forsp,FON150,FON151
+      46 00006fc0 00002a80"         .LONG  FON152,FON153,FON154,FON155,FON156,FON157,FON158,FON159
+      47 000070c0 00003980"         .LONG  FON15colon,FON15semicol,FON15less,FON15equal,FON15more
+      48 00007160 00003d80"         .LONG  FON15quest,FON15dash
+      49 000071a0 00001d00"         .LONG  FON15A,FON15B,FON15C,FON15D,FON15E,FON15F,FON15G,FON15H
+      50 000072a0 00002100"         .LONG  FON15I,FON15J,FON15K,FON15L,FON15M,FON15N,FON15O,FON15P
+      51 000073a0 00002500"         .LONG  FON15Q,FON15R,FON15S,FON15T,FON15U,FON15V,FON15W,FON15X
+      52 000074a0 00002900"         .LONG  FON15Y,FON15Z
+      53 000074e0 00003600"         .LONG  FON15brackl,FON15backsp,FON15brackr,FON15carr,FON15line
+      54 00007580 00002f00"         .LONG  FON15apos1       
+      55 000075a0 00001d00"         .LONG  FON15A,FON15B,FON15C,FON15D,FON15E,FON15F,FON15G,FON15H
+      56 000076a0 00002100"         .LONG  FON15I,FON15J,FON15K,FON15L,FON15M,FON15N,FON15O,FON15P
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- STRINGS AND SUCH >>>                             PAGE    2
+
+      57 000077a0 00002500"         .LONG  FON15Q,FON15R,FON15S,FON15T,FON15U,FON15V,FON15W,FON15X
+      58 000078a0 00002900"         .LONG  FON15Y,FON15Z
+      59 000078e0 00003700"         .LONG  FON15paren2l,FON15break,FON15paren2r
+      60 00007940 00006000"         .LONG  RD15SP,RD15RUB,RD15END,FON15rquote,FON15engPOUN,FON15CR
+      61                    *20 POINT FONT
+      62 00007a00           RD20FONT
+      63 00007a00 00000b80"         .LONG   RD20EXP,RD20QUOT,RD20PND,RD20DOLL,RD20PCNT,RD20AND,RD20SQOT
+      64 00007ae0 00001080"         .LONG   RD20LPAR,RD20RPAR,RD20ASTR,RD20PLUS,RD20COM,RD20DASH
+      65 00007ba0 00001380"         .LONG   RD20PER,RD20SLSH,RD200,RD201,RD202
+      66 00007c40 00000180"         .LONG   RD203,RD204,RD205,RD206,RD207,RD208,RD209,RD20COL,RD20SCOL
+      67 00007d60 00001000"         .LONG   RD20LESS,RD20EQL,RD20GRTR,RD20QUES,RD20AT,RD20A,RD20B
+      68 00007e40 00000780"         .LONG   RD20C,RD20D,RD20E,RD20F,RD20G,RD20H,RD20I,RD20J,RD20K
+      69 00007f60 00000f80"         .LONG   RD20L,RD20M,RD20N,RD20O,RD20P,RD20Q,RD20R,RD20S,RD20T
+      70 00008080 00001a00"         .LONG   RD20U,RD20V,RD20W,RD20X,RD20Y,RD20Z
+      71                    
+      72 00008140           NOONEMSG
+      73 00008140       4e          .STRING "NO ONE HAD THE GUTS"
+      74 000081d8       00          .BYTE   0
+      75 000081e0       55          .STRING "UNTIL NOW!"
+      76 00008230       00          .BYTE   0
+      77 00008238       4e  NARCMSG .STRING "NARC"
+      78 00008258       00          .BYTE   0
+      79 00008260           PRSNTMSG
+      80 00008260       50          .STRING "PRESENTED BY"
+      81 000082c0       00          .BYTE   0
+      82 000082c8           WMSMSG
+      83 000082c8       57          .STRING "WILLIAMS ELECTRONICS GAMES, INC."
+      84 000083c8       00          .BYTE   0
+      85 000083d0           COPYRMSG
+      86 000083d0       43          .STRING "COPYRIGHT 1988 WILLIAMS ELECTRONICS GAMES, INC."
+      87 00008548       00          .BYTE   0
+      88 00008550           GAMOVMSG
+      89 00008550       47          .STRING "GAME OVER"
+      90 00008598       00          .BYTE   0
+      91 000085a0           CASHMSG
+      92 000085a0       43          .STRING "CA$H  "
+      93 000085d0       00          .BYTE   0
+      94 000085d8       49          .STRING "IN YOUR  "
+      95 00008620       00          .BYTE   0
+      96 00008628       53          .STRING "STASH!"
+      97 00008658       00          .BYTE   0
+      98 00008660           EXTRAMSG
+      99 00008660       45          .STRING "EXTRA ENERGY EVERY "
+     100 000086f8       00          .BYTE   0
+     101 00008700           PLYR1MSG
+     102 00008700       50          .STRING "PLAYER   1"
+     103 00008750       00          .BYTE   0
+     104 00008758           PLYR2MSG
+     105 00008758       50          .STRING "PLAYER   2"
+     106 000087a8       00          .BYTE   0
+     107 000087b0           AMMOMSG       
+     108 000087b0       42          .STRING "BULLETS ADDED!"
+     109 00008820       00          .BYTE   0
+     110 00008828           NOBONMSG
+     111 00008828       4e          .STRING "NO BONUS."
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- STRINGS AND SUCH >>>                             PAGE    3
+
+     112 00008870       00          .BYTE   0
+     113 00008878           EVIMSG
+     114 00008878       45          .STRING "EVIDENCE SEIZED:"
+     115 000088f8       00          .BYTE   0
+     116 00008900           X1KMSG
+     117 00008900       58          .STRING "X 1,000"
+     118 00008938       00          .BYTE   0
+     119 00008940           X2KMSG
+     120 00008940       58          .STRING "X 2,000"
+     121 00008978       00          .BYTE   0
+     122 00008980           X5KMSG
+     123 00008980       58          .STRING "X 5,000"
+     124 000089b8       00          .BYTE   0
+     125 000089c0           X25KMSG
+     126 000089c0       58          .STRING "X 24,000"
+     127 00008a00       00          .BYTE   0
+     128 00008a08           CLOS1MSG
+     129 00008a08       43          .STRING "CLOSE CALL MAX"
+     130 00008a78       00          .BYTE   0
+     131 00008a80           CLOS2MSG
+     132 00008a80       43          .STRING "CLOSE CALL HIT"
+     133 00008af0           BLANKMSG
+     134 00008af0       00          .BYTE   0
+     135 00008af8           MAXMSG  
+     136 00008af8       4d          .STRING "MAX FORCE"
+     137 00008b40       00          .BYTE   0
+     138 00008b48           GAYMSG
+     139 00008b48       48          .STRING "HIT MAN"
+     140 00008b80       00          .BYTE   0
+     141 00008b88           WAVEMSG
+     142 00008b88       57          .STRING "WAVE:"
+     143 00008bb0       00          .BYTE   0
+     144 00008bc0                   .EVEN
+     145                    
+     146 00008bc0       4e          .STRING "NNAARRCC  CCOOPPYYRRIIGGHHTT  ((CC))  11998888  "
+     147 00008d40       57      .STRING "WWIILLLLIIAAMMSS  EELLEECCTTRROONNIICCSS  GGAAMMEESS,,  IINNCC.."  
+     148 00008f40                   .EVEN
+     149                    
+     150                            .END
+
+ No Errors,  No Warnings

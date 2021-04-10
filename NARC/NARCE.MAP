@@ -1,7 +1,7 @@
 *****************************************************
-GSP COFF Linker      , Version 3.00   
+TMS340 COFF Linker           Version 6.10
 *****************************************************
-Fri Jan 06 15:33:26 1989
+Sat Apr 10 02:20:40 2021
 
 OUTPUT FILE NAME:   <NARCE.REL>
 ENTRY POINT SYMBOL: 0
@@ -9,13 +9,13 @@ ENTRY POINT SYMBOL: 0
 
 MEMORY CONFIGURATION
 
-           name      origin     length     attributes
-         --------   --------   ---------   ----------
-         SCRATCH    01000000   000100000      RWIX
-         ROM        ffc00000   00033f000      RWIX
-         ROM2       fff4f000   000001000      RWIX
-         ROM3       fff50000   000010000      RWIX
-         TRAP31     fffffc00   000000400      RWIX
+           name      origin     length     attributes     fill
+         --------   --------   ---------   ----------   --------
+         SCRATCH    01000000   000100000      RWIX      
+         ROM        ffc00000   00033f000      RWIX      
+         ROM2       fff4f000   000001000      RWIX      
+         ROM3       fff50000   000010000      RWIX      
+         TRAP31     fffffc00   000000400      RWIX      
 
 
 SECTION ALLOCATION MAP
@@ -23,6 +23,12 @@ SECTION ALLOCATION MAP
  output                                  attributes/
 section   page    origin      length       input sections
 --------  ----  ----------  ----------   ----------------
+VECTORS    0    fffffc00    00000000     UNINITIALIZED
+
+POWERON    0    fff4f000    00000000     UNINITIALIZED
+
+DISPTEXT   0    fff50000    00000000     UNINITIALIZED
+
 FIXED      0    01000000    00000000     UNINITIALIZED
 
 OFIXED     0    01000000    00000000     UNINITIALIZED
@@ -35,295 +41,339 @@ NFIXED     0    01000000    00000000     UNINITIALIZED
 
 SYSWORK    0    01000000    00000000     UNINITIALIZED
 
-.text      0    ffc00000    0002fdd0     
-                  ffc00000    0000a190     NARC6.OBJ (.text)
-                  ffc0a190    00009380     NARCCHOP.OBJ (.text)
-                  ffc13510    00008dc0     NARCDUMP.OBJ (.text)
-                  ffc1c2d0    0000b7d0     NARCLOWN.OBJ (.text)
-                  ffc27aa0    00008330     NARCDOG.OBJ (.text)
+.text      0    ffc00000    0002ecf0     
+                  ffc00000    00009580     NARC6.OBJ (.text)
+                  ffc09580    0000e800     NARCCHOP.OBJ (.text)
+                  ffc17d80    000074c0     NARCDUMP.OBJ (.text)
+                  ffc1f240    00008da0     NARCLOWN.OBJ (.text)
+                  ffc27fe0    00006d10     NARCDOG.OBJ (.text)
 
-.TEXT      0    ffc2fdd0    00000000     UNINITIALIZED
+.TEXT      0    ffc2ecf0    00000000     UNINITIALIZED
 
-.data      0    ffc2fdd0    00000000     
+.data      0    ffc2ecf0    00009d80     
+                  ffc2ecf0    00000f80     NARC6.OBJ (.data)
+                  ffc2fc70    00003980     NARCCHOP.OBJ (.data)
+                  ffc335f0    00001600     NARCDUMP.OBJ (.data)
+                  ffc34bf0    00002980     NARCLOWN.OBJ (.data)
+                  ffc37570    00001500     NARCDOG.OBJ (.data)
 
-.DATA      0    ffc2fdd0    00000000     UNINITIALIZED
+.DATA      0    ffc38a70    00000000     UNINITIALIZED
 
-img_tbl    0    ffc2fdd0    00000000     UNINITIALIZED
+img_tbl    0    ffc38a70    00000000     UNINITIALIZED
 
-SYSCODE    0    ffc2fdd0    00000000     UNINITIALIZED
+SYSCODE    0    ffc38a70    00000000     UNINITIALIZED
 
-SYSDATA    0    ffc2fdd0    00000000     UNINITIALIZED
-
-POWERON    0    fff4f000    00000000     UNINITIALIZED
-
-DISPTEXT   0    fff50000    00000000     UNINITIALIZED
-
-VECTORS    0    fffffc00    00000000     UNINITIALIZED
+SYSDATA    0    ffc38a70    00000000     UNINITIALIZED
 
 
 GLOBAL SYMBOLS
 
 address  name                             address  name
 -------- ----                             -------- ----
-UNDEFED  ADDBB                            ffc01200 EUGDISP
-UNDEFED  ADDBUCKS                         ffc01410 LOFCOLD
-UNDEFED  ADDCLIPS                         ffc025c0 SWAPAL0
-UNDEFED  ADDDRUGS                         ffc07d00 LDEXP1
-UNDEFED  ADDROCKS                         ffc08780 LOFDEXP
-UNDEFED  ADDSUPP                          ffc09940 LOFFCRM1
-UNDEFED  ALARMSND                         ffc0ad90 CHOPCOLD
-UNDEFED  ANIMATOR                         ffc0ae60 CHOPST
-UNDEFED  ANI                              ffc0b020 CHOPDISP
-UNDEFED  BACKSLST                         ffc14b10 DUMPDISP
-UNDEFED  BGDF1C                           ffc14ca0 DUMPCOLD
-UNDEFED  BGDF2C                           ffc1bde0 DUMPCRM1
-UNDEFED  BGDF3C                           ffc1ec50 CLWNDISP
-UNDEFED  BGDF4C                           ffc1eee0 CLNSNDST
-UNDEFED  BGDTHF10                         ffc1f140 CLWNCOLD
-UNDEFED  BGDTHF11                         ffc20120 XZCNTCK
-UNDEFED  BGDTHF12                         ffc21fb0 ZCHK
-UNDEFED  BGDTHF13                         ffc24290 OIDATA
-UNDEFED  BGDTHF14                         ffc274a0 CLWNCRM1
-UNDEFED  BGDTHF15                         ffc291f0 DOGCOLD
-UNDEFED  BGDTHF1                          UNDEFED  PALSET
-UNDEFED  BGDTHF2                          UNDEFED  INSOBJ
-UNDEFED  BGDTHF3                          UNDEFED  GANISAG
-UNDEFED  BGDTHF4                          UNDEFED  CARYZVEL
-UNDEFED  BGDTHF5                          UNDEFED  CHOPBLIP
-UNDEFED  BGDTHF6                          UNDEFED  CARSCRTST
-UNDEFED  BGDTHF7                          UNDEFED  FINDMVP
-UNDEFED  BGDTHF8                          UNDEFED  ENEMY_BULLETS
-UNDEFED  BGDTHF9                          UNDEFED  GETA8
-UNDEFED  CARCHK                           UNDEFED  PLZMIN
-UNDEFED  CARINIT                          UNDEFED  HELWHT
-UNDEFED  CARLIST                          UNDEFED  PUT5K
-UNDEFED  CARSCRTST                        UNDEFED  DELCBODY
-UNDEFED  CARSTOP                          UNDEFED  PILOTPAL
-UNDEFED  CARXVEL                          UNDEFED  KILLCARP
-UNDEFED  CARYVEL                          UNDEFED  CHOPCRUZ
-UNDEFED  CARYZVEL                         UNDEFED  CHOPCNT
-UNDEFED  CDELALL                          UNDEFED  POWERSND
-UNDEFED  CHOPBLIP                         UNDEFED  OSINK
-UNDEFED  CHOPCNT                          UNDEFED  PUTA11
-ffc0ad90 CHOPCOLD                         UNDEFED  CARINIT
-UNDEFED  CHOPCRUZ                         UNDEFED  RANDOM
-ffc0b020 CHOPDISP                         UNDEFED  NEXAIR
-ffc0ae60 CHOPST                           UNDEFED  SHADST
-UNDEFED  CKBUST                           UNDEFED  PSTOPYZ
-UNDEFED  CKSNDPRI                         UNDEFED  pnklof
-ffc1eee0 CLNSNDST                         UNDEFED  ADDBUCKS
-UNDEFED  CLOZDOOR                         UNDEFED  CDELALL
-UNDEFED  CLWNBLIP                         UNDEFED  ADDSUPP
-ffc1f140 CLWNCOLD                         UNDEFED  NEXPLODE
-ffc274a0 CLWNCRM1                         UNDEFED  ROCKBIG
-ffc1ec50 CLWNDISP                         UNDEFED  FREZSND
-UNDEFED  CLWNSHT                          UNDEFED  DOOROPEN
-UNDEFED  CLWNSPD                          UNDEFED  PSTOP
-UNDEFED  CRIMEPAL                         UNDEFED  LSHIN8
-UNDEFED  ClrVel                           UNDEFED  NARCS
-UNDEFED  DEATHCNT                         UNDEFED  LOFWAIT
-UNDEFED  DELBB                            UNDEFED  XFERPROC
-UNDEFED  DELCBODY                         UNDEFED  ADDROCKS
-UNDEFED  DELENEMY                         UNDEFED  GBULLET
-UNDEFED  DELSHAD                          UNDEFED  EROCKET
-UNDEFED  DELSOBJ                          UNDEFED  EDBULLET
-UNDEFED  DELSUPP                          UNDEFED  ANI
-UNDEFED  DFRMGRND                         UNDEFED  GETANIX
-UNDEFED  DOGBLIP                          UNDEFED  DROPDRUG
-UNDEFED  DOGCNT                           UNDEFED  CARXVEL
-ffc291f0 DOGCOLD                          UNDEFED  CARYVEL
-UNDEFED  DOGMAX                           UNDEFED  SIZZSND
-UNDEFED  DOGSPD                           UNDEFED  HELBLUE
-UNDEFED  DOORCLOZ                         UNDEFED  GETA10
-UNDEFED  DOOROPEN                         UNDEFED  GETA11
-UNDEFED  DOORRITE                         UNDEFED  FINDPAL
-UNDEFED  DROPDRUG                         UNDEFED  KILL
-UNDEFED  DROPSTUF                         UNDEFED  ANIMATOR
-UNDEFED  DUMCOLL                          UNDEFED  CARSTOP
-UNDEFED  DUMDIE                           UNDEFED  CLWNBLIP
-UNDEFED  DUMPBLIP                         UNDEFED  SPLTCOLANI
-UNDEFED  DUMPBTT                          UNDEFED  KNIFEHIT
-UNDEFED  DUMPCNT                          UNDEFED  hkdie1
-ffc14ca0 DUMPCOLD                         UNDEFED  hkdie4
-ffc1bde0 DUMPCRM1                         UNDEFED  hkdie3
-ffc14b10 DUMPDISP                         UNDEFED  hkdie2
-UNDEFED  DUMPMAX                          UNDEFED  clown
-UNDEFED  DUMPPAL                          UNDEFED  hkfgt8
-UNDEFED  DUMPSHT                          UNDEFED  hkfgt7
-UNDEFED  DUMPSPD                          UNDEFED  HOOKCOLD
-UNDEFED  DUMRTSG                          UNDEFED  PUT10K
-UNDEFED  EBULL45                          UNDEFED  hookpal
-UNDEFED  EBULLET                          UNDEFED  RAND
-UNDEFED  EDBULLET                         UNDEFED  hkdie5
-UNDEFED  ENEMIES                          UNDEFED  dog
-UNDEFED  ENEMY_BULLETS                    UNDEFED  DOGCNT
-UNDEFED  ENINITLL                         UNDEFED  doggry
-UNDEFED  ENINITUL                         UNDEFED  DOGMAX
-UNDEFED  EROCKET                          UNDEFED  EXISTP
-UNDEFED  ESINITLL                         UNDEFED  DOGSPD
-UNDEFED  ESINITUL                         UNDEFED  ESINITUL
-UNDEFED  ESINK                            UNDEFED  ENINITLL
-ffc01200 EUGDISP                          UNDEFED  SPLTCOLBOX
-UNDEFED  EXISTP                           UNDEFED  hkdie6
-UNDEFED  FACEPLYR                         UNDEFED  KNAPCNT
-UNDEFED  FINDMVP                          UNDEFED  blackd
-UNDEFED  FINDPAL                          UNDEFED  DOGBLIP
-UNDEFED  FLP                              UNDEFED  SPLATS
-UNDEFED  FRANIM                           UNDEFED  hkfgt6
-UNDEFED  FREEPAL                          UNDEFED  LAMPOST
-UNDEFED  FREZSND                          UNDEFED  ESINITLL
-UNDEFED  GANISAG                          UNDEFED  BACKSLST
-UNDEFED  GBULLET                          UNDEFED  LAMPTOP
-UNDEFED  GBUST                            UNDEFED  ON_SLIST
-UNDEFED  GETA10                           UNDEFED  NOYFLP
-UNDEFED  GETA11                           UNDEFED  GETCPNT
-UNDEFED  GETA8                            UNDEFED  DUMPSHT
-UNDEFED  GETANIX                          UNDEFED  DUMDIE
-UNDEFED  GETANIXY                         UNDEFED  PCDRIVRC
-UNDEFED  GETCPLY                          UNDEFED  DUMPSPD
-UNDEFED  GETCPNT                          UNDEFED  ISBB
-UNDEFED  GETDOOR                          UNDEFED  WORLDTLX
-UNDEFED  GETFPAL                          UNDEFED  DELBB
-UNDEFED  GETPLYR                          UNDEFED  ADDBB
-UNDEFED  GETPRC                           UNDEFED  SHADCPY
-UNDEFED  GRUNTRND                         UNDEFED  hkfgt4
-UNDEFED  HEADBUTT                         UNDEFED  HEADBUTT
-UNDEFED  HELBLUE                          UNDEFED  CLWNSHT
-UNDEFED  HELWHT                           UNDEFED  HOOKCNT
-UNDEFED  HOOKCNT                          UNDEFED  hkfgt5
-UNDEFED  HOOKCOLD                         UNDEFED  CLWNSPD
-UNDEFED  IGIVSND                          UNDEFED  PLZMAX
-UNDEFED  INSOBJ                           UNDEFED  DUMPCNT
-UNDEFED  ISBB                             UNDEFED  DUMPBLIP
-UNDEFED  KILLCARP                         UNDEFED  YFLP
-UNDEFED  KILL                             UNDEFED  DUMPMAX
-UNDEFED  KNAPCNT                          UNDEFED  DUMPPAL
-UNDEFED  KNIFEHIT                         UNDEFED  DUMPBTT
-UNDEFED  L4ARM1                           UNDEFED  LOFBLIP
-UNDEFED  L4ARM2                           UNDEFED  IGIVSND
-UNDEFED  L4ARM3                           UNDEFED  ENEMIES
-UNDEFED  L4ARM4                           UNDEFED  DELENEMY
-UNDEFED  L4ARM5                           UNDEFED  XZCHK
-UNDEFED  L4ARM6                           UNDEFED  BGDTHF2
-UNDEFED  L4ARM7                           UNDEFED  BGDTHF1
-UNDEFED  L4ARM8                           UNDEFED  ADDDRUGS
-UNDEFED  LAMPOST                          UNDEFED  RANDU
-UNDEFED  LAMPTOP                          UNDEFED  LGOAT9
-UNDEFED  LCREOSOTE                        UNDEFED  LGOAT8
-ffc07d00 LDEXP1                           UNDEFED  SCRKIL
-UNDEFED  LGOAT1                           UNDEFED  DELSHAD
-UNDEFED  LGOAT10                          UNDEFED  FACEPLYR
-UNDEFED  LGOAT2                           UNDEFED  GETANIXY
-UNDEFED  LGOAT3                           UNDEFED  BGDTHF3
-UNDEFED  LGOAT4                           UNDEFED  fnklof
-UNDEFED  LGOAT5                           UNDEFED  L4ARM1
-UNDEFED  LGOAT6                           UNDEFED  SCORE
-UNDEFED  LGOAT7                           UNDEFED  EBULL45
-UNDEFED  LGOAT8                           UNDEFED  L4ARM4
-UNDEFED  LGOAT9                           UNDEFED  L4ARM3
-UNDEFED  LLEG1                            UNDEFED  L4ARM2
-UNDEFED  LLEG2                            UNDEFED  OUTDOOR
-UNDEFED  LLEG3                            UNDEFED  BGDTHF6
+UNDEFED  ADDBB                            ffc00000 LOFCOLD
+UNDEFED  ADDBUCKS                         ffc003b0 BOZCHK
+UNDEFED  ADDCLIPS                         ffc01720 SWAPAL0
+UNDEFED  ADDDRUGS                         ffc07040 LOFDFLA
+UNDEFED  ADDROCKS                         ffc07120 LDEXP1
+UNDEFED  ADDSUPP                          ffc073d0 LOFDROCK
+UNDEFED  ALARMSND                         ffc07440 LOFRAG1
+UNDEFED  ANI                              ffc07600 LOFRAG2
+UNDEFED  ANIMATOR                         ffc077c0 LOFRAG3
+UNDEFED  BACKSLST                         ffc07980 LOFRAG4
+UNDEFED  BGDF1C                           ffc07ba0 LOFDEXP
+UNDEFED  BGDF2C                           ffc07f60 LOFDEXP1
+UNDEFED  BGDF3C                           ffc08d60 LOFFCRM1
+UNDEFED  BGDF4C                           ffc09580 CHOPCOLD
+UNDEFED  BGDTHF1                          ffc09650 CHOPST
+UNDEFED  BGDTHF10                         ffc09800 CHOPDISP
+UNDEFED  BGDTHF11                         ffc0bf20 PBOMBP1
+UNDEFED  BGDTHF12                         ffc0bf90 PBOMBP2
+UNDEFED  BGDTHF13                         ffc11870 CHOFCOLD
+UNDEFED  BGDTHF14                         ffc11940 CHORCOLD
+UNDEFED  BGDTHF15                         ffc14030 XVEL2X
+UNDEFED  BGDTHF2                          ffc14ec0 CHOPINTR
+UNDEFED  BGDTHF3                          ffc17210 KILLCHOY
+UNDEFED  BGDTHF4                          ffc17d80 DUMPCOLD
+UNDEFED  BGDTHF5                          ffc1ed50 DUMPCRM1
+UNDEFED  BGDTHF6                          ffc1f240 CLNSNDST
+UNDEFED  BGDTHF7                          ffc1f490 CLWNCOLD
+UNDEFED  BGDTHF8                          ffc204c0 XZCNTCK
+UNDEFED  BGDTHF9                          ffc223e0 ZCHK
+ffc003b0 BOZCHK                           ffc241f0 CARCHK
+ffc241f0 CARCHK                           ffc247f0 OIDATA
+UNDEFED  CARINIT                          ffc279e0 CLWNCRM1
+UNDEFED  CARLIST                          ffc27fe0 DOGCOLD
+UNDEFED  CARSCRTST                        UNDEFED  FINDMVP
+UNDEFED  CARSTOP                          UNDEFED  DROPDRUG
+UNDEFED  CARXVEL                          UNDEFED  GBULLET
+UNDEFED  CARYVEL                          UNDEFED  CARZVEL
+UNDEFED  CARYZVEL                         UNDEFED  CEXPLODE
+UNDEFED  CARZVEL                          UNDEFED  CARYVEL
+UNDEFED  CDELALL                          UNDEFED  PCZEROCT
+UNDEFED  CEXPLODE                         UNDEFED  CARXVEL
+ffc11870 CHOFCOLD                         UNDEFED  PLAYCAR
+UNDEFED  CHOPBLIP                         UNDEFED  EROCKET
+UNDEFED  CHOPCNT                          UNDEFED  GETANIX
+ffc09580 CHOPCOLD                         UNDEFED  GETA8
+UNDEFED  CHOPCRUZ                         UNDEFED  PUTA11
+ffc09800 CHOPDISP                         UNDEFED  CHOPCNT
+ffc14ec0 CHOPINTR                         UNDEFED  POWERSND
+UNDEFED  CHOPRB                           UNDEFED  NEXAIR
+ffc09650 CHOPST                           UNDEFED  CARINIT
+ffc11940 CHORCOLD                         UNDEFED  PLAYER_BULLETS
+UNDEFED  CKBUST                           UNDEFED  RANDOM
+UNDEFED  CKCRESET                         UNDEFED  OSINK
+UNDEFED  CKSNDPRI                         UNDEFED  PALSET
+ffc1f240 CLNSNDST                         UNDEFED  jrpilot
+UNDEFED  CLOZDOOR                         UNDEFED  CHOPBLIP
+UNDEFED  CLWNBLIP                         UNDEFED  PCZEROY
+ffc1f490 CLWNCOLD                         UNDEFED  INSOBJ
+ffc279e0 CLWNCRM1                         UNDEFED  GANISAG
+UNDEFED  CLWNMAX                          UNDEFED  CARYZVEL
+UNDEFED  CLWNSHT                          UNDEFED  P1CTRL
+UNDEFED  CLWNSPD                          UNDEFED  SIZZSND
+UNDEFED  CNEWPAL                          UNDEFED  GETA10
+UNDEFED  CRIMEPAL                         UNDEFED  GETA11
+UNDEFED  CXACCELB                         UNDEFED  CXACCELB
+UNDEFED  ClrVel                           UNDEFED  CNEWPAL
+UNDEFED  DEATHCNT                         UNDEFED  HELBLUE
+UNDEFED  DELBB                            UNDEFED  CARSCRTST
+UNDEFED  DELCBODY                         UNDEFED  CKCRESET
+UNDEFED  DELENEMY                         UNDEFED  OBJON
+UNDEFED  DELSHAD                          UNDEFED  PSTOPYZ
+UNDEFED  DELSOBJ                          UNDEFED  NEXPLODE
+UNDEFED  DELSUPP                          UNDEFED  CDELALL
+UNDEFED  DFRMGRND                         UNDEFED  ADDSUPP
+UNDEFED  DOGBLIP                          UNDEFED  PCBSNDF
+UNDEFED  DOGCNT                           UNDEFED  ROCKBIG
+ffc27fe0 DOGCOLD                          UNDEFED  UNIVSTX
+UNDEFED  DOGMAX                           UNDEFED  FINDPAL
+UNDEFED  DOGSPD                           UNDEFED  PDRIVXWW
+UNDEFED  DOORCLOZ                         UNDEFED  P2IJDECL
+UNDEFED  DOOROPEN                         UNDEFED  CARSTOP
+UNDEFED  DOORRITE                         UNDEFED  EDBULLET
+UNDEFED  DROPDRUG                         UNDEFED  ANI
+UNDEFED  DROPSTUF                         UNDEFED  GAMSTATE
+UNDEFED  DUMCOLL                          UNDEFED  KILL
+UNDEFED  DUMDIE                           UNDEFED  PCHOPCNT
+UNDEFED  DUMPBLIP                         UNDEFED  PCSPINH
+UNDEFED  DUMPBTT                          UNDEFED  P2CTRL
+UNDEFED  DUMPCNT                          UNDEFED  ANIMATOR
+ffc17d80 DUMPCOLD                         UNDEFED  WORLDTLX
+ffc1ed50 DUMPCRM1                         UNDEFED  WORLDTLY
+UNDEFED  DUMPMAX                          UNDEFED  CHOPRB
+UNDEFED  DUMPPAL                          UNDEFED  PCRSNDF
+UNDEFED  DUMPSHT                          UNDEFED  PUT5K
+UNDEFED  DUMPSPD                          UNDEFED  RAND
+UNDEFED  DUMRETP                          UNDEFED  hookpal
+UNDEFED  DUMRTSG                          UNDEFED  HOOKCOLD
+UNDEFED  EBULL45                          UNDEFED  SPLTCOLANI
+UNDEFED  EBULLET                          UNDEFED  KNIFEHIT
+UNDEFED  EDBULLET                         UNDEFED  CLWNBLIP
+UNDEFED  ENEMIES                          UNDEFED  SPLTCOLBOX
+UNDEFED  ENEMY_BULLETS                    UNDEFED  PUT10K
+UNDEFED  ENINITLL                         UNDEFED  clown
+UNDEFED  ENINITUL                         UNDEFED  CLWNSPD
+UNDEFED  EROCKET                          UNDEFED  hkfgt5
+UNDEFED  ERRORLOG                         UNDEFED  SHADCPY
+UNDEFED  ESINITLL                         UNDEFED  CLWNSHT
+UNDEFED  ESINITUL                         UNDEFED  hkfgt7
+UNDEFED  ESINK                            UNDEFED  hkfgt8
+UNDEFED  EXISTP                           UNDEFED  HOOKCNT
+UNDEFED  FACEPLYR                         UNDEFED  hkfgt6
+UNDEFED  FINDMVP                          UNDEFED  hkdie1
+UNDEFED  FINDPAL                          UNDEFED  doggry
+UNDEFED  FLP                              UNDEFED  DOGCNT
+UNDEFED  FRANIM                           UNDEFED  DOGBLIP
+UNDEFED  FREEPAL                          UNDEFED  blackd
+UNDEFED  FREZSND                          UNDEFED  DOGSPD
+UNDEFED  GAMSTATE                         UNDEFED  EXISTP
+UNDEFED  GANISAG                          UNDEFED  dog
+UNDEFED  GBULLET                          UNDEFED  DOGMAX
+UNDEFED  GBUST                            UNDEFED  SPLATS
+UNDEFED  GETA10                           UNDEFED  hkdie4
+UNDEFED  GETA11                           UNDEFED  hkdie5
+UNDEFED  GETA8                            UNDEFED  hkdie2
+UNDEFED  GETANIX                          UNDEFED  hkdie3
+UNDEFED  GETANIXY                         UNDEFED  ENINITLL
+UNDEFED  GETCPLY                          UNDEFED  KNAPCNT
+UNDEFED  GETCPNT                          UNDEFED  hkdie6
+UNDEFED  GETDOOR                          UNDEFED  CLWNMAX
+UNDEFED  GETFPAL                          UNDEFED  hkfgt4
+UNDEFED  GETPLYR                          UNDEFED  UNIVENDX
+UNDEFED  GETPRC                           UNDEFED  DUMDIE
+UNDEFED  GETSUBDR                         UNDEFED  DUMRETP
+UNDEFED  GRUNTRND                         UNDEFED  P1IJDECL
+UNDEFED  HEADBUTT                         UNDEFED  DUMPSPD
+UNDEFED  HELBLUE                          UNDEFED  DELBB
+UNDEFED  HELWHT                           UNDEFED  jrhelpas
+UNDEFED  HOOKCNT                          UNDEFED  DUMPSHT
+UNDEFED  HOOKCOLD                         UNDEFED  ENEMY_BULLETS
+UNDEFED  IGIVSND                          UNDEFED  PLZMIN
+UNDEFED  INSOBJ                           UNDEFED  DELCBODY
+UNDEFED  ISBB                             UNDEFED  HELWHT
+UNDEFED  KILL                             UNDEFED  ERRORLOG
+UNDEFED  KILLCARP                         UNDEFED  PILOTPAL
+ffc17210 KILLCHOY                         UNDEFED  PCDRIVRC
+UNDEFED  KNAPCNT                          UNDEFED  CHOPCRUZ
+UNDEFED  KNIFEHIT                         UNDEFED  KILLCARP
+UNDEFED  L4ARM1                           UNDEFED  ISBB
+UNDEFED  L4ARM2                           UNDEFED  YFLP
+UNDEFED  L4ARM3                           UNDEFED  DUMPBTT
+UNDEFED  L4ARM4                           UNDEFED  DUMPCNT
+UNDEFED  L4ARM5                           UNDEFED  PLZMAX
+UNDEFED  L4ARM6                           UNDEFED  HEADBUTT
+UNDEFED  L4ARM7                           UNDEFED  PORSCHE1
+UNDEFED  L4ARM8                           UNDEFED  DUMPPAL
+UNDEFED  LAMPOST                          UNDEFED  DUMPMAX
+UNDEFED  LAMPTOP                          UNDEFED  DUMPBLIP
+UNDEFED  LCREOSOTE                        UNDEFED  LAMPOST
+ffc07120 LDEXP1                           UNDEFED  LAMPTOP
+UNDEFED  LGOAT1                           UNDEFED  BACKSLST
+UNDEFED  LGOAT10                          UNDEFED  ESINITLL
+UNDEFED  LGOAT2                           UNDEFED  ON_SLIST
+UNDEFED  LGOAT3                           UNDEFED  ADDBB
+UNDEFED  LGOAT4                           UNDEFED  GETCPNT
+UNDEFED  LGOAT5                           UNDEFED  NOYFLP
+UNDEFED  LGOAT6                           UNDEFED  XZCHK
+UNDEFED  LGOAT7                           UNDEFED  BGDTHF3
+UNDEFED  LGOAT8                           UNDEFED  BGDTHF1
+UNDEFED  LGOAT9                           UNDEFED  BGDTHF2
+UNDEFED  LLEG1                            UNDEFED  BGDTHF6
+UNDEFED  LLEG2                            UNDEFED  BGDTHF7
+UNDEFED  LLEG3                            UNDEFED  BGDTHF4
 UNDEFED  LLEG4                            UNDEFED  BGDTHF5
-UNDEFED  LLEG5                            UNDEFED  BGDTHF4
-UNDEFED  LLEG6                            UNDEFED  BGDTHF7
-UNDEFED  LLEG7                            UNDEFED  FLP
-UNDEFED  LLEG8                            UNDEFED  BGDTHF9
-UNDEFED  LOFBLIP                          UNDEFED  BGDTHF8
-UNDEFED  LOFCNT                           UNDEFED  LGOAT7
-ffc01410 LOFCOLD                          UNDEFED  DFRMGRND
-ffc08780 LOFDEXP                          UNDEFED  DROPSTUF
-ffc09940 LOFFCRM1                         UNDEFED  ENINITUL
-UNDEFED  LOFFIRE                          UNDEFED  blulof
-UNDEFED  LOFMAX                           UNDEFED  BGDF1C
-UNDEFED  LOFWAIT                          UNDEFED  RANGRAND
-UNDEFED  LSHIN1                           UNDEFED  GETPLYR
-UNDEFED  LSHIN2                           UNDEFED  DOORRITE
-UNDEFED  LSHIN3                           UNDEFED  FREEPAL
-UNDEFED  LSHIN4                           UNDEFED  BGDTHF11
-UNDEFED  LSHIN5                           UNDEFED  BGDTHF10
-UNDEFED  LSHIN6                           UNDEFED  BGDTHF12
-UNDEFED  LSHIN7                           UNDEFED  BGDTHF15
-UNDEFED  LSHIN8                           UNDEFED  BGDTHF14
-UNDEFED  NARCS                            UNDEFED  BGDTHF13
-UNDEFED  NEXAIR                           UNDEFED  SETZPOS
-UNDEFED  NEXPLODE                         UNDEFED  LGOAT3
-UNDEFED  NOYFLP                           UNDEFED  LGOAT2
-ffc24290 OIDATA                           UNDEFED  LGOAT1
-UNDEFED  ONESND                           UNDEFED  LGOAT4
-UNDEFED  ON_SLIST                         UNDEFED  LGOAT6
-UNDEFED  OSINK                            UNDEFED  LGOAT5
-UNDEFED  OUTDOOR                          UNDEFED  DUMRTSG
-UNDEFED  P1DATA                           UNDEFED  ONESND
-UNDEFED  P2DATA                           UNDEFED  BGDF4C
-UNDEFED  PALSET                           UNDEFED  BGDF3C
-UNDEFED  PCDRIVRC                         UNDEFED  BGDF2C
-UNDEFED  PILOTPAL                         UNDEFED  ALARMSND
-UNDEFED  PLYMAX                           UNDEFED  CKBUST
-UNDEFED  PLYMIN                           UNDEFED  SCROLLX
-UNDEFED  PLZMAX                           UNDEFED  CKSNDPRI
-UNDEFED  PLZMIN                           UNDEFED  CARLIST
-UNDEFED  POWERSND                         UNDEFED  P2DATA
-UNDEFED  PRCLSP                           UNDEFED  YAMOFF
-UNDEFED  PRCSLP                           UNDEFED  LLEG1
-UNDEFED  PSTOPYZ                          UNDEFED  LLEG3
-UNDEFED  PSTOP                            UNDEFED  LLEG2
-UNDEFED  PUT10K                           UNDEFED  ESINK
-UNDEFED  PUT2x5K                          UNDEFED  FRANIM
-UNDEFED  PUT5K                            UNDEFED  SHVELFLP
-UNDEFED  PUTA11                           UNDEFED  ClrVel
-UNDEFED  RANDPER                          UNDEFED  P1DATA
-UNDEFED  RAND                             UNDEFED  RANDPER
-UNDEFED  RANDOM                           UNDEFED  GETPRC
-UNDEFED  RANDU                            UNDEFED  SHVELCPY
-UNDEFED  RANGRAND                         UNDEFED  PLYMIN
+UNDEFED  LLEG5                            UNDEFED  DELENEMY
+UNDEFED  LLEG6                            UNDEFED  FACEPLYR
+UNDEFED  LLEG7                            UNDEFED  DELSHAD
+UNDEFED  LLEG8                            UNDEFED  SCRKIL
+UNDEFED  LOFBLIP                          UNDEFED  GETANIXY
+UNDEFED  LOFCNT                           UNDEFED  IGIVSND
+ffc00000 LOFCOLD                          UNDEFED  LOFBLIP
+ffc07f60 LOFDEXP1                         UNDEFED  ADDDRUGS
+ffc07ba0 LOFDEXP                          UNDEFED  ENEMIES
+ffc07040 LOFDFLA                          UNDEFED  BGDTHF8
+ffc073d0 LOFDROCK                         UNDEFED  L4ARM6
+ffc08d60 LOFFCRM1                         UNDEFED  DUMCOLL
+UNDEFED  LOFFIRE                          UNDEFED  L4ARM4
+UNDEFED  LOFMAX                           UNDEFED  L4ARM5
+ffc07440 LOFRAG1                          UNDEFED  L4ARM8
+ffc07600 LOFRAG2                          UNDEFED  LOFFIRE
+ffc077c0 LOFRAG3                          UNDEFED  DELSOBJ
+ffc07980 LOFRAG4                          UNDEFED  L4ARM7
+UNDEFED  LOFWAIT                          UNDEFED  L4ARM3
+UNDEFED  LSHIN1                           UNDEFED  OUTDOOR
+UNDEFED  LSHIN2                           UNDEFED  SCORE
+UNDEFED  LSHIN3                           UNDEFED  BGDTHF9
+UNDEFED  LSHIN4                           UNDEFED  FLP
+UNDEFED  LSHIN5                           UNDEFED  EBULL45
+UNDEFED  LSHIN6                           UNDEFED  L4ARM2
+UNDEFED  LSHIN7                           UNDEFED  L4ARM1
+UNDEFED  LSHIN8                           UNDEFED  fnklof
+UNDEFED  NARCS                            UNDEFED  blulof
+UNDEFED  NEXAIR                           UNDEFED  GETPLYR
+UNDEFED  NEXPLODE                         UNDEFED  DROPSTUF
+UNDEFED  NOYFLP                           UNDEFED  DFRMGRND
+UNDEFED  OBJON                            UNDEFED  SETZPOS
+ffc247f0 OIDATA                           UNDEFED  BGDF2C
+UNDEFED  ONESND                           UNDEFED  RANGRAND
+UNDEFED  ON_SLIST                         UNDEFED  BGDF1C
+UNDEFED  OSINK                            UNDEFED  ENINITUL
+UNDEFED  OUTDOOR                          UNDEFED  FREEPAL
+UNDEFED  P1CTRL                           UNDEFED  BGDTHF12
+UNDEFED  P1DATA                           UNDEFED  BGDTHF10
+UNDEFED  P1IJDECL                         UNDEFED  BGDTHF11
+UNDEFED  P2CTRL                           UNDEFED  BGDTHF15
+UNDEFED  P2DATA                           UNDEFED  DOORRITE
+UNDEFED  P2IJDECL                         UNDEFED  BGDTHF13
+UNDEFED  PALSET                           UNDEFED  BGDTHF14
+ffc0bf20 PBOMBP1                          UNDEFED  BGDF3C
+ffc0bf90 PBOMBP2                          UNDEFED  LGOAT5
+UNDEFED  PCBSNDF                          UNDEFED  LGOAT6
+UNDEFED  PCDRIVRC                         UNDEFED  LGOAT4
+UNDEFED  PCHOPCNT                         UNDEFED  DUMRTSG
+UNDEFED  PCRSNDF                          UNDEFED  LGOAT9
+UNDEFED  PCSPINH                          UNDEFED  RANDU
+UNDEFED  PCZEROCT                         UNDEFED  LGOAT7
+UNDEFED  PCZEROY                          UNDEFED  LGOAT8
+UNDEFED  PDRIVXWW                         UNDEFED  LGOAT3
+UNDEFED  PILOTPAL                         UNDEFED  CKSNDPRI
+UNDEFED  PLAYCAR                          UNDEFED  SCROLLX
+UNDEFED  PLAYER_BULLETS                   UNDEFED  BGDF4C
+UNDEFED  PLYMAX                           UNDEFED  ALARMSND
+UNDEFED  PLYMIN                           UNDEFED  LGOAT1
+UNDEFED  PLZMAX                           UNDEFED  LGOAT2
+UNDEFED  PLZMIN                           UNDEFED  CKBUST
+UNDEFED  PORSCHE1                         UNDEFED  ONESND
+UNDEFED  POWERSND                         UNDEFED  LLEG7
+UNDEFED  PRCLSP                           UNDEFED  LLEG8
+UNDEFED  PRCSLP                           UNDEFED  LLEG5
+UNDEFED  PSTOPYZ                          UNDEFED  LLEG6
+UNDEFED  PSTOP                            UNDEFED  LSHIN2
+UNDEFED  PUT10K                           UNDEFED  LSHIN3
+UNDEFED  PUT2x5K                          UNDEFED  LSHIN1
+UNDEFED  PUT5K                            UNDEFED  loafer
+UNDEFED  PUTA11                           UNDEFED  LLEG4
+UNDEFED  RANDOM                           UNDEFED  CARLIST
+UNDEFED  RAND                             UNDEFED  LLEG1
+UNDEFED  RANDPER                          UNDEFED  YAMOFF
+UNDEFED  RANDU                            UNDEFED  P2DATA
+UNDEFED  RANGRAND                         UNDEFED  LLEG3
 UNDEFED  ROCKBIG                          UNDEFED  ADDCLIPS
-UNDEFED  SCORE                            UNDEFED  LSHIN4
-UNDEFED  SCRKIL                           UNDEFED  WORLDTL
-UNDEFED  SCROLLX                          UNDEFED  LSHIN3
-UNDEFED  SCRTST                           UNDEFED  LSHIN5
-UNDEFED  SELCTPLY                         UNDEFED  LSHIN7
-UNDEFED  SETZPOS                          UNDEFED  SUCIDE
-UNDEFED  SHADCPY                          UNDEFED  LSHIN6
-UNDEFED  SHADST                           UNDEFED  LSHIN2
-UNDEFED  SHVELCPY                         UNDEFED  LLEG6
-UNDEFED  SHVELFLP                         UNDEFED  LLEG5
-UNDEFED  SIZZSND                          UNDEFED  LLEG4
-UNDEFED  SPLATBOX                         UNDEFED  LLEG7
-UNDEFED  SPLATS                           UNDEFED  loafer
-UNDEFED  SPLTCOLANI                       UNDEFED  LSHIN1
-UNDEFED  SPLTCOLBOX                       UNDEFED  LLEG8
-UNDEFED  SRAND                            UNDEFED  PLYMAX
-UNDEFED  SUCIDE                           UNDEFED  CRIMEPAL
-ffc025c0 SWAPAL0                          UNDEFED  GETFPAL
-UNDEFED  WENDIE                           UNDEFED  CARCHK
-UNDEFED  WORLDTLX                         UNDEFED  DEATHCNT
-UNDEFED  WORLDTL                          UNDEFED  SCRTST
-UNDEFED  XFERPROC                         UNDEFED  PUT2x5K
-UNDEFED  XZCHK                            UNDEFED  GRUNTRND
-ffc20120 XZCNTCK                          UNDEFED  PRCLSP
-UNDEFED  YAMOFF                           UNDEFED  DUMCOLL
-UNDEFED  YFLP                             UNDEFED  L4ARM6
-ffc21fb0 ZCHK                             UNDEFED  L4ARM5
-UNDEFED  blackd                           UNDEFED  DELSOBJ
-UNDEFED  blulof                           UNDEFED  LOFFIRE
-UNDEFED  clown                            UNDEFED  L4ARM8
-UNDEFED  dog                              UNDEFED  L4ARM7
-UNDEFED  doggry                           UNDEFED  LGOAT10
-UNDEFED  fnklof                           UNDEFED  SRAND
-UNDEFED  hkdie1                           UNDEFED  WENDIE
-UNDEFED  hkdie2                           UNDEFED  GBUST
-UNDEFED  hkdie3                           UNDEFED  CLOZDOOR
-UNDEFED  hkdie4                           UNDEFED  EBULLET
-UNDEFED  hkdie5                           UNDEFED  DELSUPP
-UNDEFED  hkdie6                           UNDEFED  SELCTPLY
-UNDEFED  hkfgt4                           UNDEFED  SPLATBOX
-UNDEFED  hkfgt5                           UNDEFED  DOORCLOZ
-UNDEFED  hkfgt6                           UNDEFED  GETCPLY
-UNDEFED  hkfgt7                           UNDEFED  PRCSLP
-UNDEFED  hkfgt8                           UNDEFED  LOFCNT
-UNDEFED  hookpal                          UNDEFED  LOFMAX
-UNDEFED  loafer                           UNDEFED  LCREOSOTE
-UNDEFED  pnklof                           UNDEFED  GETDOOR
+UNDEFED  SCORE                            UNDEFED  ESINK
+UNDEFED  SCRKIL                           UNDEFED  LLEG2
+UNDEFED  SCROLLX                          UNDEFED  WORLDTL
+UNDEFED  SCRTST                           UNDEFED  ADDROCKS
+UNDEFED  SELCTPLY                         UNDEFED  NARCS
+UNDEFED  SETZPOS                          UNDEFED  DOOROPEN
+UNDEFED  SHADCPY                          UNDEFED  XFERPROC
+UNDEFED  SHADST                           UNDEFED  ADDBUCKS
+UNDEFED  SHVELCPY                         UNDEFED  SHADST
+UNDEFED  SHVELFLP                         UNDEFED  LOFWAIT
+UNDEFED  SIZZSND                          UNDEFED  pnklof
+UNDEFED  SPLATBOX                         UNDEFED  FREZSND
+UNDEFED  SPLATS                           UNDEFED  LSHIN6
+UNDEFED  SPLTCOLANI                       UNDEFED  SUCIDE
+UNDEFED  SPLTCOLBOX                       UNDEFED  LSHIN4
+UNDEFED  SRAND                            UNDEFED  LSHIN5
+UNDEFED  SUBOPEN                          UNDEFED  LSHIN8
+UNDEFED  SUCIDE                           UNDEFED  LCREOSOTE
+ffc01720 SWAPAL0                          UNDEFED  LSHIN7
+UNDEFED  UNIVENDX                         UNDEFED  PSTOP
+UNDEFED  UNIVSTX                          UNDEFED  GETCPLY
+UNDEFED  WAVE                             UNDEFED  DOORCLOZ
+UNDEFED  WENDIE                           UNDEFED  LGOAT10
+UNDEFED  WORLDTLX                         UNDEFED  PRCSLP
+UNDEFED  WORLDTLY                         UNDEFED  SUBOPEN
+UNDEFED  WORLDTL                          UNDEFED  LOFMAX
+UNDEFED  XFERPROC                         UNDEFED  LOFCNT
+ffc14030 XVEL2X                           UNDEFED  GETDOOR
+UNDEFED  XZCHK                            UNDEFED  SCRTST
+ffc204c0 XZCNTCK                          UNDEFED  CRIMEPAL
+UNDEFED  YAMOFF                           UNDEFED  GETSUBDR
+UNDEFED  YFLP                             UNDEFED  PRCLSP
+ffc223e0 ZCHK                             UNDEFED  GETFPAL
+UNDEFED  blackd                           UNDEFED  GRUNTRND
+UNDEFED  blulof                           UNDEFED  PUT2x5K
+UNDEFED  clown                            UNDEFED  DEATHCNT
+UNDEFED  doggry                           UNDEFED  ESINITUL
+UNDEFED  dog                              UNDEFED  SPLATBOX
+UNDEFED  fnklof                           UNDEFED  SHVELFLP
+UNDEFED  hkdie1                           UNDEFED  RANDPER
+UNDEFED  hkdie2                           UNDEFED  P1DATA
+UNDEFED  hkdie3                           UNDEFED  ClrVel
+UNDEFED  hkdie4                           UNDEFED  GETPRC
+UNDEFED  hkdie5                           UNDEFED  FRANIM
+UNDEFED  hkdie6                           UNDEFED  PLYMIN
+UNDEFED  hkfgt4                           UNDEFED  SHVELCPY
+UNDEFED  hkfgt5                           UNDEFED  PLYMAX
+UNDEFED  hkfgt6                           UNDEFED  WENDIE
+UNDEFED  hkfgt7                           UNDEFED  SRAND
+UNDEFED  hkfgt8                           UNDEFED  WAVE
+UNDEFED  hookpal                          UNDEFED  GBUST
+UNDEFED  jrhelpas                         UNDEFED  DELSUPP
+UNDEFED  jrpilot                          UNDEFED  EBULLET
+UNDEFED  loafer                           UNDEFED  CLOZDOOR
+UNDEFED  pnklof                           UNDEFED  SELCTPLY
 
-[260 symbols]
+[305 symbols]

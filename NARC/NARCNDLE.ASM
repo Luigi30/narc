@@ -1,4 +1,4 @@
-	.FILE	'NARCNDLE.ASM'
+	.FILE	"NARCNDLE.ASM"
 	.TITLE	" <<< N  A  R  C  -- HYPODERMIC PROJECTILE >>>"
 	.WIDTH	132
 	.OPTION	B,D,L
@@ -318,9 +318,9 @@ FLYSHYPO:
 	neg	A3
 SkNegXV2:
 	sll	16,A3
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	RANDU
-	subi	>8000,A0
+	subi	08000H,A0
 	add	A0,A3
 	move	A3,*A8(OXVEL),L		;A3 - X VEL
 
@@ -433,7 +433,7 @@ GotPlObj:
 	;adjust Z velocity
 	move	*A8(OZVEL),A2,L
 	sub	A2,A1		;A1 - desired Z vel delta
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	ABSMAX		;clip A1 by A0
 	add	A1,A2
 	move	A2,*A8(OZVEL),L
@@ -450,7 +450,7 @@ GotPlObj:
 	move	*A7(OSIZEY),A1,W
 	subk	5,A1
 	movk	30,A0
-	calla	MIN	;min of A0,A1->A0
+	calla	MIN	;min of A0,A1-0A0H
 	add	A0,A2
 	add	A2,A5
 	move	*A8(OYPOS),A2,W
@@ -465,7 +465,7 @@ GotPlObj:
 	move	*A8(OZVEL),A3,L
 	sub	A3,A2
 	sub	A2,A1		;A1 - desired Y vel delta
-	movi	>10000,A0
+	movi	010000H,A0
 	calla	ABSMAX		;clip A1 by A0
 	add	A1,A2
 	add	A3,A2
@@ -599,7 +599,7 @@ HCOLL1:
 	calla	DELSUPP
 
 	move	A6,A0
-	movi	>00E5,A1
+	movi	000E5H,A1
 	movi	INJECT,A7
 	calla	XFERPROC
 	movi	1,A0		;stop collision scan
@@ -728,8 +728,8 @@ StckX:
 HYPOPPER:
 	move	*A8(OID),A1,W
 	sll	20,A1	;
-	srl	28,A1 	;andi	>0F00,A1
-	cmpi	>E,A1
+	srl	28,A1 	;andi	00F00H,A1
+	cmpi	0EH,A1
 	jrz	EnemyCol
 
 	;* Remove objs from bullet list

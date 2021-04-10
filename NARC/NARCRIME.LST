@@ -1,0 +1,489 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCRIME.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST        
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      21                    *       LOCAL STUFF
+      22                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      23                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      24                            .INCLUDE        "BGNDTBL.GLO"           ;Background Block Equates
+      25                    
+      26                    *
+      27                    *EXTERNALS
+      28                            .GLOBAL SETCRIMENO
+      29                            .GLOBAL HYPOCRM1,GANGCRM1,MBIGCRM1,RAMBCRM1
+      30                            .GLOBAL DUMPCRM1,CLWNCRM1,LOFFCRM1
+      31                    
+      32 00000000                   .EVEN
+      33                    ****    .DATA
+      34 00000000                   .text
+      35                    
+      36                    **************************************************************************
+      37 00000000           SETCRIMENO:
+      38 00000000     098f          mmtm    SP,A0,A2
+         00000010     a000  
+      39 00000020     09e0          MOVI    CRIMETAB,A0     ;GET THE WAVE TUNE TABLE
+         00000030 00000c20' 
+      40 00000050     05a2          MOVE    @WAVE,A2,W
+         00000060 00000000! 
+      41 00000080     1422          DEC     A2              ;ZERO BASE
+      42 00000090     2782          SLL     28,A2           ;ONLY SIGNIFICANT TO 4 BITS RIGHT NOW
+      43 000000a0     2d22          SRL     23,A2
+      44 000000b0     4040          ADD     A2,A0
+      45 000000c0     8600          MOVE    *A0,A0,L
+      46 000000d0     9402          MOVE    *A0+,A2,W
+      47 000000e0     0582          MOVE    A2,@CRIMENO,W
+         000000f0 00000000! 
+      48 00000110     09af          mmfm    SP,A0,A2
+         00000120     0005  
+      49 00000130     0960          rets
+      50                    **************************************************************************
+      51                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    2
+
+      52                    **************************************************************************
+      53                    *                                                                        *
+      54                    * CRIME - SHOW THE CRIME/GOAL FOR THE CURRENT WAVE                       *
+      55                    * NOTE: CALL WITH JSRP                                                   *
+      56                    *                                                                        *
+      57                    **************************************************************************
+      58 00000140           CRIME
+      59 00000140     5600          CLR     A0
+      60 00000150     0580          MOVE    A0,@GAMERASE,W
+         00000160 00000000! 
+      61 00000180     0580          MOVE    A0,@DISPLAYON,W
+         00000190 00000000! 
+      62 000001b0     0d5f          CALLA   AUTOEOFF
+         000001c0 00000000! 
+      63 000001e0     0d5f          CALLA   DMAQWAIT
+         000001f0 00000000! 
+      64 00000210     0d5f          CALLA   WRAMINIT                ;INITIALIZE WAVE RAM
+         00000220 00000000! 
+      65 00000240     0d5f          CALLA   OINIT
+         00000250 00000000! 
+      66 00000270     0d5f          CALLA   BBINIT
+         00000280 00000000! 
+      67 000002a0     0d5f          CALLA   GETWAVE                 ;SET UP WAVE DIFFICULTY PARAMS
+         000002b0 00000000! 
+      68 000002d0     09ea          MOVI    CRIMETAB,A10    ;GET THE WAVE TUNE TABLE
+         000002e0 00000c20' 
+      69 00000300     05a2          MOVE    @WAVE,A2,W
+         00000310 00000000! 
+      70 00000330     1422          DEC     A2              ;ZERO BASE
+      71 00000340     2782          SLL     28,A2           ;ONLY SIGNIFICANT TO 4 BITS RIGHT NOW
+      72 00000350     2d22          SRL     23,A2
+      73 00000360     404a          ADD     A2,A10
+      74 00000370     874a          MOVE    *A10,A10,L
+      75 00000380     0d3f          CALLR   INITCRIM        ;GET THE CRIME SCENE
+         00000390     003e  
+      76 000003a0     09e0          MOVI    WSCANMLL,A0
+         000003b0 00d0007e  
+      77 000003d0     0780          MOVE    A0,@SCRNTL,L
+         000003e0 00000000! 
+      78 00000400     09e0          MOVI    WSCANMLR,A0
+         00000410 00d0017e  
+      79 00000430     0780          MOVE    A0,@SCRNLR,L
+         00000440 00000000! 
+      80 00000460     1820          MOVK    1,A0
+      81 00000470     0580          MOVE    A0,@DISPLAYON,W         ;TURN THE DISPLAY PROC ON
+         00000480 00000000! 
+      82 000004a0                   CREATE  BUPDPID,BBOFSCRN        ;CREATE THE BACKGROUND UPDATE PROCESS
+      83 00000520     09c0          MOVI    05H,A0                  ;EXPAND-A-COOL
+         00000530     0005  
+      84 00000540                   PUSHP   A10
+      85 00000550     09ea          MOVI    WSCANST,A10             ;ALSO ALLOWING BBOFSCRN A CRACK
+         00000560 006c007e  
+      86 00000580     09eb          MOVI    WSCANEND,A11
+         00000590 0134017e  
+      87 000005b0     098c          MMTM    A12,A8,A9,A11
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    3
+
+         000005c0     00d0  
+      88 000005d0                   JSRP    SCREXP32
+      89 00000640     09ac          MMFM    A12,A8,A9,A11
+         00000650     0b00  
+      90 00000660                   PULLP   A10
+      91 00000680     8740          MOVE    *A10,A0,L
+      92 00000690                   JSRPR   A0                      ;DO THE CRIME
+      93 000006e0     09c0          MOVI    BUPDPID,A0
+         000006f0     2bdd  
+      94 00000700     5621          CLR     A1
+      95 00000710     03e1          NOT     A1
+      96 00000720     0d5f          CALLA   KILALL                  ;KILL THE BACKGROUND UPDATE
+         00000730 00000000! 
+      97 00000750                   RETP
+      98                    
+      99                    **************************************************************************
+     100                    *                                                                        *
+     101                    * INITCRIM - INITIALIZE A CRIME SCENE                                    *
+     102                    * A10 = PTR TO BACKGROUND INIT TABLE                                     *
+     103                    * RETURNS                                                                *
+     104                    * A10 = PTR TO CRIME_PROC TABLE ENTRY                                    *
+     105                    *                                                                        *
+     106                    **************************************************************************
+     107 00000780           INITCRIM
+     108 00000780     098f          MMTM    SP,A0,A1,A2,A14
+         00000790     e002  
+     109 000007a0     9542          MOVE    *A10+,A2,W
+     110 000007b0     0582          MOVE    A2,@CRIMENO,W
+         000007c0 00000000! 
+     111 000007e0     9542          MOVE    *A10+,A2,W
+     112 000007f0     0582          MOVE    A2,@PLYMAX,W
+         00000800 00000000! 
+     113 00000820     0be2          SUBI    ZORIGIN,A2
+         00000830     ff37  
+     114 00000840     0582          MOVE    A2,@PLZMAX,W
+         00000850 00000000! 
+     115 00000870     9541          MOVE    *A10+,A1,W
+     116 00000880     0581          MOVE    A1,@PLYMIN,W            ;STUFF Y BOUNDRIES
+         00000890 00000000! 
+     117 000008b0     0be1          SUBI    ZORIGIN,A1
+         000008c0     ff37  
+     118 000008d0     0581          MOVE    A1,@PLZMIN,W            ;AND Z BOUNDRIES
+         000008e0 00000000! 
+     119 00000900     4422          SUB     A1,A2                   ;A2 = PLAYFIELD Z WIDTH
+     120 00000910     2fe2          SRL     1,A2
+     121 00000920     4022          ADD     A1,A2                   ;A2 = Z MIDLINE OF PLAYFIELD
+     122 00000930     0582          MOVE    A2,@PLZMID,W
+         00000940 00000000! 
+     123 00000960     9542          MOVE    *A10+,A2,W      
+     124 00000970     0be2          SUBI    ZORIGIN,A2
+         00000980     ff37  
+     125 00000990     0582          MOVE    A2,@PSZMAX,W
+         000009a0 00000000! 
+     126 000009c0     9541          MOVE    *A10+,A1,W
+     127 000009d0     0be1          SUBI    ZORIGIN,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    4
+
+         000009e0     ff37  
+     128 000009f0     0581          MOVE    A1,@PSZMIN,W
+         00000a00 00000000! 
+     129 00000a20     4422          SUB     A1,A2                   ;A2 = STREET Z WIDTH
+     130 00000a30     2fe2          SRL     1,A2
+     131 00000a40     4022          ADD     A1,A2                   ;A2 = Z MIDLINE OF STREET
+     132 00000a50     0582          MOVE    A2,@PSZMID,W
+         00000a60 00000000! 
+     133                    
+     134 00000a80     974e          MOVE    *A10+,A14,L             ;GET THE BACKGROUND PRIMARY MODULE LIST
+     135 00000a90     078e          MOVE    A14,@BAKMODS,L
+         00000aa0 00000000! 
+     136 00000ac0     974e          MOVE    *A10+,A14,L             ;GET THE BACKGROUND SECONDARY MODULE LIST
+     137 00000ad0     078e          MOVE    A14,@BAK2MODS,L
+         00000ae0 00000000! 
+     138 00000b00     974e          MOVE    *A10+,A14,L
+     139 00000b10           ICRIM5
+     140 00000b10     85c0          MOVE    *A14,A0,W               ;INITIALIZE FORE/BACKGROUND OBJECTS
+     141 00000b20     ce04          JRN     ICRIM6                  ;END OF FORE/BACKGROUND LIST
+     142 00000b30     0d5f          calla   MAKFBOBJ                
+         00000b40 00000000! 
+     143 00000b60     c0fa          JRUC    ICRIM5
+     144 00000b70           ICRIM6
+     145 00000b70     09af          MMFM    SP,A0,A1,A2,A14
+         00000b80     4007  
+     146 00000b90     0960          RETS
+     147                    
+     148 00000ba0           DUMCRIME
+     149 00000ba0                   SLEEP   120
+     150 00000bf0                   RETP
+     151                    
+     152                    
+     153                    *
+     154                    *TABLE OF CRIME SCENES
+     155 00000c20           CRIMETAB
+     156 00000c20 00000de0'         .LONG   LOFFCRIM,HYPOCRIM,DUMPCRIM,CLOWNCRI,RAMBCRIM,GANGCRIM,MBIGCRIM
+     157 00000d00 00001390'         .LONG   HEADCRIM,HYPOCRIM,DUMPCRIM,CLOWNCRI,RAMBCRIM,GANGCRIM,MBIGCRIM
+     158                    
+     159                    *CRIME HEADER
+     160                    *       .WORD   CRIMENO,PLYMAX,PLYMIN,PSYMAX,PSYMIN
+     161                    *       .LONG   BACKGROUND,SECONDARY_BACKGROUND,FOREGROUND_OBJECTS,CRIME_PROC
+     162                    *
+     163                    *THE LOFFREDO CRIME(HE IS A CRIME)
+     164 00000de0           LOFFCRIM
+     165 00000de0     0000          .WORD   0,399,298,399,337
+     166 00000e30 00001460'         .LONG   LOFMODS,NULLSKY,LOFFORE,LOFFCRM1
+     167                    *
+     168                    *SGT. SKYHIGH'S CRIME
+     169 00000eb0           RAMBCRIM
+     170 00000eb0     0006          .WORD   6,399,242,399,337
+     171 00000f00 00001690'         .LONG   HIGHMODS,NULLSKY,HIGHFORE,RAMBCRM1
+     172                    *
+     173                    *THE DUMPSTER MANS CRIME
+     174 00000f80           DUMPCRIM
+     175 00000f80     0004          .WORD   4,399,298,399,337
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    5
+
+     176 00000fd0 00001c00'         .LONG   DUMPMODS,NULLSKY,NULLFORE,DUMPCRM1
+     177                    *
+     178                    *THE CLOWNS CRIME
+     179 00001050           CLOWNCRI
+     180 00001050     0002          .WORD   2,399,298,399,337
+     181 000010a0 00001ca0'         .LONG   CLOWNMOD,NULLSKY,CLOWNFOR,CLWNCRM1
+     182                    *
+     183                    *THE HYPO MAN CRIME
+     184 00001120           HYPOCRIM
+     185 00001120     0003          .WORD   3,399,298,399,337
+     186 00001170 00002150'         .LONG   HYPOMOD,NULLSKY,HYPOFORE,HYPOCRM1
+     187                    *
+     188                    *THE GANGSTERS CRIME
+     189 000011f0           GANGCRIM
+     190 000011f0     0005          .WORD   5,399,298,399,337
+     191 00001240 00002440'         .LONG   BIGMOD,NULLSKY,GANGFORE,GANGCRM1
+     192                    *
+     193                    *THE MR. BIG CRIME SCENE
+     194 000012c0           MBIGCRIM
+     195 000012c0     0009          .WORD   9,399,250,399,337
+     196 00001310 00002440'         .LONG   BIGMOD,NULLSKY,BIGFORE,MBIGCRM1
+     197                    *       
+     198                    *THE MR. BIG HEAD CRIME SCENE
+     199 00001390           HEADCRIM
+     200 00001390     0007          .WORD   7,399,250,399,337
+     201 000013e0 00003580'         .LONG   HEADMOD,NULLSKY,NULLFORE,DUMCRIME
+     202                    
+     203 00001460           LOFMODS
+     204 00001460 00000000!         .LONG   ALLEY2BMOD
+     205 00001480     002c          .WORD   44,42+SKYTOPOF          ;x,y pos.
+     206 000014a0 00000000!         .LONG   PIPELINEBMOD
+     207 000014c0     8001          .WORD   BLSTEND,33+SKYTOPOF     ;x,y pos.
+     208 000014e0 00000000!         .LONG   ALLEY2BMOD
+     209 00001500     8001          .WORD   BLSTEND,42+SKYTOPOF     ;x,y pos.
+     210 00001520 ffffffff          .LONG   0FFFFFFFFH
+     211 00001540           LOFFORE
+     212 00001540 00000000          .LONG   0,0,[164+87,0],[107+SKYTOPOF,0]                                  
+     213 000015c0     0000          .WORD   0,0                                                      
+     214 000015e0 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     215 00001640     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     216 00001660 00000000          .LONG   0
+     217 00001680     ffff          .WORD   0FFFFH
+     218                    
+     219                    *
+     220                    *SKYHIGH BACKGROUND
+     221 00001690           HIGHMODS
+     222 00001690 00000000!         .LONG   GHSINTBMOD
+     223 000016b0     0024          .WORD   36,(-56+SKYTOPOF)
+     224 000016d0 ffffffff          .LONG   0FFFFFFFFH
+     225                    
+     226 000016f0           HIGHFORE
+     227 000016f0 00000000          .LONG   0,0,[120,0],[-56+136+SKYTOPOF,0]                                         
+     228 00001770     0000          .WORD   0,0                                                      
+     229 00001790 00000000!         .LONG   WEED,WEEDZ,DUMCOLL                                       
+     230 000017f0     8002          .WORD   DMAWNZ,WEEDOID
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    6
+
+     231 00001810 00000000          .LONG   0
+     232                    
+     233 00001830 00000000          .LONG   0,0,[225,0],[-56+136+SKYTOPOF,0]                                         
+     234 000018b0     0000          .WORD   0,0                                                      
+     235 000018d0 00000000!         .LONG   WEED,WEEDZ,DUMCOLL                                       
+     236 00001930     8002          .WORD   DMAWNZ,WEEDOID
+     237 00001950 00000000          .LONG   0
+     238                    
+     239 00001970 00000000          .LONG   0,0,[330,0],[-56+136+SKYTOPOF,0]                                         
+     240 000019f0     0000          .WORD   0,0                                                      
+     241 00001a10 00000000!         .LONG   WEED,WEEDZ,DUMCOLL                                       
+     242 00001a70     8002          .WORD   DMAWNZ,WEEDOID
+     243 00001a90 00000000          .LONG   0
+     244                    
+     245 00001ab0 00000000          .LONG   0,0,[435,0],[-56+136+SKYTOPOF,0]                                         
+     246 00001b30     0000          .WORD   0,0                                                      
+     247 00001b50 00000000!         .LONG   WEED,WEEDZ,DUMCOLL                                       
+     248 00001bb0     8002          .WORD   DMAWNZ,WEEDOID
+     249 00001bd0 00000000          .LONG   0
+     250                    
+     251 00001bf0     ffff          .WORD   0FFFFH
+     252                    
+     253 00001c00           DUMPMODS
+     254 00001c00 00000000!         .LONG   BRIDGEBMOD
+     255 00001c20     0064          .WORD   100,-80+SKYTOPOF        ;x,y pos.
+     256 00001c40 00000000!         .LONG   BRIDGEBMOD
+     257 00001c60     8001          .WORD   BLSTEND,-80+SKYTOPOF    ;x,y pos.
+     258 00001c80 ffffffff          .LONG   0FFFFFFFFH
+     259                    
+     260 00001ca0           CLOWNMOD
+     261 00001ca0 00000000!         .LONG   BOOK1BMOD
+     262 00001cc0     fff1          .WORD   -15,27+SKYTOPOF         ;x,y pos.
+     263 00001ce0 00000000!         .LONG   BOOK1BMOD
+     264 00001d00     8001          .WORD   BLSTEND,27+SKYTOPOF     ;x,y pos.
+     265 00001d20 00000000!         .LONG   BOOK1BMOD
+     266 00001d40     8001          .WORD   BLSTEND,27+SKYTOPOF     ;x,y pos.
+     267 00001d60 ffffffff          .LONG   0FFFFFFFFH
+     268 00001d80           CLOWNFOR
+     269 00001d80 00000000          .LONG   0,0,((-15+89)*010000H),((90+SKYTOPOF)*Y)                                         
+     270 00001e00     0000          .WORD   0,0                                                      
+     271 00001e20 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     272 00001e80     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     273 00001ea0 00000000          .LONG   0
+     274 00001ec0 00000000          .LONG   0,0,((165+89)*010000H),((90+SKYTOPOF)*Y)                                         
+     275 00001f40     0000          .WORD   0,0                                                      
+     276 00001f60 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     277 00001fc0     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     278 00001fe0 00000000          .LONG   0
+     279 00002000 00000000          .LONG   0,0,((335+89)*010000H),((90+SKYTOPOF)*Y)                                         
+     280 00002080     0000          .WORD   0,0                                                      
+     281 000020a0 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     282 00002100     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     283 00002120 00000000          .LONG   0
+     284 00002140     ffff          .WORD   0FFFFH
+     285 00002150           HYPOMOD
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    7
+
+     286 00002150 00000000!         .LONG   KASTLEBMOD
+     287 00002170     007e          .WORD   126,32+SKYTOPOF         ;x,y pos.
+     288 00002190 ffffffff          .LONG   0FFFFFFFFH
+     289 000021b0           HYPOFORE
+     290 000021b0 00000000          .LONG   0,0,[126+271,0],[75+32+SKYTOPOF,0]                                       
+     291 00002230     0000          .WORD   0,0                                                      
+     292 00002250 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     293 000022b0     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     294 000022d0 00000000          .LONG   0
+     295                    
+     296 000022f0 00000000          .LONG   0,0,[46+327,0],[75+32+SKYTOPOF,0]                                        
+     297 00002370     0000          .WORD   0,0                                                      
+     298 00002390 00000000!         .LONG   ARMDR1,ARMDRZ,DUMCOLL                                    
+     299 000023f0     8002          .WORD   DMAWNZ,BGDCID|ARMDRID
+     300 00002410 00000000          .LONG   0
+     301                    
+     302 00002430     ffff          .WORD   0FFFFH
+     303                            
+     304 00002440           BIGMOD
+     305 00002440 00000000!         .LONG   BIGFLR4BMOD
+     306 00002460     0010          .WORD   16,0+SKYTOPOF
+     307 00002480 00000000!         .LONG   BIGFLR10BMOD
+     308 000024a0     8001          .WORD   BLSTEND,0+SKYTOPOF
+     309 000024c0 00000000!         .LONG   BIGFLR4BMOD
+     310 000024e0     8001          .WORD   BLSTEND,0+SKYTOPOF
+     311 00002500 ffffffff          .LONG   0FFFFFFFFH
+     312 00002520           BIGFORE
+     313 00002520 00000000          .LONG   0,0,((140+16)*010000H),(((0+61)+SKYTOPOF)*Y)                                     
+     314 000025a0     0000          .WORD   0,0                                                      
+     315 000025c0 00000000!         .LONG   safedrlg,0,DUMCOLL                                       
+     316 00002620     8002          .WORD   DMAWNZ,BGDCID
+     317 00002640 00000000          .LONG   0
+     318 00002660 00000000          .LONG   0,0,((140+47)*010000H),(((0+61)+SKYTOPOF)*Y)                                     
+     319 000026e0     0000          .WORD   0,0                                                      
+     320 00002700 00000000!         .LONG   safedrrg,0,DUMCOLL                                       
+     321 00002760     8002          .WORD   DMAWNZ,BGDCID
+     322 00002780 00000000          .LONG   0
+     323 000027a0 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     324 00002820     0000          .WORD   0,0                                                      
+     325 00002840 00000000!         .LONG   cardslot2,0,DUMCOLL                                      
+     326 000028a0     9002          .WORD   DMAWNZ|M_PREVZ,JUNKOID
+     327 000028c0 00000000          .LONG   0
+     328 000028e0 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     329 00002960     0000          .WORD   0,0                                                      
+     330 00002980 00000000!         .LONG   cardslot2,0,DUMCOLL                                      
+     331 000029e0     9012          .WORD   DMAWNZ|M_FLIPH|M_PREVZ,JUNKOID
+     332 00002a00 00000000          .LONG   0
+     333 00002a20 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     334 00002aa0     0000          .WORD   0,0                                                      
+     335 00002ac0 00000000!         .LONG   GOLDTYPE,0,DUMCOLL                                       
+     336 00002b20     9003          .WORD   DMAWAL|M_PREVZ,JUNKOID
+     337 00002b40 00000000          .LONG   0
+     338 00002b60 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     339 00002be0     0000          .WORD   0,0                                                      
+     340 00002c00 00000000!         .LONG   OPENTYPE,0,DUMCOLL                                       
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    8
+
+     341 00002c60     9003          .WORD   DMAWAL|M_PREVZ,JUNKOID
+     342 00002c80 00000000          .LONG   0
+     343 00002ca0 00000000          .LONG   0,0,((264+37)*010000H),(((0+188)+SKYTOPOF)*Y)                                    
+     344 00002d20     0000          .WORD   0,0                                                      
+     345 00002d40 00000000!         .LONG   GOLDcard,0,DUMCOLL                                       
+     346 00002da0     8002          .WORD   DMAWNZ,JUNKOID
+     347 00002dc0 00000000          .LONG   0
+     348                    
+     349 00002de0     ffff          .WORD   0FFFFH
+     350                    *
+     351                    *GANGSTER CRIME SCENE FOREGROUND
+     352 00002df0           GANGFORE
+     353 00002df0 00000000          .LONG   0,0,((140+16)*010000H),(((0+61)+SKYTOPOF)*Y)                                     
+     354 00002e70     0000          .WORD   0,0                                                      
+     355 00002e90 00000000!         .LONG   safedrlr,0,DUMCOLL                                       
+     356 00002ef0     8002          .WORD   DMAWNZ,BGDCID
+     357 00002f10 00000000          .LONG   0
+     358 00002f30 00000000          .LONG   0,0,((140+47)*010000H),(((0+61)+SKYTOPOF)*Y)                                     
+     359 00002fb0     0000          .WORD   0,0                                                      
+     360 00002fd0 00000000!         .LONG   safedrrr,0,DUMCOLL                                       
+     361 00003030     8002          .WORD   DMAWNZ,BGDCID
+     362 00003050 00000000          .LONG   0
+     363 00003070 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     364 000030f0     0000          .WORD   0,0                                                      
+     365 00003110 00000000!         .LONG   cardslot2,0,DUMCOLL                                      
+     366 00003170     9002          .WORD   DMAWNZ|M_PREVZ,JUNKOID
+     367 00003190 00000000          .LONG   0
+     368 000031b0 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     369 00003230     0000          .WORD   0,0                                                      
+     370 00003250 00000000!         .LONG   cardslot2,0,DUMCOLL                                      
+     371 000032b0     9012          .WORD   DMAWNZ|M_FLIPH|M_PREVZ,JUNKOID
+     372 000032d0 00000000          .LONG   0
+     373 000032f0 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     374 00003370     0000          .WORD   0,0                                                      
+     375 00003390 00000000!         .LONG   REDTYPE,0,DUMCOLL                                        
+     376 000033f0     9003          .WORD   DMAWAL|M_PREVZ,JUNKOID
+     377 00003410 00000000          .LONG   0
+     378 00003430 00000000          .LONG   0,0,((264+62)*010000H),(((0+54)+SKYTOPOF)*Y)                                     
+     379 000034b0     0000          .WORD   0,0                                                      
+     380 000034d0 00000000!         .LONG   OPENTYPE,0,DUMCOLL                                       
+     381 00003530     9003          .WORD   DMAWAL|M_PREVZ,JUNKOID
+     382 00003550 00000000          .LONG   0
+     383 00003570     ffff          .WORD   0FFFFH
+     384                    
+     385                    *
+     386                    *HEAD CRIME MODULES
+     387 00003580           HEADMOD
+     388 00003580 00000000!         .LONG   HEADRBMOD
+     389 000035a0     fb50          .WORD   -1200,(35+SKYTOPOF)             ;0 x,y pos.
+     390 000035c0 ffffffff          .LONG   0FFFFFFFFH
+     391                    
+     392 000035e0           NULLFORE
+     393 000035e0     ffff          .WORD   0FFFFH
+     394 000035f0           NULLSKY
+     395 000035f0 ffffffff          .LONG   0FFFFFFFFH
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:28 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- CRIME SCENE ROUTINES & DATA >>>                  PAGE    9
+
+     396                    
+     397                            .END
+
+ No Errors,  No Warnings

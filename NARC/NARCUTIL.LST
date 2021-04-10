@@ -1,0 +1,3164 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCUTIL.ASM"
+       2                            .TITLE  " <<< NARC - TODD"S UTILITIES >>>"
+ *********  WARNING - TRAILING OPERAND(S)
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L
+       5                            .MNOLIST
+       6                    
+       7                    *       GET THE SYSTEM STUFF
+       8                            .INCLUDE        "\video\mprocEQU.ASM"   ;MPROC equates
+       9                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      10                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      11                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      12                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      13                    *       LOCAL STUFF
+      14                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      15                            .INCLUDE        "IMGTBL.GLO"            ;Image Label Equates
+      16                            .INCLUDE        "NARCFRAG.GLO"
+      17                            .INCLUDE        "NARCTEQU.ASM"
+      18                            .INCLUDE        "NARCAUDN.ASM"
+      19                    
+      20                    ;       .GLOBL  FLYTOPL
+      21                            .GLOBAL GET_ADJ
+      22                    
+      23 00000000                   .TEXT
+      24              000a  Y_NEAR  .set    10
+      25                    
+      26                    
+      27                    **************************************************************************
+      28 00000000           MovePlyr:
+      29                    ;A0 - player data obj
+      30                    ;A1 - X offset
+      31 00000000     b602          move    *A0(POBJ),A2,L
+         00000010     00a0  
+      32 00000020     ca1d          jrz     NoPMv
+      33 00000030     b443          move    *A2(OXPOS),A3,W
+         00000040     0090  
+      34 00000050     4023          add     A1,A3
+      35 00000060     b062          move    A3,*A2(OXPOS),W
+         00000070     0090  
+      36                    
+      37 00000080     b644          move    *A2(OSHAD),A4,L
+         00000090     0240  
+      38 000000a0     ca05          jrz     SkShad1
+      39 000000b0     b483          move    *A4(OXPOS),A3,W
+         000000c0     0090  
+      40 000000d0     4023          add     A1,A3
+      41 000000e0     b064          move    A3,*A4(OXPOS),W
+         000000f0     0090  
+      42 00000100           SkShad1:
+      43                    
+      44 00000100     b602          move    *A0(PLOBJ),A2,L
+         00000110     0120  
+      45 00000120     ca0d          jrz     NoPMv
+      46 00000130     b443          move    *A2(OXPOS),A3,W
+         00000140     0090  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    2
+
+      47 00000150     4023          add     A1,A3
+      48 00000160     b062          move    A3,*A2(OXPOS),W
+         00000170     0090  
+      49                    
+      50 00000180     b644          move    *A2(OSHAD),A4,L
+         00000190     0240  
+      51 000001a0     ca05          jrz     SkShad2
+      52 000001b0     b483          move    *A4(OXPOS),A3,W
+         000001c0     0090  
+      53 000001d0     4023          add     A1,A3
+      54 000001e0     b064          move    A3,*A4(OXPOS),W
+         000001f0     0090  
+      55 00000200           SkShad2:
+      56                    
+      57 00000200           NoPMv:
+      58 00000200     0960          rets
+      59                    **************************************************************************
+      60                    
+      61                    **************************************************************************
+      62 00000210           SetAniP:
+      63                    ;Parms
+      64                    ;A8 ptr to BASE OBJ
+      65                    ;A0 ptr to obj which is to have its position set so that its anim pt
+      66                    ;is at the same coors as the BASE OBJ
+      67                    
+      68 00000210     098f          mmtm    SP,A1,A2,A3,A4,A5,A6,A7
+         00000220     7f00  
+      69                    ;* get POSITION from first obj..
+      70 00000230     b701          move    *A8(OIMG),A1,L
+         00000240     0180  
+      71 00000250     b702          move    *A8(OSIZE),A2,L
+         00000260     0140  
+      72 00000270     b504          move    *A8(OFLAGS),A4,W
+         00000280     0100  
+      73                    *GANIOF: A1=OIMG, A2=H:W, A4=OFLAGS -> A6=X ANIOFF<<16, A7=Y ANIOFF<<16
+      74 00000290     0d5f          calla   GANIOF
+         000002a0 00000000! 
+      75 000002c0     b703          move    *A8(OXVAL),A3,L
+         000002d0     0080  
+      76 000002e0     40c3          add     A6,A3                   ;A3 XANI pos
+      77 000002f0     b705          move    *A8(OYVAL),A5,L
+         00000300     00a0  
+      78 00000310     40e5          add     A7,A5                   ;A5 YANI pos
+      79                    
+      80 00000320     b601          move    *A0(OIMG),A1,L
+         00000330     0180  
+      81 00000340     b602          move    *A0(OSIZE),A2,L
+         00000350     0140  
+      82 00000360     b404          move    *A0(OFLAGS),A4,W
+         00000370     0100  
+      83                    *GANIOF: A1=OIMG, A2=H:W, A4=OFLAGS -> A6=X ANIOFF<<16, A7=Y ANIOFF<<16
+      84 00000380     0d5f          calla   GANIOF
+         00000390 00000000! 
+      85 000003b0     4466          sub     A3,A6
+      86 000003c0     03a6          neg     A6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    3
+
+      87 000003d0     b2c0          move    A6,*A0(OXVAL),L
+         000003e0     0080  
+      88 000003f0     44a7          sub     A5,A7
+      89 00000400     03a7          neg     A7
+      90 00000410     b2e0          move    A7,*A0(OYVAL),L
+         00000420     00a0  
+      91 00000430     09af          mmfm    SP,A1,A2,A3,A4,A5,A6,A7
+         00000440     00fe  
+      92 00000450     0960          rets
+      93                    **************************************************************************
+      94                    
+      95                    **************************************************************************
+      96 00000460           ZCHEK:
+      97 00000460     b501          move    *A8(OZPOS),A1,W
+         00000470     00d0  
+      98 00000480     05a0          move    @PLZMIN,A0,W
+         00000490 00000000! 
+      99 000004b0     10a0          addk    5,A0
+     100 000004c0     4401          sub     A0,A1
+     101 000004d0     cf0b          jrnn    ZMinOK
+     102 000004e0     b008          move    A0,*A8(OZPOS),W
+         000004f0     00d0  
+     103 00000500     b500          move    *A8(OYPOS),A0,W
+         00000510     00b0  
+     104 00000520     4420          sub     A1,A0
+     105 00000530     b008          move    A0,*A8(OYPOS),W
+         00000540     00b0  
+     106 00000550     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         00000560     00e0  
+     107 00000570     cf1c          jrnn    ZMaxOK
+     108 00000580     c013          jruc    SETZV
+     109 00000590           ZMinOK:
+     110 00000590     b501          move    *A8(OZPOS),A1,W
+         000005a0     00d0  
+     111 000005b0     05a0          move    @PLZMAX,A0,W
+         000005c0 00000000! 
+     112 000005e0     1460          subk    3,A0
+     113 000005f0     4401          sub     A0,A1
+     114 00000600     ce13          jrn     ZMaxOK
+     115 00000610     b008          move    A0,*A8(OZPOS),W
+         00000620     00d0  
+     116 00000630     b500          move    *A8(OYPOS),A0,W
+         00000640     00b0  
+     117 00000650     4420          sub     A1,A0
+     118 00000660     b008          move    A0,*A8(OYPOS),W
+         00000670     00b0  
+     119 00000680     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         00000690     00e0  
+     120 000006a0     ce09          jrn     ZMaxOK
+     121 000006b0     ca08          jrz     ZMaxOK
+     122 000006c0           SETZV:
+     123 000006c0     b701          move    *A8(OYVEL),A1,L
+         000006d0     0060  
+     124 000006e0     4401          sub     A0,A1
+     125 000006f0     b228          move    A1,*A8(OYVEL),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    4
+
+         00000700     0060  
+     126 00000710     5600          clr     A0
+     127 00000720     b208          move    A0,*A8(OZVEL),L ;set Z velocity
+         00000730     00e0  
+     128 00000740           ZMaxOK:
+     129 00000740     0960          rets
+     130                    **************************************************************************
+     131                    
+     132                    
+     133                    **************************************************************************
+     134 00000750           WHATCOLL:
+     135                    ;* decide which collision vector should be taken
+     136                    ;* PARMS        A1 - obj ID of item collided with
+     137                    ;* RETURNS      A1 - offset for a jump table of collision vectors
+     138 00000750     0960          rets
+     139                    **************************************************************************
+     140                    
+     141                    
+     142                    ***************************************************************************
+     143 00000760           ShadOn:
+     144 00000760     b700          move    *A8(OSHAD),A0,L
+         00000770     0240  
+     145 00000780     ca80          jaz     SHADST
+         00000790 00000000! 
+     146 000007b0     0960          rets
+     147                    ***************************************************************************
+     148                    
+     149                    ***************************************************************************
+     150 000007c0           ShadOff:
+     151 000007c0     b700          move    *A8(OSHAD),A0,L
+         000007d0     0240  
+     152 000007e0     ca04          jrz     NoShad  
+     153 000007f0     4d00          move    A8,A0
+     154 00000800     c080          jauc    DELSHAD
+         00000810 00000000! 
+     155 00000830           NoShad:
+     156 00000830     0960          rets
+     157                    ***************************************************************************
+     158                    
+     159                    ***************************************************************************
+     160 00000840           GetPLZMID:
+     161 00000840     098f          mmtm    SP,A1
+         00000850     4000  
+     162 00000860     05a0          move    @PLZMIN,A0,W
+         00000870 00000000! 
+     163 00000890     05a1          move    @PLZMAX,A1,W
+         000008a0 00000000! 
+     164 000008c0     4020          add     A1,A0
+     165 000008d0     2fe0          srl     1,A0
+     166 000008e0     09af          mmfm    SP,A1
+         000008f0     0002  
+     167 00000900     0960          rets
+     168                    ***************************************************************************
+     169                    
+     170                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    5
+
+     171                    * DFrmGrnd - RETURNS THE DIST FROM THE BOT OF OBJ TO THE "GROUND."                               *
+     172                    * A0 = OBJECT BLOCK                                                      *
+     173                    * RETURN(S)                                                              *
+     174                    * A1 = DISTANCE FROM GROUND (16 BITS)                                    *
+     175                    * STATUS BITS SET ACCORDING TO THE SIGN OF A1                            *
+     176                    * NOTE: MAX ACCEPTABLE Y = +32K, MIN ACCEPTABLE Y = -32K                 *
+     177 00000910           DFrmGrnd:
+     178 00000910                   PUSH    A2
+     179 00000920     b401          move    *A0(OYPOS),A1,W
+         00000930     00b0  
+     180 00000940     b402          move    *A0(OSIZEY),A2,W
+         00000950     0150  
+     181 00000960     4022          add     A1,A2                   ;A2 = BOTTOM Y
+     182 00000970     b401          move    *A0(OZPOS),A1,W
+         00000980     00d0  
+     183 00000990     4441          sub     A2,A1
+     184 000009a0     0b01          addi    ZORIGIN,A1
+         000009b0     00c8  
+     185 000009c0     09af          mmfm    SP,A2
+         000009d0     0004  
+     186 000009e0     0960          RETS
+     187                    **************************************************************************
+     188                    
+     189                    *************************** Get Player Data *******************************
+     190 000009f0           OidToDat:
+     191                    ;* entry point that takes players OID in A0
+     192 000009f0     098f          mmtm    SP,A1,A2
+         00000a00     6000  
+     193 00000a10     4c01          move    A0,A1
+     194 00000a20     c004          jruc    GotOid
+     195 00000a30           GetPData:
+     196                    ;* PARMS : A0 - ptr to a players Object
+     197                    ;* RETS : A0 - ptr to players DATA Block, rets 0 if neither
+     198 00000a30     098f          mmtm    SP,A1,A2
+         00000a40     6000  
+     199 00000a50     b401          move    *A0(OID),A1,W
+         00000a60     01a0  
+     200 00000a70           GotOid:
+     201 00000a70     4c22          move    A1,A2
+     202 00000a80     0b81          andi    P1OID,A1
+         00000a90 ffffefff  
+     203 00000ab0     ca04          jrz     GetP2Dat
+     204 00000ac0     09e0          movi    P1DATA,A0
+         00000ad0 00000000! 
+     205 00000af0     c009          jruc    GotPData
+     206 00000b00           GetP2Dat:
+     207 00000b00     0b82          andi    P2OID,A2
+         00000b10 ffffdfff  
+     208 00000b30     ca04          jrz     NoPDat
+     209 00000b40     09e0          movi    P2DATA,A0
+         00000b50 00000000! 
+     210 00000b70     c001          jruc    GotPData
+     211 00000b80           NoPDat:
+     212 00000b80     5600          clr     A0
+     213 00000b90           GotPData:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    6
+
+     214 00000b90     09af          mmfm    SP,A1,A2
+         00000ba0     0006  
+     215 00000bb0     0960          rets
+     216                    ***************************************************************************
+     217                    
+     218                    ***************************************************************************
+     219 00000bc0           BulToDat:
+     220                    ;* PARMS : A0 - ptr to a bullet Object
+     221                    ;* RETS : A0 - ptr to firing players DATA Block, rets 0 if neither
+     222 00000bc0     098f          mmtm    SP,A1,A2
+         00000bd0     6000  
+     223 00000be0     b401          move    *A0(OID),A1,W
+         00000bf0     01a0  
+     224 00000c00     2f81          srl     4,A1
+     225 00000c10     2481          sll     4,A1
+     226 00000c20     0b41          cmpi    B1OID,A1
+         00000c30     f4ef  
+     227 00000c40     cb04          jrnz    BP2Dat
+     228 00000c50     09e0          movi    P1DATA,A0
+         00000c60 00000000! 
+     229 00000c80     c008          jruc    GotBPDat
+     230 00000c90           BP2Dat:
+     231 00000c90     0b41          cmpi    B2OID,A1
+         00000ca0     f4df  
+     232 00000cb0     cb04          jrnz    NoBPDat
+     233 00000cc0     09e0          movi    P2DATA,A0
+         00000cd0 00000000! 
+     234 00000cf0     c001          jruc    GotBPDat
+     235 00000d00           NoBPDat:
+     236 00000d00     5600          clr     A0
+     237 00000d10           GotBPDat:
+     238 00000d10     09af          mmfm    SP,A1,A2
+         00000d20     0006  
+     239 00000d30     0960          rets
+     240                    ***************************************************************************
+     241                    
+     242                    ****************************** Get Mid Z **********************************
+     243 00000d40           GetMidZ:
+     244                    ;PARMS ptr to obj in A0
+     245                    ;RETURNS middle Z val in A0
+     246 00000d40     098f          mmtm    SP,A1,A2
+         00000d50     6000  
+     247 00000d60     b402          move    *A0(OZSIZ),A2,W
+         00000d70     01b0  
+     248 00000d80     4c41          move    A2,A1
+     249 00000d90     2e02          srl     16,A2
+     250 00000da0     0521          zext    A1,W
+     251 00000db0     03a1          neg     A1      
+     252 00000dc0     4022          add     A1,A2
+     253 00000dd0     2be2          sra     1,A2
+     254 00000de0     b400          move    *A0(OZPOS),A0,W
+         00000df0     00d0  
+     255 00000e00     4040          add     A2,A0
+     256 00000e10     09af          mmfm    SP,A1,A2
+         00000e20     0006  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    7
+
+     257 00000e30     0960          rets
+     258                    ***************************************************************************
+     259                    
+     260                    ***************************************************************************
+     261 00000e40           CentDist:
+     262 00000e40     098f          mmtm    SP,A1
+         00000e50     4000  
+     263 00000e60     05a0          move    @(WORLDTLX+16),A0,W                              
+         00000e70 00000010! 
+     264 00000e90     0b00          addi    240,A0                  ;deducting 1/2 avg. width of char
+         00000ea0     00f0  
+     265 00000eb0     b501          move    *A8(OXPOS),A1,W
+         00000ec0     0090  
+     266 00000ed0     4420          sub     A1,A0
+     267 00000ee0     0380          abs     A0
+     268 00000ef0     09af          mmfm    SP,A1
+         00000f00     0002  
+     269 00000f10     0960          rets
+     270                    ***************************************************************************
+     271                    
+     272                    ************************** Get On Screen **********************************
+     273 00000f20           GetOnScr:
+     274                    ; set dest to be just past current screen bounds
+     275 00000f20     b501          move    *A8(OXPOS),A1,W
+         00000f30     0090  
+     276                    
+     277 00000f40     05a3          move    @WORLDTL,A3,W
+         00000f50 00000000! 
+     278 00000f70     0523          zext    A3,W
+     279                    
+     280 00000f80     05a2          move    @SCRNTL,A2,W            ;GET SCREEN LEFT
+         00000f90 00000000! 
+     281 00000fb0     4062          add     A3,A2
+     282 00000fc0     0b02          addi    120,A2
+         00000fd0     0078  
+     283 00000fe0     4841          cmp     A2,A1
+     284 00000ff0     c502          jrge    SkLf
+     285 00001000     4c41          move    A2,A1
+     286 00001010     c009          jruc    SkRt
+     287 00001020           SkLf:
+     288                    
+     289 00001020     05a2          move    @SCRNLR,A2,W            ;GET SCREEN RT.
+         00001030 00000000! 
+     290 00001050     4062          add     A3,A2
+     291 00001060     0be2          subi    120,A2
+         00001070     ff87  
+     292 00001080     4841          cmp     A2,A1
+     293 00001090     c601          jrle    SkRt
+     294 000010a0     4c41          move    A2,A1
+     295 000010b0           SkRt:
+     296                    
+     297                            ;* set z dest to be same as current Z
+     298                    ;       move    *A8(OZPOS),A3,W
+     299                    ;       move    @PLZMIN,A2,W            ;check top
+     300                    ;       cmp     A2,A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    8
+
+     301                    ;       jrge    SkTp
+     302                    ;       move    A2,A3
+     303                    ;       jruc    SkBt
+     304                    ;SkTp:
+     305                    ;       move    @PLZMAX,A2,W            ;check bottom
+     306                    ;       cmp     A2,A3
+     307                    ;       jrle    SkBt
+     308                    ;       move    A2,A3
+     309                    ;SkBt:
+     310                    ;       move    A3,A0
+     311                    
+     312 000010b0     05b0          move    @PLZMIN,B0,W            ;check top
+         000010c0 00000000! 
+     313 000010e0     05b1          move    @PLZMAX,B1,W            ;check bottom
+         000010f0 00000000! 
+     314 00001110     0d5f          calla   RANGRAND
+         00001120 00000000! 
+     315 00001140     2600          sll     16,A0
+     316 00001150     ee01          movy    A0,A1
+     317                    
+     318 00001160     b22d          move    A1,*A13(DEST),L
+         00001170     01e0  
+     319                    
+     320 00001180     b7a0          move    *A13(FUNCS),A0,L        ;* choose appropriate godest func
+         00001190     00e0  
+     321 000011a0     0b00          addi    GODEST,A0
+         000011b0     0020  
+     322 000011c0     8600          move    *A0,A0,L
+     323 000011d0     0920          call    A0
+     324                    
+     325 000011e0     1940          movk    OFFSCR_T,A0
+     326 000011f0     ac0d          movb    A0,*A13(DEST_TAG)
+         00001200     01c0  
+     327                    
+     328 00001210     0960          rets
+     329                    **************************************************************************
+     330                    
+     331                    **************************** Dest OK *************************************
+     332 00001220           DestOk:
+     333                    ; make sure dest is still within bounds, else clear destination
+     334 00001220     afa0          movb    *A13(DEST_TAG),A0
+         00001230     01c0  
+     335 00001240     ca22          jrz     DestGood
+     336 00001250     0b40          cmpi    ESCAPE_T,A0
+         00001260     fff9  
+     337 00001270     ca1f          jreq    DestGood
+     338                    
+     339 00001280     b7a1          move    *A13(DEST),A1,L
+         00001290     01e0  
+     340 000012a0     05a2          move    @WORLDTL,A2,W           ;sub off world base from position
+         000012b0 00000000! 
+     341 000012d0     0522          zext    A2,W
+     342 000012e0     e241          subxy   A2,A1
+     343                    
+     344 000012f0     05a2          move    @SCRNTL,A2,W            ;GET SCREEN LEFT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE    9
+
+         00001300 00000000! 
+     345 00001320     1722          subk    25,A2                   ; give a little padding
+     346 00001330     e441          cmpxy   A2,A1
+     347 00001340                   jrxlt   DestBad
+     348                    
+     349 00001350     05a2          move    @SCRNLR,A2,W            ;GET SCREEN RT.
+         00001360 00000000! 
+     350 00001380     1322          addk    25,A2                   ; give a little padding
+     351 00001390     e441          cmpxy   A2,A1
+     352 000013a0     c50e          jrxgt   DestBad
+     353                    
+     354 000013b0     05a2          move    @PLZMIN,A2,W            ;check top
+         000013c0 00000000! 
+     355 000013e0     2602          sll     16,A2
+     356 000013f0     e441          cmpxy   A2,A1
+     357 00001400                   jrylt   DestBad
+     358                    
+     359 00001410     05a2          move    @PLZMAX,A2,W            ;check bottom
+         00001420 00000000! 
+     360 00001440     2602          sll     16,A2
+     361 00001450     e441          cmpxy   A2,A1
+     362 00001460     c302          jrygt   DestBad
+     363                    
+     364 00001470           DestGood:
+     365 00001470     0320          clrc
+     366 00001480     c00c          jruc    DestOkX
+     367                    
+     368 00001490           DestBad:
+     369 00001490     5600          clr     A0
+     370 000014a0     ac0d          movb    A0,*A13(DEST_TAG)
+         000014b0     01c0  
+     371 000014c0     ac0d          movb    A0,*A13(DESTTIKS)
+         000014d0     01a8  
+     372 000014e0     ac0d          movb    A0,*A13(BRAINTIKS)
+         000014f0     01b0  
+     373 00001500     b20d          move    A0,*A13(DEST),L
+         00001510     01e0  
+     374 00001520     b20d          move    A0,*A13(WANTOBJ),L
+         00001530     0220  
+     375 00001540     0de0          setc
+     376                    
+     377 00001550           DestOkX:
+     378 00001550     0960          rets
+     379                    **************************************************************************
+     380                    
+     381                    
+     382                    **************************************************************************
+     383 00001560           SCRNCLIP:
+     384                    ;PARMS  A0-Z:X coor
+     385                    ;RETS   A0-Z:X clipped to screen bounds
+     386 00001560     098f          mmtm    SP,A2,A3
+         00001570     3000  
+     387 00001580     05a3          move    @WORLDTL,A3,W
+         00001590 00000000! 
+     388 000015b0     0523          zext    A3,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   10
+
+     389                    
+     390 000015c0     05a2          move    @SCRNTL,A2,W            ;GET SCREEN LEFT
+         000015d0 00000000! 
+     391 000015f0     4062          add     A3,A2
+     392 00001600     1142          addk    10,A2
+     393 00001610     e440          cmpxy   A2,A0
+     394 00001620                   jrxge   SkClipLf
+     395 00001630     ec40          movx    A2,A0
+     396 00001640     c008          jruc    SkClipRt
+     397 00001650           SkClipLf:
+     398                    
+     399 00001650     05a2          move    @SCRNLR,A2,W            ;GET SCREEN RT.
+         00001660 00000000! 
+     400 00001680     4062          add     A3,A2
+     401 00001690     1542          subk    10,A2
+     402 000016a0     e440          cmpxy   A2,A0
+     403 000016b0     c401          jrxle   SkClipRt
+     404 000016c0     ec40          movx    A2,A0
+     405 000016d0           SkClipRt:
+     406                    
+     407 000016d0     05a2          move    @PLZMIN,A2,W            ;check top
+         000016e0 00000000! 
+     408 00001700     2602          sll     16,A2
+     409 00001710     e440          cmpxy   A2,A0
+     410 00001720                   jryge   SkClipTp
+     411 00001730     ee40          movy    A2,A0
+     412 00001740     c007          jruc    SkClipBt
+     413 00001750           SkClipTp:
+     414                    
+     415 00001750     05a2          move    @PLZMAX,A2,W            ;check bottom
+         00001760 00000000! 
+     416 00001780     2602          sll     16,A2
+     417 00001790     e440          cmpxy   A2,A0
+     418 000017a0     c201          jryle   SkClipBt
+     419 000017b0     ee40          movy    A2,A0
+     420 000017c0           SkClipBt:
+     421 000017c0     09af          mmfm    SP,A2,A3
+         000017d0     000c  
+     422 000017e0     0960          rets
+     423                    **************************************************************************
+     424                    
+     425                    **************************** Clip Dest ***********************************
+     426 000017f0           ClipDest:
+     427                    ; clip dest to be within screen bounds
+     428 000017f0                   PUSH    A0
+     429 00001800     b7a0          move    *A13(DEST),A0,L
+         00001810     01e0  
+     430 00001820     0d3f          callr   SCRNCLIP
+         00001830     ffd2  
+     431 00001840     b20d          move    A0,*A13(DEST),L
+         00001850     01e0  
+     432 00001860                   PULL    A0
+     433 00001880     0960          rets
+     434                    **************************************************************************
+     435                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   11
+
+     436                    **************************** Clip Z Dest *********************************
+     437 00001890           ClipZDst:
+     438                    ; clip dest to be within screen Z bounds
+     439 00001890                   PUSH    A0
+     440 000018a0     b7a0          move    *A13(DEST),A0,L
+         000018b0     01e0  
+     441 000018c0     0d3f          callr   SCRNZCLP
+         000018d0     0005  
+     442 000018e0     b20d          move    A0,*A13(DEST),L
+         000018f0     01e0  
+     443 00001900                   PULL    A0
+     444 00001920     0960          rets
+     445                    **************************************************************************
+     446                    
+     447                    **************************************************************************
+     448 00001930           SCRNZCLP:
+     449                    ;PARMS  A0-Z:X coor
+     450                    ;RETS   A0-Z:X clipped to screen Z bounds
+     451 00001930                   PUSH    A2
+     452 00001940     05a2          move    @PLZMIN,A2,W            ;check top
+         00001950 00000000! 
+     453 00001970     2602          sll     16,A2
+     454 00001980     e440          cmpxy   A2,A0
+     455 00001990                   jryge   SkClpTp2
+     456 000019a0     ee40          movy    A2,A0
+     457 000019b0     c007          jruc    SkClpBt2
+     458 000019c0           SkClpTp2:
+     459                    
+     460 000019c0     05a2          move    @PLZMAX,A2,W            ;check bottom
+         000019d0 00000000! 
+     461 000019f0     2602          sll     16,A2
+     462 00001a00     e440          cmpxy   A2,A0
+     463 00001a10     c201          jryle   SkClpBt2
+     464 00001a20     ee40          movy    A2,A0
+     465 00001a30           SkClpBt2:
+     466 00001a30                   PULL    A2
+     467 00001a50     0960          rets
+     468                    **************************************************************************
+     469                    
+     470                    
+     471                    **************************** CkDest **************************************
+     472 00001a60           CkDest:
+     473                    ;* RETURNS setc if within tolerance of destination
+     474 00001a60     b5a2          move    *A13(DEST),A2,W
+         00001a70     01e0  
+     475 00001a80     ca1d          jrz     AtDest
+     476                    
+     477 00001a90     b5a1          move    *A13(TEMPDEST),A1,W             ;want just X component
+         00001aa0     0200  
+     478 00001ab0     cb01          jrnz    TDest
+     479 00001ac0     4c41          move    A2,A1
+     480 00001ad0           TDest:
+     481 00001ad0     0d5f          calla   GETANIX
+         00001ae0 00000000! 
+     482 00001b00     4401          sub     A0,A1                   ;A1 is dist to be traveled to reach dest
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   12
+
+     483                    
+     484                            ;* Get X velocity
+     485 00001b10     b7a0          move    *A13(FUNCS),A0,L
+         00001b20     00e0  
+     486 00001b30     0b00          addi    GETXVEL,A0
+         00001b40     0040  
+     487 00001b50     8600          move    *A0,A0,L
+     488 00001b60     0920          call    A0                              ;A0 is velocity
+     489                    
+     490 00001b70     b502          move    *A8(OFLAGS),A2
+         00001b80     0100  
+     491 00001b90     1f62          BTST    B_FLIPH,A2
+     492 00001ba0     ca03          jrz     FaceRt
+     493                            ;* Facing left
+     494 00001bb0     4c00          move    A0,A0
+     495 00001bc0     c104          jrp     GoingL
+     496 00001bd0     c006          jruc    GoingR
+     497 00001be0           FaceRt:
+     498 00001be0     4c00          move    A0,A0
+     499 00001bf0     ce01          jrn     GoingL
+     500 00001c00     c003          jruc    GoingR
+     501                    
+     502 00001c10           GoingL:
+     503                            ;* we are heading left, have we passed the destination
+     504 00001c10     10a1          addk    5,A1            ;allow 5 pixel tolerance to reach dest
+     505 00001c20     ce0f          jrn     DestX
+     506 00001c30     c002          jruc    AtDest
+     507                    
+     508 00001c40           GoingR:
+     509 00001c40     14a1          subk    5,A1
+     510 00001c50     c10c          jrp     DestX
+     511                            
+     512 00001c60           AtDest:
+     513 00001c60     b5a0          move    *A13(TEMPDEST),A0,W
+         00001c70     0200  
+     514 00001c80     ca07          jrz     MadeIt
+     515 00001c90     b7a0          move    *A13(FUNCS),A0,L
+         00001ca0     00e0  
+     516 00001cb0     0b00          addi    GODEST,A0
+         00001cc0     0020  
+     517 00001cd0     8600          move    *A0,A0,L
+     518 00001ce0     0920          call    A0
+     519 00001cf0     c002          jruc    DestX
+     520 00001d00           MadeIt:
+     521 00001d00     0de0          setc
+     522 00001d10     0960          rets
+     523                             
+     524 00001d20           DestX:
+     525 00001d20     0320          clrc
+     526 00001d30     0960          rets
+     527                    **************************************************************************
+     528                    
+     529                    *************************** GO DEST Delta ********************************
+     530 00001d40           GoDestD:
+     531                    ;* calculates z motion as value for ZPER
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   13
+
+     532 00001d40     098f          mmtm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A9,A10
+         00001d50     ff60  
+     533                    
+     534                            ;* Get MaxXZAngle
+     535 00001d60     b7aa          move    *A13(FUNCS),A10,L
+         00001d70     00e0  
+     536 00001d80     b74a          move    *A10(MAXXZANGLE),A10,L      ;A10 is .16
+         00001d90     0060  
+     537                    
+     538                            ;* Get X velocity
+     539 00001da0     b7a0          move    *A13(FUNCS),A0,L
+         00001db0     00e0  
+     540 00001dc0     0b00          addi    GETXVEL,A0
+         00001dd0     0040  
+     541 00001de0     8600          move    *A0,A0,L
+     542 00001df0     0920          call    A0
+     543 00001e00     4c09          move    A0,A9
+     544                    
+     545 00001e10     b7a5          move    *A13(DEST),A5,L
+         00001e20     01e0  
+     546 00001e30     eea1          movy    A5,A1                   ;A5 = Zdest:Xdest
+     547 00001e40     2a01          sra     16,A1
+     548 00001e50     b502          move    *A8(OZPOS),A2,W
+         00001e60     00d0  
+     549 00001e70     4441          sub     A2,A1                   ;A1 = Zdelta = Zdest - Zpos     
+     550 00001e80     eca2          movx    A5,A2
+     551 00001e90     0502          sext    A2,W
+     552 00001ea0     0d5f          calla   GETANIX
+         00001eb0 00000000! 
+     553 00001ed0     4402          sub     A0,A2                   ;A2 = Xdelta = Xdest - Xpos
+     554                    
+     555                            ;* make sure we're facing the correct way..
+     556 00001ee0     ce03          jrn     GoLeft2
+     557                            ;*** need to go RIGHT
+     558 00001ef0     4d29          move    A9,A9
+     559 00001f00     c104          jrp     NoFlip
+     560 00001f10     c007          jruc    YesFlip
+     561 00001f20           GoLeft2:
+     562                            ;*** need to go LEFT
+     563 00001f20     4d29          move    A9,A9
+     564 00001f30     ce01          jrn     NoFlip
+     565 00001f40     c004          jruc    YesFlip
+     566                    
+     567 00001f50           NoFlip:
+     568 00001f50     0d3f          callr   Ck_NOYFLP
+         00001f60     0137  
+     569 00001f70     c813          jrc     SetZVel2                ;Flip succeeded
+     570 00001f80     c003          jruc    FlipFail
+     571 00001f90           YesFlip:        
+     572 00001f90     0d3f          callr   Ck_YFLP
+         00001fa0     0113  
+     573 00001fb0     c80f          jrc     SetZVel2                ;Flip Succeeded
+     574                    
+     575 00001fc0           FlipFail:
+     576                            ;* flip failed
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   14
+
+     577 00001fc0     afa1          movb    *A13(FLIPTIKS),A1
+         00001fd0     01d8  
+     578 00001fe0     2701          sll     24,A1
+     579 00001ff0     2d01          srl     24,A1   ;* Flip tiks is always positive
+     580 00002000     ac2d          movb    A1,*A13(DESTTIKS)
+         00002010     01a8  
+     581 00002020     5d21          mpys    A9,A1
+     582 00002030     2a01          sra     16,A1
+     583 00002040     e025          addxy   A1,A5
+     584 00002050     b2ad          move    A5,*A13(TEMPDEST),L
+         00002060     0200  
+     585 00002070     56a5          clr     A5
+     586 00002080     acad          movb    A5,*A13(ZPER)
+         00002090     01c8  
+     587 000020a0     c040          jruc    GoDestX2
+     588                    
+     589 000020b0           SetZVel2:
+     590                            ;* can a straight course be set for the dest
+     591                            ;** A4 = (abs Zdelta) - (abs Xdelta)*(MaxXZAngle)
+     592                            ; if A4 positive, need a temp dest
+     593 000020b0     4c44          move    A2,A4
+     594 000020c0     0384          abs     A4                          ;A4 is 16.                           (abs Xdelta)
+     595 000020d0     4d43          move    A10,A3          ;A3 - MaxXZAngle  is .16
+     596 000020e0     5e83          mpyu    A4,A3               ; result is 16.16
+     597 000020f0     2e03          srl     16,A3               ;A3 is 16.
+     598 00002100     4c24          move    A1,A4                                                            
+     599 00002110     0384          abs     A4                                                                      ;(abs Zdelta)
+     600 00002120     4464          sub     A3,A4               ;A4 = Zdist left to travel
+     601 00002130     c10d          jrp     MkTmpDest2
+     602                    
+     603                            ;* Head straight for the destination
+     604 00002140     5663          clr     A3
+     605 00002150     b26d          move    A3,*A13(TEMPDEST),L
+         00002160     0200  
+     606 00002170     4c44          move    A2,A4
+     607 00002180     0384          abs     A4                              ;(abs Xdelta)
+     608 00002190     4c87          move    A4,A7
+     609 000021a0     24e1          sll     7,A1                            ;(A1 = Zdelta) Zper has 7 signifcant digits
+     610 000021b0     5881          divs    A4,A1                   ;A4 is 16. A1 is 16
+     611 000021c0     ac2d          movb    A1,*A13(ZPER)
+         000021d0     01c8  
+     612                    
+     613 000021e0     2607          sll     16,A7                   ;A7 16. -> 32.
+     614 000021f0     5b27          divu    A9,A7                   ;A9 is 16.16, A7 is 32.
+     615                                                                    ;A7 -> 16.      
+     616 00002200     c023          jruc    SetSlp
+     617                    
+     618 00002210           MkTmpDest2:
+     619                            ;* calculate Z part of TEMPDEST
+     620 00002210     2fe4          srl     1,A4    ;travel half of Zdist left to go
+     621 00002220     4d47          move    A10,A7  ;A7 - MaxXZAngle
+     622 00002230     2ee7          srl     9,A7    ;Zper has 7 significant digits
+     623 00002240     4c21          move    A1,A1
+     624 00002250     c102          jrp     ZdeltaP2
+     625 00002260     03a7          neg     A7                      
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   15
+
+     626 00002270     03a4          neg     A4
+     627 00002280           ZdeltaP2:
+     628 00002280     aced          movb    A7,*A13(ZPER)
+         00002290     01c8  
+     629 000022a0     eea3          movy    A5,A3
+     630 000022b0     2a03          sra     16,A3
+     631 000022c0     4483          sub     A4,A3
+     632                    
+     633                            ;* calculate X part of TEMPDEST
+     634 000022d0     4d46          move    A10,A6          ;A6 is .16
+     635 000022e0     4c87          move    A4,A7           ;A4 is 16.
+     636 000022f0     0387          abs     A7
+     637 00002300     2607          sll     16,A7           ;A7 is 32.
+     638 00002310     5ac7          divu    A6,A7           ;A7 is 16.
+     639 00002320     4c42          move    A2,A2           
+     640 00002330     c101          jrp     XdeltaP2        
+     641 00002340     03a7          neg     A7
+     642 00002350           XdeltaP2:
+     643 00002350     56c6          clr     A6
+     644 00002360     eca6          movx    A5,A6
+     645 00002370     40e6          add     A7,A6
+     646 00002380     4cc7          move    A6,A7
+     647                    
+     648 00002390     2603          sll     16,A3
+     649 000023a0     ee66          movy    A3,A6
+     650 000023b0     b2cd          move    A6,*A13(TEMPDEST),L
+         000023c0     0200  
+     651                    
+     652 000023d0     0d5f          calla   GETANIX
+         000023e0 00000000! 
+     653 00002400     e207          subxy   A0,A7
+     654 00002410     0387          abs     A7
+     655 00002420     2607          sll     16,A7
+     656                            
+     657 00002430     5b27          divu    A9,A7
+     658 00002440           SetSlp:
+     659 00002440     09c1          movi 0FFH,A1
+         00002450     00ff  
+     660 00002460     4827          cmp     A1,A7
+     661 00002470     c601          jrle    SlpOk
+     662 00002480     4c27          move    A1,A7
+     663 00002490           SlpOk:  
+     664 00002490     aced          movb    A7,*A13(DESTTIKS)
+         000024a0     01a8  
+     665                            
+     666 000024b0           GoDestX2:
+     667 000024b0     09af          mmfm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A9,A10
+         000024c0     06ff  
+     668 000024d0     0960          rets
+     669                    **************************************************************************
+     670                    
+     671                    *************************** GO DEST Velocity *****************************
+     672 000024e0           GoDestV:
+     673                    ;* calculates Z motion as a velocity
+     674 000024e0     098f          mmtm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A9,A10
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   16
+
+         000024f0     ff60  
+     675                    
+     676                            ;* Get X velocity
+     677 00002500     b7a0          move    *A13(FUNCS),A0,L
+         00002510     00e0  
+     678 00002520     0b00          addi    GETXVEL,A0
+         00002530     0040  
+     679 00002540     8600          move    *A0,A0,L
+     680 00002550     0920          call    A0
+     681 00002560     4c09          move    A0,A9                   ;A9 = signed XVEL
+     682                    
+     683 00002570     b7a5          move    *A13(DEST),A5,L
+         00002580     01e0  
+     684 00002590     eea1          movy    A5,A1                   ;A5 = Zdest:Xdest
+     685 000025a0     2a01          sra     16,A1
+     686 000025b0     b502          move    *A8(OZPOS),A2,W
+         000025c0     00d0  
+     687 000025d0     4441          sub     A2,A1                   ;A1 = Zdelta = Zdest - Zpos     
+     688 000025e0     eca2          movx    A5,A2
+     689 000025f0     0502          sext    A2,W
+     690 00002600     0d5f          calla   GETANIX
+         00002610 00000000! 
+     691 00002630     4c0a          move    A0,A10                  ;A10 = current Xpos
+     692 00002640     4402          sub     A0,A2                   ;A2 = Xdelta = Xdest - Xpos
+     693 00002650     4c43          move    A2,A3
+     694 00002660     4d29          move    A9,A9
+     695 00002670     c101          jrp     SkNegDlt
+     696 00002680     03a3          neg     A3
+     697 00002690           SkNegDlt:
+     698                            ;* make sure we're facing the correct way..
+     699 00002690     4c63          move    A3,A3
+     700 000026a0     c105          jrp     GoRgt
+     701 000026b0     03a9          neg     A9              ;going to be flipped, so neg XVEL
+     702 000026c0     0d3f          callr   Ck_YFLP
+         000026d0     00a0  
+     703 000026e0     c817          jrc     SetZVel
+     704 000026f0     c003          jruc    FlpFail
+     705 00002700           GoRgt:
+     706 00002700     0d3f          callr   Ck_NOYFLP
+         00002710     00bc  
+     707 00002720     c813          jrc     SetZVel
+     708 00002730           FlpFail:
+     709                            ;* flip failed
+     710 00002730     03a9          neg     A9      ;not going direction we wanted.
+     711 00002740     afa1          movb    *A13(FLIPTIKS),A1
+         00002750     01d8  
+     712 00002760     ac2d          movb    A1,*A13(DESTTIKS)
+         00002770     01a8  
+     713 00002780     2701          sll     24,A1
+     714 00002790     2d01          srl     24,A1
+     715 000027a0     5d21          mpys    A9,A1
+     716 000027b0     2e01          srl     16,A1
+     717 000027c0     4001          add     A0,A1
+     718 000027d0     eea1          movy    A5,A1
+     719 000027e0     b22d          move    A1,*A13(TEMPDEST),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   17
+
+         000027f0     0200  
+     720 00002800     56a5          clr     A5
+     721 00002810     b2a8          move    A5,*A8(OZVEL),L
+         00002820     00e0  
+     722 00002830     b2a8          move    A5,*A8(OYVEL),L
+         00002840     0060  
+     723 00002850     c051          jruc    GoDestX
+     724                    
+     725 00002860           SetZVel:
+     726                            ;* can a straight course be set for the dest
+     727 00002860     4c44          move    A2,A4
+     728 00002870     0384          abs     A4                          ;A4=xdist is 16.
+     729 00002880     b7a3          move    *A13(FUNCS),A3,L
+         00002890     00e0  
+     730 000028a0     b663          move    *A3(MAXXZANGLE),A3,L        ;A3 is .16
+         000028b0     0060  
+     731 000028c0     5e83          mpyu    A4,A3               ; result is 16.16
+     732 000028d0     2e03          srl     16,A3               ;A3=zdist travelable is 16.
+     733 000028e0     4c24          move    A1,A4               
+     734 000028f0     0384          abs     A4                  ;A4=zdist
+     735 00002900     4464          sub     A3,A4               ;A4 = Zdist left to travel
+     736 00002910     c10d          jrp     MkTmpDest
+     737                    
+     738                            ;* Head straight for the destination
+     739 00002920     5663          clr     A3
+     740 00002930     b26d          move    A3,*A13(TEMPDEST),L
+         00002940     0200  
+     741 00002950     4c47          move    A2,A7
+     742 00002960     5d21          mpys    A9,A1                   ;A1 is 16. -> 16.16
+     743 00002970     5841          divs    A2,A1                   ;A4 is 16. A1 is 16.16
+     744 00002980     b228          move    A1,*A8(OZVEL),L
+         00002990     00e0  
+     745 000029a0     b228          move    A1,*A8(OYVEL),L
+         000029b0     0060  
+     746 000029c0     2607          sll     16,A7                   ;A7=(xdelt) 16. -> 32.
+     747 000029d0     5927          divs    A9,A7                   ;A9 is 16.16, A7 is 32.
+     748                                                                    ;A7 -> 16.      
+     749 000029e0     c02f          jruc    SetSlp2
+     750                    
+     751 000029f0           MkTmpDest:
+     752                            ;* calculate Z part of TEMPDEST
+     753 000029f0     4c80          move    A4,A0
+     754 00002a00     2fc0          srl     2,A0                        
+     755 00002a10     4404          sub     A0,A4                       ;lets travel 3/4 zdist left to go
+     756 00002a20     b7a7          move    *A13(FUNCS),A7,L
+         00002a30     00e0  
+     757 00002a40     b6e7          move    *A7(MAXXZANGLE),A7,L        ;A7 is .16
+         00002a50     0060  
+     758 00002a60     4d23          move    A9,A3
+     759 00002a70     0383          abs     A3
+     760 00002a80     2f03          srl     8,A3
+     761 00002a90     2f07          srl     8,A7
+     762 00002aa0     5e67          mpyu    A3,A7           ;A7 is 16.16  Zvel = Xvel*MaxXZAngle
+     763 00002ab0     4c21          move    A1,A1
+     764 00002ac0     c103          jrp     ZdeltaP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   18
+
+     765 00002ad0     03a7          neg     A7                      
+     766 00002ae0     03a4          neg     A4
+     767 00002af0     03a0          neg     A0              ;portion of zdelta not travelled
+     768 00002b00           ZdeltaP:
+     769 00002b00     b2e8          move    A7,*A8(OZVEL),L
+         00002b10     00e0  
+     770 00002b20     b2e8          move    A7,*A8(OYVEL),L
+         00002b30     0060  
+     771 00002b40     eea3          movy    A5,A3
+     772 00002b50     2a03          sra     16,A3
+     773 00002b60     4403          sub     A0,A3                   ;A3 = Z part of tempdest
+     774                    
+     775                            ;* calculate X part of TEMPDEST
+     776 00002b70     b7a6          move    *A13(FUNCS),A6,L
+         00002b80     00e0  
+     777 00002b90     b6c6          move    *A6(MAXXZANGLE),A6,L        ;A6 is .16
+         00002ba0     0060  
+     778 00002bb0     4c87          move    A4,A7           ;A4 is 16.
+     779 00002bc0     0387          abs     A7
+     780 00002bd0     2607          sll     16,A7           ;A7 is 32.
+     781 00002be0     5ac7          divu    A6,A7           ;A7 is 16.    1/2 Zdist to travel  / XZang
+     782 00002bf0     03a7          neg     A7
+     783 00002c00     4c42          move    A2,A2           
+     784 00002c10     c101          jrp     XdeltaN 
+     785 00002c20     03a7          neg     A7
+     786 00002c30           XdeltaN:
+     787 00002c30     56c6          clr     A6
+     788 00002c40     eca6          movx    A5,A6
+     789 00002c50     44e6          sub     A7,A6
+     790 00002c60     4cc7          move    A6,A7
+     791                    
+     792 00002c70     2603          sll     16,A3
+     793 00002c80     ee66          movy    A3,A6
+     794 00002c90     b2cd          move    A6,*A13(TEMPDEST),L
+         00002ca0     0200  
+     795                    
+     796 00002cb0     e347          subxy   A10,A7                  ;A10 = ret from GETANIX
+     797 00002cc0     2607          sll     16,A7
+     798 00002cd0     5927          divs    A9,A7
+     799 00002ce0           SetSlp2:
+     800 00002ce0     4ce7          move    A7,A7
+     801 00002cf0     ce0c          jrn     FixSlp
+     802 00002d00     09c1          movi 0FFH,A1
+         00002d10     00ff  
+     803 00002d20     4827          cmp     A1,A7
+     804 00002d30     c601          jrle    SlpOk2
+     805 00002d40     4c27          move    A1,A7
+     806 00002d50           SlpOk2: 
+     807 00002d50     aced          movb    A7,*A13(DESTTIKS)
+         00002d60     01a8  
+     808                            
+     809 00002d70           GoDestX:
+     810 00002d70     0d3f          callr   UpdShadV
+         00002d80     02eb  
+     811 00002d90     09af          mmfm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A9,A10
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   19
+
+         00002da0     06ff  
+     812 00002db0     0960          rets
+     813 00002dc0           FixSlp:
+     814 00002dc0     1847          movk    2,A7
+     815 00002dd0     c0f7          jruc    SlpOk2
+     816                    **************************************************************************
+     817                    
+     818                    **************************************************************************
+     819 00002de0           T_YFLP:
+     820 00002de0     098f          mmtm    SP,A0
+         00002df0     8000  
+     821 00002e00     b500          move    *A8(OFLAGS),A0,W
+         00002e10     0100  
+     822 00002e20     1f60          btst    B_FLIPH,A0
+     823 00002e30     cb0f          jrnz    NOFLP3
+     824                    
+     825 00002e40     b7a0          move    *A13(FUNCS),A0,L
+         00002e50     00e0  
+     826 00002e60     bc0d          movb    *A0(FLIPCT),*A13(FLIPTIKS)
+         00002e70     0080  
+         00002e80     01d8  
+     827 00002e90     0d5f          calla   YFLP
+         00002ea0 00000000! 
+     828                    
+     829                            ;* set veloctiy for skaters
+     830 00002ec0     b700          move    *A8(OXVEL),A0,L
+         00002ed0     0040  
+     831 00002ee0     03a0          neg     A0
+     832 00002ef0     b208          move    A0,*A8(OXVEL),L
+         00002f00     0040  
+     833 00002f10     0d3f          callr   UpdShadV
+         00002f20     02d1  
+     834                    
+     835 00002f30           NOFLP3:
+     836 00002f30     09af          mmfm    SP,A0
+         00002f40     0001  
+     837 00002f50     0960          rets
+     838                    **************************************************************************
+     839                    
+     840                    **************************************************************************
+     841 00002f60           T_NOYFLP:
+     842 00002f60     098f          mmtm    SP,A0
+         00002f70     8000  
+     843 00002f80     b500          move    *A8(OFLAGS),A0,W
+         00002f90     0100  
+     844 00002fa0     1f60          btst    B_FLIPH,A0
+     845 00002fb0     ca0f          jrz     NOFLP4
+     846                    
+     847 00002fc0     b7a0          move    *A13(FUNCS),A0,L
+         00002fd0     00e0  
+     848 00002fe0     bc0d          movb    *A0(FLIPCT),*A13(FLIPTIKS)
+         00002ff0     0080  
+         00003000     01d8  
+     849 00003010     0d5f          callA   NOYFLP
+         00003020 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   20
+
+     850                    
+     851                            ;* set veloctiy for skaters
+     852 00003040     b700          move    *A8(OXVEL),A0,L
+         00003050     0040  
+     853 00003060     03a0          neg     A0
+     854 00003070     b208          move    A0,*A8(OXVEL),L
+         00003080     0040  
+     855 00003090     0d3f          callr   UpdShadV
+         000030a0     02b9  
+     856                    
+     857 000030b0           NOFLP4:
+     858 000030b0     09af          mmfm    SP,A0
+         000030c0     0001  
+     859 000030d0     0960          rets
+     860                    **************************************************************************
+     861                    
+     862                    **************************************************************************
+     863 000030e0           Ck_YFLP:
+     864 000030e0     098f          mmtm    SP,A0
+         000030f0     8000  
+     865 00003100     b500          move    *A8(OFLAGS),A0,W
+         00003110     0100  
+     866 00003120     1f60          btst    B_FLIPH,A0
+     867 00003130     cb12          jrnz    NOFLP0
+     868                    
+     869 00003140     afa0          movb    *A13(FLIPTIKS),A0
+         00003150     01d8  
+     870 00003160     cb13          jrnz    CANTFLP0
+     871                    
+     872 00003170     b7a0          move    *A13(FUNCS),A0,L
+         00003180     00e0  
+     873 00003190     bc0d          movb    *A0(FLIPCT),*A13(FLIPTIKS)
+         000031a0     0080  
+         000031b0     01d8  
+     874 000031c0     0d5f          calla   YFLP
+         000031d0 00000000! 
+     875                    
+     876                            ;* set veloctiy for skaters
+     877 000031f0     b700          move    *A8(OXVEL),A0,L
+         00003200     0040  
+     878 00003210     03a0          neg     A0
+     879 00003220     b208          move    A0,*A8(OXVEL),L
+         00003230     0040  
+     880 00003240     0d3f          callr   UpdShadV
+         00003250     029e  
+     881                    
+     882 00003260           NOFLP0:
+     883 00003260     09af          mmfm    SP,A0
+         00003270     0001  
+     884 00003280     0de0          setc
+     885 00003290     0960          rets
+     886 000032a0           CANTFLP0:
+     887 000032a0     09af          mmfm    SP,A0
+         000032b0     0001  
+     888 000032c0     0320          clrc
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   21
+
+     889 000032d0     0960          rets
+     890                    **************************************************************************
+     891                    
+     892                    **************************************************************************
+     893 000032e0           Ck_NOYFLP:
+     894 000032e0     098f          mmtm    SP,A0
+         000032f0     8000  
+     895 00003300     b500          move    *A8(OFLAGS),A0,W
+         00003310     0100  
+     896 00003320     1f60          btst    B_FLIPH,A0
+     897 00003330     ca12          jrz     NOFLP1
+     898                    
+     899 00003340     afa0          movb    *A13(FLIPTIKS),A0
+         00003350     01d8  
+     900 00003360     cb13          jrnz    CANTFLP1
+     901                    
+     902 00003370     b7a0          move    *A13(FUNCS),A0,L
+         00003380     00e0  
+     903 00003390     bc0d          movb    *A0(FLIPCT),*A13(FLIPTIKS)
+         000033a0     0080  
+         000033b0     01d8  
+     904 000033c0     0d5f          calla   NOYFLP
+         000033d0 00000000! 
+     905                    
+     906                            ;* set veloctiy for skaters
+     907 000033f0     b700          move    *A8(OXVEL),A0,L
+         00003400     0040  
+     908 00003410     03a0          neg     A0
+     909 00003420     b208          move    A0,*A8(OXVEL),L
+         00003430     0040  
+     910 00003440     0d3f          callr   UpdShadV
+         00003450     027e  
+     911                    
+     912 00003460           NOFLP1:
+     913 00003460     09af          mmfm    SP,A0
+         00003470     0001  
+     914 00003480     0de0          setc
+     915 00003490     0960          rets
+     916 000034a0           CANTFLP1:
+     917 000034a0     09af          mmfm    SP,A0
+         000034b0     0001  
+     918 000034c0     0320          clrc
+     919 000034d0     0960          rets
+     920                    **************************************************************************
+     921                    
+     922                    ****************************** Z OFF *************************************
+     923 000034e0           ZOFF:
+     924                    ;A8 - obj ptr
+     925                    ;A9 - anim ptr
+     926                    ;*A13(ZPER) - signed byte, zoff = zper * Xoff >> 7
+     927 000034e0     098f          mmtm    SP,A0,A9
+         000034f0     8040  
+     928                    
+     929 00003500     9720          move    *A9+,A0,L               ;FRAME
+     930 00003510     ca1e          jreq    ZoffX           ;No Frame -> No Xoff -> no Zoff
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   22
+
+     931 00003520     9520          move    *A9+,A0,W               ;BITS|Sleep Time
+     932 00003530     1e60          btst BDELTAXZ,A0
+     933 00003540     ca1b          jrz     ZoffX           ;No Xoff -> no Zoff
+     934 00003550     1e00          btst    BSPAWNP,A0
+     935 00003560     ca02          jrz     SPAWNSk2
+     936 00003570     0b09          addi    050H,A9
+         00003580     0050  
+     937 00003590           SPAWNSk2:
+     938 00003590     1e20          btst    BFLIPBIT,A0
+     939 000035a0     ca02          jrz     FLIPSk2
+     940 000035b0     0b09          addi    16,A9
+         000035c0     0010  
+     941 000035d0           FLIPSk2:
+     942 000035d0     1e40          btst    BNEWPAL,A0
+     943 000035e0     ca01          jrz     PALSk2
+     944 000035f0     1209          addk    16,A9
+     945 00003600           PALSk2:
+     946 00003600     8f20          movb    *A9,A0          ;X offset
+     947 00003610     0380          abs     A0
+     948 00003620     afa1          movb    *A13(ZPER),A1
+         00003630     01c8  
+     949 00003640     5c01          mpys    A0,A1
+     950 00003650     2521          sll     9,A1                    ;had 7 bits frac, want 16
+     951 00003660     b700          move    *A8(OZVAL),A0,L
+         00003670     00c0  
+     952 00003680     4020          add     A1,A0
+     953 00003690     b208          move    A0,*A8(OZVAL),L
+         000036a0     00c0  
+     954 000036b0     b700          move    *A8(OYVAL),A0,L
+         000036c0     00a0  
+     955 000036d0     4020          add     A1,A0
+     956 000036e0     b208          move    A0,*A8(OYVAL),L
+         000036f0     00a0  
+     957                    
+     958 00003700           ZoffX:
+     959 00003700     09af          mmfm    SP,A0,A9
+         00003710     0201  
+     960 00003720     0960          rets
+     961                    **************************************************************************
+     962                    
+     963                    *************************************************************************
+     964                    ;* This routine looks for the nearest bullet heading toward an enemy.
+     965                    ;* PARMS:
+     966                    ;*      A8 - Enemy obj ptr
+     967                    ;* RETURNS:
+     968                    ;*      A5 - ptr to bullet obj  (0 if no threatening bullets)
+     969                    ;*      A6 - X distance to bullet
+     970 00003730           NEAR_BUL:
+     971 00003730                   push    A9
+     972 00003740     56a5          clr     A5              ;A5 will be pointer to nearest bullet
+     973 00003750     07a1          move    @PLAYER_BULLETS,A1,L
+         00003760 00000000! 
+     974 00003780     ca31          jrz     NO_BULL
+     975 00003790     09c6          movi 1000,A6    ;A6 is distance of nearest bullet
+         000037a0     03e8  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   23
+
+     976 000037b0     b504          move    *A8(OZPOS),A4,W
+         000037c0     00d0  
+     977 000037d0     0d5f          calla   GETANIX
+         000037e0 00000000! 
+     978 00003800     4c03          move    A0,A3
+     979 00003810     0be3          subi    9,A3                    ;* 1/2 width of bullet (kluge to cmp w/ mid point)
+         00003820     fff6  
+     980 00003830     b507          move    *A8(OYPOS),A7,W
+         00003840     00b0  
+     981 00003850     b509          move    *A8(OSIZEY),A9,W
+         00003860     0150  
+     982 00003870     40e9          add     A7,A9
+     983 00003880     1149          addk Y_NEAR,A9          ;* clearance below feet
+     984 00003890     17c7          subk    3*Y_NEAR,A7     ;* clearance above head
+     985                    
+     986 000038a0           BULL_LP:
+     987 000038a0     b422          move    *A1(OXPOS),A2,W
+         000038b0     0090  
+     988 000038c0     4462          sub     A3,A2
+     989 000038d0     c704          jrgt    BULL_RGT
+     990                            ;* Bullet on the left
+     991 000038e0     b420          move    *A1(OXVEL+16),A0,W
+         000038f0     0050  
+     992 00003900     ce16          jrn     BULL_MIS        
+     993 00003910     c003          jruc    BULL_XOK
+     994 00003920           BULL_RGT:
+     995 00003920     b420          move    *A1(OXVEL+16),A0,W
+         00003930     0050  
+     996 00003940     c112          jrp     BULL_MIS        
+     997                    
+     998 00003950           BULL_XOK:
+     999 00003950     0382          abs     A2              ;A2 is X distance from bullet
+    1000 00003960     48c2          cmp     A6,A2   ;is this bullet closer than last?       
+    1001 00003970     c50f          jrge    BULL_MIS
+    1002                    
+    1003                    ;* check if Z rng is ok
+    1004 00003980     b420          move    *A1(OZPOS),A0,W
+         00003990     00d0  
+    1005 000039a0     4480          sub     A4,A0
+    1006 000039b0     0380          abs     A0
+    1007 000039c0     0b40          cmpi    15,A0
+         000039d0     fff0  
+    1008 000039e0     c708          jrgt BULL_MIS
+    1009                    ;* check Y rng
+    1010 000039f0     b420          move    *A1(OYPOS),A0,W
+         00003a00     00b0  
+    1011 00003a10     48e0          cmp     A7,A0
+    1012 00003a20     c404          jrlt    BULL_MIS        ;* bullet will pass above head
+    1013 00003a30     4920          cmp     A9,A0
+    1014 00003a40     c702          jrgt    BULL_MIS        ;* bullet will  pass below feet
+    1015                    
+    1016 00003a50           GOT_BULL:
+    1017 00003a50     4c25          move    A1,A5   ;new closest bullet
+    1018 00003a60     4c46          move    A2,A6   ;new distance
+    1019 00003a70           BULL_MIS:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   24
+
+    1020 00003a70     b621          move    *A1(OSLINK),A1,L        ;* get next bullet and try again
+         00003a80     0020  
+    1021 00003a90     cbe0          jrnz    BULL_LP
+    1022 00003aa0           NO_BULL:
+    1023 00003aa0                   pull    A9
+    1024 00003ac0     0960          rets
+    1025                    *******************************************************************
+    1026                    
+    1027                    **************************************************************************
+    1028 00003ad0           FACINGOB:
+    1029                    ;* ptr to obj in A0
+    1030                    ;* enemy in A8
+    1031                    ;* return setc if facing object
+    1032 00003ad0     b401          move    *A0(OSIZEX),A1,W
+         00003ae0     0140  
+    1033 00003af0     2fe1          srl     1,A1
+    1034 00003b00     b400          move    *A0(OXPOS),A0,W
+         00003b10     0090  
+    1035 00003b20     4001          add     A0,A1
+    1036 00003b30     0d5f          calla   GETANIX
+         00003b40 00000000! 
+    1037 00003b60     4401          sub     A0,A1           ;A1 = objX - Xpos
+    1038 00003b70     b500          move    *A8(OFLAGS),A0,W
+         00003b80     0100  
+    1039 00003b90     0b80          andi    M_FLIPH,A0
+         00003ba0 ffffffef  
+    1040 00003bc0     ca01          jrz     SkFlpN
+    1041 00003bd0     03a1          neg     A1
+    1042 00003be0           SkFlpN:
+    1043 00003be0     4c21          move    A1,A1
+    1044 00003bf0     c102          jrp     ISFACING
+    1045                    
+    1046 00003c00     0320          clrc
+    1047 00003c10     0960          rets
+    1048                    
+    1049 00003c20           ISFACING:
+    1050 00003c20     0de0          setc
+    1051 00003c30     0960          rets
+    1052                    **************************************************************************
+    1053                    
+    1054                    **************************************************************************
+    1055 00003c40           FACEOBJ:
+    1056                    ;* ptr to obj in A0
+    1057                    ;* enemy in A8
+    1058                    ;** make Enemy face object
+    1059 00003c40     b401          move    *A0(OSIZEX),A1,W
+         00003c50     0140  
+    1060 00003c60     2fe1          srl     1,A1
+    1061 00003c70     b400          move    *A0(OXPOS),A0,W
+         00003c80     0090  
+    1062 00003c90     4001          add     A0,A1
+    1063 00003ca0     0d5f          calla   GETANIX
+         00003cb0 00000000! 
+    1064 00003cd0     4820          cmp     A1,A0
+    1065 00003ce0     c700          jrgt    T_YFLP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   25
+
+         00003cf0     ff0e  
+    1066 00003d00     c000          jruc    T_NOYFLP
+         00003d10     ff24  
+    1067                    **************************************************************************
+    1068                    
+    1069                    **************************************************************************
+    1070 00003d20           FaceObj:
+    1071                    ;* ptr to obj in A0
+    1072                    ;* enemy in A8
+    1073                    ;** make Enemy face object if fliptiks allow...
+    1074 00003d20     b401          move    *A0(OSIZEX),A1,W
+         00003d30     0140  
+    1075 00003d40     2fe1          srl     1,A1
+    1076 00003d50     b400          move    *A0(OXPOS),A0,W
+         00003d60     0090  
+    1077 00003d70     4001          add     A0,A1
+    1078 00003d80     0d5f          calla   GETANIX
+         00003d90 00000000! 
+    1079 00003db0     4820          cmp     A1,A0
+    1080 00003dc0     c700          jrgt    Ck_YFLP
+         00003dd0     ff30  
+    1081 00003de0     c000          jruc    Ck_NOYFLP
+         00003df0     ff4e  
+    1082                    **************************************************************************
+    1083                    
+    1084                    **************************************************************************
+    1085 00003e00           FACEBULL:
+    1086                    ;* ptr to bullet in A0
+    1087                    ;* enemy in A8
+    1088                    ;** make Enemy face object
+    1089 00003e00     ae01          movb    *A0(OXVEL+24),A1
+         00003e10     0058  
+    1090 00003e20     cf00          jrnn    T_YFLP
+         00003e30     fefa  
+    1091 00003e40     c000          jruc    T_NOYFLP
+         00003e50     ff10  
+    1092                    **************************************************************************
+    1093                    
+    1094                    **************************************************************************
+    1095 00003e60           FACEAWAY:
+    1096                    ;* ptr to obj in A0
+    1097                    ;* enemy in A8
+    1098                    ;** make Enemy face away from object
+    1099 00003e60     098f          mmtm    SP,A0,A1
+         00003e70     c000  
+    1100 00003e80     b401          move    *A0(OSIZEX),A1,W
+         00003e90     0140  
+    1101 00003ea0     2fe1          srl     1,A1
+    1102 00003eb0     b400          move    *A0(OXPOS),A0,W
+         00003ec0     0090  
+    1103 00003ed0     4001          add     A0,A1
+    1104 00003ee0     0d5f          calla   GETANIX
+         00003ef0 00000000! 
+    1105 00003f10     4820          cmp     A1,A0
+    1106 00003f20     09af          mmfm    SP,A0,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   26
+
+         00003f30     0003  
+    1107 00003f40     c400          jrlt    T_YFLP
+         00003f50     fee8  
+    1108 00003f60     c000          jruc    T_NOYFLP
+         00003f70     fefe  
+    1109                    **************************************************************************
+    1110                    
+    1111                    **************************************************************************
+    1112 00003f80           FACEFWD:
+    1113                    ;* enemy obj in A8
+    1114                    ;** make Enemy face Forward
+    1115 00003f80     b500          move    *A8(OXVEL+16),A0,W
+         00003f90     0050  
+    1116 00003fa0     ce00          jrn     T_YFLP
+         00003fb0     fee2  
+    1117 00003fc0     c000          jruc    T_NOYFLP
+         00003fd0     fef8  
+    1118                    **************************************************************************
+    1119                    
+    1120                    **************************************************************************
+    1121 00003fe0           FACEBKWD:
+    1122                    ;* enemy obj in A8
+    1123                    ;** make Enemy face Backward
+    1124 00003fe0     b500          move    *A8(OXVEL+16),A0,W
+         00003ff0     0050  
+    1125 00004000     ce00          jrn     T_NOYFLP
+         00004010     fef4  
+    1126 00004020     c000          jruc    T_YFLP
+         00004030     feda  
+    1127                    **************************************************************************
+    1128                    
+    1129                    **************************************************************************
+    1130 00004040           NEARPLYR:
+    1131                    ;Get disp obj of nearest person to shoot at
+    1132                    ; RETURNS       A0 - ptr to disp obj or Zero (with Z flag set)
+    1133                    ; DESTROYS A1,A2,A3,A4,A5
+    1134 00004040     5684          clr     A4                      ;* A4 is ptr to player to chase
+    1135 00004050     09c5          movi    1000,A5         ;* X distance to first player
+         00004060     03e8  
+    1136 00004070     b502          move    *A8(OZPOS),A2,W
+         00004080     00d0  
+    1137 00004090     b503          move    *A8(OXPOS),A3,W
+         000040a0     0090  
+    1138 000040b0     09e0          movi    P1DATA,A0
+         000040c0 00000000! 
+    1139 000040e0     b600          move    *A0(POBJ),A0,L
+         000040f0     00a0  
+    1140 00004100     ca0c          jrz     TRYP2
+    1141 00004110     b401          move    *A0(OZPOS),A1,W
+         00004120     00d0  
+    1142 00004130     4441          sub     A2,A1
+    1143 00004140     0381          abs     A1
+    1144 00004150     0b41          cmpi    18,A1
+         00004160     ffed  
+    1145 00004170     c705          jrgt    TRYP2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   27
+
+    1146 00004180     4c04          move    A0,A4
+    1147 00004190     b405          move    *A0(OXPOS),A5,W
+         000041a0     0090  
+    1148 000041b0     4465          sub     A3,A5
+    1149 000041c0     0385          abs     A5
+    1150 000041d0           TRYP2:
+    1151 000041d0     09e0          movi    P2DATA,A0
+         000041e0 00000000! 
+    1152 00004200     b600          move    *A0(POBJ),A0,L
+         00004210     00a0  
+    1153 00004220     ca0e          jrz     WhichP
+    1154 00004230     b401          move    *A0(OZPOS),A1,W
+         00004240     00d0  
+    1155 00004250     4441          sub     A2,A1
+    1156 00004260     0381          abs     A1
+    1157 00004270     0b41          cmpi    20,A1
+         00004280     ffeb  
+    1158 00004290     c707          jrgt    WhichP
+    1159 000042a0     b401          move    *A0(OXPOS),A1,W
+         000042b0     0090  
+    1160 000042c0     4461          sub     A3,A1
+    1161 000042d0     0381          abs     A1
+    1162 000042e0     48a1          cmp     A5,A1
+    1163 000042f0     c701          jrgt    WhichP
+    1164 00004300     4c04          move    A0,A4      ;* player 2 is closer
+    1165 00004310           WhichP:
+    1166 00004310     4c80          move    A4,A0
+    1167 00004320     0960          rets
+    1168                    **************************************************************************
+    1169                    
+    1170                    **************************************************************************
+    1171 00004330           ClosestP:
+    1172                    ;* return A0 - the object pointer of the Closest Player
+    1173 00004330     098f          mmtm    SP,A1,A2,A3,A4,A5,A6
+         00004340     7e00  
+    1174 00004350     b502          move    *A8(OXPOS),A2,W
+         00004360     0090  
+    1175 00004370     b503          move    *A8(OZPOS),A3,W
+         00004380     00d0  
+    1176                    
+    1177 00004390     09c4          movi    07FFFH,A4               ;so P2 can be selected if no P1
+         000043a0     7fff  
+    1178 000043b0     09e1          movi    P1DATA,A1
+         000043c0 00000000! 
+    1179 000043e0     b621          move    *A1(POBJ),A1,L
+         000043f0     00a0  
+    1180 00004400     ca09          jrz     TryP2
+    1181                    
+    1182 00004410     b424          move    *A1(OXPOS),A4,W
+         00004420     0090  
+    1183 00004430     b425          move    *A1(OZPOS),A5,W
+         00004440     00d0  
+    1184 00004450     4444          sub     A2,A4
+    1185 00004460     4465          sub     A3,A5
+    1186 00004470     0384          abs     A4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   28
+
+    1187 00004480     0385          abs     A5
+    1188 00004490     40a4          add     A5,A4
+    1189                    
+    1190 000044a0           TryP2:
+    1191 000044a0     09e0          movi    P2DATA,A0
+         000044b0 00000000! 
+    1192 000044d0     b600          move    *A0(POBJ),A0,L
+         000044e0     00a0  
+    1193 000044f0     ca0b          jrz     ItsP1
+    1194                    
+    1195 00004500     b406          move    *A0(OXPOS),A6,W
+         00004510     0090  
+    1196 00004520     b405          move    *A0(OZPOS),A5,W
+         00004530     00d0  
+    1197 00004540     4446          sub     A2,A6
+    1198 00004550     4465          sub     A3,A5
+    1199 00004560     0386          abs     A6
+    1200 00004570     0385          abs     A5
+    1201 00004580     40a6          add     A5,A6
+    1202                    
+    1203 00004590     4886          cmp     A4,A6
+    1204 000045a0     c601          jrle    GotCP
+    1205                    
+    1206 000045b0           ItsP1:
+    1207 000045b0     4c20          move    A1,A0
+    1208 000045c0           GotCP:
+    1209 000045c0     09af          mmfm    SP,A1,A2,A3,A4,A5,A6
+         000045d0     007e  
+    1210 000045e0     0960          rets
+    1211                    **************************************************************************
+    1212                    
+    1213                    
+    1214                    **************************************************************************
+    1215 000045f0           ClosestFP:
+    1216                    ;* return A0 - the object pointer of the Closest Player that is being faced.
+    1217                    ;               0 if neither player is being faced.
+    1218                    
+    1219 000045f0     098f          mmtm    SP,A1,A2,A3,A4,A5,A6,A7
+         00004600     7f00  
+    1220 00004610     b502          move    *A8(OXPOS),A2,W
+         00004620     0090  
+    1221 00004630     b503          move    *A8(OZPOS),A3,W
+         00004640     00d0  
+    1222                    
+    1223 00004650     09c4          movi    07FFFH,A4               ;so P2 can be selected if no P1
+         00004660     7fff  
+    1224 00004670     09e1          movi    P1DATA,A1
+         00004680 00000000! 
+    1225 000046a0     b621          move    *A1(POBJ),A1,L
+         000046b0     00a0  
+    1226 000046c0     ca14          jrz     NotP1
+    1227                            
+    1228 000046d0     b424          move    *A1(OXPOS),A4,W
+         000046e0     0090  
+    1229 000046f0     4444          sub     A2,A4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   29
+
+    1230                            ;* are we facing this player
+    1231 00004700     ce05          jrn     PonLft1
+    1232                            ;player is to the right
+    1233 00004710     b507          move    *A8(OFLAGS),A7,W
+         00004720     0100  
+    1234 00004730     1f67          btst    B_FLIPH,A7
+    1235 00004740     cb0c          jrnz    NotP1
+    1236 00004750     c004          jruc    Fok1
+    1237 00004760           PonLft1:
+    1238 00004760     b507          move    *A8(OFLAGS),A7,W
+         00004770     0100  
+    1239 00004780     1f67          btst    B_FLIPH,A7
+    1240 00004790     ca07          jrz     NotP1
+    1241 000047a0           Fok1:
+    1242                    
+    1243 000047a0     b425          move    *A1(OZPOS),A5,W
+         000047b0     00d0  
+    1244 000047c0     4465          sub     A3,A5
+    1245 000047d0     0384          abs     A4
+    1246 000047e0     0385          abs     A5
+    1247 000047f0     40a4          add     A5,A4
+    1248 00004800     c001          jruc    FTryP2
+    1249 00004810           NotP1:
+    1250 00004810     5621          clr     A1
+    1251 00004820           FTryP2:
+    1252 00004820     09e0          movi    P2DATA,A0
+         00004830 00000000! 
+    1253 00004850     b600          move    *A0(POBJ),A0,L
+         00004860     00a0  
+    1254 00004870     ca15          jrz     FItsP1
+    1255                    
+    1256 00004880     b406          move    *A0(OXPOS),A6,W
+         00004890     0090  
+    1257 000048a0     4446          sub     A2,A6
+    1258                            ;* are we facing this player
+    1259 000048b0     ce05          jrn     PonLft2
+    1260                            ;player is to the right
+    1261 000048c0     b507          move    *A8(OFLAGS),A7,W
+         000048d0     0100  
+    1262 000048e0     1f67          btst    B_FLIPH,A7
+    1263 000048f0     cb0d          jrnz    NotP2
+    1264 00004900     c004          jruc    Fok2
+    1265 00004910           PonLft2:
+    1266 00004910     b507          move    *A8(OFLAGS),A7,W
+         00004920     0100  
+    1267 00004930     1f67          btst    B_FLIPH,A7
+    1268 00004940     ca08          jrz     NotP2
+    1269 00004950           Fok2:
+    1270                    
+    1271 00004950     b405          move    *A0(OZPOS),A5,W
+         00004960     00d0  
+    1272 00004970     4465          sub     A3,A5
+    1273 00004980     0386          abs     A6
+    1274 00004990     0385          abs     A5
+    1275 000049a0     40a6          add     A5,A6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   30
+
+    1276                    
+    1277 000049b0     4886          cmp     A4,A6
+    1278 000049c0     c601          jrle    FGotCP
+    1279                    
+    1280 000049d0           NotP2:
+    1281 000049d0           FItsP1:
+    1282 000049d0     4c20          move    A1,A0
+    1283 000049e0           FGotCP:
+    1284 000049e0     09af          mmfm    SP,A1,A2,A3,A4,A5,A6,A7
+         000049f0     00fe  
+    1285 00004a00     0960          rets
+    1286                    **************************************************************************
+    1287                    
+    1288                    
+    1289                    ****************************  Flee  **************************************
+    1290 00004a10           Flee:
+    1291                    ;* Goes through DestTbl looking for the offset from the enemy which
+    1292                    ;* places the enemy furthest from any players.  This offset is then
+    1293                    ;* added to current coors to generate a dest, and course is set for the dest.
+    1294                    
+    1295                    ;* TRASHES B0,B1,B2,B3,B4,B5
+    1296 00004a10     098f          mmtm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A11,A14
+         00004a20     ff12  
+    1297                    
+    1298 00004a30     4d07          move    A8,A7                   ;save pimps obj ptr
+    1299                    
+    1300                            ;* stuff B2 = PIMP Z:X
+    1301 00004a40     0d5f          calla   GETANIX
+         00004a50 00000000! 
+    1302 00004a70     b501          move    *A8(OZPOS),A1,W
+         00004a80     00d0  
+    1303 00004a90     2601          sll     16,A1
+    1304 00004aa0     ee20          movy    A1,A0
+    1305 00004ab0     4e02          move    A0,B2
+    1306                    
+    1307                            ;* stuff A1 = Plyr1 Z:X
+    1308 00004ac0     09e8          movi    P1DATA,A8
+         00004ad0 00000000! 
+    1309 00004af0     b708          move    *A8(POBJ),A8,L
+         00004b00     00a0  
+    1310 00004b10     ca08          jrz     NoP1
+    1311 00004b20     0d5f          calla   GETANIX
+         00004b30 00000000! 
+    1312 00004b50     b501          move    *A8(OZPOS),A1,W
+         00004b60     00d0  
+    1313 00004b70     2601          sll     16,A1
+    1314 00004b80     ec01          movx    A0,A1
+    1315 00004b90     c001          jruc    GetP2
+    1316 00004ba0           NoP1:
+    1317 00004ba0     5621          clr     A1
+    1318                    
+    1319 00004bb0           GetP2:
+    1320                            ;* stuff A2 = Plyr2 Z:X
+    1321 00004bb0     09e8          movi    P2DATA,A8
+         00004bc0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   31
+
+    1322 00004be0     b708          move    *A8(POBJ),A8,L
+         00004bf0     00a0  
+    1323 00004c00     ca08          jrz     NoP2
+    1324 00004c10     0d5f          calla   GETANIX
+         00004c20 00000000! 
+    1325 00004c40     b502          move    *A8(OZPOS),A2,W
+         00004c50     00d0  
+    1326 00004c60     2602          sll     16,A2
+    1327 00004c70     ec02          movx    A0,A2
+    1328 00004c80     c001          jruc    GotP2
+    1329 00004c90           NoP2:
+    1330 00004c90     5642          clr     A2
+    1331 00004ca0           GotP2:
+    1332 00004ca0     4ce8          move    A7,A8                   ;restore pimps obj ptr
+    1333                    
+    1334                            ;* stuff B3 = Top Left Z:X
+    1335                            ;* stuff B4 = Bot Right Z:X
+    1336 00004cb0     05b3          move    @(WORLDTLX+16),B3,W                              
+         00004cc0 00000010! 
+    1337 00004ce0     4c74          move    B3,B4
+    1338 00004cf0     05b0          move    @PLZMIN,B0,W
+         00004d00 00000000! 
+    1339 00004d20     2610          sll     16,B0
+    1340 00004d30     ee13          movy    B0,B3
+    1341 00004d40     0b14          addi    511,B4
+         00004d50     01ff  
+    1342 00004d60     05b0          move    @PLZMAX,B0,W
+         00004d70 00000000! 
+    1343 00004d90     2610          sll     16,B0
+    1344 00004da0     ee14          movy    B0,B4
+    1345                    
+    1346 00004db0     56a5          clr     A5              ;Best distance for dest (big is good)
+    1347 00004dc0     18d0          movk    6,B0            ;# times to check for flee dest
+    1348 00004dd0     09f5          movi    DestTbl,B5
+         00004de0 00008e10' 
+    1349 00004e00     1980          movk    12,A0
+    1350 00004e10     0d5f          calla   RANDU
+         00004e20 00000000! 
+    1351 00004e40     1420          dec     A0
+    1352 00004e50     24a0          sll     5,A0
+    1353 00004e60     4e01          move    A0,B1
+    1354 00004e70     4035          add     B1,B5           ;B5 1st entry in dest tbl to check
+    1355                            
+    1356 00004e80           FleeLp:
+    1357 00004e80     0d3f          callr   GenFleeD        ;rets dest in A0
+         00004e90     0012  
+    1358 00004ea0     0d3f          callr   EvFleeD         ;rets A0 unchanged, A7 - dist to near plyr
+         00004eb0     0024  
+    1359 00004ec0     48a7          cmp     A5,A7
+    1360 00004ed0     c602          jrle    NxtFD
+    1361                            ;* Got a Better Dest
+    1362 00004ee0     4c06          move    A0,A6
+    1363 00004ef0     4ce5          move    A7,A5
+    1364 00004f00           NxtFD:
+    1365 00004f00     3d30          dsjs    B0,FleeLp
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   32
+
+    1366                    
+    1367                            ;* A6 is Best dest..
+    1368 00004f10     b2cd          move    A6,*A13(DEST),L
+         00004f20     01e0  
+    1369 00004f30     b7a0          move    *A13(FUNCS),A0,L
+         00004f40     00e0  
+    1370 00004f50     0b00          addi    GODEST,A0
+         00004f60     0020  
+    1371 00004f70     8600          move    *A0,A0,L
+    1372 00004f80     0920          call    A0
+    1373 00004f90     09af          mmfm    SP,A0,A1,A2,A3,A4,A5,A6,A7,A11,A14
+         00004fa0     48ff  
+    1374 00004fb0     0960          rets
+    1375                    
+    1376                    
+    1377                    ;***************************
+    1378 00004fc0           GenFleeD:
+    1379                    ; generate a valid destination to flee toward.
+    1380                    ; return as A0
+    1381                    ;NEEDS  B2 - Pimp Z:X
+    1382                    ;       B3 - playfield TL Z:X
+    1383                    ;       B4 - playfield BR Z:X
+    1384                    ;       B5 - DestTbl
+    1385                    
+    1386 00004fc0     18a0          movk    5,A0    ;Max # times to check for on screen
+    1387                    
+    1388 00004fd0           GetDstLp:
+    1389 00004fd0     1420          dec     A0
+    1390 00004fe0     ca0f          jrz     GotFD
+    1391 00004ff0     0b75          cmpi    DestTblX,B5
+         00005000 ffff706f' 
+    1392 00005020     cb03          jrnz    SkRstDT
+    1393 00005030     09f5          movi    DestTbl,B5
+         00005040 00008e10' 
+    1394 00005060           SkRstDT:
+    1395 00005060     96b1          move    *B5+,B1,L
+    1396 00005070     e051          addxy   B2,B1   
+    1397 00005080     e471          cmpxy   B3,B1   ;Compare against TL
+    1398 00005090                   jrxlt   GetDstLp
+    1399 000050a0                   jrylt   GetDstLp
+    1400 000050b0     e491          cmpxy   B4,B1   ;Compare against BR
+    1401 000050c0     c5f0          jrxgt   GetDstLp
+    1402 000050d0     c3ef          jrygt   GetDstLp
+    1403 000050e0           GotFD:
+    1404 000050e0     4e30          move    B1,A0
+    1405 000050f0     0960          rets
+    1406                    
+    1407 00005100           EvFleeD:
+    1408                    ;* evaluate a flee destination
+    1409                    ; the value is the nearest distance to a player
+    1410                    ;  check distance at midpoint and endpoint..
+    1411                    
+    1412                    ;       A0 - flee dest
+    1413                    ;       A1 - Plyr 1 Z:X
+    1414                    ;       A2 - Plyr 2 Z:X
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   33
+
+    1415                    ;       
+    1416                    ;returns dist to nearest plyr in A7
+    1417                    
+    1418 00005100     09c7          movi    07FFFH,A7
+         00005110     7fff  
+    1419 00005120     4c2e          move    A1,A14
+    1420 00005130     ca07          jrz     GetP2Dst
+    1421 00005140     e20e          subxy   A0,A14
+    1422 00005150     4dc7          move    A14,A7
+    1423 00005160     0507          sext    A7,W
+    1424 00005170     0387          abs     A7
+    1425 00005180     2a0e          sra     16,A14
+    1426 00005190     038e          abs     A14
+    1427 000051a0     41c7          add     A14,A7
+    1428                    
+    1429 000051b0           GetP2Dst:
+    1430 000051b0     4c4e          move    A2,A14
+    1431 000051c0     ca0a          jrz     EvFDX
+    1432 000051d0     e20e          subxy   A0,A14
+    1433 000051e0     4dcb          move    A14,A11
+    1434 000051f0     050b          sext    A11,W
+    1435 00005200     038b          abs     A11
+    1436 00005210     2a0e          sra     16,A14
+    1437 00005220     038e          abs     A14
+    1438 00005230     41cb          add     A14,A11
+    1439                    
+    1440 00005240     4967          cmp     A11,A7
+    1441 00005250     c601          jrle    EvFDX
+    1442 00005260     4d67          move    A11,A7
+    1443                    
+    1444 00005270           EvFDX:
+    1445 00005270     0960          rets
+    1446                    **************************************************************************
+    1447                    
+    1448                    
+    1449                    **************************************************************************
+    1450 00005280           FleeObj:
+    1451                    ;* ptr to obj to flee in A0
+    1452 00005280     b501          move    *A8(OXPOS),A1,W
+         00005290     0090  
+    1453 000052a0     b502          move    *A8(OZPOS),A2,W
+         000052b0     00d0  
+    1454 000052c0     b403          move    *A0(OXPOS),A3,W
+         000052d0     0090  
+    1455 000052e0     b404          move    *A0(OZPOS),A4,W
+         000052f0     00d0  
+    1456                            
+    1457 00005300     09c0          movi    100,A0
+         00005310     0064  
+    1458 00005320     0d5f          calla   RANDU
+         00005330 00000000! 
+    1459 00005350     0b00          addi    50,A0
+         00005360     0032  
+    1460 00005370     4c65          move    A3,A5
+    1461 00005380     4425          sub     A1,A5
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   34
+
+    1462 00005390     ce01          jrn     NoNegX
+    1463 000053a0     03a0          neg     A0
+    1464 000053b0           NoNegX:
+    1465 000053b0     4020          add     A1,A0
+    1466 000053c0     4c06          move    A0,A6   ;A6 - New X Dest
+    1467                    
+    1468                            ;* generate Z dest
+    1469 000053d0     09c0          movi    40,A0
+         000053e0     0028  
+    1470 000053f0     0d5f          calla   RANDU
+         00005400 00000000! 
+    1471 00005420     1280          addk    20,A0
+    1472 00005430     4c85          move    A4,A5
+    1473 00005440     4445          sub     A2,A5
+    1474 00005450     ce01          jrn     NoNegZ          
+    1475 00005460     03a0          neg     A0
+    1476 00005470           NoNegZ:
+    1477 00005470     4040          add     A2,A0
+    1478                            
+    1479 00005480     05a1          move    @PLZMIN,A1,W
+         00005490 00000000! 
+    1480 000054b0     10a1          addk    5,A1
+    1481 000054c0     05a2          move    @PLZMAX,A2,W
+         000054d0 00000000! 
+    1482 000054f0     14a2          subk    5,A2
+    1483 00005500     4820          cmp     A1,A0
+    1484 00005510     c602          jrle    SetEvZ
+    1485 00005520     4840          cmp     A2,A0
+    1486 00005530     c405          jrlt    ZSet
+    1487 00005540           SetEvZ:
+    1488                    ;       add     A2,A1
+    1489                    ;       srl     1,A1
+    1490                    ;       move    A1,A0
+    1491 00005540     4e20          move    A1,B0
+    1492 00005550     4e41          move    A2,B1
+    1493 00005560     0d5f          calla   RANGRAND
+         00005570 00000000! 
+    1494 00005590           ZSet:
+    1495 00005590     2600          sll     16,A0
+    1496 000055a0     ecc0          movx    A6,A0
+    1497 000055b0     b20d          move    A0,*A13(DEST),L
+         000055c0     01e0  
+    1498 000055d0     b7a0          move    *A13(FUNCS),A0,L
+         000055e0     00e0  
+    1499 000055f0     0b00          addi    GODEST,A0
+         00005600     0020  
+    1500 00005610     8600          move    *A0,A0,L
+    1501 00005620     0920          call    A0
+    1502 00005630     0960          rets
+    1503                    **************************************************************************
+    1504                    
+    1505                    **************************************************************************
+    1506 00005640           HuntObj:
+    1507                    ;* chase after the object in WANTOBJ
+    1508 00005640     b7a0          move    *A13(WANTOBJ),A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   35
+
+         00005650     0220  
+    1509 00005660           HuntObj0:
+    1510 00005660     b401          move    *A0(OXPOS),A1,W
+         00005670     0090  
+    1511 00005680     b402          move    *A0(OSIZEX),A2,W
+         00005690     0140  
+    1512 000056a0     2fe2          srl     1,A2
+    1513 000056b0     4041          add     A2,A1
+    1514 000056c0     b402          move    *A0(OZPOS),A2,W
+         000056d0     00d0  
+    1515 000056e0     2602          sll     16,A2
+    1516 000056f0     ee41          movy    A2,A1
+    1517 00005700     b22d          move    A1,*A13(DEST),L
+         00005710     01e0  
+    1518 00005720     0960          rets
+    1519                    **************************************************************************
+    1520                    
+    1521                    **************************************************************************
+    1522 00005730           ShortXDest:
+    1523                    ;* reduce Xdes by amount in A0
+    1524 00005730     b5a1          move    *A13(DEST),A1,W ;Get X portion of destination
+         00005740     01e0  
+    1525 00005750     b502          move    *A8(OXPOS),A2,W
+         00005760     0090  
+    1526 00005770     4422          sub     A1,A2
+    1527 00005780     ce01          jrn     ShortOK
+    1528 00005790     03a0          neg     A0
+    1529 000057a0           ShortOK:
+    1530 000057a0     4401          sub     A0,A1           ;reduce X destination
+    1531 000057b0     b02d          move    A1,*A13(DEST),W
+         000057c0     01e0  
+    1532 000057d0     0960          rets
+    1533                    **************************************************************************
+    1534                    
+    1535                    **************************************************************************
+    1536 000057e0           MAX:
+    1537                    ;* returns max of A0,A1 in A0
+    1538 000057e0     4820          cmp     A1,A0
+    1539 000057f0     c501          jrge    GotMax
+    1540 00005800     4c20          move    A1,A0
+    1541 00005810           GotMax:
+    1542 00005810     0960          rets
+    1543                    **************************************************************************
+    1544                    
+    1545                    **************************************************************************
+    1546 00005820           MIN:
+    1547                    ;* returns min of A0,A1 in A0
+    1548 00005820     4820          cmp     A1,A0
+    1549 00005830     c601          jrle    GotMin
+    1550 00005840     4c20          move    A1,A0
+    1551 00005850           GotMin:
+    1552 00005850     0960          rets
+    1553                    **************************************************************************
+    1554                    
+    1555                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   36
+
+    1556 00005860           ABSMAX:
+    1557                    ;* returns A1 Clipped at the value A0 in either pos or neg direction
+    1558                    ;parm A0 must be pos
+    1559                    ;A0 will be negated if A1 is neg
+    1560 00005860     4c21          move    A1,A1
+    1561 00005870     ce04          jrn     NegMax
+    1562 00005880     4801          cmp     A0,A1
+    1563 00005890     c606          jrle    MAXOK
+    1564 000058a0     4c01          move    A0,A1
+    1565 000058b0     0960          rets
+    1566 000058c0           NegMax:
+    1567 000058c0     03a0          neg     A0
+    1568 000058d0     4801          cmp     A0,A1
+    1569 000058e0     c501          jrge    MAXOK
+    1570 000058f0     4c01          move    A0,A1
+    1571 00005900           MAXOK:
+    1572 00005900     0960          rets
+    1573                    **************************************************************************
+    1574                    
+    1575                    **************************************************************************
+    1576 00005910           ABSINC:
+    1577 00005910     4c00          move    A0,A0
+    1578 00005920     ce02          jrn     DECX
+    1579 00005930     1020          inc     A0
+    1580 00005940     0960          rets
+    1581 00005950           DECX:
+    1582 00005950     1420          dec     A0
+    1583 00005960     0960          rets
+    1584                    **************************************************************************
+    1585                    
+    1586                    **************************************************************************
+    1587 00005970           ABSDEC:
+    1588 00005970     4c00          move    A0,A0
+    1589 00005980     ca04          jrz     ABSDECX
+    1590 00005990     ce02          jrn     INCX
+    1591 000059a0     1420          dec     A0
+    1592 000059b0     0960          rets
+    1593 000059c0           INCX:
+    1594 000059c0     1020          inc     A0
+    1595 000059d0           ABSDECX:
+    1596 000059d0     0960          rets
+    1597                    **************************************************************************
+    1598                    
+    1599                    **************************************************************************
+    1600 000059e0           ABSSUB:
+    1601                    ;* absolutely subtracts A1 from A0, A0 can't change signs
+    1602 000059e0     4c00          move    A0,A0
+    1603 000059f0     ca08          jrz     ABSSUBX
+    1604 00005a00     ce04          jrn     SUBX
+    1605 00005a10     4420          sub     A1,A0
+    1606 00005a20     c101          jrp     SUBX1
+    1607 00005a30     5600          clr     A0
+    1608 00005a40           SUBX1:
+    1609 00005a40     0960          rets
+    1610 00005a50           SUBX:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   37
+
+    1611 00005a50     4020          add     A1,A0
+    1612 00005a60     ce01          jrn     SUBX2
+    1613 00005a70     5600          clr     A0
+    1614 00005a80           SUBX2:
+    1615 00005a80           ABSSUBX:
+    1616 00005a80     0960          rets
+    1617                    **************************************************************************
+    1618                    
+    1619                    **************************************************************************
+    1620 00005a90           ABSADD:
+    1621                    ;* absolutely ADD A1 to A0
+    1622 00005a90     4c00          move    A0,A0
+    1623 00005aa0     ce02          jrn     ADDX
+    1624 00005ab0     4020          add     A1,A0
+    1625 00005ac0     0960          rets
+    1626 00005ad0           ADDX:
+    1627 00005ad0     4420          sub     A1,A0
+    1628 00005ae0     0960          rets
+    1629                    **************************************************************************
+    1630                    
+    1631                    **************************************************************************
+    1632 00005af0           XTOZSIZE:
+    1633 00005af0     098f          mmtm    SP,A0,A1
+         00005b00     c000  
+    1634 00005b10     b500          move    *A8(OSIZEX),A0,W
+         00005b20     0140  
+    1635 00005b30     2fe0          srl     1,A0
+    1636 00005b40     4c01          move    A0,A1
+    1637 00005b50     2601          sll     16,A1
+    1638 00005b60     4020          add     A1,A0
+    1639 00005b70     b208          move    A0,*A8(OZSIZ),L
+         00005b80     01b0  
+    1640 00005b90     09af          mmfm    SP,A0,A1
+         00005ba0     0003  
+    1641 00005bb0     0960          rets
+    1642                    **************************************************************************
+    1643                    
+    1644                    **************************************************************************
+    1645 00005bc0           ClrVel:
+    1646 00005bc0     5600          clr     A0
+    1647 00005bd0     b208          move    A0,*A8(OXVEL),L
+         00005be0     0040  
+    1648 00005bf0     b208          move    A0,*A8(OYVEL),L
+         00005c00     0060  
+    1649 00005c10     b208          move    A0,*A8(OZVEL),L
+         00005c20     00e0  
+    1650 00005c30     0960          rets
+    1651                    **************************************************************************
+    1652                    
+    1653                    *************************************************************************
+    1654 00005c40           UpdShadV:
+    1655 00005c40     098f          mmtm    SP,A0,A1
+         00005c50     c000  
+    1656 00005c60     b700          move    *A8(OSHAD),A0,L
+         00005c70     0240  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   38
+
+    1657 00005c80     ca0a          jrz     UpdShX
+    1658 00005c90     b701          move    *A8(OXVEL),A1,L
+         00005ca0     0040  
+    1659 00005cb0     b220          move    A1,*A0(OXVEL),L
+         00005cc0     0040  
+    1660 00005cd0     b701          move    *A8(OZVEL),A1,L
+         00005ce0     00e0  
+    1661 00005cf0     b220          move    A1,*A0(OYVEL),L
+         00005d00     0060  
+    1662 00005d10     b220          move    A1,*A0(OZVEL),L
+         00005d20     00e0  
+    1663 00005d30           UpdShX:
+    1664 00005d30     09af          mmfm    SP,A0,A1
+         00005d40     0003  
+    1665 00005d50     0960          rets
+    1666                    *************************************************************************
+    1667                    
+    1668                    *************************************************************************
+    1669                    ;* This routine looks for the nearest object of type obj Id
+    1670                    ;* PARMS:
+    1671                    ;*      A0 - Obj Id
+    1672                    ;* NEAR_OBJ entry pt, A1 - SLIST to search
+    1673                    ;* RETURNS:
+    1674                    ;*      A0 - ptr to obj  (0 if no close objs)
+    1675 00005d60           NEAR_BTY:
+    1676 00005d60     07a1          move    @BOOTY,A1,L
+         00005d70 00000000! 
+    1677 00005d90           NEAR_OBJ:
+    1678 00005d90     4c21          move    A1,A1
+    1679 00005da0     ca1f          jrz     NOBOOTY
+    1680 00005db0     56a5          clr     A5              ;A5 will be pointer to nearest obj
+    1681 00005dc0     4c03          move    A0,A3
+    1682 00005dd0     0523          zext    A3,W            ;A3 obj ID
+    1683 00005de0     09c6          movi    1000,A6 ;A6 is distance of nearest booty
+         00005df0     03e8  
+    1684 00005e00     0d5f          calla   GETANIX
+         00005e10 00000000! 
+    1685 00005e30           BOOTY_LP:
+    1686 00005e30     b422          move    *A1(OID),A2,W
+         00005e40     01a0  
+    1687 00005e50     0522          zext    A2,W
+    1688 00005e60     4843          cmp     A2,A3
+    1689 00005e70     cb0b          jrnz    BOOTYMIS
+    1690 00005e80     b622          move    *A1(OPLINK),A2,L  ;if booty has a proc (flying), skip it..
+         00005e90     01f0  
+    1691 00005ea0     cb08          jrnz    BOOTYMIS
+    1692 00005eb0     b422          move    *A1(OXPOS),A2,W
+         00005ec0     0090  
+    1693 00005ed0     4402          sub     A0,A2
+    1694 00005ee0     0382          abs     A2
+    1695 00005ef0     48c2          cmp     A6,A2
+    1696 00005f00     c702          jrgt    BOOTYMIS
+    1697 00005f10           GOTBOOTY:
+    1698 00005f10     4c25          move    A1,A5   ;new closest booty
+    1699 00005f20     4c46          move    A2,A6   ;new distance
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   39
+
+    1700 00005f30           BOOTYMIS:
+    1701 00005f30     b621          move    *A1(OSLINK),A1,L        ;* get next item and try again
+         00005f40     0020  
+    1702 00005f50     cbed          jrnz    BOOTY_LP
+    1703 00005f60           BOOTYX:
+    1704 00005f60     4ca0          move    A5,A0
+    1705 00005f70     ca02          jrz     NOBOOTY
+    1706 00005f80     0de0          setc
+    1707 00005f90     0960          rets
+    1708 00005fa0           NOBOOTY:
+    1709 00005fa0     0320          clrc
+    1710 00005fb0     0960          rets
+    1711                    *******************************************************************
+    1712                    
+    1713                    *************************************************************************
+    1714                    ;* Check if obj A0 is on supplemental list A1
+    1715                    ;* PARMS:
+    1716                    ;*      A0 - Obj ptr, A1 - supplemental list
+    1717                    ;* RETURNS:
+    1718                    ;*      setc if obj on list
+    1719 00005fc0           ON_SLIST:
+    1720 00005fc0     4c21          move    A1,A1
+    1721 00005fd0     ca05          jrz     OffList
+    1722 00005fe0           CK_LP:
+    1723 00005fe0     4801          cmp     A0,A1
+    1724 00005ff0     ca05          jrz     OnList
+    1725 00006000     b621          move    *A1(OSLINK),A1,L        ;* get next item and try again
+         00006010     0020  
+    1726 00006020     cbfb          jrnz    CK_LP
+    1727 00006030           OffList:
+    1728 00006030     0320          clrc
+    1729 00006040     0960          rets
+    1730 00006050           OnList:
+    1731 00006050     0de0          setc
+    1732 00006060     0960          rets
+    1733                    *******************************************************************
+    1734                    
+    1735                    *******************************************************************
+    1736 00006070           CLROBJ:
+    1737 00006070     098f          mmtm    SP,A1,A2,A3
+         00006080     7000  
+    1738 00006090     4c01          move    A0,A1
+    1739 000060a0     09c2          movi    OBSIZ/16,A2
+         000060b0     002a  
+    1740 000060c0     5663          clr     A3
+    1741 000060d0           ClrObjLp:
+    1742 000060d0     9061          move    A3,*A1+,W
+    1743 000060e0     3c42          dsjs    A2,ClrObjLp
+    1744 000060f0     09af          mmfm    SP,A1,A2,A3
+         00006100     000e  
+    1745 00006110     0960          rets
+    1746                    *******************************************************************
+    1747                    
+    1748                    *******************************************************************
+    1749 00006120           BullSlp:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   40
+
+    1750                    ;* generate Sleep Time for Bullet Before striking wall or
+    1751                    ;* Going off bottom of screen
+    1752                    ;* PARMS A0 - MAX Sleep Time if Bullet doesn't hit wall or go off screen
+    1753                    ;* RETS A0 - SLEEP TIME
+    1754                    ;       A11 - cleared if bullet doesn't strike bgnd wall, else set
+    1755                    
+    1756 00006120     098f          mmtm    SP,A1,A2,A3
+         00006130     7000  
+    1757 00006140     576b          clr     A11     ;A11 set if bullet strikes bgnd
+    1758 00006150     b701          move    *A8(OZVEL),A1,L
+         00006160     00e0  
+    1759 00006170     4c22          move    A1,A2
+    1760 00006180     0382          abs     A2
+    1761 00006190     2f02          srl     8,A2
+    1762 000061a0     ca1a          jrz     GotBSlp
+    1763 000061b0     4c21          move    A1,A1
+    1764 000061c0     ce09          jrn     BHitWall
+    1765                    
+    1766                            ;* bullet going off Bot of Screen
+    1767 000061d0     05a3          move    @PLZMAX,A3,W
+         000061e0 00000000! 
+    1768 00006200     0b03          addi    60,A3
+         00006210     003c  
+    1769 00006220     b501          move    *A8(OZPOS),A1,W
+         00006230     00d0  
+    1770 00006240     4423          sub     A1,A3
+    1771 00006250     c007          jruc    CalcBSlp
+    1772                    
+    1773 00006260           BHitWall: ;* bullet has neg Z, it will hit the wall
+    1774 00006260     182b          movk    1,A11   ;hit wall flag
+    1775 00006270     b503          move    *A8(OZPOS),A3,W
+         00006280     00d0  
+    1776 00006290     05a1          move    @PLZMIN,A1,W
+         000062a0 00000000! 
+    1777 000062c0     4423          sub     A1,A3
+    1778                    
+    1779 000062d0           CalcBSlp:
+    1780 000062d0     2603          sll     16,A3
+    1781 000062e0     5a43          divu    A2,A3
+    1782 000062f0     2f03          srl     8,A3
+    1783 00006300     4803          cmp     A0,A3
+    1784 00006310     c202          jrls    SkUseMax
+    1785 00006320     576b          clr     A11     ;clear wall hit flag
+    1786 00006330     4c03          move    A0,A3
+    1787 00006340           SkUseMax:
+    1788 00006340     4c60          move    A3,A0
+    1789 00006350           GotBSlp:
+    1790 00006350     09af          mmfm    SP,A1,A2,A3
+         00006360     000e  
+    1791 00006370     0960          rets
+    1792                    *******************************************************************
+    1793                    
+    1794                    *******************************************************************
+    1795 00006380           SyncAnim:
+    1796                    ;PARMS  A0 ptr to animation script
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   41
+
+    1797                    ;       A1 # tiks of anim to skip
+    1798                    ;RETURNS A0 ptr to frame to be animated
+    1799                    ;        A1 # tiks to sleep on that frame
+    1800 00006380     098f          mmtm    SP,A7,A9,A10,A11
+         00006390     0170  
+    1801 000063a0     4c0a          move    A0,A10
+    1802 000063b0     56e7          clr     A7
+    1803 000063c0           FrstFrme:
+    1804 000063c0     4d49          move    A10,A9
+    1805 000063d0           GetSlpLp:
+    1806 000063d0     8720          move    *A9,A0,L        ;FRAME
+    1807 000063e0     cb04          jrnz    GotNxtFr
+    1808 000063f0           AniDcLp:
+    1809 000063f0     48e1          cmp     A7,A1
+    1810 00006400     c4fb          jrlt    FrstFrme
+    1811 00006410     44e1          sub     A7,A1
+    1812 00006420     c0fc          jruc    AniDcLp
+    1813 00006430           GotNxtFr:
+    1814 00006430     4d2b          move    A9,A11          ;hang onto frame ptr
+    1815 00006440     1009          addk    32,A9
+    1816 00006450     9520          move    *A9+,A0,W               ;BITS|Sleep Time
+    1817 00006460     1e00          btst    BSPAWNP,A0
+    1818 00006470     ca02          jrz     SPAWNSk1
+    1819 00006480     0b09          addi    050H,A9
+         00006490     0050  
+    1820 000064a0           SPAWNSk1:
+    1821 000064a0     1e20          btst    BFLIPBIT,A0
+    1822 000064b0     ca02          jrz     FLIPSk1
+    1823 000064c0     0b09          addi    16,A9
+         000064d0     0010  
+    1824 000064e0           FLIPSk1:
+    1825 000064e0     1e40          btst    BNEWPAL,A0
+    1826 000064f0     ca01          jrz     PALSk1
+    1827 00006500     1209          addk    16,A9
+    1828 00006510           PALSk1:
+    1829 00006510     0b80          andi    0FFFH,A0
+         00006520 fffff000  
+    1830 00006540     4820          cmp     A1,A0
+    1831 00006550     c703          jrgt    GotFrm
+    1832 00006560     4401          sub     A0,A1
+    1833 00006570     4007          add     A0,A7
+    1834 00006580     c0e4          jruc    GetSlpLp
+    1835 00006590           GotFrm:
+    1836 00006590     4420          sub     A1,A0
+    1837 000065a0     4c01          move    A0,A1           ;sleep for remaining tiks of frame
+    1838 000065b0     4d60          move    A11,A0          ;get ptr to the frame
+    1839 000065c0     09af          mmfm    SP,A7,A9,A10,A11
+         000065d0     0e80  
+    1840 000065e0     0960          rets
+    1841                    *******************************************************************
+    1842                    
+    1843                    *******************************************************************
+    1844 000065f0           SumSlp:
+    1845                    ;PARMS  A0 ptr to animation script
+    1846                    ;RETURNS  A0 sum of sleep times for animation script
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   42
+
+    1847 000065f0     098f          mmtm    SP,A1,A9
+         00006600     4040  
+    1848 00006610     4c09          move    A0,A9
+    1849 00006620     5621          clr     A1                      ;A1     sum up sleep times
+    1850 00006630           SlpSumLp:
+    1851 00006630     9720          move    *A9+,A0,L               ;FRAME
+    1852 00006640     ca11          jreq    SlpSumX         ;BR = END WAS HIT
+    1853 00006650     9520          move    *A9+,A0,W               ;BITS|Sleep Time
+    1854 00006660     1e00          btst    BSPAWNP,A0
+    1855 00006670     ca02          jrz     SPAWNSk
+    1856 00006680     0b09          addi    050H,A9
+         00006690     0050  
+    1857 000066a0           SPAWNSk:
+    1858 000066a0     1e20          btst    BFLIPBIT,A0
+    1859 000066b0     ca02          jrz     FLIPSk
+    1860 000066c0     0b09          addi    16,A9
+         000066d0     0010  
+    1861 000066e0           FLIPSk:
+    1862 000066e0     1e40          btst    BNEWPAL,A0
+    1863 000066f0     ca01          jrz     PALSk
+    1864 00006700     1209          addk    16,A9
+    1865 00006710           PALSk:
+    1866 00006710     0b80          andi    0FFFH,A0
+         00006720 fffff000  
+    1867 00006740     4001          add     A0,A1
+    1868 00006750     c0ed          jruc    SlpSumLp
+    1869 00006760           SlpSumX:
+    1870 00006760     4c20          move    A1,A0
+    1871 00006770     09af          mmfm    SP,A1,A9
+         00006780     0202  
+    1872 00006790     0960          rets
+    1873                    *******************************************************************
+    1874                    
+    1875                    
+    1876                    *******************************************************************
+    1877 000067a0           SPLTCOLBOX:
+    1878 000067a0     0b10          .WORD   B1OID|BULLETID
+    1879 000067b0 00006890'         .LONG   SPLTCOL0
+    1880 000067d0     0b14          .WORD   B1OID|ROCKETID
+    1881 000067e0 00006890'         .LONG   SPLTCOL0
+    1882 00006800     0b20          .WORD   B2OID|BULLETID
+    1883 00006810 00006890'         .LONG   SPLTCOL0
+    1884 00006830     0b24          .WORD   B2OID|ROCKETID
+    1885 00006840 00006890'         .LONG   SPLTCOL0
+    1886 00006860     0000          .WORD   0
+    1887 00006870 00000000!         .LONG   DUMRTSG
+    1888                    *******************************************************************
+    1889                    *MAKE MORE BLOOD COLLSION ROUTINE
+    1890                    *A0 = PTR TO ENEMY OBJECT
+    1891                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+    1892 00006890           SPLTCOL0:
+    1893 00006890     b50b          MOVE    *A8(OID),A11,W          
+         000068a0     01a0  
+    1894 000068b0     b509          move    *A8(OYPOS),A9,W
+         000068c0     00b0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   43
+
+    1895 000068d0     09c1          MOVI    0EDh,A1
+         000068e0     00ed  
+    1896 000068f0     09e7          movi    SPLATBOX,A7
+         00006900 000073c0' 
+    1897 00006920     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+    1898 00006930     0d5f          CALLA   GETPRC
+         00006940 00000000! 
+    1899                    
+    1900 00006960     0320          CLRC            ;Don't delete in Coll routine
+    1901 00006970     0960          rets
+    1902                    *******************************************************************
+    1903                    
+    1904                    *******************************************************************
+    1905 00006980           SPLTCOLANI:
+    1906 00006980     0b10          .WORD   B1OID|BULLETID
+    1907 00006990 00006a70'         .LONG   SPLTCOL1
+    1908 000069b0     0b14          .WORD   B1OID|ROCKETID
+    1909 000069c0 00006a70'         .LONG   SPLTCOL1
+    1910 000069e0     0b20          .WORD   B2OID|BULLETID
+    1911 000069f0 00006a70'         .LONG   SPLTCOL1
+    1912 00006a10     0b24          .WORD   B2OID|ROCKETID
+    1913 00006a20 00006a70'         .LONG   SPLTCOL1
+    1914 00006a40     0000          .WORD   0
+    1915 00006a50 00000000!         .LONG   DUMRTSG
+    1916                    *******************************************************************
+    1917                    *MAKE MORE BLOOD COLLSION ROUTINE
+    1918                    *A0 = PTR TO ENEMY OBJECT
+    1919                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+    1920 00006a70           SPLTCOL1:
+    1921 00006a70     b50b          MOVE    *A8(OID),A11,W          
+         00006a80     01a0  
+    1922 00006a90     b509          move    *A8(OYPOS),A9,W
+         00006aa0     00b0  
+    1923 00006ab0     09c1          MOVI    0EDh,A1
+         00006ac0     00ed  
+    1924 00006ad0     09e7          movi    SPLATANI,A7
+         00006ae0 00006b60' 
+    1925 00006b00     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+    1926 00006b10     0d5f          CALLA   GETPRC
+         00006b20 00000000! 
+    1927                    
+    1928 00006b40     0320          CLRC            ;Don't delete in Coll routine
+    1929 00006b50     0960          rets
+    1930                    *******************************************************************
+    1931                    
+    1932                    **************************************************************************
+    1933                    * BLOOD SPLATTER PROCESS x positioning on animation pt.
+    1934                    * A8 = Obj ptr of guy hit
+    1935                    * A9 = Y POS of killer
+    1936                    * A11 - OID of killer
+    1937 00006b60           SPLATANI:
+    1938 00006b60                   ADJUST  ADJGORE
+    1939 00006bb0     cb7d          JRNZ    NOSPLAT
+    1940                    
+    1941 00006bc0     4d0a          move    A8,A10                  ;keep ptr to victims obj
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   44
+
+    1942 00006bd0     278b          SLL     28,A11
+    1943 00006be0     2c8b          SRL     28,A11
+    1944 00006bf0     0b4b          CMPI    ROCKETID,A11,W
+         00006c00     fffb  
+    1945 00006c10     ca77          JREQ    NOSPLAT                 ;DEATH BY ROCKET
+    1946 00006c20     0b4b          CMPI    EXPLODID,A11,W
+         00006c30     fffd  
+    1947 00006c40     ca74          JREQ    NOSPLAT                 ;DEATH BY EXPLOSION
+    1948 00006c50     0d5f          calla   GETOBJ
+         00006c60 00000000! 
+    1949 00006c80     ca70          jrz     NOSPLAT
+    1950 00006c90     09ee          movi    SPLTINIT,A14
+         00006ca0 00008ab0' 
+    1951 00006cc0     0d5f          calla   STFOBJ
+         00006cd0 00000000! 
+    1952 00006cf0     4c08          move    A0,A8
+    1953 00006d00     b128          move    A9,*A8(OYPOS),W
+         00006d10     00b0  
+    1954 00006d20     b541          move    *A10(OYPOS),A1,W
+         00006d30     00b0  
+    1955 00006d40     4429          sub     A1,A9
+    1956 00006d50     2609          sll     16,A9
+    1957 00006d60     b541          move    *A10(OSIZEY),A1,W
+         00006d70     0150  
+    1958 00006d80     5a29          divu    A1,A9
+    1959 00006d90     4d2b          move    A9,A11
+    1960 00006da0     5729          clr     A9
+    1961 00006db0     b128          move    A9,*A8(OPAL),W
+         00006dc0     0160  
+    1962                            
+    1963 00006dd0     5600          clr     A0
+    1964 00006de0     b008          move    A0,*A8(OZPOS),W
+         00006df0     00d0  
+    1965 00006e00     b008          move    A0,*A8(OXPOS),W
+         00006e10     0090  
+    1966 00006e20     ac0d          movb    A0,*A13(ANIMTIKS)
+         00006e30     01a0  
+    1967 00006e40     09e9          movi    BSPLAT,A9
+         00006e50 00008d30' 
+    1968 00006e70     4d00          move    A8,A0
+    1969 00006e80     0d5f          calla   INSOBJ
+         00006e90 00000000! 
+    1970 00006eb0           SpltLp:
+    1971 00006eb0     b541          move    *A10(OZPOS),A1,W
+         00006ec0     00d0  
+    1972 00006ed0     1021          inc     A1
+    1973 00006ee0     b503          move    *A8(OZPOS),A3,W
+         00006ef0     00d0  
+    1974 00006f00     ca05          jrz     StfZ0
+    1975 00006f10     4423          sub     A1,A3
+    1976 00006f20     0383          abs     A3
+    1977 00006f30     0b43          cmpi    64,A3
+         00006f40     ffbf  
+    1978 00006f50     c73f          jrgt    SpltX
+    1979 00006f60           StfZ0:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   45
+
+    1980 00006f60     b028          move    A1,*A8(OZPOS),W
+         00006f70     00d0  
+    1981 00006f80     4d07          move    A8,A7
+    1982 00006f90     4d48          move    A10,A8
+    1983 00006fa0     0d5f          calla   GETANIX
+         00006fb0 00000000! 
+    1984 00006fd0     4ce8          move    A7,A8
+    1985 00006fe0     b502          move    *A8(OSIZEX),A2,W
+         00006ff0     0140  
+    1986 00007000     2fe2          srl     1,A2
+    1987 00007010     4440          sub     A2,A0
+    1988 00007020     b503          move    *A8(OXPOS),A3,W
+         00007030     0090  
+    1989 00007040     ca05          jrz     StfX0
+    1990 00007050     4403          sub     A0,A3
+    1991 00007060     0383          abs     A3
+    1992 00007070     0b43          cmpi    64,A3
+         00007080     ffbf  
+    1993 00007090     c72b          jrgt    SpltX
+    1994 000070a0           StfX0:
+    1995 000070a0     b008          move    A0,*A8(OXPOS),W
+         000070b0     0090  
+    1996 000070c0     b541          move    *A10(OSIZEY),A1,W
+         000070d0     0150  
+    1997 000070e0     5f61          mpyu    A11,A1
+    1998 000070f0     2e01          srl     16,A1
+    1999 00007100     b542          move    *A10(OYPOS),A2,W
+         00007110     00b0  
+    2000 00007120     4041          add     A2,A1
+    2001 00007130     b502          move    *A8(OSIZEY),A2,W
+         00007140     0150  
+    2002 00007150     2fe2          srl     1,A2
+    2003 00007160     4441          sub     A2,A1
+    2004 00007170     b503          move    *A8(OYPOS),A3,W
+         00007180     00b0  
+    2005 00007190     4423          sub     A1,A3
+    2006 000071a0     0383          abs     A3
+    2007 000071b0     0b43          cmpi    64,A3
+         000071c0     ffbf  
+    2008 000071d0     c717          jrgt    SpltX
+    2009 000071e0     b028          move    A1,*A8(OYPOS),W
+         000071f0     00b0  
+    2010                    
+    2011 00007200     afa0          movb    *A13(ANIMTIKS),A0
+         00007210     01a0  
+    2012 00007220     cb0a          jrnz    AnimX
+    2013 00007230     1881          movk    4,A1                    ;* one frame, no sleepin
+    2014 00007240                   jsrp    FRANIM
+    2015 000072b0     8721          move    *A9,A1,L
+    2016 000072c0     ca08          jrz     SpltX
+    2017 000072d0           AnimX:
+    2018 000072d0     1420          dec     A0
+    2019 000072e0     ac0d          movb    A0,*A13(ANIMTIKS)
+         000072f0     01a0  
+    2020 00007300     1820          movk    1,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   46
+
+    2021 00007310     0d5f          calla   PRCSLP
+         00007320 00000000! 
+    2022 00007340     c0b6          jruc    SpltLp
+    2023                    
+    2024 00007350           SpltX:
+    2025 00007350     4d00          move    A8,A0
+    2026 00007360     0d5f          calla   DELOBJ
+         00007370 00000000! 
+    2027 00007390           NOSPLAT:
+    2028 00007390                   DIE
+    2029                    **********************************************************************
+    2030                    
+    2031                    **************************************************************************
+    2032                    * BLOOD SPLATTER PROCESS X positioning on middle of frames
+    2033                    * A8 = Obj ptr of guy hit
+    2034                    * A9 = Y POS of killer
+    2035                    * A11 - OID of killer
+    2036 000073c0           SPLATBOX:
+    2037 000073c0                   ADJUST  ADJGORE
+    2038 00007410     cb7d          JRNZ    NOSPLAT1
+    2039                    
+    2040 00007420     4d0a          move    A8,A10                  ;keep ptr to victims obj
+    2041 00007430     278b          SLL     28,A11
+    2042 00007440     2c8b          SRL     28,A11
+    2043 00007450     0b4b          CMPI    ROCKETID,A11,W
+         00007460     fffb  
+    2044 00007470     ca77          JREQ    NOSPLAT1                        ;DEATH BY ROCKET
+    2045 00007480     0b4b          CMPI    EXPLODID,A11,W
+         00007490     fffd  
+    2046 000074a0     ca74          JREQ    NOSPLAT1                        ;DEATH BY EXPLOSION
+    2047 000074b0     0d5f          calla   GETOBJ
+         000074c0 00000000! 
+    2048 000074e0     ca70          jrz     NOSPLAT1
+    2049 000074f0     09ee          movi    SPLTINIT,A14
+         00007500 00008ab0' 
+    2050 00007520     0d5f          calla   STFOBJ
+         00007530 00000000! 
+    2051 00007550     4c08          move    A0,A8
+    2052 00007560     b128          move    A9,*A8(OYPOS),W
+         00007570     00b0  
+    2053 00007580     b541          move    *A10(OYPOS),A1,W
+         00007590     00b0  
+    2054 000075a0     4429          sub     A1,A9
+    2055 000075b0     2609          sll     16,A9
+    2056 000075c0     b541          move    *A10(OSIZEY),A1,W
+         000075d0     0150  
+    2057 000075e0     5a29          divu    A1,A9
+    2058 000075f0     4d2b          move    A9,A11
+    2059 00007600     5729          clr     A9
+    2060 00007610     b128          move    A9,*A8(OPAL),W
+         00007620     0160  
+    2061                            
+    2062 00007630     5600          clr     A0
+    2063 00007640     b008          move    A0,*A8(OZPOS),W
+         00007650     00d0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   47
+
+    2064 00007660     b008          move    A0,*A8(OXPOS),W
+         00007670     0090  
+    2065 00007680     ac0d          movb    A0,*A13(ANIMTIKS)
+         00007690     01a0  
+    2066 000076a0     09e9          movi    BSPLAT,A9
+         000076b0 00008d30' 
+    2067 000076d0     4d00          move    A8,A0
+    2068 000076e0     0d5f          calla   INSOBJ
+         000076f0 00000000! 
+    2069 00007710           SpltLp1:
+    2070 00007710     b541          move    *A10(OZPOS),A1,W
+         00007720     00d0  
+    2071 00007730     1021          inc     A1
+    2072 00007740     b503          move    *A8(OZPOS),A3,W
+         00007750     00d0  
+    2073 00007760     ca05          jrz     StfZ1
+    2074 00007770     4423          sub     A1,A3
+    2075 00007780     0383          abs     A3
+    2076 00007790     0b43          cmpi    64,A3
+         000077a0     ffbf  
+    2077 000077b0     c73f          jrgt    SpltX1
+    2078 000077c0           StfZ1:
+    2079 000077c0     b028          move    A1,*A8(OZPOS),W
+         000077d0     00d0  
+    2080 000077e0     b541          move    *A10(OXPOS),A1,W
+         000077f0     0090  
+    2081 00007800     b542          move    *A10(OSIZEX),A2,W
+         00007810     0140  
+    2082 00007820     2fe2          srl     1,A2
+    2083 00007830     4041          add     A2,A1
+    2084 00007840     b502          move    *A8(OSIZEX),A2,W
+         00007850     0140  
+    2085 00007860     2fe2          srl     1,A2
+    2086 00007870     4441          sub     A2,A1
+    2087 00007880     b503          move    *A8(OXPOS),A3,W
+         00007890     0090  
+    2088 000078a0     ca05          jrz     StfX1
+    2089 000078b0     4423          sub     A1,A3
+    2090 000078c0     0383          abs     A3
+    2091 000078d0     0b43          cmpi    64,A3
+         000078e0     ffbf  
+    2092 000078f0     c72b          jrgt    SpltX1
+    2093 00007900           StfX1:
+    2094 00007900     b028          move    A1,*A8(OXPOS),W
+         00007910     0090  
+    2095 00007920     b541          move    *A10(OSIZEY),A1,W
+         00007930     0150  
+    2096 00007940     5f61          mpyu    A11,A1
+    2097 00007950     2e01          srl     16,A1
+    2098 00007960     b542          move    *A10(OYPOS),A2,W
+         00007970     00b0  
+    2099 00007980     4041          add     A2,A1
+    2100 00007990     b502          move    *A8(OSIZEY),A2,W
+         000079a0     0150  
+    2101 000079b0     2fe2          srl     1,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   48
+
+    2102 000079c0     4441          sub     A2,A1
+    2103 000079d0     b503          move    *A8(OYPOS),A3,W
+         000079e0     00b0  
+    2104 000079f0     4423          sub     A1,A3
+    2105 00007a00     0383          abs     A3
+    2106 00007a10     0b43          cmpi    64,A3
+         00007a20     ffbf  
+    2107 00007a30     c717          jrgt    SpltX1
+    2108 00007a40     b028          move    A1,*A8(OYPOS),W
+         00007a50     00b0  
+    2109                    
+    2110 00007a60     afa0          movb    *A13(ANIMTIKS),A0
+         00007a70     01a0  
+    2111 00007a80     cb0a          jrnz    AnimX1
+    2112 00007a90     1881          movk    4,A1                    ;* one frame, no sleepin
+    2113 00007aa0                   jsrp    FRANIM
+    2114 00007b10     8721          move    *A9,A1,L
+    2115 00007b20     ca08          jrz     SpltX1
+    2116 00007b30           AnimX1:
+    2117 00007b30     1420          dec     A0
+    2118 00007b40     ac0d          movb    A0,*A13(ANIMTIKS)
+         00007b50     01a0  
+    2119 00007b60     1820          movk    1,A0
+    2120 00007b70     0d5f          callA   PRCSLP
+         00007b80 00000000! 
+    2121 00007ba0     c0b6          jruc    SpltLp1
+    2122                    
+    2123 00007bb0           SpltX1:
+    2124 00007bb0     4d00          move    A8,A0
+    2125 00007bc0     0d5f          calla   DELOBJ
+         00007bd0 00000000! 
+    2126 00007bf0           NOSPLAT1:
+    2127 00007bf0                   DIE
+    2128                    **********************************************************************
+    2129                    
+    2130                    **************************************
+    2131                    * STATIC BLOOD SPLATTER PROCESS
+    2132                    * A9 = Y:X OFFSET FROM KILLER OBJECT
+    2133                    * A8 = killer OBJECT
+    2134                    **************************************
+    2135 00007c20           SPLATS:
+    2136 00007c20                   ADJUST  ADJGORE
+    2137 00007c70     cb3d          JRNZ    NOSPLATS
+    2138 00007c80     0d5f          CALLA   GETANIXY
+         00007c90 00000000! 
+    2139 00007cb0     2e03          SRL     16,A3
+    2140 00007cc0     e122          ADDXY   A9,A2
+    2141 00007cd0     b500          MOVE    *A8(OFLAGS),A0,W
+         00007ce0     0100  
+    2142 00007cf0     1f60          BTST    B_FLIPH,A0
+    2143 00007d00     ca01          JREQ    SPLATS0
+    2144 00007d10     03a9          NEG     A9
+    2145 00007d20           SPLATS0:
+    2146 00007d20     e123          ADDXY   A9,A3
+    2147 00007d30     ee43          MOVY    A2,A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   49
+
+    2148 00007d40     0d5f          calla   GETOBJ
+         00007d50 00000000! 
+    2149 00007d70     ca2d          jrz     NOSPLATS
+    2150 00007d80     09ee          movi    SPLTINIT,A14
+         00007d90 00008ab0' 
+    2151 00007db0     0d5f          calla   STFOBJ
+         00007dc0 00000000! 
+    2152 00007de0     b501          MOVE    *A8(OZPOS),A1,W
+         00007df0     00d0  
+    2153 00007e00     0b01          ADDI    6,A1
+         00007e10     0006  
+    2154 00007e20     b020          MOVE    A1,*A0(OZPOS),W
+         00007e30     00d0  
+    2155 00007e40     4c08          move    A0,A8
+    2156 00007e50     4c60          MOVE    A3,A0
+    2157 00007e60     b501          MOVE    *A8(OSIZEX),A1
+         00007e70     0140  
+    2158 00007e80     2fe1          SRL     1,A1
+    2159 00007e90     4420          SUB     A1,A0           ;SUBTRACT 1/2 WIDTH
+    2160 00007ea0     b008          MOVE    A0,*A8(OXPOS),W
+         00007eb0     0090  
+    2161 00007ec0     2e03          SRL     16,A3
+    2162 00007ed0     b068          MOVE    A3,*A8(OYPOS),W
+         00007ee0     00b0  
+    2163 00007ef0     5729          clr     A9
+    2164 00007f00     b128          move    A9,*A8(OPAL),W
+         00007f10     0160  
+    2165                            
+    2166 00007f20     4d00          move    A8,A0
+    2167 00007f30     0d5f          calla   INSOBJ
+         00007f40 00000000! 
+    2168 00007f60     09e9          movi    BSPLAT,A9
+         00007f70 00008d30' 
+    2169 00007f90     1821          movk    1,A1                    ;DO IT UNTIL THE END
+    2170 00007fa0                   jsrp    FRANIM
+    2171 00008010     4d00          move    A8,A0
+    2172 00008020     0d5f          calla   DELOBJ
+         00008030 00000000! 
+    2173 00008050           NOSPLATS:
+    2174 00008050                   DIE
+    2175                    **********************************************************************
+    2176                    
+    2177                    
+    2178                    *************************************************************************
+    2179                    ;* THESE ROUTINES WILL PUT THE BONUS OUT CENTERED ON THE BOTTOM OF THE
+    2180                    ;* OBJECT IN A8
+    2181                    ; ptr to player data in A2
+    2182 00008080           PUT1K:
+    2183 00008080     098f          mmtm    SP,A0,A1,A7,A8,A9,A10,A11
+         00008090     c1f0  
+    2184 000080a0     09eb          movi    K1IMG,A11
+         000080b0 00000000! 
+    2185 000080d0     c017          jruc    MAKEBON
+    2186 000080e0           PUT2x5K:
+    2187 000080e0     098f          mmtm    SP,A0,A1,A7,A8,A9,A10,A11
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   50
+
+         000080f0     c1f0  
+    2188 00008100     09eb          movi    K2x5IMG,A11
+         00008110 00000000! 
+    2189 00008130     c011          jruc    MAKEBON
+    2190 00008140           PUT5K:
+    2191 00008140     098f          mmtm    SP,A0,A1,A7,A8,A9,A10,A11
+         00008150     c1f0  
+    2192 00008160     09eb          movi    K5IMG,A11
+         00008170 00000000! 
+    2193 00008190     c00b          jruc    MAKEBON
+    2194 000081a0           PUT10K:
+    2195 000081a0     098f          mmtm    SP,A0,A1,A7,A8,A9,A10,A11
+         000081b0     c1f0  
+    2196 000081c0     09eb          movi    K10IMG,A11
+         000081d0 00000000! 
+    2197 000081f0     c005          jruc    MAKEBON
+    2198 00008200           PUT25K:
+    2199 00008200     098f          mmtm    SP,A0,A1,A7,A8,A9,A10,A11
+         00008210     c1f0  
+    2200 00008220     09eb          movi    K25IMG,A11
+         00008230 00000000! 
+    2201                    ;       jruc    MAKEBON
+    2202 00008250           MAKEBON:
+    2203 00008250     0d5f          calla   GETANIX
+         00008260 00000000! 
+    2204 00008280     4c09          move    A0,A9
+    2205 00008290     b50a          move    *A8(OYPOS),A10,W
+         000082a0     00b0  
+    2206 000082b0     b500          move    *A8(OSIZEY),A0,W
+         000082c0     0150  
+    2207 000082d0     2fe0          srl     1,A0
+    2208 000082e0     400a          add     A0,A10
+    2209                    
+    2210 000082f0     4c48          move    A2,A8
+    2211 00008300                   CREATE  INDPID,PUTBONUS
+    2212                    
+    2213 00008380     09af          mmfm    SP,A0,A1,A7,A8,A9,A10,A11
+         00008390     0f83  
+    2214 000083a0     0960          rets
+    2215                    *************************************************************************
+    2216                    
+    2217                    *************************************************************************
+    2218 000083b0           PUTBONUS:
+    2219                    ;PARMS
+    2220                    ; A8 ptr to player data
+    2221                    ; A9-XPOS for center of bonus
+    2222                    ; A10-YPOS for top of bonus
+    2223                    ; A11-ptr to frame to use for bonus
+    2224 000083b0     4d02          move    A8,A2
+    2225                            ;* create bonus image
+    2226 000083c0     0d5f          calla   GETOBJ
+         000083d0 00000000! 
+    2227 000083f0     ca3b          jrz     BONUSX
+    2228 00008400     4c08          move    A0,A8
+    2229 00008410     09ee          movi    BONINIT,A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   51
+
+         00008420 00008bf0' 
+    2230 00008440     0d5f          calla   STFOBJ
+         00008450 00000000! 
+    2231 00008470     b3a0          move    A13,*A0(OPLINK),L
+         00008480     01f0  
+    2232                    
+    2233                            ;* allocate palette
+    2234 00008490     09e0          MOVI    NARCS,A0
+         000084a0 00000000! 
+    2235 000084c0     0d5f          CALLA   GETFPAL                 ;GET A COLOR MAP ASSIGNMENT
+         000084d0 00000000! 
+    2236 000084f0     ca2e          jrz     NoPal
+    2237 00008500     b008          MOVE    A0,*A8(OPAL),W
+         00008510     0160  
+    2238                    
+    2239 00008520     09e4          movi    08000H|M_WRNONZ|M_NOCOLL,A4
+         00008530 00008802  
+    2240 00008550     4d61          move    A11,A1  
+    2241 00008560     0d5f          calla   ANI
+         00008570 00000000! 
+    2242                    
+    2243                            ;Set The Coors
+    2244 00008590     b500          move    *A8(OSIZEX),A0,W
+         000085a0     0140  
+    2245 000085b0     2fe0          srl     1,A0
+    2246 000085c0     4409          sub     A0,A9
+    2247 000085d0     b128          move    A9,*A8(OXPOS),W
+         000085e0     0090  
+    2248 000085f0     b148          move    A10,*A8(OYPOS),W
+         00008600     00b0  
+    2249 00008610     09c0          movi    1000,A0
+         00008620     03e8  
+    2250 00008630     b008          move    A0,*A8(OZPOS),W
+         00008640     00d0  
+    2251                    
+    2252 00008650     4d00          move    A8,A0
+    2253 00008660     0d5f          calla   INSOBJ
+         00008670 00000000! 
+    2254                    
+    2255 00008690     09c4          movi    120,A4
+         000086a0     0078  
+    2256 000086b0                   jsrp    FLYTOPL
+    2257                    
+    2258                            ;* delete bonus image
+    2259 00008720     b500          move    *A8(OPAL),A0,W
+         00008730     0160  
+    2260 00008740     0d5f          calla   FREEPAL
+         00008750 00000000! 
+    2261 00008770     4d00          move    A8,A0
+    2262 00008780     0d5f          calla   DELOBJ
+         00008790 00000000! 
+    2263 000087b0           BONUSX:
+    2264 000087b0                   DIE
+    2265 000087e0           NoPal:
+    2266                            ;* must free the obj
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   52
+
+    2267 000087e0     4d00          move    A8,A0
+    2268 000087f0     0d5f          calla   FREEOBJ
+         00008800 00000000! 
+    2269 00008820     c0f8          jruc    BONUSX
+    2270                    *************************************************************************
+    2271                    
+    2272                    **************************************************************************
+    2273                    *                                                                        *
+    2274                    * FLYTOPL - SEND AN OBJECT TO THE PLAYER STATUS AREA.                    *
+    2275                    * A2 = PTR TO PLAYER DATA                                                *
+    2276                    * A4 = TRAVEL TIME IN TICKS                                              *
+    2277                    * A8 = PTR TO OBJECT                                                     *
+    2278                    * RETURNS WHEN THE OBJECT HAS MADE IT.                                   *
+    2279                    * NOTE: CALL WITH JSRP                                                   *
+    2280                    *                                                                        *
+    2281                    **************************************************************************
+    2282 00008830           FLYTOPL
+    2283 00008830                   PUSHP   A2
+    2284 00008840     0d5f          CALLA   PSTOP
+         00008850 00000000! 
+    2285 00008870     b643          MOVE    *A2(PSCRAD),A3,L        ;SET UP FOR EFFECT
+         00008880     0180  
+    2286                    
+    2287 00008890     4d00          MOVE    A8,A0
+    2288 000088a0     0d5f          CALLA   GSCRNREL
+         000088b0 00000000! 
+    2289 000088d0     2e01          SRL     16,A1
+    2290 000088e0     ec22          MOVX    A1,A2
+    2291 000088f0     0d5f          CALLA   SLINEVEL                ;GET THE VELOCITIES
+         00008900 00000000! 
+    2292 00008920           FLYTOP1
+    2293 00008920     b228          MOVE    A1,*A8(OXVEL),L
+         00008930     0040  
+    2294 00008940     b248          MOVE    A2,*A8(OYVEL),L         ;STUFF THE VELOCITIES
+         00008950     0060  
+    2295 00008960     098c          MMTM    A12,A1,A2
+         00008970     6000  
+    2296 00008980     4d00          MOVE    A8,A0
+    2297 00008990     0d5f          CALLA   SCRNRELV                ;MAKE THE VELOCITIES SCREEN RELATIVE
+         000089a0 00000000! 
+    2298 000089c0                   SLEEP   1
+    2299 00008a00     09ac          MMFM    A12,A1,A2
+         00008a10     0006  
+    2300 00008a20     0d5f          CALLA   SCRTST                  ;CHECK FOR OFF SCREEN
+         00008a30 00000000! 
+    2301 00008a50     caec          JREQ    FLYTOP1
+    2302 00008a60                   PULLP   A2
+    2303 00008a80                   RETP
+    2304                    **************************************************************************
+    2305                    
+    2306                    
+    2307 00008ab0           SPLTINIT:
+    2308 00008ab0 00000000          .LONG   0,0,0,0
+    2309 00008b30     0000          .WORD   0,0
+    2310 00008b50 00000000!         .LONG   blood1,0,DUMCOLL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:05 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< NARC - TODD                                                     PAGE   53
+
+    2311 00008bb0     8002          .WORD   DMAWNZ,JUNKOID
+    2312 00008bd0 00000000          .LONG   0
+    2313 00008bf0           BONINIT:
+    2314 00008bf0 00000000          .LONG   0,0,0,0
+    2315 00008c70     0000          .WORD   0,0
+    2316 00008c90 00000000!         .LONG   K1IMG,0,DUMCOLL
+    2317 00008cf0     8002          .WORD   DMAWNZ,JUNKOID
+    2318 00008d10 00000000          .LONG   0
+    2319                    
+    2320                    
+    2321                    
+    2322 00008d30           BSPLAT:
+    2323 00008d30 00000000!         .long   blood1
+    2324 00008d50     0006          .word   6
+    2325 00008d60 00000000!         .long   blood2
+    2326 00008d80     0006          .word   6
+    2327 00008d90 00000000!         .long   blood3a
+    2328 00008db0     0006          .word   6
+    2329 00008dc0 00000000!         .long   blood2
+    2330 00008de0     0006          .word   6
+    2331 00008df0                   LONGNULL
+    2332                    
+    2333 00008e10           DestTbl:
+    2334                            ;*  x offset, z offset
+    2335 00008e10     0050          .word    80,  0
+    2336 00008e30     ffb0          .word   -80,  0
+    2337 00008e50     003c          .word    60, 20
+    2338 00008e70     003c          .word    60,-20
+    2339 00008e90     ffc4          .word   -60, 20
+    2340 00008eb0     ffc4          .word   -60,-20
+    2341 00008ed0     003c          .word    60, 40
+    2342 00008ef0     003c          .word    60,-40
+    2343 00008f10     ffc4          .word   -60, 40
+    2344 00008f30     ffc4          .word   -60,-40
+    2345 00008f50     0000          .word     0, 60
+    2346 00008f70     0000          .word     0,-60
+    2347 00008f90           DestTblX:
+
+ No Errors, 1 Warning

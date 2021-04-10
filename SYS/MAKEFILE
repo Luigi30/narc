@@ -4,11 +4,11 @@
 OBJS = mproc.OBJ ndsp1.OBJ gspsnd.OBJ
 
 .asm.obj:
-	echome "$*.ASM(1) ----Assembling----"
-        c:\bin\gspa $* -h
+	echo "$*.ASM(1) ----Assembling----"
+        gspa $* -h
 
 system: $(OBJS)
-      	echome "Done with system."
+      	echo "Done with system."
 
 banzail:        $(OBJS)
                 l68 -q game

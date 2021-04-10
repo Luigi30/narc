@@ -1,0 +1,1834 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCDOG.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      18                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      19                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      20                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      21                    *       LOCAL STUFF
+      22                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      23                            .INCLUDE        "NARCTEQU.ASM"          ;TODD JIZZ
+      24                            .INCLUDE        "NARCDOG.TBL"
+      25                    
+      26 00000000                   .TEXT                                                            
+      27                            .GLOBAL ZCHK,XZCNTCK,SWAPAL0,CARCHK,BOZCHK
+      28                            .GLOBAL doggry,blackd,dog
+      29                    
+      30                    *
+      31                    *PITBULL DISPATCHER
+      32                    *
+      33                    *DOGDISP:
+      34                    *       MOVI    9,A0
+      35                    *       MOVE    A0,@DOGMAX,W            ;MAX DOG COUNT
+      36                    *       CLR     A0
+      37                    *       MOVE    A0,@DOGCNT,W
+      38                    *       MOVI    00300H,A0
+      39                    *       MOVE    A0,@DOGSPD,W            ;DOG SPEED
+      40                    *       CREATE  0,DOGDIS3
+      41                    *       RETS
+      42                    *DOGDIS3:
+      43                    *       CLR     A5
+      44                    *       MOVI    000450E10H,A14
+      45                    *       CALLR   DOGCOLD
+      46                    *       SLOOP   320,DOGDIS3             ;WAIT FOR THEM TO DIE
+      47                    *
+      48                    *DOG COLD START
+      49                    *A5=Y:X COORD; IF ZERO THEN MAKE-UP COORDINATE
+      50                    *A6=0:Z COORD
+      51                    *A14= 0; FIX NUMBER:RANDOM NUMBER; 0E; ENEMY TYPE:ENEMY SUBTYPE (BYTE FIELDS)
+      52                    *
+      53 00000000           DOGCOLD:
+      54 00000000     4dca          MOVE    A14,A10                 ;SAVE OID
+      55 00000010     278a          SLL     28,A10
+      56 00000020     2c8a          SRL     28,A10  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    2
+
+      57 00000030     09c0          MOVI    030H,A0
+         00000040     0030  
+      58 00000050     5e0a          MPYU    A0,A10
+      59 00000060     0b2b          ADDI    DGTAB,A11               ;FORM TABLE REFERENCE BASE ADDR
+         00000070 00000460' 
+      60                    
+      61 00000090     4dca          MOVE    A14,A10                 ;SAVE OID
+      62 000000a0     4dc2          MOVE    A14,A2  
+      63 000000b0     2502          SLL     8,A2                    ;GET FIXED COUNT
+      64 000000c0     2c82          SRL     28,A2
+      65 000000d0     4dc0          MOVE    A14,A0
+      66 000000e0     2580          SLL     12,A0                   ;GET RANDOM COUNT
+      67 000000f0     2c80          SRL     28,A0
+      68 00000100     ca04          JRZ     DOGCLD0                 ;BR = NO RANDOM GUYS
+      69 00000110     0d5f          CALLA   RANDU
+         00000120 00000000! 
+      70 00000140     4002          ADD     A0,A2
+      71 00000150           DOGCLD0:
+      72                    
+      73                    *GET PACK STARTING POINT
+      74 00000150     4ca9          MOVE    A5,A9
+      75 00000160     cb0b          JRNE    DOGCLD1                 ;ALREADY GOT A STARTING POINT
+      76                    
+      77 00000170     05a9          MOVE    @WORLDTL,A9,W           ;COME FROM EDGE OF SCREEN
+         00000180 00000000! 
+      78 000001a0     0be9          SUBI    150,A9
+         000001b0     ff69  
+      79 000001c0     0d5f          CALLA   RANDOM
+         000001d0 00000000! 
+      80 000001f0     ce02          JRN     DOGCLD1
+      81 00000200     0b09          ADDI    680,A9                  ;START HIM AT RIGHT SCREEN EDGE
+         00000210     02a8  
+      82 00000220           DOGCLD1:
+      83 00000220     0529          ZEXT    A9                      ;Y COORDINATE
+      84 00000230     05b0          MOVE    @PLYMIN,B0,W
+         00000240 00000000! 
+      85 00000260     05b1          MOVE    @PLYMAX,B1,W
+         00000270 00000000! 
+      86 00000290     0d5f          CALLA   RANGRAND
+         000002a0 00000000! 
+      87 000002c0     0be0          SUBI    38,A0                   ;ADJUST FOR UL
+         000002d0     ffd9  
+      88 000002e0     2600          SLL     16,A0
+      89 000002f0     4009          ADD     A0,A9
+      90                    
+      91 00000300                   CREATE  DOGPID,DOG1X            ;MAKE 'EM
+      92 00000380     3ee2          DSJS    A2,DOGCLD1
+      93                    
+      94 00000390     876b          MOVE    *A11,A11,L              ;GET PALETTE
+      95 000003a0     278a          SLL     28,A10
+      96 000003b0     2c8a          SRL     28,A10
+      97 000003c0     0b0a          ADDI    0DD0H,A10               ;START A DOGEYE
+         000003d0     0dd0  
+      98 000003e0     4d41          MOVE    A10,A1
+      99 000003f0     09e7          MOVI    DOGEYE,A7
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    3
+
+         00000400 00003770' 
+     100 00000420     0d5f          CALLA   GETPRC
+         00000430 00000000! 
+     101 00000450     0960          RETS
+     102                    *
+     103                    *DOG TYPE TABLE
+     104                    *
+     105 00000460           DGTAB
+     106 00000460 00000000!         .LONG   dog                     ;type zero
+     107 00000480     0004          .WORD   4
+     108                    
+     109 00000490 00000000!         .LONG   doggry          ;gray type
+     110 000004b0     0003          .WORD   3
+     111                    
+     112 000004c0 00000000!         .LONG   blackd          ;black type
+     113 000004e0     0002          .WORD   2
+     114                    *
+     115                    *DISPATCH YOUR DOGS
+     116                    *A9=Y:X COORD
+     117                    *A10=OID
+     118 000004f0           DOG1X:
+     119 000004f0     05a0          MOVE    @DOGCNT,A0,W
+         00000500 00000000! 
+     120 00000520     05a1          MOVE    @DOGMAX,A1,W
+         00000530 00000000! 
+     121 00000550     4801          CMP     A0,A1
+     122 00000560     c680          JALE    SUCIDE          ;TOO MANY DOGS...
+         00000570 00000000! 
+     123 00000590           DOG2X
+     124 00000590     09c0          MOVI    30,A0
+         000005a0     001e  
+     125 000005b0     0d5f          CALLA   SRAND
+         000005c0 00000000! 
+     126 000005e0     0520          ZEXT    A0,W
+     127 000005f0     e009          ADDXY   A0,A9           ;ADD IN X SPREAD
+     128 00000600     4d21          MOVE    A9,A1
+     129 00000610     09ee          MOVI    DOGINIT,A14     ;DOG ENEMY INIT
+         00000620 00005760' 
+     130                    * A1  = Y:X INITIAL ENEMY POSITION
+     131                    * A10 = OID
+     132                    
+     133 00000640     098c          MMTM    A12,A10,A11     ;GET BACK JIVE
+         00000650     0030  
+     134 00000660     0d5f          CALLA   ESINITUL        ;CREATE DOG
+         00000670 00000000! 
+     135 00000690     ca80          JAEQ    SUCIDE          ;CREATE ERROR, EXIT
+         000006a0 00000000! 
+     136 000006c0     09ac          MMFM    A12,A10,A11     ;GET BACK JIVE
+         000006d0     0c00  
+     137 000006e0     b148          MOVE    A10,*A8(OID),W  ;SAVE OBJECT ID
+         000006f0     01a0  
+     138                    
+     139 00000700     9760          MOVE    *A11+,A0,L      ;DGTAB STUFF
+     140 00000710     0d5f          CALLA   SWAPAL0
+         00000720 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    4
+
+     141 00000740     8560          MOVE    *A11,A0,W
+     142 00000750     b00d          MOVE    A0,*A13(ETEMP3),W       ;SLEEPTIME
+         00000760     01c0  
+     143 00000770     5621          CLR     A1
+     144 00000780     b02d          MOVE    A1,*A13(ETEMP4),W       ;CLEAR FLIP FLAG
+         00000790     01e0  
+     145                    
+     146 000007a0     05a0          MOVE    @DOGCNT,A0,W
+         000007b0 00000000! 
+     147 000007d0     1020          INC     A0
+     148 000007e0     0580          MOVE    A0,@DOGCNT,W    ;INCREMENT THE GLOBAL DOG COUNT
+         000007f0 00000000! 
+     149                    
+     150 00000810     0d5f          CALLA   GETCPLY
+         00000820 00000000! 
+     151 00000840     0d5f          CALLA   XZCHK           ;GET INITIAL DIRECTION
+         00000850 00000000! 
+     152 00000870     0d3f          CALLR   DOGD0
+         00000880     0330  
+     153                    
+     154 00000890     09e9          MOVI    DOGRUN,A9       ;GET ANIMATION SCRIPT
+         000008a0 00005ae0' 
+     155 000008c0     18c0          MOVK    6,A0
+     156 000008d0     0d5f          CALLA   RANDU           ;RANDOM STARTING POINT
+         000008e0 00000000! 
+     157 00000900     09c1          MOVI    48,A1
+         00000910     0030  
+     158 00000920     5e01          MPYU    A0,A1
+     159 00000930     4029          ADD     A1,A9
+     160 00000940     c035          JRUC    GPLAYR1
+     161                    *
+     162                    *DO SOME GROWLING
+     163                    *
+     164 00000950           GRRRR0
+     165 00000950     0d5f          CALLA   PSTOP
+         00000960 00000000! 
+     166 00000980     09e9          MOVI    DRAG,A9
+         00000990 000069b0' 
+     167 000009b0     0d5f          CALLA   RANDOM
+         000009c0 00000000! 
+     168 000009e0     09e0          MOVI    DGRR1SND,A0     ;GROWL IT UP
+         000009f0 00001710' 
+     169 00000a10     ce06          JRN     GRRRRL0
+     170 00000a20     09e9          MOVI    TUG,A9
+         00000a30 00006450' 
+     171 00000a50     09e0          MOVI    DGBRKSND,A0     ;BARK IT UP
+         00000a60 00001750' 
+     172 00000a80           GRRRRL0
+     173 00000a80     0d5f          CALLA   ONESND
+         00000a90 00000000! 
+     174 00000ab0           GRRRRL
+     175 00000ab0     5621          CLR     A1
+     176 00000ac0                   JSRP    FRANIM
+     177 00000b30     c8e1          JRC     GRRRR0
+     178                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    5
+
+     179 00000b40     0d5f          CALLA   GETCPLY
+         00000b50 00000000! 
+     180 00000b70     0d5f          CALLA   FACEPLYR
+         00000b80 00000000! 
+     181                    
+     182 00000ba0     09c0          MOVI    160,A0 
+         00000bb0     00a0  
+     183 00000bc0     0d5f          CALLA   RANDPER
+         00000bd0 00000000! 
+     184 00000bf0     c9eb          JRNC    GRRRRL
+     185 00000c00     0300          JRUC    GPLAYR
+     186                    *
+     187                    *GET NEAREST PLAYER AND BITE HIM
+     188                    *A8=DOG OBJECT
+     189                    *
+     190 00000c10           GPLAYR:
+     191 00000c10     09c0          MOVI    15,A0
+         00000c20     000f  
+     192 00000c30     0d5f          CALLA   RANDPER
+         00000c40 00000000! 
+     193 00000c60     c8ce          JRC     GRRRR0
+     194 00000c70     09e9          MOVI    DOGRUN,A9               ;GET ANIMATION SCRIPT
+         00000c80 00005ae0' 
+     195 00000ca0           GPLAYR1:
+     196 00000ca0     0b69          CMPI    DOGRUNX,A9      
+         00000cb0 ffffa3df' 
+     197 00000cd0     c9f3          JRHS    GPLAYR          ;INVALID ANIMATION, RESET...
+     198 00000ce0     1881          MOVK    4,A1
+     199 00000cf0                   JSRP    FRANIM
+     200 00000d60     c8ea          JRC     GPLAYR
+     201                    
+     202 00000d70     b5a0          MOVE    *A13(ETEMP3),A0,W       ;VARIABLE SLEEP TIME
+         00000d80     01c0  
+     203 00000d90     0d5f          CALLA   PRCSLP
+         00000da0 00000000! 
+     204 00000dc0     0d3f          CALLR   DOGSND
+         00000dd0     0076  
+     205 00000de0           GPLAYR2
+     206 00000de0     0d5f          CALLA   GETCPLY         ;GET CLOSEST PLAYER
+         00000df0 00000000! 
+     207 00000e10     b607          MOVE    *A0(PFLAGS),A7,L
+         00000e20     0080  
+     208 00000e30     1d67          BTST    BINVINC,A7      ;DUDE INVINCIBLE?
+     209 00000e40     ca3d          JREQ    GPLAYR6         ;NO, GO FER IT!!
+     210 00000e50     b401          MOVE    *A0(PENERGY+16),A1,W
+         00000e60     01d0  
+     211 00000e70     0b41          CMPI    IENERGY,A1
+         00000e80     ffdc  
+     212 00000e90     cb38          JRNE    GPLAYR6         ;A PHONY INVINCIBLE
+     213                    *       BTST    BBUYIN,A7
+     214                    *       JRNE    GPLAYR6         ;BUYIN GO AFTER HIM ANYWAY
+     215                    *       BTST    BDEAD,A7
+     216                    *       JRNE    GPLAYR6
+     217                    *       BTST    BDHOLD,A7       ;WOUNDED IGNORE IT
+     218                    *       JRNE    GPLAYR6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    6
+
+     219 00000ea0     09e2          MOVI    P2DATA,A2       ;GET THE OTHER PLAYER
+         00000eb0 00000000! 
+     220 00000ed0     4840          CMP     A2,A0
+     221 00000ee0     cb03          JRNE    GPLAYR3
+     222 00000ef0     09e2          MOVI    P1DATA,A2
+         00000f00 00000000! 
+     223 00000f20           GPLAYR3
+     224 00000f20     4c40          MOVE    A2,A0
+     225 00000f30     b602          MOVE    *A0(POBJ),A2,L          ;GET EXPECTED PLAYERS OBJECT    
+         00000f40     00a0  
+     226 00000f50     ca09          JRZ     GPLAYR4                 ;INACTIVE... BAG IT
+     227 00000f60     b607          MOVE    *A0(PFLAGS),A7,L
+         00000f70     0080  
+     228 00000f80     1d67          BTST    BINVINC,A7      ;DUDE INVINCIBLE?
+     229 00000f90     ca28          JREQ    GPLAYR6         ;NO, GOFERIT!
+     230 00000fa0     b401          MOVE    *A0(PENERGY+16),A1,W
+         00000fb0     01d0  
+     231 00000fc0     0b41          CMPI    IENERGY,A1
+         00000fd0     ffdc  
+     232 00000fe0     cb23          JRNE    GPLAYR6         ;A PHONY INVINCIBLE
+     233 00000ff0           GPLAYR4 
+     234 00000ff0     0d5f          CALLA   ZCHK            ;KEEP HIM IN BOUNDS
+         00001000 00000000! 
+     235                    
+     236 00001020     b5a0          MOVE    *A13(ETEMP4),A0,W       ;ALREADY FLIPPED?
+         00001030     01e0  
+     237 00001040     cb0d          JRNE    GPLAYR4A
+     238                    
+     239 00001050     b504          MOVE    *A8(OFLAGS),A4,W        ;FLIP THE SUCKER
+         00001060     0100  
+     240 00001070     0bc4          XORI    M_FLIPH,A4
+         00001080 00000010  
+     241 000010a0     b701          MOVE    *A8(OIMG),A1,L          ;GET THE CURRENT IMAGE POINTER
+         000010b0     0180  
+     242 000010c0     0d5f          CALLA   ANI                     ;SETUP THE "NEW" IMAGE
+         000010d0 00000000! 
+     243 000010f0     1820          MOVK    1,A0
+     244 00001100     b00d          MOVE    A0,*A13(ETEMP4),W       ;SET FLIP FLAG
+         00001110     01e0  
+     245 00001120           GPLAYR4A
+     246 00001120     05a3          MOVE    @DOGSPD,A3,W    ;X VELOCITY
+         00001130 00000000! 
+     247                    
+     248 00001150     b5a4          MOVE    *A13(ETEMP1),A4 
+         00001160     0180  
+     249 00001170     0524          ZEXT    A4,W
+     250 00001180     5e83          MPYU    A4,A3
+     251 00001190     2f03          SRL     8,A3            ;NORMALIZE IT
+     252 000011a0     b501          MOVE    *A8(OFLAGS),A1,W
+         000011b0     0100  
+     253 000011c0     1f61          BTST    B_FLIPH,A1
+     254 000011d0     ca01          JRZ     GPLAYR5
+     255 000011e0     03a3          NEG     A3
+     256 000011f0           GPLAYR5
+     257 000011f0     b268          MOVE    A3,*A8(OXVEL),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    7
+
+         00001200     0040  
+     258 00001210     c0a8          JRUC    GPLAYR1
+     259                            
+     260 00001220           GPLAYR6 
+     261 00001220     5621          CLR     A1
+     262 00001230     b02d          MOVE    A1,*A13(ETEMP4),W
+         00001240     01e0  
+     263 00001250     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         00001260     00a0  
+     264 00001270     09c5          MOVI    30,A5
+         00001280     001e  
+     265 00001290     09c6          MOVI    10,A6
+         000012a0     000a  
+     266 000012b0     1da7          BTST    BDEAD,A7        ;PLAYER DOWN?
+     267 000012c0     ca15          JREQ    GPLYRL1         ;NOPE
+     268                    
+     269 000012d0     09c6          MOVI    7,A6            ;
+         000012e0     0007  
+     270 000012f0     5621          CLR     A1              ;NO X OFFSET
+     271 00001300     09c3          MOVI    10,A3           ;Z IN FRONT
+         00001310     000a  
+     272 00001320     09c5          MOVI    45,A5
+         00001330     002d  
+     273 00001340     0d5f          CALLA   XZCNTCK         ;CENTERED XZ CHECK
+         00001350 00000000! 
+     274 00001370     c90e          JRNC    GPLYRL3         ;NOT CLOSE
+     275 00001380     0b43          CMPI    35,A3           ;DOG AT THE END OF DUDE'S BODY
+         00001390     ffdc  
+     276 000013a0     c250          JRLS    DOGBITE         ;NO
+     277 000013b0     09c0          MOVI    090H,A0         ;TRY A DRAG?
+         000013c0     0090  
+     278 000013d0     0d5f          CALLA   RANDPER
+         000013e0 00000000! 
+     279 00001400     c84a          JRC     DOGBITE         ;ITS OUR LUCKY DAY
+     280 00001410     c004          JRUC    GPLYRL3
+     281 00001420           GPLYRL1:
+     282 00001420     0d5f          CALLA   XZCHK           ;ARE WE IN POSITION?
+         00001430 00000000! 
+     283 00001450           GPLYRL2:
+     284 00001450     c845          JRC     DOGBITE         ;HE'S WITHIN RANGE      
+     285 00001460           GPLYRL3:
+     286 00001460     0d5f          CALLA   ZCHK            ;KEEP HIM IN BOUNDS
+         00001470 00000000! 
+     287 00001490     09c0          MOVI    400,A0
+         000014a0     0190  
+     288 000014b0     0d5f          CALLA   RANDPER
+         000014c0 00000000! 
+     289 000014e0     c900          JRNC    GPLAYR1
+         000014f0     ff7a  
+     290 00001500     0d3f          CALLR   DOGDIR          ;NO GET DIRECTION
+         00001510     0261  
+     291 00001520     c000          JRUC    GPLAYR1
+         00001530     ff76  
+     292                    *TRY FOR A SOUND
+     293 00001540           DOGSND
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    8
+
+     294 00001540     09c0          MOVI    15,A0           ;MAKE A SOUND?
+         00001550     000f  
+     295 00001560     0d5f          CALLA   RANDPER
+         00001570 00000000! 
+     296 00001590     c906          JRNC    GPLYR20         ;NOPE.....
+     297 000015a0     09e0          MOVI    DGRR1SND,A0     ;GROWL IT UP
+         000015b0 00001710' 
+     298 000015d0     0d5f          CALLA   ONESND
+         000015e0 00000000! 
+     299 00001600           GPLYR20
+     300 00001600     09c0          MOVI    60,A0           ;MAKE A SOUND?
+         00001610     003c  
+     301 00001620     0d5f          CALLA   RANDPER
+         00001630 00000000! 
+     302 00001650     c906          JRNC    GPLYR30         ;NOPE.....
+     303 00001660     09e0          MOVI    DGBRKSND,A0     ;BARK IT UP
+         00001670 00001750' 
+     304 00001690     0d5f          CALLA   ONESND
+         000016a0 00000000! 
+     305 000016c0           GPLYR30
+     306 000016c0     0960          RETS
+     307                    **************************************************************************
+     308                    *DOG SOUNDS
+     309                    *                                                                        *
+     310                    * CHANNEL #0    CVSD SOUNDS                                              *
+     311                    * CHANNEL #1    DAC A                                                    *
+     312                    * CHANNEL #2    DAC B                                                    *
+     313                    * CHANNEL #3    MUSIC                                                    *
+     314                    *                                                                        *
+     315                    *SOUND DESCRIPTION= PRIORITY,TIME,SOUND CODE,(PRIORITY),(TIME),(SOUND CODE),0
+     316                    *SOUND ENDS IN 0000.
+     317                    *PRIORITY WORD = 1111IENNPPPPPPPP; I=1=NON-INTERRUPTABLE, E=1=NON-INT BY EQUAL
+     318                    *NN=CHANNEL #(0-3);
+     319                    *PP=PRIORITY (00-FF), FF=HIGHEST.
+     320                    *TIME WORD =TTTT (0000-7FFF X 16MS).
+     321                    *SOUND WORD =8SSS SSS=SOUND CODE(000-FFF).
+     322                    *SOUND WORD =4SSS SSS=SOUND CODE (ZERO TIME SOUND CODE)
+     323                    *DOG GROWL
+     324 000016d0     f415  DGRWLSND        .WORD   0F415H,020H,08050H,0    
+     325                    *DOG GROWL
+     326 00001710     f415  DGRR1SND        .WORD   0F415H,060H,08050H,0    
+     327                    *DOG BARK
+     328 00001750     f415  DGBRKSND        .WORD   0F415H,00CH,08051H,0
+     329                    *DOG WHIMPER
+     330 00001790     f416  DGWMPSND        .WORD   0F416H,020H,08052H,0
+     331                    *DOG HITS THE GROUND
+     332 000017d0     f015  DGHTSND         .WORD   0F015H,008H,0804EH,0
+     333                    *DOG BOUNCE SOUND
+     334 00001810     f015  DGBCSND         .WORD   0F015H,004H,08053H,0
+     335                    *DOG HITS THE CAR
+     336 00001850     f016  DGCARSND        .WORD   0F016H,0AH,08044H,020H,08052H,0
+     337                    *
+     338                    *DOGBITE
+     339                    *LETS BITE THE DUDE
+     340                    *A0=CLOSEST PLAYER DATA AREA
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE    9
+
+     341                    *A1=DELTA X
+     342                    *A2=DELTA Z
+     343                    *A3=ABS DX
+     344                    *A4=ABS DZ
+     345                    *A8=DOG OBJECT
+     346                    *A13=DOG PROCESS
+     347                    *
+     348 000018b0           DOGBITE:        
+     349 000018b0     09c0          MOVI    250,A0
+         000018c0     00fa  
+     350 000018d0     0d5f          CALLA   RANDPER
+         000018e0 00000000! 
+     351 00001900     c904          JRNC    DGBT0
+     352 00001910     09e0          MOVI    DGRR1SND,A0
+         00001920 00001710' 
+     353 00001940     c003          JRUC    DGBT1
+     354 00001950           DGBT0   
+     355 00001950     09e0          MOVI    DGRWLSND,A0     ;GROWL IT UP
+         00001960 000016d0' 
+     356 00001980           DGBT1
+     357 00001980     0d5f          CALLA   ONESND
+         00001990 00000000! 
+     358                    
+     359 000019b0     4c21          MOVE    A1,A1           ;FLIP THE DUDE PROPERLY
+     360 000019c0     ce04          JRN     DOGBIT0
+     361 000019d0     0d5f          CALLA   NOYFLP
+         000019e0 00000000! 
+     362 00001a00     c003          JRUC    DOGBIT1
+     363 00001a10           DOGBIT0:
+     364 00001a10     0d5f          CALLA   YFLP
+         00001a20 00000000! 
+     365 00001a40           DOGBIT1:
+     366 00001a40     0d5f          CALLA   PSTOP           ;STOP THE DUDE
+         00001a50 00000000! 
+     367                    
+     368                    *GET VELOCITY
+     369                    *FLY, CHECK FOR BITE
+     370                    *LAND
+     371                    *CHECK FOR LIE DOWN     
+     372 00001a70     1da7          BTST    BDEAD,A7        ;PLAYER DOWN?
+     373 00001a80     ca75          JREQ    DOGBIT2         ;NOPE
+     374 00001a90     0b43          CMPI    35,A3           ;DOG AT THE END OF DUDE'S BODY
+         00001aa0     ffdc  
+     375 00001ab0     c91c          JRHS    DOGDRG          ;NO
+     376 00001ac0           DGBT2
+     377 00001ac0     09c0          MOVI    7,A0
+         00001ad0     0007  
+     378 00001ae0     0d5f          CALLA   RANDU
+         00001af0 00000000! 
+     379 00001b10     24a0          SLL     5,A0
+     380 00001b20     0b20          ADDI    LOWBTAB,A0
+         00001b30 00001b80' 
+     381 00001b50     8609          MOVE    *A0,A9,L
+     382 00001b60     c000          JRUC    BITSHT2
+         00001b70     008e  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   10
+
+     383                    *LOW ATTACK TABLE
+     384 00001b80           LOWBTAB
+     385 00001b80 00006530'         .LONG   GRR1,GRR2,TEAR1,TEAR2,TUG,DRAG,TUG,GRR2
+     386                    *DRAG HIM AWAY
+     387 00001c80           DOGDRG:
+     388 00001c80     0d5f          CALLA   GETCPLY         ;SAVE PLAYER STUFF
+         00001c90 00000000! 
+     389 00001cb0     4c0a          MOVE    A0,A10  
+     390 00001cc0           DOGDRG0
+     391 00001cc0     09e9          MOVI    DRAG,A9         ;DRAG ANIMATION
+         00001cd0 000069b0' 
+     392 00001cf0           DOGDRGL
+     393 00001cf0     1881          MOVK    4,A1
+     394 00001d00                   JSRP    FRANIM
+     395 00001d70     4c0b          MOVE    A0,A11          ;SAVE SLEEP TIME
+     396 00001d80     c8f3          JRC     DOGDRG0
+     397 00001d90           DOGDRG1
+     398 00001d90     b747          MOVE    *A10(PFLAGS),A7,L
+         00001da0     0080  
+     399 00001db0     1da7          BTST    BDEAD,A7        ;PLAYER STILL DOWN?
+     400 00001dc0     ca00          JREQ    GPLAYR          ;NOPE
+         00001dd0     fee3  
+     401 00001de0     09c0          MOVI    16,A0
+         00001df0     0010  
+     402 00001e00     0d5f          CALLA   RANDPER         ;QUIT DRAGGING ?
+         00001e10 00000000! 
+     403 00001e30     c800          JRC     GPLAYR          ;YIP, ITS GETTING OLD
+         00001e40     fedc  
+     404 00001e50     b740          MOVE    *A10(POBJ),A0,L ;PLAYER OBJECT
+         00001e60     00a0  
+     405 00001e70     5621          CLR     A1              ;NO X OFFSET
+     406 00001e80     09c3          MOVI    10,A3           ;Z IN FRONT
+         00001e90     000a  
+     407 00001ea0     0d5f          CALLA   XZCNTCK         ;STILL IN RANGE
+         00001eb0 00000000! 
+     408 00001ed0     0b43          CMPI    45,A3
+         00001ee0     ffd2  
+     409 00001ef0     c900          JRHS    GPLAYR                  
+         00001f00     fed0  
+     410 00001f10                   PUSH    A0
+     411 00001f20     09e0          MOVI    018000H,A0      ;GET RANDOM DRAG FACTOR 
+         00001f30 00018000  
+     412 00001f50     0d5f          CALLA   RANDU
+         00001f60 00000000! 
+     413 00001f80     0b20          ADDI    08000H,A0
+         00001f90 00008000  
+     414 00001fb0     4c03          MOVE    A0,A3
+     415 00001fc0                   PULL    A0
+     416 00001fe0     4c21          MOVE    A1,A1
+     417 00001ff0     ce01          JRN     DOGDRG2
+     418 00002000     03a3          NEG     A3
+     419 00002010           DOGDRG2
+     420 00002010     b602          MOVE    *A0(OXVAL),A2,L
+         00002020     0080  
+     421 00002030     4062          ADD     A3,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   11
+
+     422 00002040     b240          MOVE    A2,*A0(OXVAL),L
+         00002050     0080  
+     423 00002060     b604          MOVE    *A0(OSHAD),A4,L         ;DRAG HIS STUPID SHADOW
+         00002070     0240  
+     424 00002080     ca02          JREQ    DOGDRG3                 ;NO SHADOW...
+     425 00002090     b244          MOVE    A2,*A4(OXVAL),L
+         000020a0     0080  
+     426 000020b0           DOGDRG3
+     427 000020b0     b740          MOVE    *A10(PLOBJ),A0,L        ;GET OTHER HALF
+         000020c0     0120  
+     428 000020d0     b602          MOVE    *A0(OXVAL),A2,L
+         000020e0     0080  
+     429 000020f0     4062          ADD     A3,A2
+     430 00002100     b240          MOVE    A2,*A0(OXVAL),L
+         00002110     0080  
+     431 00002120     b702          MOVE    *A8(OXVAL),A2,L
+         00002130     0080  
+     432 00002140     4062          ADD     A3,A2
+     433 00002150     b248          MOVE    A2,*A8(OXVAL),L
+         00002160     0080  
+     434 00002170                   SLEEP    1
+     435 000021b0     0d8b          DSJ     A11,DOGDRG1     
+         000021c0     ffbc  
+     436 000021d0     c0b1          JRUC    DOGDRGL
+     437                    
+     438 000021e0           DOGBIT2:
+     439                    *CHECK FOR A JUMP SHOT
+     440 000021e0     1fa7          BTST    BJUMP2,A7               ;IN AIR ?
+     441 000021f0     ca06          JREQ    DOGBIT3                 ;NO
+     442 00002200     09c0          MOVI    200,A0
+         00002210     00c8  
+     443 00002220     0d5f          CALLA   RANDPER                 ;JUMPER?
+         00002230 00000000! 
+     444 00002250     c866          JRC     DOGJMP                  ;NOPE
+     445                    
+     446                    *SHORT JUMP     
+     447                    *GET TAKEOFF FRAMES
+     448 00002260           DOGBIT3
+     449 00002260     09e9          MOVI    QKLEAP,A9       ;WERE IN BACK DO SIDE ATTACK
+         00002270 00005d50' 
+     450 00002290     4c42          MOVE    A2,A2           ;TEST DELTA Z
+     451 000022a0     cf06          JRNN    BITSHT0
+     452 000022b0     0d5f          CALLA   SHADST          ;START A SHADOW FOR UNSHADOWED FRAMES
+         000022c0 00000000! 
+     453 000022e0     09e9          MOVI    QKATTACK,A9
+         000022f0 00005c20' 
+     454 00002310           BITSHT0
+     455 00002310     1821          MOVK    1,A1
+     456 00002320                   JSRP    FRANIM          ;DO YOUR TAKEOFF
+     457 00002390     09e0          MOVI    030000H,A0
+         000023a0 00030000  
+     458 000023c0     0d5f          CALLA   RANDU
+         000023d0 00000000! 
+     459 000023f0     b501          MOVE    *A8(OFLAGS),A1,W
+         00002400     0100  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   12
+
+     460 00002410     1f60          BTST    B_FLIPH,A0
+     461 00002420     ca01          JRZ     BITSHT1
+     462 00002430     03a0          NEG     A0
+     463 00002440           BITSHT1
+     464 00002440     b208          MOVE    A0,*A8(OXVEL),L
+         00002450     0040  
+     465 00002460           BITSHT2:
+     466 00002460     0d5f          CALLA   GETCPLY
+         00002470 00000000! 
+     467 00002490     b607          MOVE    *A0(PFLAGS),A7,L
+         000024a0     0080  
+     468 000024b0     1fa7          BTST    BJUMP2,A7               ;IN AIR ?
+     469 000024c0     ca19          JREQ    BITSHT3
+     470 000024d0     1da7          BTST    BDEAD,A7                ;PLAYER DOWN?
+     471 000024e0     cb17          JRNE    BITSHT3                 ;YES
+     472 000024f0     4c0a          MOVE    A0,A10                  ;SAVE PLAYER DATA PTR
+     473 00002500     b600          MOVE    *A0(PLOBJ),A0,L         ;PLAYER OBJECT LEGS
+         00002510     0120  
+     474 00002520     b402          MOVE    *A0(OYPOS),A2,W
+         00002530     00b0  
+     475 00002540     b401          MOVE    *A0(OSIZEY),A1,W
+         00002550     0150  
+     476 00002560     4022          ADD     A1,A2
+     477 00002570     b501          MOVE    *A8(OYPOS),A1,W
+         00002580     00b0  
+     478 00002590     0b01          ADDI    8,A1                    ;FUDGE FACTOR
+         000025a0     0008  
+     479 000025b0     4822          CMP     A1,A2                   ;ARE WE HIGH ENOUGH TO BITE
+     480 000025c0     c221          JRLS    BITSHT3X                ;NO...
+     481 000025d0     09c5          MOVI    35,A5
+         000025e0     0023  
+     482 000025f0     09c6          MOVI    10,A6
+         00002600     000a  
+     483 00002610     0d5f          CALLA   XZCHK                   ;ARE WE IN XZ POSITION?
+         00002620 00000000! 
+     484 00002640     c919          JRNC    BITSHT3X                ;NOPE...
+     485 00002650     4d40          MOVE    A10,A0
+     486 00002660           BITSHT3 
+     487 00002660     05a1          MOVE    @WAVE,A1,W
+         00002670 00000000! 
+     488 00002690     0b41          CMPI    1,A1            ;WAVE 1?
+         000026a0     fffe  
+     489 000026b0     cb0c          JRNE    BITSHT3A        ;NO
+     490 000026c0     0d5f          CALLA   BOZCHK
+         000026d0 00000000! 
+     491 000026f0     c908          JRNC    BITSHT3A                ;NO BOZO TARGET
+     492 00002700     4c0a          MOVE    A0,A10
+     493 00002710     09c0          MOVI    200,A0
+         00002720     00c8  
+     494 00002730     0d5f          CALLA   RANDPER
+         00002740 00000000! 
+     495 00002760     c907          JRNC    BITSHT3X                ;BITE SOME OF THE TIME
+     496 00002770     4d40          MOVE    A10,A0
+     497 00002780           BITSHT3A        
+     498 00002780     4c02          MOVE    A0,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   13
+
+     499 00002790     0d5f          CALLA   KNIFEHIT
+         000027a0 00000000! 
+     500 000027c0     0d3f          CALLR   DGBLOOD                 ;MAKE DOG BITE BLEED
+         000027d0     00d0  
+     501 000027e0           BITSHT3X:
+     502 000027e0     4d00          MOVE    A8,A0                   ;GET RID OF SHADOW FOLKS
+     503 000027f0     0d5f          CALLA   DELSHAD
+         00002800 00000000! 
+     504 00002820     1821          MOVK    1,A1                    ;DO YOUR LANDING FRAMES
+     505 00002830                   JSRP    FRANIM
+     506 000028a0     c000          JRUC    GPLAYR                  ;START OVER AGAIN
+         000028b0     fe35  
+     507                    
+     508                    *DOG JUMP SHOT AT PLAYER
+     509 000028c0           DOGJMP:
+     510 000028c0     09e9          MOVI    FATTACK,A9
+         000028d0 000060f0' 
+     511 000028f0     4c42          MOVE    A2,A2           ;TEST DELTA Z
+     512 00002900     ce03          JRN     DOGJMP0
+     513 00002910     09e9          MOVI    LEAP,A9         ;WERE IN BACK DO SIDE ATTACK
+         00002920 00005e80' 
+     514 00002940           DOGJMP0
+     515 00002940     1821          MOVK    1,A1
+     516 00002950                   JSRP    FRANIM          ;DO YOUR TAKEOFF
+     517 000029c0     b32d          MOVE    A9,*A13(ETEMP2),L       ;SAVE RESTART POINT     
+         000029d0     01a0  
+     518 000029e0     0d5f          CALLA   GETCPLY
+         000029f0 00000000! 
+     519 00002a10     4c0b          MOVE    A0,A11          ;SAVE DUDES POINTER
+     520 00002a20     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         00002a30     00a0  
+     521 00002a40     0d5f          CALLA   XZCHK          
+         00002a50 00000000! 
+     522 00002a70     b605          MOVE    *A0(OXVEL),A5,L ;GET PLAYER VELOCITY
+         00002a80     0040  
+     523 00002a90     b606          MOVE    *A0(OZVEL),A6,L
+         00002aa0     00e0  
+     524 00002ab0     2561          SLL     11,A1           ;ADJUST X VELOCITY
+     525 00002ac0     2562          SLL     11,A2           ;GET ZVEL
+     526 00002ad0     09c0          MOVI    500,A0
+         00002ae0     01f4  
+     527 00002af0     0d5f          CALLA   RANDPER
+         00002b00 00000000! 
+     528 00002b20     c902          JRNC    DOGJMP1
+     529 00002b30     40a1          ADD     A5,A1           ;ADD PLAYER VELOCITY
+     530 00002b40     40c2          ADD     A6,A2
+     531 00002b50           DOGJMP1:
+     532 00002b50     09e0          MOVI    030000H,A0      ;GET Y VELOCITY
+         00002b60 00030000  
+     533 00002b80     0d5f          CALLA   RANDU
+         00002b90 00000000! 
+     534 00002bb0     0b20          ADDI    0FFFA0000H,A0
+         00002bc0 fffa0000  
+     535                            
+     536 00002be0     b228          MOVE    A1,*A8(OXVEL),L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   14
+
+         00002bf0     0040  
+     537 00002c00     b248          MOVE    A2,*A8(OZVEL),L
+         00002c10     00e0  
+     538 00002c20     4040          ADD     A2,A0
+     539 00002c30     b208          MOVE    A0,*A8(OYVEL),L
+         00002c40     0060  
+     540 00002c50     0d5f          CALLA   SHADST
+         00002c60 00000000! 
+     541 00002c80     0d5f          CALLA   SHVELCPY
+         00002c90 00000000! 
+     542 00002cb0     574a          CLR     A10                     ;BITE FLAG
+     543 00002cc0     4c21          MOVE    A1,A1                   ;FLIP THE DUDE PROPERLY
+     544 00002cd0     ce04          JRN     DOGJMP2
+     545 00002ce0     0d5f          CALLA   NOYFLP
+         00002cf0 00000000! 
+     546 00002d10     c003          JRUC    JUMP1
+     547 00002d20           DOGJMP2:
+     548 00002d20     0d5f          CALLA   YFLP
+         00002d30 00000000! 
+     549 00002d50           JUMP1:
+     550 00002d50     b7a9          MOVE    *A13(ETEMP2),A9,L       ;GET RESTART POINT      
+         00002d60     01a0  
+     551 00002d70           JUMPL:
+     552 00002d70     1881          MOVK    4,A1
+     553 00002d80                   JSRP    FRANIM
+     554 00002df0     c8f5          JRC     JUMP1
+     555 00002e00                   SLEEP   3
+     556 00002e40     4d4a          MOVE    A10,A10
+     557 00002e50     ca20          JREQ    JUMP2                   ;ALEADY BEEN BITTEN
+     558                    
+     559                    *CHECK FOR BITE
+     560 00002e60     b760          MOVE    *A11(PLOBJ),A0,L        ;PLAYER OBJECT LEGS
+         00002e70     0120  
+     561 00002e80     09c4          MOVI    8,A4                    ;Y OFFSET
+         00002e90     0008  
+     562 00002ea0     09c5          MOVI    20,A5                   ;XRANGE
+         00002eb0     0014  
+     563 00002ec0     09c6          MOVI    10,A6
+         00002ed0     000a  
+     564 00002ee0     0d5f          CALLA   XYZCK                   ;ARE WE IN POSITION
+         00002ef0 00003380' 
+     565 00002f10     c80c          JRC     JMPBIT                  ;BITE THE DUDE
+     566                    
+     567 00002f20     b760          MOVE    *A11(POBJ),A0,L         ;PLAYER OBJECT
+         00002f30     00a0  
+     568 00002f40     09c4          MOVI    8,A4                    ;Y OFFSET
+         00002f50     0008  
+     569 00002f60     09c5          MOVI    20,A5                   ;XRANGE
+         00002f70     0014  
+     570 00002f80     09c6          MOVI    10,A6
+         00002f90     000a  
+     571 00002fa0     0d5f          CALLA   XYZCK                   ;ARE WE IN POSITION
+         00002fb0 00003380' 
+     572 00002fd0     c908          JRNC    JUMP2
+     573 00002fe0           JMPBIT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   15
+
+     574 00002fe0     102a          INC     A10
+     575 00002ff0     4d62          MOVE    A11,A2                  ;GIVE PLAYER KNIFE HIT
+     576 00003000     0d5f          CALLA   KNIFEHIT
+         00003010 00000000! 
+     577 00003030     4d60          MOVE    A11,A0
+     578 00003040     0d3f          CALLR   DGBLOOD                 ;MAKE DOG BITE BLEED
+         00003050     0048  
+     579 00003060           JUMP2
+     580 00003060     0d5f          CALLA   ZCHK                    ;MAKE SURE Z IN BOUNDS
+         00003070 00000000! 
+     581 00003090     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         000030a0     0060  
+     582 000030b0     0b20          ADDI    00B000H,A0,L
+         000030c0 0000b000  
+     583 000030e0     b208          MOVE    A0,*A8(OYVEL),L
+         000030f0     0060  
+     584 00003100     b701          MOVE    *A8(OZVEL),A1,L         ;REMOVE Z COMPONENT
+         00003110     00e0  
+     585 00003120     4420          SUB     A1,A0
+     586 00003130     cec3          JRN     JUMPL                   ;UPWARD VEL, NO LAND
+     587 00003140     0d5f          CALLA   DFRMGRND
+         00003150 00000000! 
+     588 00003170     0b41          CMPI    10,A1
+         00003180     fff5  
+     589 00003190     c7bd          JRGT    JUMPL                   ;IN THE AIR STILL
+     590                    
+     591                    *LANDING ANIMATION
+     592 000031a0     0d3f          CALLR   FNANI                   ;FIND NEXT ANIMATION
+         000031b0     0014  
+     593 000031c0     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         000031d0 00000000! 
+     594 000031f0     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+     595 00003200     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00003210 00000000! 
+     596 00003230     0d5f          CALLA   DELSHAD                 ;RESET YOUR SHADOW
+         00003240 00000000! 
+     597                    *       CALLA   SHADST
+     598 00003260     1821          MOVK    1,A1                    ;DO YOUR LANDING FRAMES
+     599 00003270                   JSRP    FRANIM
+     600 000032e0     c000          JRUC    GPLAYR                  ;START OVER AGAIN
+         000032f0     fd91  
+     601                    *
+     602                    *FIND NEXT ANIMATION
+     603                    *A9=SCRIPT, RETURNED WITH NEXT ANIMATION
+     604                    *
+     605 00003300           FNANI:
+     606 00003300                   PUSH    A0
+     607 00003310           FNANIL
+     608 00003310     9720          MOVE    *A9+,A0,L
+     609 00003320     ca02          JREQ    FNANIX
+     610 00003330     1209          ADDK    16,A9
+     611 00003340     c0fc          JRUC    FNANIL
+     612 00003350           FNANIX
+     613 00003350                   PULL    A0
+     614 00003370     0960          RETS
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   16
+
+     615                    *
+     616                    *CHECK X Y Z
+     617                    *A0=OBJECT SEEKED
+     618                    *A4=Y OFFSET
+     619                    *A5=XRANGE
+     620                    *A6=ZRANGE
+     621                    *RETURNS CARRY IF IN RANGE
+     622                    *A1,A2,A3,A4 AS XZCHK
+     623 00003380           XYZCK:
+     624 00003380     b402          MOVE    *A0(OFLAGS),A2,W
+         00003390     0100  
+     625 000033a0     2782          SLL     28,A2
+     626 000033b0     ca10          JREQ    XYZFL                   ;OBJECT NOT ACTIVE
+     627 000033c0     b402          MOVE    *A0(OYPOS),A2,W
+         000033d0     00b0  
+     628 000033e0     b401          MOVE    *A0(OSIZEY),A1,W
+         000033f0     0150  
+     629 00003400     4041          ADD     A2,A1
+     630 00003410     b503          MOVE    *A8(OYPOS),A3,W
+         00003420     00b0  
+     631 00003430     4083          ADD     A4,A3                   ;FUDGE FACTOR
+     632 00003440     4861          CMP     A3,A1                   ;ARE WE IN Y RANGE ?
+     633 00003450     c906          JRHS    XYZFL                   ;OUT OF RANGE
+     634 00003460     4862          CMP     A3,A2
+     635 00003470     c204          JRLS    XYZFL
+     636 00003480     0d5f          CALLA   XZCHK                   ;ARE WE IN POSITION
+         00003490 00000000! 
+     637 000034b0     0960          RETS
+     638 000034c0           XYZFL   
+     639 000034c0     0320          CLRC
+     640 000034d0     0960          RETS
+     641                    *
+     642                    *DOG BLOOD START
+     643                    *A8=DOG, A0=PLAYER DATA 
+     644                    *
+     645 000034e0           DGBLOOD:
+     646 000034e0     098f          MMTM    SP,A8,A9,A11
+         000034f0     00d0  
+     647 00003500     b50b          MOVE    *A8(OID),A11,W
+         00003510     01a0  
+     648 00003520     b509          MOVE    *A8(OYPOS),A9,W
+         00003530     00b0  
+     649 00003540     0b09          ADDI    5,A9                    ;ADJUST FOR KNIFE POSITION
+         00003550     0005  
+     650 00003560     b607          MOVE    *A0(PFLAGS),A7,L
+         00003570     0080  
+     651 00003580     1da7          BTST    BDEAD,A7                ;PLAYER DOWN?
+     652 00003590     ca0c          JREQ    DGBLD00
+     653 000035a0     09e9          MOVI    0007A000CH,A9           ;Y:X OFFSET
+         000035b0 007a000c  
+     654 000035d0                   CREATE  0EDH,SPLATS
+     655 00003650     c00e          JRUC    DGBLD1
+     656 00003660           DGBLD00
+     657 00003660     1f27          BTST    BSWALK,A7
+     658 00003670     ca02          JREQ    DGBLD0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   17
+
+     659 00003680     0b09          ADDI    15,A9                   ;LOWER BLOOD FOR SQUAT WALK
+         00003690     000f  
+     660 000036a0           DGBLD0:
+     661 000036a0     b608          MOVE    *A0(POBJ),A8,L
+         000036b0     00a0  
+     662 000036c0                   CREATE  0EDH,SPLATBOX
+     663 00003740           DGBLD1
+     664 00003740     09af          MMFM    SP,A8,A9,A11
+         00003750     0b00  
+     665 00003760     0960          RETS
+     666                    *
+     667                    *BLINK DOG EYE
+     668                    *A11=PALETTE
+     669                    *A10=PID
+     670 00003770           DOGEYE:
+     671 00003770                   SLEEP   1
+     672 000037b0     4d40          MOVE    A10,A0
+     673 000037c0     5621          CLR     A1
+     674 000037d0     03e1          NOT     A1
+     675 000037e0     0d5f          CALLA   EXISTP
+         000037f0 00000000! 
+     676 00003810     cb22          JRNE    DEDIE           ;ALREADY EXISTS
+     677                    
+     678 00003820     278a          SLL     28,A10
+     679 00003830     2d4a          SRL     22,A10
+     680 00003840     0b2a          ADDI    ICOLTAB,A10
+         00003850 00003a70' 
+     681 00003870           DOG0LP
+     682 00003870     4d49          MOVE    A10,A9
+     683 00003880           DOGILP:
+     684 00003880     05a0          MOVE    @DOGCNT,A0
+         00003890 00000000! 
+     685 000038b0     ca18          JREQ    DEDIE
+     686                    
+     687 000038c0     4d60          MOVE    A11,A0
+     688 000038d0     0d5f          CALLA   FINDPAL
+         000038e0 00000000! 
+     689 00003900     ca13          JREQ    DEDIE
+     690                    
+     691 00003910     4c08          MOVE    A0,A8           ;KEEP PALETTE POSITION
+     692 00003920     2708          SLL     24,A8
+     693 00003930     2e08          SRL     16,A8
+     694 00003940     0b08          ADDI    241,A8          ;ADD IN EYE COLOR VALUE
+         00003950     00f1  
+     695 00003960     4d01          MOVE    A8,A1
+     696                    
+     697 00003970     1822          MOVK    1,A2
+     698 00003980     4d20          MOVE    A9,A0
+     699 00003990     0d5f          CALLA   PALSET
+         000039a0 00000000! 
+     700 000039c0                   SLEEP   5
+     701 00003a00     1209          ADDK    16,A9
+     702 00003a10     8520          MOVE    *A9,A0,W
+     703 00003a20     cae4          JREQ    DOG0LP
+     704 00003a30     c0e4          JRUC    DOGILP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   18
+
+     705 00003a40     c080  DEDIE   JAUC    SUCIDE
+         00003a50 00000000! 
+     706                    *
+     707                    *                R        G         B
+     708                    *DOG EYE COLOR TABLE
+     709                    *0=END
+     710 00003a70           ICOLTAB
+     711 00003a70     0001          .WORD   1                               ;BLACK
+     712 00003a80     7c00        .word   (31*32*32)+(0 *32)+(  0 )         ;RED
+     713 00003a90     7fff        .word   (31*32*32)+(31*32)+(  31 )        ;WHITE
+     714 00003aa0     0000          .WORD   0
+     715                    *GREY GUY WITH RED/GOLD
+     716 00003ab0     7c00        .word   (31*32*32)+(0 *32)+(  0 )  
+     717 00003ac0     7fe0        .word   (31*32*32)+(31*32)+(  0)  
+     718 00003ad0     7c00        .word   (31*32*32)+(0 *32)+(  0 )  
+     719 00003ae0     0000          .WORD   0
+     720                    *BLACK GUY WITH BLUE GLOWERS
+     721 00003af0     7fff        .word   (31*32*32)+(31*32)+(  31 )        ;WHITE
+     722 00003b00     0014        .word   (0*32*32)+(0 *32)+(  20 ) 
+     723 00003b10     001f        .word   (0*32*32)+(0 *32)+(  31 ) 
+     724 00003b20     0000          .WORD   0
+     725 00003b30           ICOLTEND
+     726                    *
+     727                    *GET DIRECTION FOR DOG
+     728                    *A1=DELTA X
+     729                    *A2=DELTA Z
+     730                    *A3=ABS DX
+     731                    *A4=ABS DZ
+     732                    *A8=OBJECT
+     733                    *A13=PROCESS
+     734 00003b30           DOGDIR:
+     735 00003b30     09c0          MOVI    200,A0
+         00003b40     00c8  
+     736 00003b50     0d5f          CALLA   RANDPER
+         00003b60 00000000! 
+     737 00003b80     c90a          JRNC    DOGD1   
+     738 00003b90           DOGD0
+     739 00003b90     09c0          MOVI    04000H,A0       ;GET RANDOM VELOCITY FACTOR
+         00003ba0     4000  
+     740 00003bb0     0d5f          CALLA   RANDU
+         00003bc0 00000000! 
+     741 00003be0     0b20          ADDI    0BFFFH,A0
+         00003bf0 0000bfff  
+     742 00003c10     b00d          MOVE    A0,*A13(ETEMP1),W
+         00003c20     0180  
+     743 00003c30           DOGD1
+     744 00003c30     4c6e          MOVE    A3,A14          ;SAVE ABS DX
+     745 00003c40     05a3          MOVE    @DOGSPD,A3,W    ;X VELOCITY
+         00003c50 00000000! 
+     746                    
+     747 00003c70     b5a4          MOVE    *A13(ETEMP1),A4 
+         00003c80     0180  
+     748 00003c90     0524          ZEXT    A4,W
+     749 00003ca0     5e83          MPYU    A4,A3
+     750 00003cb0     2f03          SRL     8,A3            ;NORMALIZE IT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   19
+
+     751 00003cc0     4c64          MOVE    A3,A4
+     752 00003cd0     b500          MOVE    *A8(OID),A0,W   ;INCREASE VELOCITY FOR SUBTYPES
+         00003ce0     01a0  
+     753 00003cf0     2780          SLL     28,A0
+     754 00003d00     2c80          SRL     28,A0           ;MASK THE STUFF OUT
+     755 00003d10     ca05          JREQ    DOGD2
+     756 00003d20     2fe4          SRL     1,A4
+     757 00003d30     1420          DEC     A0
+     758 00003d40     cb01          JRNE    DOGD10
+     759 00003d50     2fe4          SRL     1,A4
+     760 00003d60           DOGD10
+     761 00003d60     4083          ADD     A4,A3
+     762 00003d70           DOGD2
+     763 00003d70     4c64          MOVE    A3,A4
+     764 00003d80     2fe4          SRL     1,A4            ;Z VELOCITY
+     765 00003d90     0381          ABS     A1              ;NEGATE FOR NEGATIVE X
+     766 00003da0     ce01          JRN     DOGDIR1
+     767 00003db0     03a3          NEG     A3
+     768 00003dc0           DOGDIR1:
+     769 00003dc0     0382          ABS     A2              ;NEGATE FOR NEGATIVE Z
+     770 00003dd0     ce01          JRN     DOGDIR2
+     771 00003de0     03a4          NEG     A4
+     772 00003df0           DOGDIR2:        
+     773 00003df0     0b42          CMPI    4,A2            ;CLEAR ZVEL IF REAL CLOSE
+         00003e00     fffb  
+     774 00003e10     c301          JRHI    DOGDIR4
+     775 00003e20     5684          CLR     A4
+     776 00003e30           DOGDIR4:
+     777 00003e30     b502          MOVE    *A8(OZPOS),A2,W         ;IF OFF SCREEN, COME ON BACK
+         00003e40     00d0  
+     778 00003e50     05a1          MOVE    @PLZMIN,A1,W
+         00003e60 00000000! 
+     779 00003e80     4822          CMP     A1,A2
+     780 00003e90     c502          JRGE    DOGDIR44
+     781 00003ea0     09c4          MOVI    01000H,A4
+         00003eb0     1000  
+     782 00003ec0           DOGDIR44:
+     783 00003ec0     b288          MOVE    A4,*A8(OYVEL),L
+         00003ed0     0060  
+     784 00003ee0     b288          MOVE    A4,*A8(OZVEL),L
+         00003ef0     00e0  
+     785 00003f00     0b4e          CMPI    30,A14          ;DONT CHANGE XVEL IF CLOSE (ANTI STAIRSTEP)
+         00003f10     ffe1  
+     786 00003f20     c904          JRHS    DOGDIR5
+     787 00003f30     b70e          MOVE    *A8(OXVEL),A14,L
+         00003f40     0040  
+     788 00003f50     ca01          JREQ    DOGDIR5
+     789 00003f60     4dc3          MOVE    A14,A3
+     790 00003f70           DOGDIR5:
+     791 00003f70     b268          MOVE    A3,*A8(OXVEL),L ;STORE VELOCITY
+         00003f80     0040  
+     792 00003f90     c080          JAUC    SHVELFLP
+         00003fa0 00000000! 
+     793                    *
+     794                    *EXPLOSION VELOCITY
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   20
+
+     795                    *A8=OBJECT, A6=SHIT THAT HIT YOU
+     796                    *
+     797 00003fc0           EXPVEL:
+     798 00003fc0     0d5f          CALLA   PSTOP           ;BLOW DUDE INTO THE AIR                                  
+         00003fd0 00000000! 
+     799 00003ff0     09e0          MOVI    050000H,A0      ;GET RANDOM Y VELOCITY
+         00004000 00050000  
+     800 00004020     0d5f          CALLA   RANDU
+         00004030 00000000! 
+     801 00004050     0b20          ADDI    01C000H,A0
+         00004060 0001c000  
+     802 00004080     4c03          MOVE    A0,A3
+     803 00004090     03a3          NEG     A3
+     804 000040a0     09e0          MOVI    030000H,A0      ;GET RANDOM X VELOCITY
+         000040b0 00030000  
+     805 000040d0     0d5f          CALLA   RANDU
+         000040e0 00000000! 
+     806 00004100     0b20          ADDI    0C000H,A0       ;ADD IN BIAS
+         00004110 0000c000  
+     807 00004130     b4ce          MOVE    *A6(OXVEL+010H),A14  ;GET ROCKET VELOCITY
+         00004140     0050  
+     808 00004150     ca03          JREQ    CLNEX1
+     809 00004160     cf15          JRNN    CLNEX2
+     810 00004170     03a0          NEG     A0
+     811 00004180     c013          JRUC    CLNEX2
+     812 00004190           CLNEX1:                          ;ZERO VELOCITY CASE, (EXPLOSION)
+     813 00004190     0d00          SUBI    018000H,A0       ;REMOVE BIAS
+         000041a0 fffe7fff  
+     814 000041c0     0d5f          CALLA   GETCPNT
+         000041d0 00000000! 
+     815 000041f0                   SWAP    A6,A8
+     816 00004220     4c22          MOVE    A1,A2            ;A2=CLOWN CENTER
+     817 00004230     0d5f          CALLA   GETCPNT
+         00004240 00000000! 
+     818 00004260                   SWAP    A6,A8            ;A1=EXPLOSION CENTER
+     819 00004290     e222          SUBXY   A1,A2
+     820 000042a0     cd01          JRXNN   CLNEX2
+     821 000042b0     03a0          NEG     A0
+     822 000042c0           CLNEX2:
+     823 000042c0     b208          MOVE    A0,*A8(OXVEL),L
+         000042d0     0040  
+     824 000042e0     09c0          MOVI    06000H,A0       ;GET RANDOM Z VELOCITY
+         000042f0     6000  
+     825 00004300     0d5f          CALLA   SRAND
+         00004310 00000000! 
+     826 00004330     b208          MOVE    A0,*A8(OZVEL),L
+         00004340     00e0  
+     827 00004350     4003          ADD     A0,A3
+     828 00004360     b268          MOVE    A3,*A8(OYVEL),L
+         00004370     0060  
+     829 00004380     0d5f          CALLA   SHVELCPY
+         00004390 00000000! 
+     830 000043b0           CLNEXP0:
+     831 000043b0     0960          RETS
+     832                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   21
+
+     833                    *ROCKET, EXPLOSION  KILL
+     834                    *A0 = PTR TO DOG OBJECT
+     835                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     836                    *
+     837 000043c0           DOGCOL0
+     838 000043c0     b50b          MOVE    *A8(OID),A11,W          ;GET ENEMY ID FOR POINTS
+         000043d0     01a0  
+     839 000043e0     4d06          MOVE    A8,A6
+     840 000043f0     4c08          MOVE    A0,A8
+     841 00004400     0d5f          CALLA   SCRKIL
+         00004410 00000000! 
+     842 00004430     0d3f          CALLR   EXPVEL
+         00004440     ffb7  
+     843                    
+     844 00004450     09e0          MOVI    DUMCOLL,A0
+         00004460 00000000! 
+     845 00004480     b208          MOVE    A0,*A8(OCVECT),L        ;COLLISION POINTER NULL FOR NOW
+         00004490     01d0  
+     846                    
+     847 000044a0     b700          MOVE    *A8(OPLINK),A0,L
+         000044b0     01f0  
+     848 000044c0     09c1          MOVI    0EDh,A1
+         000044d0     00ed  
+     849 000044e0     09e7          MOVI    CHIFLY,A7
+         000044f0 00004560' 
+     850 00004510     0d5f          CALLA   XFERPROC                ;CREATE A CHIHUAHUA FLYER
+         00004520 00000000! 
+     851 00004540           DOGCOLX
+     852 00004540     0320          CLRC                            ;TELL COLLISION SCANNER NOT TO DELETE
+     853 00004550     0960          RETS
+     854                    *
+     855                    *FLY CHIHUAHUA FLY
+     856                    *
+     857 00004560           CHIFLY:
+     858 00004560     4d00          MOVE    A8,A0                   ;DONT CREATE 2 SHADOWS
+     859 00004570     0d5f          CALLA   DELSHAD
+         00004580 00000000! 
+     860 000045a0     0d5f          CALLA   SHADST
+         000045b0 00000000! 
+     861 000045d0     0d5f          CALLA   SHVELCPY
+         000045e0 00000000! 
+     862 00004600           CHIFLY00:
+     863 00004600     09e9          MOVI    CHIBLO,A9       ;FLIP HIM OVER
+         00004610 00006bd0' 
+     864 00004630     1881          MOVK    4,A1
+     865 00004640                   JSRP    FRANIM
+     866 000046b0     b50a          MOVE    *A8(OYPOS),A10,W
+         000046c0     00b0  
+     867 000046d0     07a1          MOVE    @CHIBLO,A1,L
+         000046e0 00006bd0' 
+     868 00004700     b704          MOVE    *A8(OFLAGS),A4,L
+         00004710     0100  
+     869 00004720     0bc4          XORI    M_FLIPV,A4
+         00004730 00000020  
+     870 00004750     0d5f          CALLA   RANDOM
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   22
+
+         00004760 00000000! 
+     871 00004780     0b80          ANDI    M_FLIPH,A0              ;RANDOM HFLIP
+         00004790 ffffffef  
+     872 000047b0     5604          XOR     A0,A4
+     873 000047c0     0d5f          CALLA   ANI
+         000047d0 00000000! 
+     874 000047f0     b148          MOVE    A10,*A8(OYPOS),W        ;RESET YOUR Y COORD FOR IN PLACE FLIP
+         00004800     00b0  
+     875 00004810           CHIFLY0:
+     876 00004810     09e9          MOVI    CHIBLO,A9       ;DO YOUR BLO UP ANIMATION
+         00004820 00006bd0' 
+     877                    *       CLR     A10
+     878 00004840           CHIFLYL:
+     879                    *       DEC     A10
+     880                    *       JRNN    CHIFLY1
+     881                    *       MOVK    1,A10
+     882 00004840     1881          MOVK    4,A1
+     883 00004850                   JSRP    FRANIM
+     884 000048c0     c8f4          JRC     CHIFLY0
+     885 000048d0           CHIFLY1
+     886 000048d0     0d5f          CALLA   ZCHK
+         000048e0 00000000! 
+     887 00004900                   SLEEP   3
+     888 00004940     b700          MOVE    *A8(OYVEL),A0,L         ;EFFECT OF GRAVITY
+         00004950     0060  
+     889 00004960     0b00          ADDI    05000H,A0
+         00004970     5000  
+     890 00004980     b208          MOVE    A0,*A8(OYVEL),L
+         00004990     0060  
+     891 000049a0     b701          MOVE    *A8(OZVEL),A1,L         ;SUBTRACT OUT Z COMPONENT
+         000049b0     00e0  
+     892 000049c0     4420          SUB     A1,A0
+     893 000049d0     cee6          JRN     CHIFLYL                 ;CANT LAND WITH NEGATIVE Y VEL.
+     894 000049e0     0d5f          CALLA   DFRMGRND
+         000049f0 00000000! 
+     895 00004a10     cfe2          JRNN    CHIFLYL                 ;STILL GOING
+     896                    
+     897 00004a20     0b60          CMPI    01A000H,A0
+         00004a30 fffe5fff  
+     898 00004a50     c219          JRLS    DOGLAND
+     899 00004a60     2be0          SRA     1,A0                    ;BOUNCE VELOCITY
+     900 00004a70     03a0          NEG     A0
+     901 00004a80     b701          MOVE    *A8(OZVEL),A1,L         ;CUT DOWN Z
+         00004a90     00e0  
+     902 00004aa0     2be1          SRA     1,A1
+     903 00004ab0     b228          MOVE    A1,*A8(OZVEL),L
+         00004ac0     00e0  
+     904 00004ad0     4020          ADD     A1,A0
+     905 00004ae0     b208          MOVE    A0,*A8(OYVEL),L         ;CUT DOWN Y
+         00004af0     0060  
+     906 00004b00     b700          MOVE    *A8(OXVEL),A0,L         ;CUT DOWN X
+         00004b10     0040  
+     907 00004b20     2be0          SRA     1,A0
+     908 00004b30     b208          MOVE    A0,*A8(OXVEL),L
+         00004b40     0040  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   23
+
+     909 00004b50     0d5f          CALLA   SHVELCPY
+         00004b60 00000000! 
+     910                            
+     911 00004b80     09e0          MOVI    DGBCSND,A0              ;MAKE DOG BOUNCE SOUND
+         00004b90 00001810' 
+     912 00004bb0     0d5f          CALLA   ONESND
+         00004bc0 00000000! 
+     913 00004be0     c0a1          JRUC    CHIFLY00
+     914                    
+     915 00004bf0           DOGLAND:
+     916 00004bf0     09e0          MOVI    DGHTSND,A0              ;MAKE DOG HIT SOUND
+         00004c00 000017d0' 
+     917 00004c20     0d5f          CALLA   ONESND
+         00004c30 00000000! 
+     918 00004c50     0d5f          CALLA   PSTOP                   ;STOP THE SUCKER   
+         00004c60 00000000! 
+     919 00004c80     4d00          MOVE    A8,A0                   ;OBJECT IN A0 FOR SETZPOS
+     920 00004c90     0d5f          CALLA   SETZPOS                 ;ADJUST THE MUTHA
+         00004ca0 00000000! 
+     921 00004cc0                   DECW    @DOGCNT                 ;CUT DOWN DOGGIES
+     922 00004d30     09e9          MOVI    [1,1],A9
+         00004d40 00010001  
+     923 00004d60                   CREATE  0DFh,ESINK              ;CREATE THE DEADMAN SINK         
+     924 00004de0     c080          JAUC    SUCIDE                  ;DIE
+         00004df0 00000000! 
+     925                    *
+     926                    *DOG HIT BY A CAR
+     927                    *A0 = PTR TO DOG OBJECT
+     928                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     929                    *
+     930 00004e10           DOGCAR:
+     931 00004e10     0d5f          CALLA   CARCHK
+         00004e20 00000000! 
+     932 00004e40     c900          JRNC    DOGCOLX
+         00004e50     ff6e  
+     933 00004e60                   PUSH    A0
+     934 00004e70     09e0          MOVI    DGCARSND,A0             ;FAST CAR DO IT
+         00004e80 00001850' 
+     935 00004ea0     0d5f          CALLA   ONESND
+         00004eb0 00000000! 
+     936 00004ed0                   PULL    A0
+     937 00004ef0     c000          JRUC    DOGCOL0
+         00004f00     ff4b  
+     938                    *
+     939                    *DOG BULLET COLLISION ROUTINE
+     940                    *A0 = PTR TO DOG OBJECT
+     941                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+     942 00004f10           DOGBUL
+     943 00004f10     b50b          MOVE    *A8(OID),A11,W          ;GET ENEMY ID FOR POINTS
+         00004f20     01a0  
+     944 00004f30     4d0a           MOVE   A8,A10                  ;SAVE BULLET
+     945 00004f40     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+     946 00004f50     0d5f          CALLA   SCRKIL
+         00004f60 00000000! 
+     947 00004f80     09ee          MOVI    DUMCOLL,A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   24
+
+         00004f90 00000000! 
+     948 00004fb0     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER NULL FOR NOW
+         00004fc0     01d0  
+     949                    
+     950 00004fd0     0d5f          CALLA   DFRMGRND                ;IS HE IN THE AIR?
+         00004fe0 00000000! 
+     951 00005000     0b41          CMPI    4,A1
+         00005010     fffb  
+     952 00005020     c40f          JRLT    DOGBUL1
+     953 00005030     09c2          MOVI    4,A2
+         00005040     0004  
+     954 00005050     b500          MOVE    *A8(OXVEL+010H),A0,W    ;GIVE HIM A SHOVE
+         00005060     0050  
+     955 00005070     b541          MOVE    *A10(OXVEL),A1
+         00005080     0040  
+     956 00005090     cf01          JRNN    DOGBUL0
+     957 000050a0     03a2          NEG     A2
+     958 000050b0           DOGBUL0:
+     959 000050b0     4040          ADD     A2,A0
+     960 000050c0     b008          MOVE    A0,*A8(OXVEL+010H),W
+         000050d0     0050  
+     961 000050e0     09e7          MOVI    CHIFLY,A7
+         000050f0 00004560' 
+     962 00005110     c003          JRUC    DOGBUL2
+     963 00005120           DOGBUL1:        
+     964 00005120     09e7          MOVI    CHICHI,A7
+         00005130 000051e0' 
+     965 00005150           DOGBUL2:
+     966 00005150     b700          MOVE    *A8(OPLINK),A0,L
+         00005160     01f0  
+     967 00005170     09c1          MOVI    0EDh,A1
+         00005180     00ed  
+     968 00005190     0d5f          CALLA   XFERPROC                ;CREATE A CHIHUAHUA
+         000051a0 00000000! 
+     969 000051c0     0320          CLRC                            ;TELL COLLISION SCANNER NOT TO DELETE
+     970 000051d0     0960          RETS
+     971                    *       
+     972                    *CHIHUAHUA RUN OFF SCREEN
+     973                    *A8=OBJECT
+     974 000051e0           CHICHI: 
+     975 000051e0     0d5f          CALLA   PSTOP
+         000051f0 00000000! 
+     976 00005210     4d00          MOVE    A8,A0                   ;DONT CREATE 2 SHADOWS
+     977 00005220     0d5f          CALLA   DELSHAD
+         00005230 00000000! 
+     978 00005250     0d5f          CALLA   SHADST
+         00005260 00000000! 
+     979 00005280     09e0          MOVI    DGWMPSND,A0
+         00005290 00001790' 
+     980 000052b0     0d5f          CALLA   ONESND
+         000052c0 00000000! 
+     981 000052e0     09c1          MOVI    3,A1            ;FLIP HIM AROUND AND SCAMPER AWAY
+         000052f0     0003  
+     982 00005300     0d5f          CALLA   GETCPLY         ;GET CLOSEST PLAYER
+         00005310 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   25
+
+     983 00005330     b600          MOVE    *A0(POBJ),A0,L  ;PLAYER OBJECT
+         00005340     00a0  
+     984 00005350     0d5f          CALLA   XZCHK
+         00005360 00000000! 
+     985 00005380     09e0          MOVI    020000H,A0
+         00005390 00020000  
+     986 000053b0     0d5f          CALLA   RANDU
+         000053c0 00000000! 
+     987 000053e0     0b20          ADDI    020000H,A0
+         000053f0 00020000  
+     988 00005410     4c21          MOVE    A1,A1
+     989 00005420     ce05          JRN     CHICHI0
+     990 00005430     03a0          NEG     A0
+     991 00005440     0d5f          CALLA   YFLP
+         00005450 00000000! 
+     992 00005470     c003          JRUC    CHICHI2
+     993 00005480           CHICHI0 
+     994 00005480     0d5f          CALLA   NOYFLP
+         00005490 00000000! 
+     995 000054b0           CHICHI2
+     996 000054b0     b208          MOVE    A0,*A8(OXVEL),L
+         000054c0     0040  
+     997 000054d0     0d5f          CALLA   SHVELCPY
+         000054e0 00000000! 
+     998 00005500           CHILP
+     999 00005500     09e9          MOVI    LILDOG,A9
+         00005510 00006a90' 
+    1000 00005530     09c1          MOVI    1,A1
+         00005540     0001  
+    1001 00005550                   JSRP    FRANIM
+    1002                    
+    1003 000055c0     05a0          MOVE    @WORLDTL,A0,W           ;CHECK FOR FAR OFF SCREEN
+         000055d0 00000000! 
+    1004 000055f0     0b00          ADDI    256,A0                  ;NORMALIZE FOR SCREEN CENTER
+         00005600     0100  
+    1005 00005610     b501          MOVE    *A8(OXPOS),A1,W 
+         00005620     0090  
+    1006 00005630     4401          SUB     A0,A1
+    1007 00005640     0381          ABS     A1
+    1008 00005650     0b41          CMPI    300,A1
+         00005660     fed3  
+    1009 00005670     c2e8          JRLS    CHILP                   ;NOT GONE YET
+    1010                            
+    1011 00005680     05a0          MOVE    @DOGCNT,A0,W
+         00005690 00000000! 
+    1012 000056b0     1420          DEC     A0
+    1013 000056c0     0580          MOVE    A0,@DOGCNT,W
+         000056d0 00000000! 
+    1014                    
+    1015 000056f0     4d00          MOVE    A8,A0                   ;GET OBJECT DESCRIPTOR
+    1016 00005700     0d5f          CALLA   DELENEMY                ;DELETE OBJECT AND QUIT
+         00005710 00000000! 
+    1017 00005730     c080          JAUC    SUCIDE
+         00005740 00000000! 
+    1018                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   26
+
+    1019                    *STFOBJ INITIALIZING DATA
+    1020                    *       .LONG   OXVEL,OYVEL,OXVAL,OYVAL
+    1021                    *       .WORD   OZPOS,OZVEL
+    1022                    *       .LONG   OIMG,OZSIZ,OCVECT
+    1023                    *       .WORD   OFLAGS,OID
+    1024 00005760           DOGINIT
+    1025 00005760 00000000          .LONG   0,0,0,0
+    1026 000057e0     0000          .WORD   0,0
+    1027 00005800 00000100"         .LONG   dog3,LOFZ,DOGCOLL
+    1028 00005860     8002          .WORD   DMAWNZ,DOGOID
+    1029 00005880 00000000!         .LONG   DOGBLIP
+    1030                    
+    1031                    *COLLISION TABLE
+    1032 000058a0           DOGCOLL 
+    1033 000058a0     0b10          .WORD   B1OID|BULLETID
+    1034 000058b0 00004f10'         .LONG   DOGBUL
+    1035 000058d0     0b12          .WORD   B1OID|EXPLODID
+    1036 000058e0 000043c0'         .LONG   DOGCOL0
+    1037 00005900     0b14          .WORD   B1OID|ROCKETID
+    1038 00005910 000043c0'         .LONG   DOGCOL0
+    1039 00005930     0b20          .WORD   B2OID|BULLETID
+    1040 00005940 00004f10'         .LONG   DOGBUL
+    1041 00005960     0b22          .WORD   B2OID|EXPLODID
+    1042 00005970 000043c0'         .LONG   DOGCOL0
+    1043 00005990     0b24          .WORD   B2OID|ROCKETID
+    1044 000059a0 000043c0'         .LONG   DOGCOL0
+    1045 000059c0     0be2          .WORD   BEOID|EXPLODID
+    1046 000059d0 000043c0'         .LONG   DOGCOL0
+    1047 000059f0     0c30          .WORD   TRAN1OID+CBODYID
+    1048 00005a00 00004e10'         .LONG   DOGCAR
+    1049 00005a20     0c40          .WORD   TRAN2OID+CBODYID
+    1050 00005a30 00004e10'         .LONG   DOGCAR
+    1051 00005a50     0c42          .WORD   TRAN2OID+WSHLDID
+    1052 00005a60 00004e10'         .LONG   DOGCAR
+    1053 00005a80     0c00          .WORD   C1OID+CBODYID
+    1054 00005a90 00004e10'         .LONG   DOGCAR
+    1055 00005ab0     0000          .WORD   0
+    1056 00005ac0 00000000!         .LONG   DUMRTSG
+    1057                    
+    1058                    *DDUMCL0                                ;DOG DUMCOLL
+    1059                    *               .WORD   0
+    1060                    *       .LONG   DUMRTSG
+    1061                    *DDUMCL1
+    1062                    *               .WORD   0
+    1063                    *       .LONG   DUMRTSG
+    1064                    
+    1065                    
+    1066                    *LOFFREDO FRAME TABLES
+    1067                    *NORMAL TABLE ENTRY:
+    1068                    *       .LONG   FRAME1
+    1069                    *       .WORD   SLEEPT,FLIP_FACTOR
+    1070                    *       .LONG   FRAME2
+    1071                    *       .
+    1072                    *       .
+    1073                    *       .
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   27
+
+    1074                    *SPECIAL ENTRY(FOR STORED OFFSETS AND PROCESSES)
+    1075                    *       .LONG   FRAME1
+    1076                    *       .WORD   -SLEEPT,XOFF,YOFF,PROC. ID
+    1077                    *       .LONG   PROCESS STARTING ADDRESS
+    1078                    *       .WORD   FLIP_FACTOR
+    1079                    *       .LONG   FRAME2
+    1080                    *
+    1081                    *DOG RUN
+    1082                    *       
+    1083 00005ae0           DOGRUN: 
+    1084 00005ae0 00000100"         .LONG   dog3
+    1085 00005b00     0004          .WORD   4
+    1086 00005b10 00000180"         .LONG   dog4
+    1087 00005b30     0004          .WORD   4
+    1088 00005b40 00000000"         .LONG   dog1
+    1089 00005b60     0004          .WORD   4
+    1090 00005b70 00000880"         .LONG   leap1
+    1091 00005b90     0004          .WORD   4
+    1092 00005ba0 00000900"         .LONG   leap2
+    1093 00005bc0     0004          .WORD   4
+    1094 00005bd0 00000080"         .LONG   dog2
+    1095 00005bf0     0004          .WORD   4
+    1096 00005c00 00000000          .LONG   0
+    1097 00005c20           DOGRUNX:
+    1098                    *
+    1099                    *ATTACKING SEQUENCES
+    1100                    *
+    1101                    *QUICK FRONTAL ATTACK
+    1102                    *
+    1103 00005c20           QKATTACK:       
+    1104 00005c20 00000a00"         .LONG   atack1
+    1105 00005c40     0006          .WORD   6
+    1106 00005c50 00000a80"         .LONG   atack2
+    1107 00005c70     0006          .WORD   6
+    1108 00005c80 00000b00"         .LONG   atack3
+    1109 00005ca0     0009          .WORD   9
+    1110 00005cb0 00000000          .LONG   0
+    1111 00005cd0 00000a80"         .LONG   atack2
+    1112 00005cf0     0006          .WORD   6
+    1113 00005d00 00000a00"         .LONG   atack1
+    1114 00005d20     0006          .WORD   6
+    1115 00005d30 00000000          .LONG   0
+    1116                    *
+    1117                    *DOG QUICK LEAP (SIDE BITE)
+    1118                    *
+    1119 00005d50           QKLEAP:
+    1120 00005d50 00000880"         .LONG   leap1
+    1121 00005d70     0004          .WORD   4
+    1122 00005d80 00000900"         .LONG   leap2
+    1123 00005da0     0004          .WORD   4
+    1124 00005db0 00000980"         .LONG   leap3
+    1125 00005dd0     0008          .WORD   8
+    1126 00005de0 00000000          .LONG   0
+    1127 00005e00 00000900"         .LONG   leap2
+    1128 00005e20     0006          .WORD   6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   28
+
+    1129 00005e30 00000880"         .LONG   leap1
+    1130 00005e50     0006          .WORD   6
+    1131 00005e60 00000000          .LONG   0
+    1132                    *
+    1133                    *LEAP (LUNGE AT PLAYER)
+    1134                    *
+    1135 00005e80           LEAP:
+    1136                    *TAKEOFF
+    1137 00005e80 00000880"         .LONG   leap1
+    1138 00005ea0     0003          .WORD   3
+    1139 00005eb0 00000900"         .LONG   leap2
+    1140 00005ed0     0003          .WORD   3
+    1141 00005ee0 00000980"         .LONG   leap3
+    1142 00005f00     0003          .WORD   3
+    1143 00005f10 00000000          .LONG   0
+    1144                    *IN AIR
+    1145 00005f30 00000f80"         .LONG   atack12
+    1146 00005f50     0003          .WORD   3
+    1147 00005f60 00000f80"         .LONG   atack12
+    1148 00005f80     0003          .WORD   3
+    1149 00005f90 00001000"         .LONG   atack13
+    1150 00005fb0     0003          .WORD   3
+    1151 00005fc0 00001000"         .LONG   atack13
+    1152 00005fe0     0003          .WORD   3
+    1153 00005ff0 00001080"         .LONG   atack14
+    1154 00006010     0003          .WORD   3
+    1155 00006020 00001080"         .LONG   atack14
+    1156 00006040     0003          .WORD   3
+    1157 00006050 00000000          .LONG   0
+    1158                    *LANDING
+    1159 00006070 00000980"         .LONG   leap3
+    1160 00006090     0005          .WORD   5
+    1161 000060a0 00000880"         .LONG   leap1
+    1162 000060c0     0005          .WORD   5
+    1163 000060d0 00000000          .LONG   0
+    1164                    *
+    1165                    *FRONTAL LEAP ATTACK
+    1166                    *
+    1167 000060f0           FATTACK:
+    1168 000060f0 00000a00"         .LONG   atack1
+    1169 00006110     0003          .WORD   3
+    1170 00006120 00000a80"         .LONG   atack2
+    1171 00006140     0003          .WORD   3
+    1172 00006150 00000000          .LONG   0
+    1173                    *IN AIR
+    1174 00006170 00000b00"         .LONG   atack3
+    1175 00006190     0003          .WORD   3
+    1176 000061a0 00000b80"         .LONG   atack4
+    1177 000061c0     0003          .WORD   3
+    1178 000061d0 00000e80"         .LONG   atack10
+    1179 000061f0     0003          .WORD   3
+    1180 00006200 00000c00"         .LONG   atack5
+    1181 00006220     0003          .WORD   3
+    1182 00006230 00000c80"         .LONG   atack6
+    1183 00006250     0003          .WORD   3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   29
+
+    1184 00006260 00000d00"         .LONG   atack7
+    1185 00006280     0003          .WORD   3
+    1186 00006290 00000d80"         .LONG   atack8
+    1187 000062b0     0003          .WORD   3
+    1188 000062c0 00000b80"         .LONG   atack4
+    1189 000062e0     0003          .WORD   3
+    1190 000062f0 00000c00"         .LONG   atack5
+    1191 00006310     0003          .WORD   3
+    1192 00006320 00000c80"         .LONG   atack6
+    1193 00006340     0003          .WORD   3
+    1194 00006350 00000c00"         .LONG   atack5
+    1195 00006370     0003          .WORD   3
+    1196 00006380 00000b00"         .LONG   atack3
+    1197 000063a0     0003          .WORD   3
+    1198 000063b0 00000000          .LONG   0
+    1199                    *LAND
+    1200 000063d0 00000a80"         .LONG   atack2
+    1201 000063f0     0003          .WORD   3
+    1202 00006400 00000a00"         .LONG   atack1
+    1203 00006420     0003          .WORD   3
+    1204 00006430 00000000          .LONG   0
+    1205                    *
+    1206                    *TUG
+    1207                    *
+    1208 00006450           TUG:
+    1209 00006450 00000280"         .LONG   drag2
+    1210 00006470     0006          .WORD   6
+    1211 00006480 00000300"         .LONG   drag3
+    1212 000064a0     0006          .WORD   6
+    1213 000064b0 00000200"         .LONG   drag1
+    1214 000064d0     0006          .WORD   6
+    1215 000064e0 00000380"         .LONG   drag4
+    1216 00006500     0006          .WORD   6
+    1217 00006510 00000000          .LONG   0
+    1218                    *
+    1219                    *GRRR ...LOW ATTACK
+    1220                    *
+    1221 00006530           GRR1:
+    1222 00006530 00000880"         .LONG   leap1
+    1223 00006550     0005          .WORD   5
+    1224 00006560 00000980"         .LONG   leap3
+    1225 00006580     0005          .WORD   5
+    1226 00006590 00000900"         .LONG   leap2
+    1227 000065b0     0005          .WORD   5
+    1228 000065c0           GRR2:
+    1229 000065c0 00001100"         .LONG   growl1
+    1230 000065e0     0005          .WORD   5
+    1231 000065f0 00001180"         .LONG   growl2
+    1232 00006610     0005          .WORD   5
+    1233 00006620 00000000          .LONG   0
+    1234                    *
+    1235                    *TEAR ATTACK
+    1236                    *
+    1237 00006640           TEAR1:
+    1238 00006640 00001200"         .LONG   tear1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   30
+
+    1239 00006660     0005          .WORD   5
+    1240 00006670 00001280"         .LONG   tear2
+    1241 00006690     0005          .WORD   5
+    1242 000066a0 00001300"         .LONG   tear3
+    1243 000066c0     0005          .WORD   5
+    1244 000066d0 00001380"         .LONG   tear4
+    1245 000066f0     0005          .WORD   5
+    1246 00006700 00001400"         .LONG   tear5
+    1247 00006720     0005          .WORD   5
+    1248 00006730 00001480"         .LONG   tear6
+    1249 00006750     0005          .WORD   5
+    1250 00006760 00001380"         .LONG   tear4
+    1251 00006780     0005          .WORD   5
+    1252 00006790 00001280"         .LONG   tear2
+    1253 000067b0     0005          .WORD   5
+    1254 000067c0 00000000          .LONG   0
+    1255                    
+    1256 000067e0           TEAR2:
+    1257 000067e0 00001280"         .LONG   tear2
+    1258 00006800     0005          .WORD   5
+    1259 00006810 00001300"         .LONG   tear3
+    1260 00006830     0003          .WORD   3
+    1261 00006840 00001380"         .LONG   tear4
+    1262 00006860     0002          .WORD   2
+    1263 00006870 00001400"         .LONG   tear5
+    1264 00006890     0005          .WORD   5
+    1265 000068a0 00001480"         .LONG   tear6
+    1266 000068c0     0005          .WORD   5
+    1267 000068d0 00001400"         .LONG   tear5
+    1268 000068f0     0003          .WORD   3
+    1269 00006900 00001380"         .LONG   tear4
+    1270 00006920     0002          .WORD   2
+    1271 00006930 00001300"         .LONG   tear3
+    1272 00006950     0003          .WORD   3
+    1273 00006960 00001280"         .LONG   tear2
+    1274 00006980     0002          .WORD   2
+    1275 00006990 00000000          .LONG   0
+    1276                    *
+    1277                    *DOG DRAG OFF CORPSE
+    1278                    *
+    1279 000069b0           DRAG:
+    1280 000069b0 00000380"         .LONG   drag4
+    1281 000069d0     0008          .WORD   8
+    1282 000069e0 00000400"         .LONG   drag5
+    1283 00006a00     0008          .WORD   8
+    1284 00006a10 00000480"         .LONG   drag6
+    1285 00006a30     0008          .WORD   8
+    1286 00006a40 00000500"         .LONG   drag7
+    1287 00006a60     0008          .WORD   8
+    1288 00006a70 00000000          .LONG   0
+    1289                    *
+    1290                    *LITTLE DOGGIE RUN AWAY 
+    1291                    *
+    1292 00006a90           LILDOG:
+    1293 00006a90 00000580"         .LONG   smdog1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:20:36 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- PIT BULLS >>>                                    PAGE   31
+
+    1294 00006ab0     0003          .WORD   3
+    1295 00006ac0 00000600"         .LONG   smdog2
+    1296 00006ae0     0003          .WORD   3
+    1297 00006af0 00000680"         .LONG   smdog3
+    1298 00006b10     0003          .WORD   3
+    1299 00006b20 00000700"         .LONG   smdog4
+    1300 00006b40     0003          .WORD   3
+    1301 00006b50 00000780"         .LONG   smdog5
+    1302 00006b70     0003          .WORD   3
+    1303 00006b80 00000800"         .LONG   smdog6
+    1304 00006ba0     0003          .WORD   3
+    1305 00006bb0 00000000          .LONG   0
+    1306 00006bd0           CHIBLO:
+    1307 00006bd0 00000580"         .LONG   smdog1
+    1308 00006bf0     0005          .WORD   5
+    1309 00006c00 00000700"         .LONG   smdog4
+    1310 00006c20     0005          .WORD   5
+    1311 00006c30 00000600"         .LONG   smdog2
+    1312 00006c50     0005          .WORD   5
+    1313 00006c60 00000800"         .LONG   smdog6
+    1314 00006c80     0005          .WORD   5
+    1315 00006c90 00000680"         .LONG   smdog3
+    1316 00006cb0     0005          .WORD   5
+    1317 00006cc0 00000780"         .LONG   smdog5
+    1318 00006ce0     0005          .WORD   5
+    1319 00006cf0 00000000          .LONG   0
+    1320                            
+
+ No Errors,  No Warnings

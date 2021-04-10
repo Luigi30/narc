@@ -1,0 +1,538 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCBLIP.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L,T
+      13                            .MNOLIST
+      14                    
+      15                    *       GET THE SYSTEM STUFF
+      16                            .INCLUDE        "\video\MPROCEQU.ASM"   ;MPROC equates
+      17                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      18                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      19                    *       LOCAL STUFF
+      20                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      21 00000000                   .EVEN
+      22                    
+      23 00000000                   .data
+      24                    *
+      25                    *SCANNER BLIP IMAGE TABLE
+      26                    *       .LONG   PTR TO UNFLIPPED,PTR TO FLIPPED
+      27 00000000           CADBLIP:
+      28 00000000 00000040"         .LONG   CADBLP1,CADBLP2
+      29                    *BLIP IMAGE DATA
+      30                    *       .WORD   WIDTH,HEIGHT
+      31                    *       .BYTE   DATA
+      32 00000040           CADBLP1:
+      33 00000040     000f     .word    0FH,06H
+      34 00000060       00     .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,01DH,000H,000H,000H,000H,000H
+      35 000000d8       00     .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,026H,01DH,000H,000H,000H,000H
+      36 00000150       00     .byte    000H,0A4H,0B5H,0B5H,04AH,0A4H,0A4H,0A4H,0A4H,026H,03EH,03DH,03DH,03DH,0A8H
+      37 000001c8       b6     .byte    0B6H,03EH,03EH,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B6H,0B6H,0A8H
+      38 00000240       a8     .byte    0A8H,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,0ABH,0ABH,03DH,03DH,000H
+      39 000002b8       00     .byte    000H,000H,000H,0ABH,0BBH,000H,000H,000H,000H,000H,0ABH,0BBH,000H,000H,000H
+      40 00000330                   .EVEN
+      41 00000330           CADBLP2:
+      42 00000330     000f     .word    0FH,06H
+      43 00000350       00     .byte    000H,000H,000H,000H,000H,01DH,000H,000H,000H,000H,000H,000H,000H,000H,000H
+      44 000003c8       00     .byte    000H,000H,000H,000H,01DH,026H,000H,000H,000H,000H,000H,000H,000H,000H,000H
+      45 00000440       a8     .byte    0A8H,03DH,03DH,03DH,03EH,026H,0A4H,0A4H,0A4H,0A4H,04AH,0B5H,0B5H,0A4H,000H
+      46 000004b8       a8     .byte    0A8H,0B6H,0B6H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,0B5H,03EH,03EH,0B6H
+      47 00000530       00     .byte    000H,03DH,03DH,0ABH,0ABH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,03DH,0A8H
+      48 000005a8       00     .byte    000H,000H,000H,0BBH,0ABH,000H,000H,000H,000H,000H,0BBH,0ABH,000H,000H,000H
+      49 00000620                   .EVEN
+      50 00000620           DUMPBLIP:
+      51 00000620 00000660"         .LONG   DUMPBLP1,DUMPBLP1
+      52 00000660           DUMPBLP1
+      53 00000660     0004     .word    04H,08H
+      54 00000680       b6     .byte    0B6H,01EH,082H,0B6H
+      55 000006a0       22     .byte    022H,000H,000H,022H
+      56 000006c0       22     .byte    022H,045H,0B6H,022H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    2
+
+      57 000006e0       8b     .byte    08BH,022H,022H,08BH
+      58 00000700       00     .byte    000H,022H,022H,000H
+      59 00000720       1a     .byte    01AH,01CH,01CH,01AH
+      60 00000740       22     .byte    022H,000H,000H,022H
+      61 00000760       22     .byte    022H,000H,000H,022H
+      62 00000780                   .EVEN
+      63 00000780           EXITBLIP:
+      64 00000780 000007c0"         .LONG   EXITBLP1,EXITBLP1
+      65 000007c0           EXITBLP1
+      66 000007c0     0005     .word    05H,08H
+      67 000007e0       d6     .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+      68 00000808       d6     .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+      69 00000830       d6     .byte    0D6H,0D6H,000H,000H,000H
+      70 00000858       d6     .byte    0D6H,0D6H,0D6H,0D6H,000H
+      71 00000880       d6     .byte    0D6H,0D6H,0D6H,0D6H,000H
+      72 000008a8       d6     .byte    0D6H,0D6H,000H,000H,000H
+      73 000008d0       d6     .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+      74 000008f8       d6     .byte    0D6H,0D6H,0D6H,0D6H,0D6H
+      75 00000920                   .EVEN
+      76                    
+      77                      .IF BLUEP1
+      78                    P1BLIP:
+      79                            .LONG   P1BLP1,P1BLP1
+      80                      .ELSE
+      81 00000920           P1BLIP:
+      82 00000920 00000b70"         .LONG   P2BLP1,P2BLP1
+      83                      .ENDIF
+      84 00000960           P1BLP1
+      85 00000960     0006     .word    06H,09H
+      86 00000980       00     .byte    000H,000H,0DFH,0DFH,000H,000H
+      87 000009b0       00     .byte    000H,0DFH,000H,000H,0DFH,000H
+      88 000009e0       df     .byte    0DFH,0DFH,0DFH,0DFH,0DFH,0DDH
+      89 00000a10       63     .byte    063H,0DDH,0DFH,0DFH,0DDH,0B5H
+      90 00000a40       63     .byte    063H,000H,0DDH,0DDH,000H,0B6H
+      91 00000a70       63     .byte    063H,0DEH,0DFH,0DFH,0DEH,0B6H
+      92 00000aa0       00     .byte    000H,0DFH,0DDH,0DDH,0DFH,000H
+      93 00000ad0       00     .byte    000H,0DFH,000H,000H,0DFH,000H
+      94 00000b00       00     .byte    000H,0DFH,000H,000H,0DFH,000H
+      95 00000b30                   .EVEN
+      96                      .IF BLUEP1
+      97                    P2BLIP:
+      98                            .LONG   P2BLP1,P2BLP1
+      99                      .ELSE
+     100 00000b30           P2BLIP:
+     101 00000b30 00000960"         .LONG   P1BLP1,P1BLP1
+     102                      .ENDIF
+     103 00000b70           P2BLP1
+     104 00000b70     0006     .word    06H,09H
+     105 00000b90       00     .byte    000H,000H,0D6H,0D6H,000H,000H
+     106 00000bc0       00     .byte    000H,0D6H,000H,000H,0D6H,000H
+     107 00000bf0       d6     .byte    0D6H,0D6H,0D6H,0D6H,0D6H,09DH
+     108 00000c20       63     .byte    063H,09DH,0D6H,0D6H,09DH,0B6H
+     109 00000c50       63     .byte    063H,000H,0CEH,0CEH,000H,0B6H
+     110 00000c80       63     .byte    063H,0CEH,0D6H,0D6H,0CEH,0B6H
+     111 00000cb0       00     .byte    000H,0D6H,09DH,09DH,0D6H,000H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    3
+
+     112 00000ce0       00     .byte    000H,0D6H,000H,000H,0D6H,000H
+     113 00000d10       00     .byte    000H,0D6H,000H,000H,0D6H,000H
+     114 00000d40                   .EVEN
+     115 00000d40           PORSBLIP:
+     116 00000d40 00000d80"         .LONG   PORSBLP1,PORSBLP2
+     117 00000d80           PORSBLP1
+     118 00000d80     0010     .word    010H,06H
+     119 00000da0       00     .byte    000H,000H,0D6H,0CEH,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H
+     120 00000e20       00     .byte    000H,0D6H,0D6H,0D6H,0D6H,0CEH,0CEH,09DH,09DH,09DH,01DH,0ABH,0CEH,000H,000H,000H
+     121 00000ea0       d6     .byte    0D6H,0D6H,0D6H,0CEH,0D6H,01DH,09DH,09DH,09AH,01DH,026H,03EH,0D6H,0D6H,0CEH,09DH
+     122 00000f20       00     .byte    000H,09DH,0CEH,0CEH,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0CEH
+     123 00000fa0       00     .byte    000H,000H,0D6H,082H,082H,0A2H,0D6H,0A2H,0D6H,0D6H,0A2H,082H,082H,0D6H,0CEH,000H
+     124 00001020       00     .byte    000H,000H,000H,082H,082H,000H,000H,000H,000H,000H,000H,082H,082H,000H,000H,000H
+     125 000010a0                   .EVEN
+     126 000010a0           PORSBLP2
+     127 000010a0     0010     .word    010H,06H
+     128 000010c0       00     .byte    000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,000H,0CEH,0D6H,000H,000H
+     129 00001140       00     .byte    000H,000H,000H,0CEH,0ABH,01DH,09DH,09DH,09DH,0CEH,0CEH,0D6H,0D6H,0D6H,0D6H,000H
+     130 000011c0       9d     .byte    09DH,0CEH,0D6H,0D6H,03EH,026H,01DH,09AH,09DH,09DH,01DH,0D6H,0CEH,0D6H,0D6H,0D6H
+     131 00001240       ce     .byte    0CEH,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0D6H,0CEH,0CEH,09DH,000H
+     132 000012c0       00     .byte    000H,0CEH,0D6H,082H,082H,0A2H,0D6H,0D6H,0A2H,0D6H,0A2H,082H,082H,0D6H,000H,000H
+     133 00001340       00     .byte    000H,000H,000H,082H,082H,000H,000H,000H,000H,000H,000H,082H,082H,000H,000H,000H
+     134 000013c0                   .EVEN
+     135 000013c0           BUCKBLIP:
+     136 000013c0 00001400"         .LONG   BUCKBLP1,BUCKBLP1
+     137 00001400           BUCKBLP1
+     138 00001400     0004     .word    04H,01H
+     139 00001420       db     .byte    0DBH,01CH,01CH,0DBH
+     140 00001440                   .EVEN
+     141 00001440           CLIPBLIP:
+     142 00001440 00001480"         .LONG   CLIPBLP1,CLIPBLP1
+     143 00001480           CLIPBLP1
+     144 00001480     0003     .word    03H,03H
+     145 000014a0       a8     .byte    0A8H,000H,0A8H
+     146 000014b8       b2     .byte    0B2H,00FH,0B1H
+     147 000014d0       b1     .byte    0B1H,012H,0B1H
+     148 000014f0                   .EVEN
+     149 000014f0           CLWNBLIP:
+     150 000014f0 00001530"         .LONG   CLWNBLP1,CLWNBLP2
+     151 00001530           CLWNBLP1:
+     152 00001530     0004     .word    04H,08H
+     153 00001550       00     .byte    000H,0D6H,0B6H,000H
+     154 00001570       d6     .byte    0D6H,0D6H,0B6H,03DH
+     155 00001590       00     .byte    000H,0B6H,0B4H,000H
+     156 000015b0       cc     .byte    0CCH,053H,0CCH,0B4H
+     157 000015d0       b4     .byte    0B4H,0CCH,0CCH,000H
+     158 000015f0       00     .byte    000H,0CCH,053H,04BH
+     159 00001610       00     .byte    000H,0CCH,000H,053H
+     160 00001630       00     .byte    000H,0CCH,000H,0CCH
+     161 00001650                   .EVEN
+     162 00001650           CLWNBLP2:
+     163 00001650     0004     .word    04H,08H
+     164 00001670       00     .byte    000H,0B6H,0D6H,000H
+     165 00001690       3d     .byte    03DH,0B6H,0D6H,0D6H
+     166 000016b0       00     .byte    000H,0B4H,0B6H,000H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    4
+
+     167 000016d0       b4     .byte    0B4H,0CCH,053H,0CCH
+     168 000016f0       00     .byte    000H,0CCH,0CCH,0B4H
+     169 00001710       4b     .byte    04BH,053H,0CCH,000H
+     170 00001730       53     .byte    053H,000H,0CCH,000H
+     171 00001750       cc     .byte    0CCH,000H,0CCH,000H
+     172 00001770                   .EVEN
+     173 00001770           DRUGBLIP:
+     174 00001770 000017b0"         .LONG   DRUGBLP1,DRUGBLP1
+     175 000017b0           DRUGBLP1
+     176 000017b0     0002     .word    02H,02H
+     177 000017d0       26     .byte    026H,026H
+     178 000017e0       31     .byte    031H,031H
+     179 000017f0                   .EVEN
+     180 000017f0           GOALBLIP:
+     181 000017f0 00001830"         .LONG   GOALBLP1,GOALBLP1
+     182 00001830           GOALBLP1
+     183 00001830     000b     .word    0BH,0BH
+     184 00001850       00     .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+     185 000018a8       00     .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+     186 00001900       00     .byte    000H,000H,000H,000H,0F5H,0F5H,0F5H,000H,000H,000H,000H
+     187 00001958       00     .byte    000H,000H,000H,0F5H,000H,0F5H,000H,0F5H,000H,000H,000H
+     188 000019b0       00     .byte    000H,000H,0F5H,000H,000H,0F5H,000H,000H,0F5H,000H,000H
+     189 00001a08       f5     .byte    0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H,0F5H
+     190 00001a60       00     .byte    000H,000H,0F5H,000H,000H,0F5H,000H,000H,0F5H,000H,000H
+     191 00001ab8       00     .byte    000H,000H,000H,0F5H,000H,0F5H,000H,0F5H,000H,000H,000H
+     192 00001b10       00     .byte    000H,000H,000H,000H,0F5H,0F5H,0F5H,000H,000H,000H,000H
+     193 00001b68       00     .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+     194 00001bc0       00     .byte    000H,000H,000H,000H,000H,0F5H,000H,000H,000H,000H,000H
+     195 00001c20                   .EVEN
+     196 00001c20           HOOKBLIP:
+     197 00001c20 00001c60"         .LONG   HOOKBLP1,HOOKBLP2
+     198 00001c60           HOOKBLP1
+     199 00001c60     0003     .word    03H,0AH
+     200 00001c80       b1     .byte    0B1H,0DAH,000H
+     201 00001c98       da     .byte    0DAH,0CAH,000H
+     202 00001cb0       00     .byte    000H,0CAH,000H
+     203 00001cc8       00     .byte    000H,0CCH,0CCH
+     204 00001ce0       00     .byte    000H,0D6H,000H
+     205 00001cf8       d6     .byte    0D6H,0D6H,000H
+     206 00001d10       d6     .byte    0D6H,0CEH,000H
+     207 00001d28       ca     .byte    0CAH,000H,000H
+     208 00001d40       ca     .byte    0CAH,000H,000H
+     209 00001d58       b4     .byte    0B4H,000H,000H
+     210 00001d70                   .EVEN
+     211 00001d70           HOOKBLP2
+     212 00001d70     0003     .word    03H,0AH
+     213 00001d90       00     .byte    000H,0DAH,0B1H
+     214 00001da8       00     .byte    000H,0CAH,0DAH
+     215 00001dc0       00     .byte    000H,0CAH,000H
+     216 00001dd8       cc     .byte    0CCH,0CCH,000H
+     217 00001df0       00     .byte    000H,0D6H,000H
+     218 00001e08       00     .byte    000H,0D6H,0D6H
+     219 00001e20       00     .byte    000H,0CEH,0D6H
+     220 00001e38       00     .byte    000H,000H,0CAH
+     221 00001e50       00     .byte    000H,000H,0CAH
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    5
+
+     222 00001e68       00     .byte    000H,000H,0B4H
+     223 00001e80                   .EVEN
+     224                    
+     225 00001e80           HYPOBLIP
+     226 00001e80 00001ec0"         .LONG   HYPOBLP1,HYPOBLP2
+     227 00001ec0           HYPOBLP1:
+     228 00001ec0     0005     .word    05H,0AH
+     229 00001ee0       45     .byte    045H,0D8H,000H,000H,000H
+     230 00001f08       45     .byte    045H,0B6H,000H,000H,000H
+     231 00001f30       45     .byte    045H,085H,000H,000H,000H
+     232 00001f58       d8     .byte    0D8H,085H,085H,000H,000H
+     233 00001f80       b7     .byte    0B7H,0B6H,027H,026H,091H
+     234 00001fa8       85     .byte    085H,085H,083H,000H,000H
+     235 00001fd0       85     .byte    085H,085H,083H,000H,000H
+     236 00001ff8       85     .byte    085H,000H,085H,000H,000H
+     237 00002020       85     .byte    085H,000H,085H,000H,000H
+     238 00002048       b7     .byte    0B7H,000H,0B7H,000H,000H
+     239 00002070                   .EVEN
+     240 00002070           HYPOBLP2:
+     241 00002070     0005     .word    05H,0AH
+     242 00002090       00     .byte    000H,000H,000H,0D8H,045H
+     243 000020b8       00     .byte    000H,000H,000H,0B6H,045H
+     244 000020e0       00     .byte    000H,000H,000H,085H,045H
+     245 00002108       00     .byte    000H,000H,085H,085H,0D8H
+     246 00002130       91     .byte    091H,026H,027H,0B6H,0B7H
+     247 00002158       00     .byte    000H,000H,083H,085H,085H
+     248 00002180       00     .byte    000H,000H,083H,085H,085H
+     249 000021a8       00     .byte    000H,000H,085H,000H,085H
+     250 000021d0       00     .byte    000H,000H,085H,000H,085H
+     251 000021f8       00     .byte    000H,000H,0B7H,000H,0B7H
+     252 00002220                   .EVEN
+     253 00002220           LOFBLIP:
+     254 00002220 00002260"         .LONG   LOFBLP1,LOFBLP2
+     255 00002260           LOFBLP1
+     256 00002260     0004     .word    04H,07H
+     257 00002280       00     .byte    000H,09FH,09FH,0CAH
+     258 000022a0       9f     .byte    09FH,0A8H,0A8H,0C5H
+     259 000022c0       a8     .byte    0A8H,0A8H,034H,000H
+     260 000022e0       a8     .byte    0A8H,0A8H,047H,000H
+     261 00002300       a8     .byte    0A8H,0A8H,09FH,000H
+     262 00002320       bb     .byte    0BBH,000H,0BBH,000H
+     263 00002340       bb     .byte    0BBH,000H,0BBH,000H
+     264 00002360                   .EVEN
+     265 00002360           LOFBLP2
+     266 00002360     0004     .word    04H,07H
+     267 00002380       ca     .byte    0CAH,09FH,09FH,000H
+     268 000023a0       c5     .byte    0C5H,0A8H,0A8H,09FH
+     269 000023c0       00     .byte    000H,034H,0A8H,0A8H
+     270 000023e0       00     .byte    000H,047H,0A8H,0A8H
+     271 00002400       00     .byte    000H,09FH,0A8H,0A8H
+     272 00002420       00     .byte    000H,0BBH,000H,0BBH
+     273 00002440       00     .byte    000H,0BBH,000H,0BBH
+     274 00002460                   .EVEN
+     275 00002460           MBIGBLIP:
+     276 00002460 000024a0"         .LONG   MBIGBLP1,MBIGBLP2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    6
+
+     277 000024a0           MBIGBLP1:
+     278 000024a0     0007     .word    07H,08H
+     279 000024c0       00     .byte    000H,000H,063H,063H,000H,000H,000H
+     280 000024f8       00     .byte    000H,063H,0B6H,0B6H,063H,000H,000H
+     281 00002530       b9     .byte    0B9H,063H,063H,0B6H,000H,000H,000H
+     282 00002568       00     .byte    000H,063H,0CCH,0CCH,0B6H,000H,000H
+     283 000025a0       4e     .byte    04EH,0C3H,04EH,04EH,063H,0C3H,01EH
+     284 000025d8       63     .byte    063H,000H,000H,08DH,063H,063H,000H
+     285 00002610       63     .byte    063H,0B9H,000H,000H,063H,063H,000H
+     286 00002648       8d     .byte    08DH,063H,063H,04EH,08DH,0C3H,063H
+     287 00002680                   .EVEN
+     288 00002680           MBIGBLP2:
+     289 00002680     0007     .word    07H,08H
+     290 000026a0       00     .byte    000H,000H,000H,063H,063H,000H,000H
+     291 000026d8       00     .byte    000H,000H,063H,0B6H,0B6H,063H,000H
+     292 00002710       00     .byte    000H,000H,000H,0B6H,063H,063H,0B9H
+     293 00002748       00     .byte    000H,000H,0B6H,0CCH,0CCH,063H,000H
+     294 00002780       1e     .byte    01EH,0C3H,063H,04EH,04EH,0C3H,04EH
+     295 000027b8       00     .byte    000H,063H,063H,08DH,000H,000H,063H
+     296 000027f0       00     .byte    000H,063H,063H,000H,000H,0B9H,063H
+     297 00002828       63     .byte    063H,0C3H,08DH,04EH,063H,063H,08DH
+     298 00002860                   .EVEN
+     299 00002860           ROCKBLIP:
+     300 00002860 000028a0"         .LONG   ROCKBLP1,ROCKBLP2
+     301 000028a0           ROCKBLP1:
+     302 000028a0     0006     .word    06H,01H
+     303 000028c0       cc     .byte    0CCH,0ABH,0CCH,0CCH,0D6H,0D6H
+     304 000028f0                   .EVEN
+     305 000028f0           ROCKBLP2:
+     306 000028f0     0006     .word    06H,01H
+     307 00002910       d6     .byte    0D6H,0D6H,0CCH,0CCH,0ABH,0CCH
+     308 00002940                   .EVEN
+     309 00002940           DOGBLIP:
+     310 00002940 00002980"         .LONG   DOGBLP1,DOGBLP2
+     311 00002980           DOGBLP1:
+     312 00002980     0005     .word    05H,03H
+     313 000029a0       32     .byte    032H,000H,000H,032H,0A8H
+     314 000029c8       a8     .byte    0A8H,0A8H,0A8H,0A8H,000H
+     315 000029f0       a8     .byte    0A8H,000H,000H,0A8H,000H
+     316 00002a20                   .EVEN
+     317 00002a20           DOGBLP2:
+     318 00002a20     0005     .word    05H,03H
+     319 00002a40       a8     .byte    0A8H,032H,000H,000H,032H
+     320 00002a68       00     .byte    000H,0A8H,0A8H,0A8H,0A8H
+     321 00002a90       00     .byte    000H,0A8H,000H,000H,0A8H
+     322 00002ac0                   .EVEN
+     323 00002ac0           BUGBLIP:
+     324 00002ac0 00002b00"         .LONG   BUGBLP1,BUGBLP1
+     325 00002b00           BUGBLP1
+     326 00002b00     0005     .word    05H,03H
+     327 00002b20       75     .byte    075H,033H,0A7H,033H,094H
+     328 00002b48       a5     .byte    0A5H,039H,039H,0A5H,039H
+     329 00002b70       a2     .byte    0A2H,000H,0A5H,000H,0A5H
+     330 00002ba0                   .EVEN
+     331 00002ba0           PIMPBLIP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    7
+
+     332 00002ba0 00002be0"         .LONG   PIMPBLP1,PIMPBLP2
+     333 00002be0           PIMPBLP1:
+     334 00002be0     0003     .word    03H,09H
+     335 00002c00       00     .byte    000H,0A6H,0A6H
+     336 00002c18       7d     .byte    07DH,0B9H,0A6H
+     337 00002c30       b9     .byte    0B9H,0BDH,000H
+     338 00002c48       bd     .byte    0BDH,0BDH,0D6H
+     339 00002c60       bd     .byte    0BDH,0BDH,0D6H
+     340 00002c78       bd     .byte    0BDH,0B9H,0CEH
+     341 00002c90       b9     .byte    0B9H,0CEH,0D6H
+     342 00002ca8       b9     .byte    0B9H,000H,0D6H
+     343 00002cc0       d6     .byte    0D6H,000H,0D6H
+     344 00002ce0                   .EVEN
+     345 00002ce0           PIMPBLP2:
+     346 00002ce0     0003     .word    03H,09H
+     347 00002d00       a6     .byte    0A6H,0A6H,000H
+     348 00002d18       a6     .byte    0A6H,0B9H,07DH
+     349 00002d30       00     .byte    000H,0BDH,0B9H
+     350 00002d48       d6     .byte    0D6H,0BDH,0BDH
+     351 00002d60       d6     .byte    0D6H,0BDH,0BDH
+     352 00002d78       ce     .byte    0CEH,0B9H,0BDH
+     353 00002d90       d6     .byte    0D6H,0CEH,0B9H
+     354 00002da8       d6     .byte    0D6H,000H,0B9H
+     355 00002dc0       d6     .byte    0D6H,000H,0D6H
+     356 00002de0                   .EVEN
+     357                    
+     358 00002de0           CHOPBLIP
+     359 00002de0 00002e20"         .LONG   CHOPBLP1,CHOPBLP2
+     360 00002e20           CHOPBLP1:
+     361 00002e20     000c     .word    0CH,06H
+     362 00002e40       00     .byte    000H,000H,000H,04EH,04EH,05EH,05EH,0CCH,05EH,05EH,04EH,04EH
+     363 00002ea0       cc     .byte    0CCH,000H,000H,000H,000H,000H,000H,0CCH,000H,000H,000H,000H
+     364 00002f00       5e     .byte    05EH,04EH,000H,000H,000H,0CCH,0CCH,0CCH,0CCH,04EH,000H,000H
+     365 00002f60       b7     .byte    0B7H,0CCH,0CCH,0CCH,0CCH,0CCH,04EH,000H,000H,0B7H,04EH,000H
+     366 00002fc0       00     .byte    000H,000H,000H,000H,000H,0CCH,05EH,000H,000H,000H,05EH,04EH
+     367 00003020       00     .byte    000H,000H,000H,000H,000H,000H,05EH,0CCH,0CCH,0CCH,05EH,04EH
+     368 00003080                   .EVEN
+     369 00003080           CHOPBLP2:
+     370 00003080     000c     .word    0CH,06H
+     371 000030a0       4e     .byte    04EH,04EH,05EH,05EH,0CCH,05EH,05EH,04EH,04EH,000H,000H,000H
+     372 00003100       00     .byte    000H,000H,000H,000H,0CCH,000H,000H,000H,000H,000H,000H,0CCH
+     373 00003160       00     .byte    000H,000H,04EH,0CCH,0CCH,0CCH,0CCH,000H,000H,000H,04EH,05EH
+     374 000031c0       00     .byte    000H,04EH,0B7H,000H,000H,04EH,0CCH,0CCH,0CCH,0CCH,0CCH,0B7H
+     375 00003220       4e     .byte    04EH,05EH,000H,000H,000H,05EH,0CCH,000H,000H,000H,000H,000H
+     376 00003280       4e     .byte    04EH,05EH,0CCH,0CCH,0CCH,05EH,000H,000H,000H,000H,000H,000H
+     377 000032e0                   .EVEN
+     378                    
+     379 000032e0           GANGBLIP
+     380 000032e0 00003320"         .LONG   GANGBLP1,GANGBLP2
+     381 00003320           GANGBLP1:
+     382 00003320     0003     .word    03H,09H
+     383 00003340       8a     .byte    08AH,057H,040H
+     384 00003358       7d     .byte    07DH,0A6H,0A6H
+     385 00003370       b9     .byte    0B9H,0BDH,0A6H
+     386 00003388       bd     .byte    0BDH,0BDH,040H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    8
+
+     387 000033a0       bd     .byte    0BDH,0B9H,08AH
+     388 000033b8       b9     .byte    0B9H,0B9H,08AH
+     389 000033d0       b9     .byte    0B9H,08AH,040H
+     390 000033e8       b9     .byte    0B9H,000H,057H
+     391 00003400       57     .byte    057H,000H,057H
+     392 00003420                   .EVEN
+     393 00003420           GANGBLP2:
+     394 00003420     0003     .word    03H,09H
+     395 00003440       40     .byte    040H,057H,08AH
+     396 00003458       a6     .byte    0A6H,0A6H,07DH
+     397 00003470       a6     .byte    0A6H,0BDH,0B9H
+     398 00003488       40     .byte    040H,0BDH,0BDH
+     399 000034a0       8a     .byte    08AH,0B9H,0BDH
+     400 000034b8       8a     .byte    08AH,0B9H,0B9H
+     401 000034d0       40     .byte    040H,08AH,0B9H
+     402 000034e8       57     .byte    057H,000H,0B9H
+     403 00003500       57     .byte    057H,000H,057H
+     404 00003520                   .EVEN
+     405                    
+     406 00003520           RAMBBLIP
+     407 00003520 00003560"         .LONG   RAMBBLP1,RAMBBLP2
+     408 00003560           RAMBBLP1:
+     409 00003560     0007     .word    07H,010H
+     410 00003580       00     .byte    000H,000H,000H,0A4H,0A1H,000H,000H
+     411 000035b8       00     .byte    000H,000H,000H,0B1H,0B1H,000H,000H
+     412 000035f0       00     .byte    000H,000H,0B1H,03DH,0B4H,000H,000H
+     413 00003628       00     .byte    000H,0B1H,0B4H,0F4H,0B4H,000H,000H
+     414 00003660       00     .byte    000H,047H,03AH,0B3H,0C1H,088H,000H
+     415 00003698       00     .byte    000H,047H,0C6H,060H,0CCH,05BH,000H
+     416 000036d0       00     .byte    000H,0B6H,0B4H,034H,018H,034H,018H
+     417 00003708       00     .byte    000H,047H,0CAH,034H,014H,000H,000H
+     418 00003740       00     .byte    000H,015H,03CH,0C7H,039H,000H,000H
+     419 00003778       00     .byte    000H,00DH,034H,033H,03AH,0B1H,000H
+     420 000037b0       00     .byte    000H,016H,0C7H,000H,003H,034H,000H
+     421 000037e8       00     .byte    000H,035H,0C4H,000H,0B1H,034H,000H
+     422 00003820       b1     .byte    0B1H,035H,000H,000H,0B1H,0C4H,000H
+     423 00003858       b1     .byte    0B1H,035H,000H,000H,0B1H,065H,000H
+     424 00003890       15     .byte    015H,0B1H,000H,000H,000H,066H,000H
+     425 000038c8       65     .byte    065H,0B1H,000H,000H,000H,000H,000H
+     426 00003900                   .EVEN
+     427 00003900           RAMBBLP2:
+     428 00003900     0007     .word    07H,010H
+     429 00003920       00     .byte    000H,000H,0A1H,0A4H,000H,000H,000H
+     430 00003958       00     .byte    000H,000H,0B1H,0B1H,000H,000H,000H
+     431 00003990       00     .byte    000H,000H,0B4H,03DH,0B1H,000H,000H
+     432 000039c8       00     .byte    000H,000H,0B4H,0F4H,0B4H,0B1H,000H
+     433 00003a00       00     .byte    000H,088H,0C1H,0B3H,03AH,047H,000H
+     434 00003a38       00     .byte    000H,05BH,0CCH,060H,0C6H,047H,000H
+     435 00003a70       18     .byte    018H,034H,018H,034H,0B4H,0B6H,000H
+     436 00003aa8       00     .byte    000H,000H,014H,034H,0CAH,047H,000H
+     437 00003ae0       00     .byte    000H,000H,039H,0C7H,03CH,015H,000H
+     438 00003b18       00     .byte    000H,0B1H,03AH,033H,034H,00DH,000H
+     439 00003b50       00     .byte    000H,034H,003H,000H,0C7H,016H,000H
+     440 00003b88       00     .byte    000H,034H,0B1H,000H,0C4H,035H,000H
+     441 00003bc0       00     .byte    000H,0C4H,0B1H,000H,000H,035H,0B1H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:47 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- SCANNER BLIPS >>>                                PAGE    9
+
+     442 00003bf8       00     .byte    000H,065H,0B1H,000H,000H,035H,0B1H
+     443 00003c30       00     .byte    000H,066H,000H,000H,000H,0B1H,015H
+     444 00003c68       00     .byte    000H,000H,000H,000H,000H,0B1H,065H
+     445 00003ca0                   .EVEN
+     446                    
+     447 00003ca0           HEADBLIP
+     448 00003ca0 00003ce0"         .LONG   HEADBLP,HEADBLP
+     449 00003ce0           HEADBLP:
+     450 00003ce0     000c     .word    0CH,012H
+     451 00003d00       00     .byte    000H,000H,000H,040H,057H,057H,040H,04CH,000H,000H,000H,000H
+     452 00003d60       00     .byte    000H,000H,0CCH,0CBH,048H,040H,048H,048H,038H,000H,000H,000H
+     453 00003dc0       00     .byte    000H,000H,064H,064H,05AH,04CH,048H,040H,038H,00BH,000H,000H
+     454 00003e20       00     .byte    000H,000H,0CCH,0CCH,05AH,038H,098H,098H,098H,098H,098H,040H
+     455 00003e80       00     .byte    000H,000H,064H,0CCH,038H,017H,098H,037H,046H,0AFH,0C1H,048H
+     456 00003ee0       00     .byte    000H,000H,04CH,098H,04CH,0CCH,060H,0C1H,047H,03DH,0B4H,000H
+     457 00003f40       00     .byte    000H,000H,01CH,0CCH,0CCH,0AFH,0AEH,03DH,03EH,03DH,03CH,000H
+     458 00003fa0       00     .byte    000H,042H,057H,0AEH,01BH,0A0H,034H,0A6H,03DH,03DH,03CH,000H
+     459 00004000       37     .byte    037H,0CAH,0AEH,03DH,0A4H,034H,0A5H,034H,03DH,03DH,03CH,000H
+     460 00004060       3c     .byte    03CH,000H,03DH,03DH,0A4H,016H,016H,0A6H,047H,03DH,03CH,000H
+     461 000040c0       00     .byte    000H,000H,0B4H,0D3H,016H,014H,0C7H,03DH,047H,03DH,018H,000H
+     462 00004120       00     .byte    000H,000H,0A1H,0AEH,098H,015H,035H,03CH,0C8H,03DH,0A1H,000H
+     463 00004180       00     .byte    000H,000H,000H,040H,0AFH,037H,036H,0A4H,0C8H,03DH,03DH,000H
+     464 000041e0       00     .byte    000H,000H,000H,0B4H,03CH,0C7H,0C7H,0D3H,0B0H,047H,0B5H,000H
+     465 00004240       00     .byte    000H,000H,000H,0B6H,0C8H,0C7H,0A4H,0A6H,0D3H,03EH,047H,0AEH
+     466 000042a0       00     .byte    000H,000H,000H,0B6H,03CH,018H,0A0H,039H,03DH,047H,0B6H,0B4H
+     467 00004300       00     .byte    000H,000H,000H,047H,0C8H,0A4H,0A1H,039H,0C6H,047H,0B6H,0B1H
+     468 00004360       00     .byte    000H,000H,000H,000H,0B1H,034H,0A0H,0A4H,0D3H,0D3H,000H,000H
+     469 000043c0                   .EVEN
+     470                    
+     471 000043c0           SKULBLIP
+     472 000043c0 00004400"         .LONG   SKULBLP,SKULBLP
+     473 00004400           SKULBLP:
+     474 00004400     000a     .word    0AH,0FH
+     475 00004420       00     .byte    000H,000H,000H,087H,087H,079H,068H,000H,000H,000H
+     476 00004470       00     .byte    000H,0B8H,0BBH,0B8H,087H,085H,00CH,00BH,000H,000H
+     477 000044c0       00     .byte    000H,0C0H,0BDH,090H,087H,07FH,07AH,00CH,00CH,000H
+     478 00004510       bb     .byte    0BBH,0C0H,0BDH,0B8H,01EH,087H,01EH,090H,090H,000H
+     479 00004560       bd     .byte    0BDH,0C0H,0BDH,0BAH,01EH,01EH,0BAH,04BH,04EH,090H
+     480 000045b0       bd     .byte    0BDH,04BH,04EH,04EH,04BH,054H,050H,04BH,053H,0B8H
+     481 00004600       bb     .byte    0BBH,04BH,0AAH,0AEH,0BAH,050H,0A2H,037H,054H,04BH
+     482 00004650       bd     .byte    0BDH,04BH,034H,0A4H,04BH,038H,0A5H,098H,04EH,0BAH
+     483 000046a0       bb     .byte    0BBH,0C0H,04EH,053H,042H,04EH,0C3H,0C3H,053H,000H
+     484 000046f0       00     .byte    000H,05EH,062H,05EH,04BH,053H,064H,064H,05EH,000H
+     485 00004740       00     .byte    000H,0C0H,04BH,0C0H,0C0H,04BH,053H,0C0H,084H,000H
+     486 00004790       00     .byte    000H,0BDH,04BH,054H,053H,04BH,054H,04EH,000H,000H
+     487 000047e0       00     .byte    000H,04BH,0C0H,062H,064H,064H,063H,0C0H,000H,000H
+     488 00004830       00     .byte    000H,000H,053H,062H,061H,063H,063H,0BAH,000H,000H
+     489 00004880       00     .byte    000H,000H,000H,0C0H,05EH,05EH,0BAH,000H,000H,000H
+     490 000048d0                   .EVEN
+     491                    
+     492                            .END
+
+ No Errors,  No Warnings

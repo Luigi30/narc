@@ -1,0 +1,3428 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCRAMB.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .OPTION B,D,L
+      13                            .MNOLIST
+      14                    
+      15                    
+      16                    *       GET THE SYSTEM STUFF
+      17                            .INCLUDE        "\video\mprocEQU.ASM"   ;MPROC equates
+      18                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      19                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+      20                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      21                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      22                    *       LOCAL STUFF
+      23                            .INCLUDE        "NARCEQU.ASM"           ;NARC Equates
+      24                            .INCLUDE        "NARCTEQU.ASM"
+      25                            .include        "imgtbl.glo"
+      26                            .INCLUDE        "NARCFRAG.GLO"
+      27                            .include        "narcramb.tbl"
+      28                    
+      29                            .GLOBL  RAMBCRM1
+      30                            .GLOBL  MAKEFLAM,GROWFLAM
+      31                    
+      32                    
+      33                            .GLOBL  BCOLDDMP,BCOLDCAN,BCOLDPST,BCOLDSID,BCOLL1
+      34                    
+      35 00000000                   .bss    rambcol,16,1
+      36                    
+      37              01c8  DIR             .set    ZPER            ;RAMBO
+      38                    
+      39                    ********** GEORGE -- COMMENT THIS STUFF OUT **************
+      40                    ;* Also uncomment RETS in GVARINIT
+      41                    ;       .BSS    rambmax,16,16           ;U - max # of active rambmen
+      42                    ;       .BSS    rambbrain,16,16         ;U - sleep between homing on players
+      43                    ;       .BSS    rambdrug,16,16          ;U - chance/1000 of rambman having drugs
+      44 00000010                   .BSS    rambclip,16,16          ;U - chance/1000 of rambman having clips
+      45                    
+      46 00000000                   .TEXT
+      47 00000000           VARINIT:
+      48 00000000     09c0          movi    150,A0
+         00000010     0096  
+      49 00000020     0580          move    A0,@rambclip,W
+         00000030 00000010- 
+      50 00000050     0960          rets               ;* <---------------------- remove ;
+      51 00000060     09c0          movi    1,A0
+         00000070     0001  
+      52 00000080     0580          move    A0,@rambmax,W
+         00000090 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    2
+
+      53 000000b0     09c0          movi    4,A0
+         000000c0     0004  
+      54 000000d0     0580          move    A0,@rambbrain,W
+         000000e0 00000000! 
+      55 00000100     09c0          movi    250,A0
+         00000110     00fa  
+      56 00000120     0580          move    A0,@rambdrug,W
+         00000130 00000000! 
+      57 00000150     0960          rets
+      58                    **********************************************************
+      59                    
+      60                    ***************************************************************************
+      61                    ; RAMBO SUB_TYPES
+      62                    ; 0 - w/ no coors starts at PLZMIN and 1 to 2 full screens away from
+      63                    ;       players in X.  90% chance of coming up to the right.
+      64                    ; 1 - FlameThrower - GRAY
+      65                    ;
+      66 00000160           DTBL:
+      67 00000160 00000e30'         .long   D0,D1
+      68 000001a0 00000e30'         .long   D0,D0
+      69 000001e0 00000e30'         .long   D0,D0,D0,D0,D0,D0
+      70 000002a0 00000e30'         .long   D0,D0,D0,D0,D0,D0
+      71                    ***************************************************************************
+      72                    
+      73                    ************************* FUNCTION TABLE ***************************
+      74 00000360           RAMBFUNCS:
+      75 00000360 00000400'         .long   BOOF
+      76 00000380 00000000!         .long   GoDestV
+      77 000003a0 00005630'         .long   GetXVel
+      78 000003c0 0000b000          .long   0B000H  ;MaxXZAngle
+      79 000003e0 0000001e          .long   30      ;FlipTiks
+      80                    ********************************************************************
+      81                    
+      82                    ********************************************************************
+      83                    ;To catch a nulled dereference through JR_FUNCS
+      84 00000400     c000  BOOF:   jruc    $
+         00000410     fffe  
+      85                    ********************************************************************
+      86                    
+      87                    **************************************************************************
+      88                    *INIT TABLE
+      89                    *       .LONG   OXVEL,OYVEL,OXVAL,XYVAL
+      90                    *       .WORD   OZPOS,OZVEL
+      91                    *       .LONG   OIMG,OZSIZ,OCVECT
+      92                    *       .WORD   OFLAGS,OID
+      93          000c000c  RAMBZSIZ        .set    0000C000CH
+      94 00000420           LegsInit:
+      95 00000420 00000000          .LONG   0,0,0,0
+      96 000004a0     0000          .WORD   0,0
+      97 000004c0 00000200"         .LONG   rmrun1,RAMBZSIZ,RAMBCOLL
+      98 00000520     8002          .WORD   DMAWNZ,RAMBEOID
+      99 00000540 00000000!         .LONG   RAMBBLIP
+     100 00000560           BodyInit:
+     101 00000560 00000000          .LONG   0,0,0,0
+     102 000005e0     0000          .WORD   0,0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    3
+
+     103 00000600 00000600"         .LONG   rmsh0a,RAMBZSIZ,RAMBCOLL
+     104 00000660     8002          .WORD   DMAWNZ,RAMBEOID
+     105 00000680 00000000          .LONG   0
+     106                    **************************************************************************
+     107                    
+     108                    **************************************************************************
+     109 000006a0           FRANCHEK:
+     110 000006a0     0b69          cmpi    FRANMIN,A9
+         000006b0 ffff571f' 
+     111 000006d0     c400          jrlt    $
+         000006e0     fffe  
+     112 000006f0     0b69          cmpi    FRANMAX,A9
+         00000700 ffff3bef' 
+     113 00000720     c700          jrgt    $
+         00000730     fffe  
+     114 00000740     0960          rets
+     115                    **************************************************************************
+     116                    
+     117                    **************************************************************************
+     118 00000750           RAMBCOLD:
+     119                    ;* PARMS
+     120                    ; A5  - Y:X
+     121                    ; A6  - 0:Z     ;if A5 and A6=0 then Random Position
+     122                    ; A14 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
+     123                    
+     124 00000750     098f          mmtm    SP,A0,A1,A2,A7,A9,A10,A11
+         00000760     e170  
+     125 00000770     0d3f          callr   VARINIT
+         00000780     ff87  
+     126                            
+     127 00000790     05a0          move    @SLPRAMBS,A0,W
+         000007a0 00000000! 
+     128 000007c0     0b40          cmpi    5,A0
+         000007d0     fffa  
+     129 000007e0     c518          jrge    ColdX
+     130                    
+     131 000007f0     4ca9          move    A5,A9           ;Y:X in A9
+     132 00000800     4cca          move    A6,A10          ;0:Z in A10
+     133 00000810     4dcb          move    A14,A11         ;ID in A11
+     134                    
+     135 00000820     4dc0          move    A14,A0
+     136 00000830     2580          sll     12,A0
+     137 00000840     2c80          srl     28,A0
+     138 00000850     ca03          jrz     SkRndCnt
+     139 00000860     0d5f          calla   RANDU
+         00000870 00000000! 
+     140 00000890           SkRndCnt:
+     141 00000890     4dc2          move    A14,A2
+     142 000008a0     2502          sll     8,A2
+     143 000008b0     2c82          srl     28,A2
+     144 000008c0     4002          add     A0,A2
+     145 000008d0           ColdLp: 
+     146 000008d0                   CREATE  RAMBEPID,RAMBO ;allocate process?       (bashes A1,A7)
+     147 00000950     ca01          jrz     ColdX
+     148 00000960     3d42          dsjs    A2,ColdLp
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    4
+
+     149 00000970           ColdX:
+     150 00000970     09af          mmfm    SP,A0,A1,A2,A7,A9,A10,A11
+         00000980     0e87  
+     151 00000990     0960          rets
+     152                    **************************************************************************
+     153                    
+     154                    **************************************************************************
+     155 000009a0           CkPal:
+     156 000009a0     05a0          move    @rambcol,A0,W
+         000009b0 00000000- 
+     157 000009d0     ca11          jrz     CkPalX
+     158 000009e0     24a0          sll     5,A0
+     159 000009f0     0b20          addi    RAMBPALS,A0
+         00000a00 0000c430' 
+     160 00000a20     8600          move    *A0,A0,L
+     161 00000a30     0d5f          calla   GETFPAL
+         00000a40 00000000! 
+     162 00000a60     ca08          jrz     CkPalX
+     163 00000a70     4c01          move    A0,A1
+     164 00000a80     b500          move    *A8(OPAL),A0,W
+         00000a90     0160  
+     165 00000aa0     0d5f          calla   FREEPAL
+         00000ab0 00000000! 
+     166 00000ad0     b028          move    A1,*A8(OPAL),W
+         00000ae0     0160  
+     167 00000af0           CkPalX:
+     168 00000af0     0960          rets
+     169                    **************************************************************************
+     170                    
+     171                    *********************  START OF RAMBOMAN PROCESS  *************************
+     172 00000b00           RAMBO:
+     173                    * A9  - Y:X
+     174                    * A10 - 0:Z     ;if A9,A10 = 0 generate random start pos.
+     175                    * A11 - 0.8:#.4:rand#.4:00EH.8:OIDtype.4:OIDsubtype.4
+     176                    ;based on sub-type, jump to appropriate routine
+     177                    
+     178 00000b00                   INCW    @SLPRAMBS
+     179 00000b70           MaxWait:
+     180 00000b70     05a0          move    @rambmax,A0,W
+         00000b80 00000000! 
+     181 00000ba0     05a1          move    @RAMBCNT,A1,W
+         00000bb0 00000000! 
+     182 00000bd0     4801          cmp     A0,A1
+     183 00000be0     c405          jrlt    MaxWaitX
+     184 00000bf0                   SLEEP   30
+     185 00000c30     c0f3          jruc    MaxWait
+     186 00000c40           MaxWaitX:
+     187 00000c40                   DECW    @SLPRAMBS
+     188 00000cb0                   INCW    @RAMBCNT
+     189                    
+     190 00000d20     5600          clr     A0
+     191 00000d30     0580          move    A0,@rambcol,W
+         00000d40 00000000- 
+     192                    
+     193 00000d60     4d60          move    A11,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    5
+
+     194 00000d70     2780          sll     28,A0
+     195 00000d80     2c80          srl     28,A0
+     196 00000d90     24a0          sll     5,A0
+     197 00000da0     0b20          addi    DTBL,A0
+         00000db0 00000160' 
+     198 00000dd0     8600          move    *A0,A0,L
+     199 00000de0     0160          jump    A0
+     200                    
+     201                    **************************************************************************
+     202 00000df0           D1:     
+     203 00000df0     1820          movk    1,A0
+     204 00000e00     0580          move    A0,@rambcol,W
+         00000e10 00000000- 
+     205                    
+     206                    **************************************************************************
+     207 00000e30           D0:     
+     208 00000e30     4d20          move    A9,A0
+     209 00000e40     5540          or      A10,A0
+     210 00000e50     cb1f          jrnz    GotCoors
+     211                    
+     212                    *Enemy object initialization
+     213 00000e60     05a9          move    @(WORLDTLX+16),A9,W                              
+         00000e70 00000010! 
+     214 00000e90     0be9          subi    500,A9
+         00000ea0     fe0b  
+     215 00000eb0     09c0          movi    950,A0
+         00000ec0     03b6  
+     216 00000ed0     0d5f          calla   RANDPER
+         00000ee0 00000000! 
+     217 00000f00     c902          jrnc    StrtLft
+     218 00000f10     0b09          addi    1500,A9
+         00000f20     05dc  
+     219 00000f30           StrtLft:
+     220 00000f30     09c0          movi    90,A0
+         00000f40     005a  
+     221 00000f50     0d5f          calla   RANDU
+         00000f60 00000000! 
+     222 00000f80     4009          add     A0,A9
+     223                    
+     224 00000f90     05a1          move    @PLYMIN,A1,W                                                                     
+         00000fa0 00000000! 
+     225 00000fc0     09c0          movi    45,A0
+         00000fd0     002d  
+     226 00000fe0     0d5f          calla   RANDU
+         00000ff0 00000000! 
+     227 00001010     4001          add     A0,A1
+     228 00001020     2601          sll     16,A1
+     229 00001030     ee29          movy    A1,A9   ;* initial position                                                      
+     230 00001040     574a          clr     A10
+     231                    
+     232 00001050           GotCoors:
+     233 00001050     4d21          move    A9,A1
+     234 00001060     09e6          movi    RAMBTAB,A6
+         00001070 0000a390' 
+     235 00001090     09ee          movi    LegsInit,A14    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    6
+
+         000010a0 00000420' 
+     236 000010c0     098f          mmtm    SP,A9,A10,A11
+         000010d0     0070  
+     237 000010e0     0d5f          calla   ENINITLL                ;CREATE RAMBO Legs
+         000010f0 00000000! 
+     238 00001110     09af          mmfm    SP,A9,A10,A11
+         00001120     0e00  
+     239 00001130     ca00          jrz     RAMBDIE1                ;create bombed
+         00001140     0545  
+     240                    ;Y:X in A9
+     241                    ;0:Z in A10
+     242 00001150     4d4a          move    A10,A10
+     243 00001160     cb04          jrnz    GotZC
+     244 00001170     ef2a          movy    A9,A10
+     245 00001180     2e0a          srl     16,A10
+     246 00001190     0bea          subi    ZORIGIN,A10
+         000011a0     ff37  
+     247 000011b0           GotZC:
+     248 000011b0     b128          move    A9,*A8(OXPOS),W
+         000011c0     0090  
+     249 000011d0     b148          move    A10,*A8(OZPOS),W
+         000011e0     00d0  
+     250 000011f0     0b0a          addi    ZORIGIN,A10
+         00001200     00c8  
+     251 00001210     b500          move    *A8(OSIZEY),A0,W
+         00001220     0150  
+     252 00001230     440a          sub     A0,A10
+     253 00001240     b148          move    A10,*A8(OYPOS),W
+         00001250     00b0  
+     254 00001260     b168          move    A11,*A8(OID),W
+         00001270     01a0  
+     255                    
+     256 00001280     0d3f          callr   CkPal
+         00001290     ff70  
+     257                    ;       jruc    InitEnmy
+     258                    
+     259                    
+     260                    ****************************************************************************
+     261 000012a0           InitEnmy:
+     262 000012a0     0d5f          calla   GetBody
+         000012b0 000017b0' 
+     263 000012d0     ca00          jrz     RAMBDIE2
+         000012e0     0527  
+     264 000012f0     0d5f          calla   ClrVel
+         00001300 00000000! 
+     265 00001320     5600          clr     A0
+     266 00001330     b20d          move    A0,*A13(COLLOBJ),L
+         00001340     00c0  
+     267 00001350     b20d          move    A0,*A13(DEST),L
+         00001360     01e0  
+     268 00001370     b20d          move    A0,*A13(TEMPDEST),L
+         00001380     0200  
+     269 00001390     ac0d          movb    A0,*A13(DEST_TAG)
+         000013a0     01c0  
+     270 000013b0     ac0d          movb    A0,*A13(SNOOZE)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    7
+
+         000013c0     01d0  
+     271 000013d0     ac0d          movb    A0,*A13(FLIPTIKS)
+         000013e0     01d8  
+     272 000013f0     b20d          move    A0,*A13(TIKCTRS),L
+         00001400     01a0  
+     273 00001410     b20d          move    A0,*A13(EBYTES),L
+         00001420     0180  
+     274 00001430     09e0          movi    RAMBFUNCS,A0
+         00001440 00000360' 
+     275 00001460     b20d          move    A0,*A13(FUNCS),L
+         00001470     00e0  
+     276 00001480     18e0          movk    7,A0
+     277 00001490     ac0d          movb    A0,*A13(DIR)
+         000014a0     01c8  
+     278 000014b0     5600          clr     A0
+     279 000014c0     0d3f          callr   AniBod
+         000014d0     03d2  
+     280                    
+     281 000014e0     5621          clr     A1
+     282 000014f0           DrgLp:
+     283 000014f0     05a0          move    @rambdrug,A0,W
+         00001500 00000000! 
+     284 00001520     0d5f          calla   RANDPER
+         00001530 00000000! 
+     285 00001550     c904          jrnc    DrgX
+     286 00001560     1021          inc     A1
+     287 00001570     0b41          cmpi    5,A1
+         00001580     fffa  
+     288 00001590     c4f5          jrlt    DrgLp
+     289 000015a0           DrgX:
+     290 000015a0     4c20          move    A1,A0
+     291 000015b0     ca03          jrz     NoDrg
+     292 000015c0     0d5f          calla   ADDDRUGS
+         000015d0 00000000! 
+     293 000015f0           NoDrg:
+     294                    
+     295 000015f0     5621          clr     A1
+     296 00001600           ClpLp:
+     297 00001600     05a0          move    @rambclip,A0,W
+         00001610 00000010- 
+     298 00001630     0d5f          calla   RANDPER
+         00001640 00000000! 
+     299 00001660     c904          jrnc    ClpX
+     300 00001670     1021          inc     A1
+     301 00001680     0b41          cmpi    3,A1
+         00001690     fffc  
+     302 000016a0     c4f5          jrlt    ClpLp
+     303 000016b0           ClpX:
+     304 000016b0     4c20          move    A1,A0
+     305 000016c0     ca03          jrz     NoClp
+     306 000016d0     0d5f          calla   ADDCLIPS
+         000016e0 00000000! 
+     307 00001700           NoClp:
+     308                            
+     309 00001700     09e0          movi    RAMBCOLL,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    8
+
+         00001710 00007ca0' 
+     310 00001730     b208          move    A0,*A8(OCVECT),L
+         00001740     01d0  
+     311                    
+     312 00001750     0d3f          callr   GoRun
+         00001760     0430  
+     313 00001770     0d3f          callr   Charge
+         00001780     03ca  
+     314 00001790     c000          jruc    RAMBO_MV
+         000017a0     0190  
+     315                    
+     316 000017b0                   .even
+     317                    **************************************************************************
+     318                    
+     319                    **************************************************************************
+     320 000017b0           GetBody:
+     321 000017b0     0d5f          calla   GETOBJ
+         000017c0 00000000! 
+     322 000017e0     ca1d          jrz     GetBodyX
+     323 000017f0     09ee          movi    BodyInit,A14
+         00001800 00000560' 
+     324 00001820     0d5f          calla   STFOBJ
+         00001830 00000000! 
+     325 00001850     b3a0          move    A13,*A0(OPLINK),L
+         00001860     01f0  
+     326 00001870     4c07          move    A0,A7
+     327 00001880     09e0          movi    ram1,A0
+         00001890 00000000! 
+     328 000018b0     0d5f          calla   GETFPAL
+         000018c0 00000000! 
+     329 000018e0     ca0e          jrz     NoBodPal
+     330 000018f0     b007          move    A0,*A7(OPAL),W
+         00001900     0160  
+     331 00001910     4ce0          move    A7,A0
+     332 00001920     0d5f          calla   INSOBJ
+         00001930 00000000! 
+     333 00001950     09e1          movi    ENEMIES,A1
+         00001960 00000000! 
+     334 00001980     0d5f          calla   ADDSUPP
+         00001990 00000000! 
+     335 000019b0     4cea          move    A7,A10
+     336 000019c0           GetBodyX:
+     337 000019c0     0960          rets
+     338 000019d0           NoBodPal:
+     339 000019d0     4c20          move    A1,A0
+     340 000019e0     0d5f          calla   FREEOBJ
+         000019f0 00000000! 
+     341 00001a10     5600          clr     A0
+     342 00001a20     c0f9          jruc    GetBodyX
+     343                    **************************************************************************
+     344                    
+     345                    **************************************************************************
+     346 00001a30           DelBody:
+     347 00001a30     098f          mmtm    SP,A0,A1
+         00001a40     c000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE    9
+
+     348 00001a50     4d40          move    A10,A0
+     349 00001a60     0d5f          calla   DELPAL
+         00001a70 00000000! 
+     350 00001a90     09e1          movi    ENEMIES,A1
+         00001aa0 00000000! 
+     351 00001ac0     0d5f          calla   DELSUPP
+         00001ad0 00000000! 
+     352 00001af0     0d5f          calla   DELSOBJ
+         00001b00 00000000! 
+     353 00001b20     09af          mmfm    SP,A0,A1
+         00001b30     0003  
+     354 00001b40     0960          rets
+     355                    **************************************************************************
+     356                    
+     357                    **************************************************************************
+     358 00001b50           AnimRst:
+     359 00001b50     5600          clr     A0
+     360 00001b60     ac0d          movb    A0,*A13(DEST_TAG)
+         00001b70     01c0  
+     361 00001b80     ac0d          movb    A0,*A13(BRAINTIKS)
+         00001b90     01b0  
+     362 00001ba0     ac0d          movb    A0,*A13(ANIMTIKS)
+         00001bb0     01a0  
+     363                    ;       callr   FRANCHEK
+     364 00001bc0     0960          rets
+     365                    **************************************************************************
+     366                    
+     367                    **************************************************************************
+     368 00001bd0           DO_JUMP:
+     369 00001bd0     09e0          movi    -090000H,A0
+         00001be0 fff70000  
+     370 00001c00     b208          move    A0,*A8(OYVEL),L
+         00001c10     0060  
+     371                    
+     372 00001c20     b7a0          move    *A13(COLLOBJ),A0,L
+         00001c30     00c0  
+     373 00001c40     ca0d          jrz     SkXBump
+     374 00001c50     0d5f          calla   FACEOBJ
+         00001c60 00000000! 
+     375 00001c80     b7a0          move    *A13(COLLOBJ),A0,L
+         00001c90     00c0  
+     376 00001ca0     b600          move    *A0(OXVEL),A0,L
+         00001cb0     0040  
+     377 00001cc0     2be0          sra     1,A0
+     378 00001cd0     b701          move    *A8(OXVEL),A1,L
+         00001ce0     0040  
+     379 00001cf0     4001          add     A0,A1
+     380 00001d00     b228          move    A1,*A8(OXVEL),L
+         00001d10     0040  
+     381 00001d20           SkXBump:
+     382                    
+     383 00001d20     09e9          movi    RAMBJMP,A9,L
+         00001d30 0000b000' 
+     384                    
+     385 00001d50     1881          movk    4,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   10
+
+     386 00001d60                   jsrp    FRANIM
+     387 00001dd0           RAMBFLY0:
+     388 00001dd0     0d3f          callr   ZCHECK
+         00001de0     007f  
+     389 00001df0     0d3f          callr   UpdTorso
+         00001e00     00f9  
+     390 00001e10     1820          movk    1,A0
+     391 00001e20     0d5f          calla   PRCSLP
+         00001e30 00000000! 
+     392 00001e50     0d5f          calla   DFRMGRND
+         00001e60 00000000! 
+     393 00001e80     0b41          cmpi    30,A1
+         00001e90     ffe1  
+     394 00001ea0     c709          jrgt    RAMBFLY1a
+     395 00001eb0     b700          move    *A8(OYVEL),A0,L
+         00001ec0     0060  
+     396 00001ed0     c106          jrp     RAMBFLY1a
+     397 00001ee0     0b20          addi    0C000H,A0
+         00001ef0 0000c000  
+     398 00001f10     b208          move    A0,*A8(OYVEL),L
+         00001f20     0060  
+     399 00001f30     c0e9          jruc    RAMBFLY0
+     400 00001f40           RAMBFLY1a:
+     401 00001f40     1881          movk    4,A1
+     402 00001f50                   jsrp    FRANIM     ;* throw it
+     403 00001fc0           RAMBFLY1:
+     404 00001fc0     0d3f          callr   ZCHECK
+         00001fd0     0060  
+     405 00001fe0     0d3f          callr   UpdTorso
+         00001ff0     00da  
+     406 00002000     1820          movk    1,A0
+     407 00002010     0d5f          calla   PRCSLP
+         00002020 00000000! 
+     408 00002040     0d5f          calla   DFRMGRND
+         00002050 00000000! 
+     409 00002070     0b41          cmpi    45,A1
+         00002080     ffd2  
+     410 00002090     c709          jrgt    RAMBFLY2a
+     411 000020a0     b700          move    *A8(OYVEL),A0,L
+         000020b0     0060  
+     412 000020c0     c106          jrp     RAMBFLY2a
+     413 000020d0     0b20          addi    0A000H,A0
+         000020e0 0000a000  
+     414 00002100     b208          move    A0,*A8(OYVEL),L
+         00002110     0060  
+     415 00002120     c0e9          jruc    RAMBFLY1
+     416 00002130           RAMBFLY2a:
+     417 00002130     1881          movk    4,A1
+     418 00002140                   jsrp    FRANIM
+     419 000021b0           RAMBFLY2:
+     420 000021b0     0d3f          callr   ZCHECK
+         000021c0     0041  
+     421 000021d0     0d3f          callr   UpdTorso
+         000021e0     00bb  
+     422 000021f0     1820          movk    1,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   11
+
+     423 00002200     0d5f          calla   PRCSLP
+         00002210 00000000! 
+     424 00002230     b700          move    *A8(OYVEL),A0,L
+         00002240     0060  
+     425 00002250     0b20          addi    0A000H,A0
+         00002260 0000a000  
+     426 00002280     b208          move    A0,*A8(OYVEL),L
+         00002290     0060  
+     427 000022a0     cef0          jrn     RAMBFLY2
+     428 000022b0     0d5f          calla   DFRMGRND
+         000022c0 00000000! 
+     429 000022e0     0b41          cmpi    30,A1
+         000022f0     ffe1  
+     430 00002300     c401          jrlt    RAMBFLY4a
+     431 00002310     c0e9          jruc    RAMBFLY2
+     432 00002320           RAMBFLY4a:
+     433 00002320     1881          movk    4,A1
+     434 00002330                   jsrp    FRANIM
+     435 000023a0           RAMBFLY4:
+     436 000023a0     0d3f          callr   ZCHECK
+         000023b0     0022  
+     437 000023c0     0d3f          callr   UpdTorso
+         000023d0     009c  
+     438 000023e0     1820          movk    1,A0
+     439 000023f0     0d5f          calla   PRCSLP
+         00002400 00000000! 
+     440 00002420     b700          move    *A8(OYVEL),A0,L
+         00002430     0060  
+     441 00002440     0b20          addi    08000H,A0
+         00002450 00008000  
+     442 00002470     b208          move    A0,*A8(OYVEL),L
+         00002480     0060  
+     443 00002490     0d5f          calla   DFRMGRND
+         000024a0 00000000! 
+     444                    ;       subk    5,A1
+     445 000024c0     c1ed          jrp     RAMBFLY4
+     446                    
+     447                    ;* we have hit the ground..
+     448 000024d0     bb08          move    *A8(OZVEL),*A8(OYVEL),L
+         000024e0     00e0  
+         000024f0     0060  
+     449 00002500     4d00          move    A8,A0
+     450 00002510     0d5f          calla   SETZPOS
+         00002520 00000000! 
+     451 00002540     0d3f          callr   AnimRst
+         00002550     ff5f  
+     452 00002560     0d3f          callr   GoRun
+         00002570     034f  
+     453 00002580     5600          clr     A0
+     454 00002590     b20d          move    A0,*A13(COLLOBJ),L
+         000025a0     00c0  
+     455 000025b0                   retp
+     456                    **************************************************************************
+     457                    
+     458                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   12
+
+     459 000025e0           ZCHECK:
+     460 000025e0     b501          move    *A8(OZPOS),A1,W
+         000025f0     00d0  
+     461 00002600     05a0          move    @PLZMIN,A0,W
+         00002610 00000000! 
+     462 00002630     10a0          addk    5,A0
+     463 00002640     4401          sub     A0,A1
+     464 00002650     cf0b          jrnn    ZMinOK
+     465 00002660     b008          move    A0,*A8(OZPOS),W
+         00002670     00d0  
+     466 00002680     b500          move    *A8(OYPOS),A0,W
+         00002690     00b0  
+     467 000026a0     4420          sub     A1,A0
+     468 000026b0     b008          move    A0,*A8(OYPOS),W
+         000026c0     00b0  
+     469 000026d0     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         000026e0     00e0  
+     470 000026f0     cf1c          jrnn    ZMaxOK
+     471 00002700     c013          jruc    SETZV
+     472 00002710           ZMinOK:
+     473 00002710     b501          move    *A8(OZPOS),A1,W
+         00002720     00d0  
+     474 00002730     05a0          move    @PLZMAX,A0,W
+         00002740 00000000! 
+     475 00002760     1460          subk    3,A0
+     476 00002770     4401          sub     A0,A1
+     477 00002780     ce13          jrn     ZMaxOK
+     478 00002790     b008          move    A0,*A8(OZPOS),W
+         000027a0     00d0  
+     479 000027b0     b500          move    *A8(OYPOS),A0,W
+         000027c0     00b0  
+     480 000027d0     4420          sub     A1,A0
+     481 000027e0     b008          move    A0,*A8(OYPOS),W
+         000027f0     00b0  
+     482 00002800     b700          move    *A8(OZVEL),A0,L ;* want to check sign
+         00002810     00e0  
+     483 00002820     ce09          jrn     ZMaxOK
+     484 00002830     ca08          jrz     ZMaxOK
+     485 00002840           SETZV:
+     486 00002840     b701          move    *A8(OYVEL),A1,L
+         00002850     0060  
+     487 00002860     4401          sub     A0,A1
+     488 00002870     b228          move    A1,*A8(OYVEL),L
+         00002880     0060  
+     489 00002890     5600          clr     A0
+     490 000028a0     b208          move    A0,*A8(OZVEL),L ;set Z velocity
+         000028b0     00e0  
+     491 000028c0           ZMaxOK:
+     492 000028c0     0960          rets
+     493                    **************************************************************************
+     494                    
+     495                    
+     496                    **************************************************************************
+     497 000028d0           CkXDIST:
+     498 000028d0     05a1          move    @(WORLDTLX+16),A1,W
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   13
+
+         000028e0 00000010! 
+     499 00002900     0b01          addi    256,A1
+         00002910     0100  
+     500 00002920     0d5f          calla   GETANIX
+         00002930 00000000! 
+     501 00002950     4420          sub     A1,A0
+     502 00002960     0b40          cmpi    600,A0
+         00002970     fda7  
+     503 00002980     c71e          jrgt    DeepRght
+     504 00002990     0b40          cmpi    300,A0
+         000029a0     fed3  
+     505 000029b0     c725          jrgt    NearRght
+     506 000029c0     0b40          cmpi    -600,A0
+         000029d0     0257  
+     507 000029e0     c407          jrlt    DeepLeft
+     508 000029f0     0b40          cmpi    -300,A0
+         00002a00     012b  
+     509 00002a10     c426          jrlt    NearLeft
+     510                    
+     511                            ;* on screen
+     512 00002a20     5600          clr     A0
+     513 00002a30     ac0d          movb    A0,*A13(SNOOZE)
+         00002a40     01d0  
+     514 00002a50     c028          jruc    CkXDISTX
+     515                    
+     516 00002a60           DeepLeft:
+     517 00002a60                   jsrp    CkQuit
+     518 00002ad0     afa0          movb    *A13(SNOOZE),A0
+         00002ae0     01d0  
+     519 00002af0     cb1e          jrnz    CkXDISTX
+     520 00002b00     1820          movk    1,A0
+     521 00002b10     ac0d          movb    A0,*A13(SNOOZE)
+         00002b20     01d0  
+     522 00002b30     0d5f          calla   ShadOff
+         00002b40 00000000! 
+     523 00002b60     c017          jruc    CkXDISTX
+     524 00002b70           DeepRght:
+     525 00002b70     afa0          movb    *A13(SNOOZE),A0
+         00002b80     01d0  
+     526 00002b90     cb14          jrnz    CkXDISTX
+     527 00002ba0     1820          movk    1,A0
+     528 00002bb0     ac0d          movb    A0,*A13(SNOOZE)
+         00002bc0     01d0  
+     529 00002bd0     0d5f          calla   ShadOff
+         00002be0 00000000! 
+     530 00002c00     c00d          jruc    CkXDISTX
+     531 00002c10           NearRght:
+     532 00002c10     5600          clr     A0
+     533 00002c20     ac0d          movb    A0,*A13(SNOOZE)
+         00002c30     01d0  
+     534 00002c40     0d5f          calla   ShadOn
+         00002c50 00000000! 
+     535 00002c70     c006          jruc    CkXDISTX
+     536 00002c80           NearLeft:
+     537 00002c80     5600          clr     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   14
+
+     538 00002c90     ac0d          movb    A0,*A13(SNOOZE)
+         00002ca0     01d0  
+     539 00002cb0     0d5f          calla   ShadOn
+         00002cc0 00000000! 
+     540                    ;       jruc    CkXDISTX
+     541 00002ce0           CkXDISTX:
+     542 00002ce0                   RETP
+     543                    **************************************************************************
+     544                    
+     545                    **************************************************************************
+     546 00002d10           CkQuit:
+     547 00002d10     05a0          move    @SLPRAMBS,A0,W
+         00002d20 00000000! 
+     548 00002d40     ca02          jrz     CkQuitX
+     549 00002d50     c000          jruc    RAMBDONE
+         00002d60     037d  
+     550 00002d70           CkQuitX:
+     551 00002d70                   RETP
+     552                    **************************************************************************
+     553                    
+     554                    **************************************************************************
+     555 00002da0           UpdTorso:
+     556 00002da0     098f          mmtm    SP,A0
+         00002db0     8000  
+     557 00002dc0     bb0a          move    *A8(OXVEL),*A10(OXVEL),L
+         00002dd0     0040  
+         00002de0     0040  
+     558 00002df0     bb0a          move    *A8(OYVEL),*A10(OYVEL),L
+         00002e00     0060  
+         00002e10     0060  
+     559 00002e20     bb0a          move    *A8(OZVEL),*A10(OZVEL),L
+         00002e30     00e0  
+         00002e40     00e0  
+     560 00002e50     b700          move    *A8(OZPOS),A0,L
+         00002e60     00d0  
+     561 00002e70     1020          inc     A0
+     562 00002e80     b20a          move    A0,*A10(OZPOS),L
+         00002e90     00d0  
+     563 00002ea0     b701          MOVE    *A8(OIMG),A1,L
+         00002eb0     0180  
+     564 00002ec0     b702          MOVE    *A8(OSIZE),A2,L
+         00002ed0     0140  
+     565 00002ee0     b504          MOVE    *A8(OFLAGS),A4,W
+         00002ef0     0100  
+     566 00002f00     0d5f          CALLA   GANIOF
+         00002f10 00000000! 
+     567 00002f30     b703          MOVE    *A8(OXVAL),A3,L
+         00002f40     0080  
+     568 00002f50     b705          MOVE    *A8(OYVAL),A5,L
+         00002f60     00a0  
+     569 00002f70     40c3          ADD     A6,A3
+     570 00002f80     40e5          ADD     A7,A5
+     571 00002f90     b741          MOVE    *A10(OIMG),A1,L
+         00002fa0     0180  
+     572 00002fb0     b742          MOVE    *A10(OSIZE),A2,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   15
+
+         00002fc0     0140  
+     573 00002fd0     b544          MOVE    *A10(OFLAGS),A4,W
+         00002fe0     0100  
+     574 00002ff0     0d5f          CALLA   GANIOF
+         00003000 00000000! 
+     575 00003020     44c3          SUB     A6,A3
+     576 00003030     44e5          SUB     A7,A5
+     577 00003040     b26a          MOVE    A3,*A10(OXVAL),L
+         00003050     0080  
+     578 00003060     b2aa          MOVE    A5,*A10(OYVAL),L
+         00003070     00a0  
+     579 00003080     09af          mmfm    SP,A0
+         00003090     0001  
+     580 000030a0     0960          rets
+     581                    **************************************************************************
+     582                    
+     583                    **************************************************************************
+     584 000030b0           RAMBO_MV:
+     585 000030b0     0d3f          callr   ZCHECK
+         000030c0     ff51  
+     586                    
+     587 000030d0     b7a0          move    *A13(COLLOBJ),A0,L
+         000030e0     00c0  
+     588 000030f0     ca07          jrz     NOCOLL
+     589 00003100                   jsrp    DO_JUMP
+     590 00003170           NOCOLL:
+     591                    
+     592                    ;********  CHECK if a DESTINATION has been reached, and what to do if so..
+     593 00003170     afa0          movb    *A13(DEST_TAG),A0
+         00003180     01c0  
+     594 00003190     ca0c          jrz     SkCkDest
+     595 000031a0     afa0          movb    *A13(DESTTIKS),A0
+         000031b0     01a8  
+     596 000031c0     cb09          jrnz    SkCkDest
+     597 000031d0     0d5f          calla   CkDest
+         000031e0 00000000! 
+     598 00003200     c905          jrnc    NotYet
+     599                    
+     600                            ;* we have reached our destination
+     601 00003210     5600          clr     A0
+     602 00003220     ac0d          movb    A0,*A13(BRAINTIKS)      ;Allow new course of action
+         00003230     01b0  
+     603 00003240     ac0d          movb    A0,*A13(DEST_TAG)
+         00003250     01c0  
+     604 00003260           NotYet:
+     605 00003260           SkCkDest:
+     606                    
+     607                    **** BRAIN functions *****
+     608 00003260           DoBrain:
+     609 00003260     afa0          movb    *A13(BRAINTIKS),A0
+         00003270     01b0  
+     610 00003280     cb2d          jrnz    BrainX
+     611                    
+     612 00003290     19e0          movk    15,A0
+     613 000032a0     afa1          movb    *A13(SNOOZE),A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   16
+
+         000032b0     01d0  
+     614 000032c0     cb03          jrnz    SetBTiks
+     615 000032d0     05a0          move    @rambbrain,A0,W
+         000032e0 00000000! 
+     616 00003300           SetBTiks:
+     617 00003300     ac0d          movb    A0,*A13(BRAINTIKS)              ;reset brain wait
+         00003310     01b0  
+     618                    
+     619 00003320                   jsrp    CkXDIST         ;routine can DIE
+     620                    
+     621 00003390     afa0          movb    *A13(SNOOZE),A0
+         000033a0     01d0  
+     622 000033b0     cb0d          jrnz    SkDngrCk
+     623                    
+     624 000033c0     afa0          movb    *A13(DEST_TAG),A0
+         000033d0     01c0  
+     625 000033e0     0b40          cmpi    BULL_T,A0
+         000033f0     ffeb  
+     626 00003400     c515          jrge    BrainX
+     627                    
+     628 00003410                   jsrp    CkDngr
+     629 00003480     c80d          jrc     BrainX
+     630 00003490           SkDngrCk:
+     631                    
+     632 00003490     b500          move    *A8(OID),A0,W
+         000034a0     01a0  
+     633 000034b0     1fe0          btst    0,A0
+     634 000034c0     cb05          jrnz    FRAMB
+     635 000034d0     0d3f          callr   ATTACK
+         000034e0     0054  
+     636 000034f0     0d3f          callr   DoBod
+         00003500     0084  
+     637 00003510     c004          jruc    BrainX
+     638 00003520           FRAMB:
+     639 00003520     0d3f          callr   ATTACK2
+         00003530     013c  
+     640 00003540     0d3f          callr   DoBod2
+         00003550     0183  
+     641 00003560           BrainX:
+     642                    
+     643                    
+     644                    **** Animation check ****
+     645 00003560     afa0          movb    *A13(SNOOZE),A0
+         00003570     01d0  
+     646 00003580     cb11          jrnz    AnimX
+     647 00003590     afa0          movb    *A13(ANIMTIKS),A0
+         000035a0     01a0  
+     648 000035b0     cb0e          jrnz    AnimX
+     649                    
+     650 000035c0     1881          movk    4,A1                    ;* one frame, no sleepin
+     651 000035d0                   jsrp    FRANIM
+     652 00003640     8721          move    *A9,A1,L
+     653 00003650     cb02          jrnz    ListLeft
+     654 00003660     0d3f          callr   AnimCycle
+         00003670     01f8  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   17
+
+     655 00003680           ListLeft:
+     656 00003680     ac0d          movb    A0,*A13(ANIMTIKS)
+         00003690     01a0  
+     657 000036a0           AnimX:
+     658                    
+     659                    **** Find Next Event ****
+     660 000036a0     afa0          movb    *A13(BRAINTIKS),A0
+         000036b0     01b0  
+     661 000036c0     c101          jrp     SkBrain1
+     662 000036d0     1820          movk    1,A0
+     663 000036e0           SkBrain1:
+     664 000036e0     4c05          move    A0,A5                   ;current min
+     665                            
+     666 000036f0     afa1          movb    *A13(DEST_TAG),A1
+         00003700     01c0  
+     667 00003710     ca09          jrz     SkMin1
+     668 00003720     afa1          movb    *A13(DESTTIKS),A1
+         00003730     01a8  
+     669 00003740     2701          sll     24,A1
+     670 00003750     2d01          srl     24,A1
+     671 00003760     cb01          jrnz    SkDest1
+     672 00003770     1821          movk    1,A1
+     673 00003780           SkDest1:
+     674 00003780     48a1          cmp     A5,A1
+     675 00003790     c501          jrge    SkMin1
+     676 000037a0     4c25          move    A1,A5
+     677 000037b0           SkMin1:
+     678                    
+     679                            ;**** The following are only done when not snoozing
+     680 000037b0     afa7          movb    *A13(SNOOZE),A7
+         000037c0     01d0  
+     681 000037d0     cb05          jrnz    GotMin
+     682                    
+     683 000037e0     afa2          movb    *A13(ANIMTIKS),A2
+         000037f0     01a0  
+     684 00003800     48a2          cmp     A5,A2
+     685 00003810     c501          jrge    SkMin2
+     686 00003820     4c45          move    A2,A5
+     687 00003830           SkMin2:
+     688                    
+     689 00003830           GotMin:
+     690 00003830     44a0          sub     A5,A0
+     691 00003840     ac0d          movb    A0,*A13(BRAINTIKS)
+         00003850     01b0  
+     692 00003860     4c21          move    A1,A1
+     693 00003870     ca03          jrz     SkDestDc
+     694 00003880     44a1          sub     A5,A1
+     695 00003890     ac2d          movb    A1,*A13(DESTTIKS)
+         000038a0     01a8  
+     696 000038b0           SkDestDc:
+     697 000038b0     4ce7          move    A7,A7   ;ck snooze
+     698 000038c0     cb03          jrnz    MoveSlp
+     699 000038d0     44a2          sub     A5,A2
+     700 000038e0     ac4d          movb    A2,*A13(ANIMTIKS)
+         000038f0     01a0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   18
+
+     701                    
+     702 00003900           MoveSlp:
+     703 00003900     afa1          movb    *A13(FLIPTIKS),A1
+         00003910     01d8  
+     704 00003920     ca08          jrz     SkFlipDc
+     705 00003930     0b81          andi    0FFH,A1 ;No o' this sign extended byte shit
+         00003940 ffffff00  
+     706 00003960     44a1          sub     A5,A1
+     707 00003970     c101          jrp     SkClrFlp
+     708 00003980     5621          clr     A1
+     709 00003990           SkClrFlp:
+     710 00003990     ac2d          movb    A1,*A13(FLIPTIKS)
+         000039a0     01d8  
+     711 000039b0           SkFlipDc:
+     712                    
+     713 000039b0     4ca0          move    A5,A0
+     714 000039c0     0d3f          callr   UpdTorso
+         000039d0     ff3c  
+     715 000039e0     0d5f          calla   PRCSLP
+         000039f0 00000000! 
+     716                    
+     717 00003a10     c000          jruc    RAMBO_MV
+         00003a20     ff68  
+     718                    **************************************************************************
+     719                    
+     720                    **************************************************************************
+     721 00003a30           ATTACK:
+     722 00003a30     4d06          move    A8,A6
+     723 00003a40     0d5f          calla   ClosestP
+         00003a50 00000000! 
+     724 00003a70     4c08          move    A0,A8
+     725 00003a80     0d5f          calla   GETANIX
+         00003a90 00000000! 
+     726 00003ab0     4d07          move    A8,A7
+     727 00003ac0     4c01          move    A0,A1                   ;A1 = Xpos of Player
+     728 00003ad0     4cc8          move    A6,A8
+     729 00003ae0     0d5f          calla   GETANIX
+         00003af0 00000000! 
+     730 00003b10     4401          sub     A0,A1           ;A1 = dist to closest player
+     731 00003b20     b702          move    *A8(OXVEL),A2,L
+         00003b30     0040  
+     732 00003b40     5622          xor     A1,A2           ;A2 neg means heading away from player
+     733 00003b50     4c42          move    A2,A2
+     734 00003b60     cf1d          jrnn    AttackX         ;if heading toward player, keep going..
+     735                            ;* Should We Change X Dir?
+     736 00003b70     0381          abs     A1
+     737 00003b80     09c0          movi    800,A0          
+         00003b90     0320  
+     738 00003ba0     0d5f          calla   RANDU
+         00003bb0 00000000! 
+     739 00003bd0     0b00          addi    50,A0
+         00003be0     0032  
+     740 00003bf0     4801          cmp     A0,A1
+     741 00003c00     c613          jrle    AttackX
+     742 00003c10     4ce0          move    A7,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   19
+
+     743 00003c20     0d5f          calla   FACEOBJ
+         00003c30 00000000! 
+     744                    
+     745                            ;set ZVEL
+     746 00003c50     b700          move    *A8(OXVEL),A0,L
+         00003c60     0040  
+     747 00003c70     0380          abs     A0
+     748 00003c80     0d5f          calla   RANDU
+         00003c90 00000000! 
+     749 00003cb0     07e1          movb    @RAND,A1
+         00003cc0 00000000! 
+     750 00003ce0     ce01          jrn     SkNegZ
+     751 00003cf0     03a0          neg     A0
+     752 00003d00           SkNegZ:
+     753 00003d00     b208          move    A0,*A8(OZVEL),L
+         00003d10     00e0  
+     754 00003d20     b208          move    A0,*A8(OYVEL),L
+         00003d30     0060  
+     755 00003d40           AttackX:
+     756 00003d40     0960          rets
+     757                    **************************************************************************
+     758                    
+     759                    
+     760                    **************************************************************************
+     761 00003d50           DoBod:
+     762 00003d50     afa0          movb    *A13(SNOOZE),A0
+         00003d60     01d0  
+     763 00003d70     cb00          jrnz    DoBodX
+         00003d80     00b1  
+     764 00003d90     4d06          move    A8,A6
+     765 00003da0     0d5f          calla   ClosestP
+         00003db0 00000000! 
+     766 00003dd0     4c08          move    A0,A8
+     767 00003de0     0d5f          calla   GETANIX
+         00003df0 00000000! 
+     768 00003e10     4d07          move    A8,A7
+     769 00003e20     4c01          move    A0,A1                   ;A1 = Xpos of Player
+     770 00003e30     4cc8          move    A6,A8
+     771 00003e40     0d5f          calla   GETANIX
+         00003e50 00000000! 
+     772 00003e70     4401          sub     A0,A1                   ;A1 = X dist to closest player
+     773 00003e80     b503          move    *A8(OZPOS),A3,W
+         00003e90     00d0  
+     774 00003ea0     b4e2          move    *A7(OZPOS),A2,W
+         00003eb0     00d0  
+     775 00003ec0     4462          sub     A3,A2                   ;A2 = Z dist to closest player
+     776                    
+     777 00003ed0     4c43          move    A2,A3
+     778 00003ee0     4c24          move    A1,A4
+     779 00003ef0     ca00          jrz     ZEROX
+         00003f00     009a  
+     780 00003f10     0383          abs     A3
+     781 00003f20     0384          abs     A4
+     782 00003f30     2603          sll     16,A3
+     783 00003f40     5a83          divu    A4,A3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   20
+
+     784 00003f50           GotZdivX:
+     785                    
+     786 00003f50     4c21          move    A1,A1
+     787 00003f60     ce14          jrn     LftDir
+     788                    ;* facing right, 0<=dir<=4
+     789 00003f70     4c42          move    A2,A2
+     790 00003f80     ce0b          jrn     RgtUDir
+     791                    ;**facing right and down
+     792 00003f90     0b43          cmpi    01665H,A3       ;ANG < 5 deg            
+         00003fa0     e99a  
+     793 00003fb0     c427          jrlt    Dir2
+     794 00003fc0     0b43          cmpi    04498H,A3       ;ANG < 15 deg           
+         00003fd0     bb67  
+     795 00003fe0     c426          jrlt    Dir3
+     796 00003ff0     0b63          cmpi    0224FEH,A3      ;ANG < 65 deg           
+         00004000 fffddb01  
+     797 00004020     c424          jrlt    Dir4
+     798 00004030     c025          jruc    Dir5
+     799 00004040           RgtUDir:
+     800                    ;**facing right and up
+     801 00004040     0b43          cmpi    01665H,A3       ;ANG < 5 deg            
+         00004050     e99a  
+     802 00004060     c41c          jrlt    Dir2
+     803 00004070     0b43          cmpi    04498H,A3       ;ANG < 15 deg           
+         00004080     bb67  
+     804 00004090     c417          jrlt    Dir1
+     805 000040a0     c014          jruc    Dir0
+     806                    
+     807 000040b0           LftDir:
+     808                    ;* facing left, 5<=dir<=9
+     809 000040b0     4c42          move    A2,A2
+     810 000040c0     ce0b          jrn     LftUDir
+     811                    ;**facing left and down
+     812 000040d0     0b43          cmpi    01665H,A3       ;ANG < 5 deg            
+         000040e0     e99a  
+     813 000040f0     c41f          jrlt    Dir8
+     814 00004100     0b43          cmpi    04498H,A3       ;ANG < 15 deg           
+         00004110     bb67  
+     815 00004120     c41a          jrlt    Dir7
+     816 00004130     0b63          cmpi    0224FEH,A3      ;ANG < 65 deg           
+         00004140 fffddb01  
+     817 00004160     c414          jrlt    Dir6
+     818 00004170     c011          jruc    Dir5
+     819                    
+     820 00004180           LftUDir:
+     821                    ;**facing left and up
+     822 00004180     0b43          cmpi    01665H,A3       ;ANG < 5 deg            
+         00004190     e99a  
+     823 000041a0     c414          jrlt    Dir8
+     824 000041b0     0b43          cmpi    04498H,A3       ;ANG < 15 deg           
+         000041c0     bb67  
+     825 000041d0     c413          jrlt    Dir9
+     826 000041e0     c014          jruc    Dir10
+     827                    
+     828 000041f0     5600  Dir0:   clr     A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   21
+
+     829 00004200     c013          jruc    SetBDir
+     830 00004210     1820  Dir1:   movk    1,A0
+     831 00004220     c011          jruc    SetBDir
+     832 00004230     1840  Dir2:   movk    2,A0
+     833 00004240     c00f          jruc    SetBDir
+     834 00004250     1860  Dir3:   movk    3,A0
+     835 00004260     c00d          jruc    SetBDir
+     836 00004270     1880  Dir4:   movk    4,A0
+     837 00004280     c00b          jruc    SetBDir
+     838 00004290     18a0  Dir5:   movk    5,A0
+     839 000042a0     c009          jruc    SetBDir
+     840 000042b0     18c0  Dir6:   movk    6,A0
+     841 000042c0     c007          jruc    SetBDir
+     842 000042d0     18e0  Dir7:   movk    7,A0
+     843 000042e0     c005          jruc    SetBDir
+     844 000042f0     1900  Dir8:   movk    8,A0
+     845 00004300     c003          jruc    SetBDir
+     846 00004310     1920  Dir9:   movk    9,A0
+     847 00004320     c001          jruc    SetBDir
+     848 00004330     1940  Dir10:  movk    10,A0
+     849                    ;       jruc    SetBDir
+     850                    
+     851 00004340           SetBDir:
+     852 00004340     afa4          movb    *A13(DIR),A4
+         00004350     01c8  
+     853 00004360     4804          cmp     A0,A4
+     854 00004370     c402          jrlt    IncDir
+     855 00004380     c703          jrgt    DecDir
+     856 00004390     c005          jruc    TryShot1
+     857 000043a0           IncDir:
+     858 000043a0     1024          inc     A4
+     859 000043b0     c001          jruc    GotBDir
+     860 000043c0           DecDir:
+     861 000043c0     1424          dec     A4
+     862 000043d0           GotBDir:
+     863 000043d0           TryShot:
+     864 000043d0     4804          cmp     A0,A4
+     865 000043e0     cb46          jrnz    SkShot
+     866 000043f0           TryShot1:
+     867 000043f0     afa1          movb    *A13(CANFIRE),A1
+         00004400     0180  
+     868 00004410     ca40          jrz     CantFire
+     869 00004420     5621          clr     A1
+     870 00004430     ac2d          movb    A1,*A13(CANFIRE)
+         00004440     0180  
+     871 00004450     24a0          sll     5,A0
+     872 00004460     0b20          addi    SDIRTBL,A0
+         00004470 000044b0' 
+     873 00004490     8600          move    *A0,A0,L
+     874 000044a0     0160          jump    A0
+     875                    
+     876 000044b0           SDIRTBL:
+     877 000044b0 00004710'         .long   SDir0,SDir1,SDir2,SDir3,SDir4,SDir5
+     878 00004570 00004710'         .long   SDir6,SDir7,SDir8,SDir9,SDir10
+     879 00004610           SDir5:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   22
+
+     880 00004610     0b63          cmpi    05ABD9H,A3      ;ANG > 80 deg
+         00004620 fffa5426  
+     881 00004640     c420          jrlt    SkShot
+     882 00004650     c011          jruc    DoShot
+     883 00004660           SDir2:
+     884 00004660           SDir8:
+     885 00004660     0b43          cmpi    01665H,A3       ;ANG < 4 deg
+         00004670     e99a  
+     886 00004680     c71c          jrgt    SkShot
+     887 00004690     c00d          jruc    DoShot
+     888 000046a0           SDir1:
+     889 000046a0           SDir3:
+     890 000046a0           SDir7:
+     891 000046a0           SDir9:
+     892 000046a0     0b43          cmpi    02AD7H,A3       ;6 deg < ANG < 14
+         000046b0     d528  
+     893 000046c0     c418          jrlt    SkShot
+     894 000046d0     0b43          cmpi    04235H,A3
+         000046e0     bdca  
+     895 000046f0     c715          jrgt    SkShot
+     896 00004700     c006          jruc    DoShot
+     897 00004710           SDir0:
+     898 00004710           SDir4:
+     899 00004710           SDir6:
+     900 00004710           SDir10:
+     901 00004710     0b43          cmpi    02AD7H,A3       ;16 deg < ANG < 24
+         00004720     d528  
+     902 00004730     c411          jrlt    SkShot
+     903 00004740     0b43          cmpi    04235H,A3
+         00004750     bdca  
+     904 00004760     c70e          jrgt    SkShot
+     905                    ;       jruc    DoShot
+     906                    
+     907 00004770           DoShot:
+     908 00004770     0d3f          callr   FIRE
+         00004780     0375  
+     909 00004790     ac8d          movb    A4,*A13(DIR)
+         000047a0     01c8  
+     910 000047b0     1820          movk    1,A0
+     911 000047c0     0d3f          callr   AniBod
+         000047d0     00a2  
+     912 000047e0     18a0          movk    5,A0
+     913 000047f0     ac0d          movb    A0,*A13(BRAINTIKS)
+         00004800     01b0  
+     914 00004810     c008          jruc    DoBodX
+     915                    
+     916 00004820           CantFire:
+     917 00004820     1821          movk    1,A1
+     918 00004830     ac2d          movb    A1,*A13(CANFIRE)
+         00004840     0180  
+     919 00004850           SkShot:
+     920 00004850     ac8d          movb    A4,*A13(DIR)
+         00004860     01c8  
+     921 00004870     5600          clr     A0
+     922 00004880     0d3f          callr   AniBod
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   23
+
+         00004890     0096  
+     923 000048a0           DoBodX: 
+     924 000048a0     0960          rets
+     925                    
+     926 000048b0           ZEROX:
+     927 000048b0     09e3          movi    07FFFFFFFH,A3
+         000048c0 7fffffff  
+     928 000048e0     c000          jruc    GotZdivX
+         000048f0     ff65  
+     929                    **************************************************************************
+     930                    
+     931                    **************************************************************************
+     932              004b  MinXDelt        .set    75
+     933 00004900           ATTACK2:
+     934                    ;* For flame thrower rambo, move toward nearest player
+     935 00004900     4d06          move    A8,A6
+     936 00004910     0d5f          calla   ClosestP
+         00004920 00000000! 
+     937 00004940     4c08          move    A0,A8
+     938 00004950     0d5f          calla   GETANIX
+         00004960 00000000! 
+     939 00004980     4d07          move    A8,A7
+     940 00004990     4c01          move    A0,A1                   ;A1 = Xpos of Player
+     941 000049a0     b4e3          move    *A7(OZPOS),A3,W
+         000049b0     00d0  
+     942 000049c0     2603          sll     16,A3
+     943 000049d0     ec23          movx    A1,A3
+     944 000049e0     4cc8          move    A6,A8
+     945 000049f0     0d5f          calla   GETANIX
+         00004a00 00000000! 
+     946 00004a20     4401          sub     A0,A1           ;A1 = dist to closest player
+     947 00004a30     b702          move    *A8(OXVEL),A2,L
+         00004a40     0040  
+     948 00004a50     5622          xor     A1,A2           ;A2 neg means heading away from player
+     949 00004a60     4c42          move    A2,A2
+     950 00004a70     ce15          jrn     Going   ;heading away from player, keep going
+     951                    
+     952                            ;* heading toward the player
+     953 00004a80     0381          abs     A1
+     954 00004a90     0b41          cmpi    MinXDelt+40,A1
+         00004aa0     ff8c  
+     955 00004ab0     c42c          jrlt    Attack2X
+     956 00004ac0     09c0          movi    650,A0
+         00004ad0     028a  
+     957 00004ae0     0d5f          calla   RANDPER
+         00004af0 00000000! 
+     958 00004b10     c826          jrc     Attack2X
+     959 00004b20     b26d          move    A3,*A13(DEST),L
+         00004b30     01e0  
+     960 00004b40     09c0          movi    MinXDelt,A0
+         00004b50     004b  
+     961 00004b60     0d5f          calla   ShortXDest
+         00004b70 00000000! 
+     962 00004b90     0d5f          calla   GoDestV
+         00004ba0 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   24
+
+     963 00004bc0     c01b          jruc    Attack2X
+     964                    
+     965 00004bd0           Going:
+     966                            ;* Should We Change X Dir?
+     967 00004bd0     0381          abs     A1
+     968 00004be0     0b41          cmpi    MinXDelt,A1
+         00004bf0     ffb4  
+     969 00004c00     c417          jrlt    Attack2X
+     970 00004c10     09c0          movi    800,A0          
+         00004c20     0320  
+     971 00004c30     0d5f          calla   RANDU
+         00004c40 00000000! 
+     972 00004c60     0b00          addi    MinXDelt,A0
+         00004c70     004b  
+     973 00004c80     4801          cmp     A0,A1
+     974 00004c90     c60e          jrle    Attack2X
+     975 00004ca0     4ce0          move    A7,A0
+     976 00004cb0     0d5f          calla   FACEOBJ
+         00004cc0 00000000! 
+     977 00004ce0     b26d          move    A3,*A13(DEST),L
+         00004cf0     01e0  
+     978 00004d00     09c0          movi    MinXDelt,A0
+         00004d10     004b  
+     979 00004d20     0d5f          calla   ShortXDest
+         00004d30 00000000! 
+     980 00004d50     0d5f          calla   GoDestV
+         00004d60 00000000! 
+     981                    
+     982 00004d80           Attack2X:
+     983 00004d80     0960          rets
+     984                    **************************************************************************
+     985                    
+     986                    **************************************************************************
+     987 00004d90           DoBod2:
+     988 00004d90     afa0          movb    *A13(SNOOZE),A0
+         00004da0     01d0  
+     989 00004db0     cb43          jrnz    DoBod2X
+     990 00004dc0     4d06          move    A8,A6
+     991 00004dd0     0d5f          calla   ClosestP
+         00004de0 00000000! 
+     992 00004e00     4c08          move    A0,A8
+     993 00004e10     0d5f          calla   GETANIX
+         00004e20 00000000! 
+     994 00004e40     4d07          move    A8,A7
+     995 00004e50     4c01          move    A0,A1                   ;A1 = Xpos of Player
+     996 00004e60     4cc8          move    A6,A8
+     997 00004e70     0d5f          calla   GETANIX
+         00004e80 00000000! 
+     998 00004ea0     4401          sub     A0,A1                   ;A1 = X dist to closest player
+     999 00004eb0     ce02          jrn     DirF4
+    1000 00004ec0     1840          movk    2,A0
+    1001 00004ed0     c001          jruc    StBDir
+    1002 00004ee0           DirF4:
+    1003 00004ee0     1900          movk    8,A0
+    1004                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   25
+
+    1005 00004ef0           StBDir:
+    1006 00004ef0     afa4          movb    *A13(DIR),A4
+         00004f00     01c8  
+    1007 00004f10     4804          cmp     A0,A4
+    1008 00004f20     c402          jrlt    IncDir2
+    1009 00004f30     c703          jrgt    DecDir2
+    1010 00004f40     c004          jruc    TryFlam1
+    1011 00004f50           IncDir2:
+    1012 00004f50     1024          inc     A4
+    1013 00004f60     c023          jruc    SkFlam
+    1014 00004f70           DecDir2:
+    1015 00004f70     1424          dec     A4
+    1016 00004f80     c021          jruc    SkFlam
+    1017                    
+    1018 00004f90           TryFlam1:
+    1019 00004f90     afa3          movb    *A13(CANFIRE),A3
+         00004fa0     0180  
+    1020 00004fb0     ca1b          jrz     CantFlam
+    1021                    
+    1022 00004fc0     b503          move    *A8(OZPOS),A3,W
+         00004fd0     00d0  
+    1023 00004fe0     b4e2          move    *A7(OZPOS),A2,W
+         00004ff0     00d0  
+    1024 00005000     4443          sub     A2,A3                   ;A2 = Z dist to closest player
+    1025 00005010     0381          abs     A1      ;X delta
+    1026 00005020     0b41          cmpi    270,A1
+         00005030     fef1  
+    1027 00005040     c715          jrgt    SkFlam
+    1028 00005050     0383          abs     A3      ;Z delta
+    1029 00005060     2fc1          srl     2,A1
+    1030 00005070     4823          cmp     A1,A3
+    1031 00005080     c711          jrgt    SkFlam
+    1032                    
+    1033 00005090     5621          clr     A1
+    1034 000050a0     ac2d          movb    A1,*A13(CANFIRE)
+         000050b0     0180  
+    1035                    
+    1036 000050c0     0d3f          callr   FLAMER
+         000050d0     02f7  
+    1037 000050e0     ac8d          movb    A4,*A13(DIR)
+         000050f0     01c8  
+    1038 00005100     1820          movk    1,A0
+    1039 00005110     0d3f          callr   AniBod
+         00005120     000d  
+    1040 00005130     1900          movk    8,A0
+    1041 00005140     ac0d          movb    A0,*A13(BRAINTIKS)
+         00005150     01b0  
+    1042 00005160     c008          jruc    DoBod2X
+    1043                    
+    1044 00005170           CantFlam:
+    1045 00005170     1821          movk    1,A1
+    1046 00005180     ac2d          movb    A1,*A13(CANFIRE)
+         00005190     0180  
+    1047 000051a0           SkFlam:
+    1048 000051a0     ac8d          movb    A4,*A13(DIR)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   26
+
+         000051b0     01c8  
+    1049 000051c0     5600          clr     A0
+    1050 000051d0     0d3f          callr   AniBod
+         000051e0     0001  
+    1051 000051f0           DoBod2X:        
+    1052 000051f0     0960          rets
+    1053                    **************************************************************************
+    1054                    
+    1055                    
+    1056                    **************************************************************************
+    1057 00005200           AniBod:
+    1058                    ;* PARMS
+    1059                    ; A0 - 0 -> not firing
+    1060                    ; A0 - 1 -> firing
+    1061 00005200     098f          mmtm    SP,A1
+         00005210     4000  
+    1062 00005220     afa1          movb    *A13(DIR),A1
+         00005230     01c8  
+    1063 00005240     24c1          sll     6,A1
+    1064 00005250     4c00          move    A0,A0
+    1065 00005260     cb04          jrnz    GetFTor
+    1066 00005270     0b21          addi    TORSOS,A1
+         00005280 0000a8e0' 
+    1067 000052a0     c003          jruc    GotTor
+    1068 000052b0           GetFTor
+    1069 000052b0     0b21          addi    FTORSOS,A1
+         000052c0 0000aba0' 
+    1070 000052e0           GotTor:
+    1071 000052e0                   PUSHP   A9
+    1072 000052f0     4c29          move    A1,A9
+    1073 00005300                   SWAP    A8,A10
+    1074 00005330     1881          movk    4,A1
+    1075 00005340                   jsrp    FRANIM
+    1076 000053b0                   SWAP    A8,A10
+    1077 000053e0                   PULLP   A9
+    1078 00005400     09af          mmfm    SP,A1
+         00005410     0002  
+    1079 00005420     0960          rets
+    1080                    **************************************************************************
+    1081                    
+    1082                    
+    1083                    **************************************************************************
+    1084 00005430           Charge:
+    1085 00005430     0d5f          calla   ClosestP
+         00005440 00000000! 
+    1086 00005460     0d5f          calla   FACEOBJ
+         00005470 00000000! 
+    1087 00005490                   SWAP    A8,A10
+    1088 000054c0     0d5f          calla   FACEOBJ
+         000054d0 00000000! 
+    1089 000054f0                   SWAP    A8,A10
+    1090 00005520     09e0          movi    020000H,A0
+         00005530 00020000  
+    1091 00005550     0d5f          calla   RANDU
+         00005560 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   27
+
+    1092 00005580     0d00          subi    010000H,A0
+         00005590 fffeffff  
+    1093 000055b0     b208          move    A0,*A8(OZVEL),L
+         000055c0     00e0  
+    1094 000055d0     b208          move    A0,*A8(OYVEL),L
+         000055e0     0060  
+    1095 000055f0     0960          rets
+    1096                    **************************************************************************
+    1097                    
+    1098                    ************************** Animation Cycler ******************************
+    1099 00005600           AnimCycle:
+    1100                    ;Resets animation loop
+    1101 00005600     b7a9          move    *A13(ANIMPTR),A9,L
+         00005610     0120  
+    1102 00005620     0960          rets
+    1103                    **************************************************************************
+    1104                    
+    1105                    **************************** GetXVel *************************************
+    1106 00005630           GetXVel:
+    1107 00005630     0b69          cmpi    MOVETBL,A9
+         00005640 ffff519f' 
+    1108 00005660     c410          jrlt    NoXvel
+    1109 00005670     0b69          cmpi    MOVEEND,A9
+         00005680 ffff4fff' 
+    1110 000056a0     c50c          jrge    NoXvel
+    1111 000056b0     0b69          cmpi    RUN,A9
+         000056c0 ffff519f' 
+    1112 000056e0     c504          jrge    IsRun
+    1113 000056f0     09e0          movi    WALKVEL+01000H,A0
+         00005700 00019000  
+    1114 00005720     c005          jruc    GotXvel
+    1115 00005730           IsRun:
+    1116 00005730     09e0          movi    RUNVEL+01000H,A0
+         00005740 00039000  
+    1117 00005760     c001          jruc    GotXvel
+    1118 00005770           NoXvel:
+    1119 00005770     5600          clr     A0
+    1120 00005780           GotXvel:
+    1121 00005780     0960          rets
+    1122                    **************************************************************************
+    1123                    
+    1124                    ***************************** GoWalk *************************************
+    1125 00005790           GoWalk:
+    1126 00005790     098f          mmtm    SP,A0
+         000057a0     8000  
+    1127 000057b0     0b69          cmpi    WALK,A9
+         000057c0 ffff519f' 
+    1128 000057e0     c405          jrlt    StrtWalk
+    1129 000057f0     0b69          cmpi    WALKEND,A9
+         00005800 ffff519f' 
+    1130 00005820     c501          jrge    StrtWalk
+    1131                    
+    1132 00005830     c005          jruc    SetVel1
+    1133                    
+    1134 00005840           StrtWalk:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   28
+
+    1135 00005840     09e9          movi    WALK,A9
+         00005850 0000ae60' 
+    1136 00005870     b32d          move    A9,*A13(ANIMPTR),L
+         00005880     0120  
+    1137                    
+    1138 00005890           SetVel1:
+    1139                            ;* set veloctiy for skaters
+    1140 00005890     b500          move    *A8(OFLAGS),A0,W
+         000058a0     0100  
+    1141 000058b0     1f60          btst    B_FLIPH,A0
+    1142 000058c0     ca04          jrz     VelPos1
+    1143 000058d0     09e0          movi    -WALKVEL,A0
+         000058e0 fffe8000  
+    1144 00005900     c003          jruc    SetXV1
+    1145 00005910           VelPos1:
+    1146 00005910     09e0          movi    WALKVEL,A0
+         00005920 00018000  
+    1147 00005940           SetXV1:
+    1148 00005940     b208          move    A0,*A8(OXVEL),L
+         00005950     0040  
+    1149 00005960     0d5f          calla   UpdShadV
+         00005970 00000000! 
+    1150 00005990                   SWAP    A8,A10
+    1151 000059c0     b208          move    A0,*A8(OXVEL),L
+         000059d0     0040  
+    1152 000059e0     0d5f          calla   UpdShadV
+         000059f0 00000000! 
+    1153 00005a10                   SWAP    A8,A10
+    1154                    
+    1155 00005a40           GoWalkX:
+    1156 00005a40     09af          mmfm    SP,A0
+         00005a50     0001  
+    1157 00005a60     0960          rets
+    1158                    **************************************************************************
+    1159                    
+    1160                    ***************************** GoRun *************************************
+    1161 00005a70           GoRun:
+    1162 00005a70     098f          mmtm    SP,A0
+         00005a80     8000  
+    1163 00005a90     0b69          cmpi    RUN,A9
+         00005aa0 ffff519f' 
+    1164 00005ac0     c405          jrlt    StrtRUN
+    1165 00005ad0     0b69          cmpi    RUNEND,A9
+         00005ae0 ffff4fff' 
+    1166 00005b00     c501          jrge    StrtRUN
+    1167                    
+    1168 00005b10     c005          jruc    SetVel2
+    1169                    
+    1170 00005b20           StrtRUN:
+    1171 00005b20     09e9          movi    RUN,A9
+         00005b30 0000ae60' 
+    1172 00005b50     b32d          move    A9,*A13(ANIMPTR),L
+         00005b60     0120  
+    1173                    
+    1174 00005b70           SetVel2:
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   29
+
+    1175                            ;* set veloctiy for skaters
+    1176 00005b70     b500          move    *A8(OFLAGS),A0,W
+         00005b80     0100  
+    1177 00005b90     1f60          btst    B_FLIPH,A0
+    1178 00005ba0     ca04          jrz     VelPos2
+    1179 00005bb0     09e0          movi    -RUNVEL,A0
+         00005bc0 fffc8000  
+    1180 00005be0     c003          jruc    SetXV2
+    1181 00005bf0           VelPos2:
+    1182 00005bf0     09e0          movi    RUNVEL,A0
+         00005c00 00038000  
+    1183 00005c20           SetXV2:
+    1184 00005c20     b208          move    A0,*A8(OXVEL),L
+         00005c30     0040  
+    1185 00005c40     0d5f          calla   UpdShadV
+         00005c50 00000000! 
+    1186 00005c70                   SWAP    A8,A10
+    1187 00005ca0     b208          move    A0,*A8(OXVEL),L
+         00005cb0     0040  
+    1188 00005cc0     0d5f          calla   UpdShadV
+         00005cd0 00000000! 
+    1189 00005cf0                   SWAP    A8,A10
+    1190                    
+    1191 00005d20           GoRUNX:
+    1192 00005d20     09af          mmfm    SP,A0
+         00005d30     0001  
+    1193 00005d40     0960          rets
+    1194                    **************************************************************************
+    1195                    
+    1196                    
+    1197                    ***************************** CHECK DANGER *******************************
+    1198                    * if in danger of being shot, dodge or jump
+    1199                    * if a destination is set, set the carry to prevent MODE stuff
+    1200 00005d50           CkDngr:
+    1201 00005d50     0d5f          calla   NEAR_BUL
+         00005d60 00000000! 
+    1202 00005d80     4ca5          move    A5,A5   ;is there a closest bullet
+    1203 00005d90     ca76          jrz     NoDngr
+    1204                    
+    1205 00005da0     b501          move    *A8(OYPOS),A1,W
+         00005db0     00b0  
+    1206 00005dc0     b502          move    *A8(OSIZEY),A2,W
+         00005dd0     0150  
+    1207 00005de0     2fe2          srl     1,A2            ;want to find belly
+    1208 00005df0     1682          subk    20,A2   ;* encourage jumping
+    1209 00005e00     4041          add     A2,A1
+    1210 00005e10     b4a3          move    *A5(OYPOS),A3,W
+         00005e20     00b0  
+    1211 00005e30     4461          sub     A3,A1
+    1212 00005e40     ce2b          jrn     BULL_LOW
+    1213                            ;* bullet heading at head
+    1214 00005e50     0b46          cmpi    200,A6          ;is bullet real close?
+         00005e60     ff37  
+    1215 00005e70     0300          jrgt HGH_NEAR
+    1216                    ;* bullet is very close and high
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   30
+
+    1217                            ;* shoot toward where bullet came from 
+    1218 00005e80           HGH_NEAR:
+    1219 00005e80     0b46          cmpi    500,A6  ;is bullet near?
+         00005e90     fe0b  
+    1220 00005ea0     c765          jrgt    DNGRX
+    1221                    
+    1222                            ;* bullet is near - move down, down and away!
+    1223                            ;* find Z destination
+    1224 00005eb0     b501          move    *A8(OZPOS),A1,W
+         00005ec0     00d0  
+    1225 00005ed0     1bc0          movk    30,A0
+    1226 00005ee0     0d5f          calla   RANDU
+         00005ef0 00000000! 
+    1227 00005f10     11e0          addk    15,A0
+    1228 00005f20     4001          add     A0,A1
+    1229 00005f30     05a0          move    @PLZMAX,A0,W
+         00005f40 00000000! 
+    1230 00005f60     4801          cmp     A0,A1
+    1231 00005f70     c405          jrlt    ZisGood
+    1232 00005f80     05a1          move    @PLZMIN,A1,W
+         00005f90 00000000! 
+    1233 00005fb0     4001          add     A0,A1
+    1234 00005fc0     2fe1          srl     1,A1
+    1235 00005fd0           ZisGood:
+    1236 00005fd0     2601          sll     16,A1   ;A1 is z portion of destination
+    1237                    
+    1238                            ;* generate X destination
+    1239 00005fe0     1bc0          movk    30,A0
+    1240 00005ff0     0d5f          calla   RANDU
+         00006000 00000000! 
+    1241 00006020     13c0          addk    30,A0           ;A0 is magnitude of X distance to run away
+    1242 00006030     b4a2          move    *A5(OXVEL+16),A2,W              ;Get sign of Bullets velocity
+         00006040     0050  
+    1243 00006050     c101          jrp     XdirOK
+    1244 00006060     03a0          neg     A0
+    1245 00006070           XdirOK:
+    1246 00006070     4c02          move    A0,A2
+    1247 00006080     0d5f          calla   GETANIX
+         00006090 00000000! 
+    1248 000060b0     4002          add     A0,A2
+    1249 000060c0     ee22          movy    A1,A2
+    1250 000060d0     b24d          move    A2,*A13(DEST),L
+         000060e0     01e0  
+    1251 000060f0     c032          jruc    DNGRDEST
+    1252                    
+    1253 00006100           BULL_LOW:
+    1254                            ;* bullet heading at feet
+    1255 00006100     0b46          cmpi    200,A6  ;is bullet real close?
+         00006110     ff37  
+    1256 00006120     c708          jrgt    LOW_NEAR
+    1257                            ;* bullet is very close - jump and fire
+    1258 00006130                   jsrp    DO_JUMP
+    1259 000061a0     c035          jruc    DNGRX
+    1260 000061b0           LOW_NEAR:
+    1261 000061b0     0b46          cmpi    500,A6  ;is bullet near?
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   31
+
+         000061c0     fe0b  
+    1262 000061d0     c732          jrgt    DNGRX
+    1263                    
+    1264                            ;* bullet is near - move up, up and away
+    1265                            ;* find Z destination
+    1266 000061e0     b501          move    *A8(OZPOS),A1,W
+         000061f0     00d0  
+    1267 00006200     1bc0          movk    30,A0
+    1268 00006210     0d5f          calla   RANDU
+         00006220 00000000! 
+    1269 00006240     11e0          addk    15,A0
+    1270 00006250     4401          sub     A0,A1
+    1271 00006260     05a0          move    @PLZMIN,A0,W
+         00006270 00000000! 
+    1272 00006290     4801          cmp     A0,A1
+    1273 000062a0     c705          jrgt    ZisGood2
+    1274 000062b0     05a1          move    @PLZMAX,A1,W
+         000062c0 00000000! 
+    1275 000062e0     4001          add     A0,A1
+    1276 000062f0     2fe1          srl     1,A1
+    1277 00006300           ZisGood2:
+    1278 00006300     2601          sll     16,A1   ;A1 is z portion of destination
+    1279                    
+    1280                            ;* generate X destination
+    1281 00006310     1bc0          movk    30,A0
+    1282 00006320     0d5f          calla   RANDU
+         00006330 00000000! 
+    1283 00006350     13c0          addk    30,A0           ;A0 is magnitude of X distance to run away
+    1284 00006360     b4a2          move    *A5(OXVEL+16),A2,W              ;Get sign of Bullets velocity
+         00006370     0050  
+    1285 00006380     c101          jrp     XdirOK2
+    1286 00006390     03a0          neg     A0
+    1287 000063a0           XdirOK2:
+    1288 000063a0     4c02          move    A0,A2
+    1289 000063b0     0d5f          calla   GETANIX
+         000063c0 00000000! 
+    1290 000063e0     4002          add     A0,A2
+    1291 000063f0     ee22          movy    A1,A2
+    1292 00006400     b24d          move    A2,*A13(DEST),L
+         00006410     01e0  
+    1293                    
+    1294 00006420           DNGRDEST:
+    1295 00006420     0d3f          callr   AnimRst
+         00006430     fb71  
+    1296 00006440     0d3f          callr   GoRun
+         00006450     ff61  
+    1297 00006460     1a80          movk    BULL_T,A0
+    1298 00006470     ac0d          movb    A0,*A13(DEST_TAG)
+         00006480     01c0  
+    1299                    
+    1300 00006490     0d5f          calla   GoDestV
+         000064a0 00000000! 
+    1301 000064c0     0de0          setc
+    1302 000064d0                   retp
+    1303                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   32
+
+    1304 00006500           DNGRX:
+    1305 00006500           NoDngr:
+    1306 00006500     0320          clrc
+    1307 00006510                   retp
+    1308                    **************************************************************************
+    1309                    
+    1310                    **************************************************************************
+    1311 00006540           RAMBDONE:
+    1312 00006540     0d3f          callr   DelBody
+         00006550     fb4d  
+    1313 00006560           RAMBDIE2:
+    1314 00006560     4d00          move    A8,A0           ;GET THE POINTER TO THE OBJECT
+    1315 00006570     0d5f          calla   DELENEMY                        ;DELETE THE ENEMY
+         00006580 00000000! 
+    1316 000065a0           RAMBDIE1:
+    1317 000065a0                   DECW    @RAMBCNT
+    1318 00006610                   DIE
+    1319                    **************************************************************************
+    1320                    
+    1321                    
+    1322                    **************************************************************************
+    1323                    *WALKING RAMBO, AS OBJECT 0, COLLSION ROUTINE
+    1324                    *A0 = PTR TO JR OBJECT
+    1325                    *A8 = PTR TO OBJECT THAT SMASHED HIM
+    1326 00006640           CARCOL0
+    1327 00006640     4d06          MOVE    A8,A6           ;KILLERS OBJ
+    1328 00006650     4c08          MOVE    A0,A8           ;JR OBJ
+    1329 00006660     b6c0          move    *A6(OXVEL),A0,L
+         00006670     0040  
+    1330 00006680     b701          move    *A8(OXVEL),A1,L
+         00006690     0040  
+    1331 000066a0     4420          sub     A1,A0
+    1332 000066b0     0b60          cmpi    070000H,A0
+         000066c0 fff8ffff  
+    1333 000066e0     c415          jrlt    NotHurt
+    1334 000066f0     09e0          movi    060000H,A0
+         00006700 00060000  
+    1335 00006720     0d5f          calla   RANDU
+         00006730 00000000! 
+    1336 00006750     0d00          subi    030000H,A0
+         00006760 fffcffff  
+    1337 00006780     b6c1          move    *A6(OXVEL),A1,L
+         00006790     0040  
+    1338 000067a0     2be1          sra     1,A1
+    1339 000067b0     4c22          move    A1,A2
+    1340 000067c0     4020          add     A1,A0
+    1341 000067d0     b208          move    A0,*A8(OXVEL),L
+         000067e0     0040  
+    1342 000067f0     0382          abs     A2
+    1343 00006800     03a2          neg     A2
+    1344 00006810     b248          move    A2,*A8(OYVEL),L
+         00006820     0060  
+    1345 00006830     c006          jruc    Wasted
+    1346 00006840           NotHurt:
+    1347 00006840     b700          move    *A8(OPLINK),A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   33
+
+         00006850     01f0  
+    1348                    ;       move    A6,*A0(COLLOBJ),L
+    1349 00006860     5600          clr     A0      ;stop collision scan
+    1350 00006870     0960          RETS
+    1351                    
+    1352 00006880           RAMBCOL0
+    1353 00006880     4d06          MOVE    A8,A6                   ;STORE KILLERS OBLOCK
+    1354 00006890     4c08          MOVE    A0,A8                   ;PASS WASTED GUYS POINTER
+    1355 000068a0           Wasted:
+    1356 000068a0     b700          move    *A8(OPLINK),A0,L
+         000068b0     01f0  
+    1357 000068c0     0d5f          calla   GETA8
+         000068d0 00000000! 
+    1358 000068f0     0d5f          calla   GETA10
+         00006900 00000000! 
+    1359 00006920     0d5f          calla   DelBody
+         00006930 00001a30' 
+    1360                    
+    1361 00006950     09ee          MOVI    SPLTCOLBOX,A14
+         00006960 00000000! 
+    1362 00006980     b3c8          MOVE    A14,*A8(OCVECT),L       ;COLLISION POINTER
+         00006990     01d0  
+    1363                    
+    1364 000069a0     b700          MOVE    *A8(OPLINK),A0,L
+         000069b0     01f0  
+    1365 000069c0     0d5f          CALLA   KILL                    ;KILL CONTROL
+         000069d0 00000000! 
+    1366 000069f0     4c0e          MOVE    A0,A14                  ;STORE THIS RELIC
+    1367                            
+    1368 00006a00     b6c9          MOVE    *A6(OXVEL),A9,L         ;GET PROJECTILE DATA
+         00006a10     0040  
+    1369 00006a20     b6ca          MOVE    *A6(OYVEL),A10,L
+         00006a30     0060  
+    1370 00006a40     b4cb          MOVE    *A6(OID),A11,W          
+         00006a50     01a0  
+    1371 00006a60     09c1          MOVI    0EDh,A1
+         00006a70     00ed  
+    1372 00006a80     4d63          MOVE    A11,A3                  ;COPY OF I.D.
+    1373 00006a90     2783          SLL     28,A3
+    1374 00006aa0     2c83          SRL     28,A3
+    1375 00006ab0     0b43          CMPI    ROCKETID,A3,W
+         00006ac0     fffb  
+    1376 00006ad0     ca07          JREQ    BlowUp                  ;DEATH BY ROCKET
+    1377 00006ae0     0b43          CMPI    EXPLODID,A3,W
+         00006af0     fffd  
+    1378 00006b00     ca04          JREQ    BlowUp                  ;DEATH BY EXPLOSION
+    1379 00006b10     09e7          MOVI    WENDIE,A7
+         00006b20 00000000! 
+    1380 00006b40     c003          JRUC    DoDth
+    1381 00006b50           BlowUp:
+    1382 00006b50     09e7          MOVI    BLOWUP,A7
+         00006b60 00006e90' 
+    1383 00006b80           DoDth:
+    1384 00006b80     0d5f          CALLA   GETPRC                  ;CREATE A NEW ENEMY DEATH PROCESS
+         00006b90 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   34
+
+    1385 00006bb0     ca23          jrz     SkWendie
+    1386 00006bc0     bac0          MOVE    *A6(ODMAXY),*A0(PDATA),L        ;PASS KILLERS DMA XY POSITION
+         00006bd0     0210  
+         00006be0     0060  
+    1387 00006bf0     bac0          MOVE    *A6(OSIZE),*A0(PDATA+20H),L     ;AND KILLERS XY SIZE
+         00006c00     0140  
+         00006c10     0080  
+    1388 00006c20     bbc0          move    *A14(EBCNTRS),*A0(EBCNTRS),L    ;and the booty counters
+         00006c30     0140  
+         00006c40     0140  
+    1389 00006c50     bbc0          MOVE    *A14(EMAINT),*A0(EMAINT),L
+         00006c60     0100  
+         00006c70     0100  
+    1390                    
+    1391 00006c80     b4c9          move    *A6(OYPOS),A9,W
+         00006c90     00b0  
+    1392 00006ca0     09c1          MOVI    0EDh,A1
+         00006cb0     00ed  
+    1393 00006cc0     09e7          movi    SPLATBOX,A7
+         00006cd0 00000000! 
+    1394 00006cf0     0d5f          CALLA   GETPRC
+         00006d00 00000000! 
+    1395                    
+    1396 00006d20           DoDie:
+    1397 00006d20     05a0          move    @RAMBCNT,A0,W
+         00006d30 00000000! 
+    1398 00006d50     1420          dec     A0
+    1399 00006d60     0580          move    A0,@RAMBCNT,W
+         00006d70 00000000! 
+    1400 00006d90     0d5f          calla   CARDCHEK
+         00006da0 00000000! 
+    1401                    
+    1402 00006dc0     09c0          movi    1,A0    ;stop collision scan
+         00006dd0     0001  
+    1403 00006de0     0960          RETS
+    1404 00006df0           SkWendie:
+    1405 00006df0     4d00          move    A8,A0
+    1406 00006e00     0d5f          calla   DELENEMY
+         00006e10 00000000! 
+    1407 00006e30     c0ee          jruc    DoDie
+    1408                    *************************************************************************
+    1409                    
+    1410 00006e40           LFALSND
+    1411 00006e40     f026          .WORD   0F000H|EXPLOPRI+1,018H,08007H,08016H,0  ;MISSLE LARGE EXPLOSION
+    1412                    
+    1413                    **************************************************************************
+    1414 00006e90           BLOWUP:
+    1415 00006e90     09e0          movi    LFALSND,A0
+         00006ea0 00006e40' 
+    1416 00006ec0     0d5f          calla   ONESND
+         00006ed0 00000000! 
+    1417                    
+    1418                    ;PROCESS TO BLOW RAMBO UP INTO AIR
+    1419 00006ef0     09e0          movi    -0A0000H,A0
+         00006f00 fff60000  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   35
+
+    1420 00006f20     b208          move    A0,*A8(OYVEL),L
+         00006f30     0060  
+    1421                    
+    1422 00006f40     09e0          movi    040000H,A0
+         00006f50 00040000  
+    1423 00006f70     0d5f          calla   SRAND
+         00006f80 00000000! 
+    1424 00006fa0     b208          move    A0,*A8(OXVEL),L
+         00006fb0     0040  
+    1425 00006fc0     09e0          movi    020000H,A0
+         00006fd0 00020000  
+    1426 00006ff0     0d5f          calla   SRAND
+         00007000 00000000! 
+    1427 00007020     b208          move    A0,*A8(OZVEL),L
+         00007030     00e0  
+    1428                    
+    1429 00007040     09e9          movi    RAMBBLOW,A9
+         00007050 0000b1f0' 
+    1430                    
+    1431 00007070     1881          movk    4,A1
+    1432 00007080                   jsrp    FRANIM
+    1433 000070f0           RAMBBLW0:
+    1434 000070f0     0d3f          callr   ZCHECK
+         00007100     fb4d  
+    1435 00007110     1820          movk    1,A0
+    1436 00007120     0d5f          calla   PRCSLP
+         00007130 00000000! 
+    1437 00007150     0d5f          calla   DFRMGRND
+         00007160 00000000! 
+    1438 00007180     0b41          cmpi    80,A1
+         00007190     ffaf  
+    1439 000071a0     c708          jrgt    RAMBBLW1a
+    1440 000071b0     b700          move    *A8(OYVEL),A0,L
+         000071c0     0060  
+    1441 000071d0     c105          jrp     RAMBBLW1a
+    1442 000071e0     0b00          addi    05000H,A0
+         000071f0     5000  
+    1443 00007200     b208          move    A0,*A8(OYVEL),L
+         00007210     0060  
+    1444 00007220     c0ec          jruc    RAMBBLW0
+    1445 00007230           RAMBBLW1a:
+    1446 00007230     1881          movk    4,A1
+    1447 00007240                   jsrp    FRANIM     ;* throw it
+    1448 000072b0           RAMBBLW1:
+    1449 000072b0     0d3f          callr   ZCHECK
+         000072c0     fb31  
+    1450 000072d0     1820          movk    1,A0
+    1451 000072e0     0d5f          calla   PRCSLP
+         000072f0 00000000! 
+    1452 00007310     0d5f          calla   DFRMGRND
+         00007320 00000000! 
+    1453 00007340     0b41          cmpi    180,A1
+         00007350     ff4b  
+    1454 00007360     c708          jrgt    RAMBBLW2a
+    1455 00007370     b700          move    *A8(OYVEL),A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   36
+
+         00007380     0060  
+    1456 00007390     c105          jrp     RAMBBLW2a
+    1457 000073a0     0b00          addi    05000H,A0
+         000073b0     5000  
+    1458 000073c0     b208          move    A0,*A8(OYVEL),L
+         000073d0     0060  
+    1459 000073e0     c0ec          jruc    RAMBBLW1
+    1460 000073f0           RAMBBLW2a:
+    1461 000073f0     0d5f          CALLA   DROPSTUF                ;DROP THE BOOTY
+         00007400 00000000! 
+    1462 00007420     1881          movk    4,A1
+    1463 00007430                   jsrp    FRANIM
+    1464 000074a0           RAMBBLW2:
+    1465 000074a0     0d3f          callr   ZCHECK
+         000074b0     fb12  
+    1466 000074c0     1820          movk    1,A0
+    1467 000074d0     0d5f          calla   PRCSLP
+         000074e0 00000000! 
+    1468 00007500     b700          move    *A8(OYVEL),A0,L
+         00007510     0060  
+    1469 00007520     0b00          addi    05000H,A0
+         00007530     5000  
+    1470 00007540     b208          move    A0,*A8(OYVEL),L
+         00007550     0060  
+    1471 00007560     cef3          jrn     RAMBBLW2
+    1472 00007570     0d5f          calla   DFRMGRND
+         00007580 00000000! 
+    1473 000075a0     0b41          cmpi    140,A1
+         000075b0     ff73  
+    1474 000075c0     c401          jrlt    RAMBBLW4a
+    1475 000075d0     c0ec          jruc    RAMBBLW2
+    1476 000075e0           RAMBBLW4a:
+    1477 000075e0     1881          movk    4,A1
+    1478 000075f0                   jsrp    FRANIM
+    1479 00007660           RAMBBLW4:
+    1480 00007660     0d3f          callr   ZCHECK
+         00007670     faf6  
+    1481 00007680     1820          movk    1,A0
+    1482 00007690     0d5f          calla   PRCSLP
+         000076a0 00000000! 
+    1483 000076c0     b700          move    *A8(OYVEL),A0,L
+         000076d0     0060  
+    1484 000076e0     0b00          addi    05000H,A0
+         000076f0     5000  
+    1485 00007700     b208          move    A0,*A8(OYVEL),L
+         00007710     0060  
+    1486 00007720     0d5f          calla   DFRMGRND
+         00007730 00000000! 
+    1487                    ;       subk    5,A1
+    1488 00007750     c1f0          jrp     RAMBBLW4
+    1489                    
+    1490                    ;* we have hit the ground..
+    1491 00007760     0d5f          calla   ClrVel
+         00007770 00000000! 
+    1492 00007790     4d00          move    A8,A0
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   37
+
+    1493 000077a0     0d5f          calla   SETZPOS
+         000077b0 00000000! 
+    1494                    
+    1495 000077d0     09e0          movi    -048000H,A0
+         000077e0 fffb8000  
+    1496 00007800     b208          move    A0,*A8(OYVEL),L
+         00007810     0060  
+    1497 00007820     5600          clr     A0
+    1498 00007830     ac0d          movb    A0,*A13(ANIMTIKS)
+         00007840     01a0  
+    1499 00007850           BnceLp:
+    1500 00007850     afa0          movb    *A13(ANIMTIKS),A0
+         00007860     01a0  
+    1501 00007870     cb08          jrnz    SkBncAni
+    1502 00007880     1881          movk    4,A1
+    1503 00007890                   jsrp    FRANIM
+    1504 00007900           SkBncAni:
+    1505 00007900     1420          dec     A0
+    1506 00007910     ac0d          movb    A0,*A13(ANIMTIKS)
+         00007920     01a0  
+    1507                    
+    1508 00007930     1820          movk    1,A0
+    1509 00007940     0d5f          calla   PRCSLP
+         00007950 00000000! 
+    1510                    
+    1511 00007970     b700          move    *A8(OYVEL),A0,L
+         00007980     0060  
+    1512 00007990     0b00          addi    06000H,A0
+         000079a0     6000  
+    1513 000079b0     b208          move    A0,*A8(OYVEL),L
+         000079c0     0060  
+    1514 000079d0     cee7          jrn     BnceLp
+    1515                    
+    1516 000079e0     0d5f          calla   DFRMGRND
+         000079f0 00000000! 
+    1517 00007a10     0b41          cmpi    5,A1
+         00007a20     fffa  
+    1518 00007a30     c7e1          jrgt    BnceLp
+    1519                    
+    1520 00007a40     0d5f          calla   ClrVel
+         00007a50 00000000! 
+    1521 00007a70     4d00          move    A8,A0
+    1522 00007a80     0d5f          calla   DELSHAD
+         00007a90 00000000! 
+    1523                            
+    1524 00007ab0     afa0          movb    *A13(ANIMTIKS),A0
+         00007ac0     01a0  
+    1525 00007ad0     0d5f          calla   PRCSLP
+         00007ae0 00000000! 
+    1526                    
+    1527 00007b00     1821          movk    1,A1
+    1528 00007b10                   jsrp    FRANIM
+    1529                    
+    1530 00007b80     1a80          movk    20,A0
+    1531 00007b90     0d5f          calla   PRCSLP
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   38
+
+         00007ba0 00000000! 
+    1532 00007bc0     09e9          MOVI    [1,1],A9
+         00007bd0 00010001  
+    1533 00007bf0                   CREATE  0DFh,ESINK              ;CREATE THE DEADMAN SINK         
+    1534 00007c70                   DIE                             ;AND ME                                                         
+    1535                    ;       move    A8,A0
+    1536                    ;       calla   DELENEMY
+    1537                    ;       DIE
+    1538                    **************************************************************************
+    1539                    
+    1540                    *************************************************************************
+    1541 00007ca0           RAMBCOLL:
+    1542 00007ca0     0b10          .WORD   B1OID|BULLETID
+    1543 00007cb0 00006880'         .LONG   RAMBCOL0
+    1544 00007cd0     0b12          .WORD   B1OID|EXPLODID
+    1545 00007ce0 00006880'         .LONG   RAMBCOL0
+    1546 00007d00     0b14          .WORD   B1OID|ROCKETID
+    1547 00007d10 00006880'         .LONG   RAMBCOL0
+    1548 00007d30     0b20          .WORD   B2OID|BULLETID
+    1549 00007d40 00006880'         .LONG   RAMBCOL0
+    1550 00007d60     0b22          .WORD   B2OID|EXPLODID
+    1551 00007d70 00006880'         .LONG   RAMBCOL0
+    1552 00007d90     0b24          .WORD   B2OID|ROCKETID
+    1553 00007da0 00006880'         .LONG   RAMBCOL0
+    1554 00007dc0     0be2          .WORD   BEOID|EXPLODID
+    1555 00007dd0 00006880'         .LONG   RAMBCOL0
+    1556 00007df0     0c00          .word   C1OID           ;ENEMY CAR #1 "CADILLAC" OBJECT I.D.
+    1557 00007e00 00006640'         .LONG   CARCOL0
+    1558 00007e20     0c10          .word   CAR2OID         ;ENEMY CAR #2 "PORSCHE" OBJECT I.D.
+    1559 00007e30 00006640'         .LONG   CARCOL0
+    1560 00007e50     0c20          .word   CAR3OID         ;ENEMY CAR #3 "BELL-JET" OBJECT I.D.
+    1561 00007e60 00006640'         .LONG   CARCOL0
+    1562 00007e80     0c30          .word   TRAN1OID        ;PLAYER TRANSPORT #1 "PORSCHE" OBJECT I.D.
+    1563 00007e90 00006640'         .LONG   CARCOL0
+    1564 00007eb0     0000          .WORD   0
+    1565 00007ec0 00000000!         .LONG   DUMRTSG
+    1566                    **************************************************************************
+    1567                    
+    1568                    
+    1569                    **************************************************************************
+    1570 00007ee0           FIRE:
+    1571 00007ee0     098f          mmtm    SP,A4
+         00007ef0     0800  
+    1572 00007f00                   CREATE  MBBULPID,BigBull
+    1573 00007f80     ca09          jrz     NoFire
+    1574 00007f90     4c01          move    A0,A1
+    1575 00007fa0                   SWAP    A8,A10
+    1576 00007fd0     0d3f          callr   BullSet
+         00007fe0     0054  
+    1577 00007ff0                   SWAP    A8,A10
+    1578 00008020           NoFire:
+    1579 00008020     09af          mmfm    SP,A4
+         00008030     0010  
+    1580 00008040     0960          rets
+    1581                    **************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   39
+
+    1582                    
+    1583                    **************************************************************************
+    1584 00008050           FLAMER:
+    1585 00008050     098f          mmtm    SP,A0,A1,A2,A3,A4,A5,A6,A7
+         00008060     ff00  
+    1586                    
+    1587 00008070     09e7          movi    BullOff,A7
+         00008080 00008290' 
+    1588 000080a0     afa0          movb    *A13(DIR),A0
+         000080b0     01c8  
+    1589 000080c0     56c6          clr     A6              ;A6 - FLAMEDIR
+    1590 000080d0     0b40          cmpi    2,A0
+         000080e0     fffd  
+    1591 000080f0     ca01          jreq    SkFDir
+    1592 00008100     1826          movk    1,A6
+    1593 00008110           SkFDir:
+    1594 00008110     24a0          sll     5,A0            ;Each entry is 4 bytes
+    1595 00008120     4007          add     A0,A7
+    1596                    
+    1597 00008130     b543          move    *A10(OXPOS),A3,W
+         00008140     0090  
+    1598 00008150     8ee2          movb    *A7,A2
+    1599 00008160     1107          addk    8,A7
+    1600 00008170     4043          add     A2,A3           ;A3 - Xpos
+    1601                    
+    1602 00008180     b544          move    *A10(OYPOS),A4,W
+         00008190     00b0  
+    1603 000081a0     8ee2          movb    *A7,A2
+    1604 000081b0     4044          add     A2,A4           ;A4 - Ypos
+    1605                    
+    1606 000081c0     b545          move    *A10(OZPOS),A5,W        ;A5 - Zpos
+         000081d0     00d0  
+    1607                    
+    1608 000081e0     b740          move    *A10(OXVEL),A0,L
+         000081f0     0040  
+    1609 00008200     b742          move    *A10(OZVEL),A2,L
+         00008210     00e0  
+    1610                    ;       move    *A10(OYVEL),A1,L
+    1611 00008220     4c41          move    A2,A1
+    1612                    
+    1613 00008230     0d5f          calla   MAKEFLAM
+         00008240 00000000! 
+    1614                    
+    1615 00008260     09af          mmfm    SP,A0,A1,A2,A3,A4,A5,A6,A7
+         00008270     00ff  
+    1616 00008280     0960          rets
+    1617                    **************************************************************************
+    1618                    
+    1619                    **************************************************************************
+    1620 00008290           BullOff:
+    1621                            ;offsets X,Y(from TL of frame),Z,pad
+    1622 00008290       3c          .byte   60,19,-15,0     ;Dir = 0
+    1623 000082b0       3f          .byte   63,29,-8,0      ;Dir = 1
+    1624 000082d0       48          .byte   72,39, 0,0      ;Dir = 2
+    1625 000082f0       40          .byte   64,47, 8,0      ;Dir = 3
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   40
+
+    1626 00008310       3c          .byte   60,53,15,0      ;Dir = 4
+    1627 00008330       06          .byte   6 ,55,20,0      ;Dir = 5
+    1628 00008350       00          .byte   0 ,53,15,0      ;Dir = 6
+    1629 00008370       00          .byte   0 ,47, 8,0      ;Dir = 7
+    1630 00008390       03          .byte   3, 39, 0,0      ;Dir = 8
+    1631 000083b0       00          .byte   0 ,29,-8,0      ;Dir = 9
+    1632 000083d0       00          .byte   0 ,19,-15,0     ;Dir = 10
+    1633                    
+    1634                    **************************************************************************
+    1635 000083f0           FLAMINIT:
+    1636 000083f0 00000000          .LONG   0,0,0,0
+    1637 00008470     0000          .WORD   0,0
+    1638 00008490 00000000!         .LONG   SFLAME,00H,DUMCOLL      ;ZSIZ
+    1639 000084f0     8002          .WORD   DMAWNZ,EFF0OID  ;OBJ ID
+    1640 00008510 00000000          .LONG   0
+    1641                    **************************************************************************
+    1642                    
+    1643                    **************************************************************************
+    1644 00008530           BullSet:
+    1645                    ;A1 - ptr to bullet process
+    1646                    ;* set following fields in proc block
+    1647                    ;ETEMP1-Xvel    
+    1648                    ;ETEMP2-Zvel
+    1649                    ;ETEMP3-Xpos
+    1650                    ;ETEMP3+16-Ypos
+    1651                    ;ETEMP4-Zpos
+    1652                    
+    1653 00008530     09e7          movi    BullOff,A7
+         00008540 00008290' 
+    1654 00008560     afa0          movb    *A13(DIR),A0
+         00008570     01c8  
+    1655 00008580     24a0          sll     5,A0            ;Each entry is 4 bytes
+    1656 00008590     4007          add     A0,A7
+    1657                    
+    1658 000085a0     0d3f          callr   BullXV0
+         000085b0     0088  
+    1659 000085c0     b201          move    A0,*A1(ETEMP1),L        ;set XVEL
+         000085d0     0180  
+    1660 000085e0     0d3f          callr   BullZV0
+         000085f0     009f  
+    1661 00008600     b201          move    A0,*A1(ETEMP2),L        ;set ZVEL
+         00008610     01a0  
+    1662                    
+    1663 00008620     b500          move    *A8(OXPOS),A0,W
+         00008630     0090  
+    1664 00008640     8ee2          movb    *A7,A2
+    1665 00008650     1107          addk    8,A7
+    1666 00008660     4040          add     A2,A0
+    1667 00008670     4c04          move    A0,A4
+    1668 00008680     b001          move    A0,*A1(ETEMP3),W        ;set XPOS
+         00008690     01c0  
+    1669                    
+    1670 000086a0     b500          move    *A8(OYPOS),A0,W
+         000086b0     00b0  
+    1671 000086c0     8ee2          movb    *A7,A2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   41
+
+    1672 000086d0     1107          addk    8,A7
+    1673 000086e0     4002          add     A0,A2
+    1674 000086f0     1482          subk    4,A2    ;height of bullet
+    1675 00008700     b041          move    A2,*A1(ETEMP3+16),W     ;set YPOS
+         00008710     01d0  
+    1676 00008720     1082          addk    4,A2
+    1677                    
+    1678 00008730     8ee0          movb    *A7,A0
+    1679 00008740     b503          move    *A8(OZPOS),A3,W
+         00008750     00d0  
+    1680 00008760     4003          add     A0,A3
+    1681 00008770     b061          move    A3,*A1(ETEMP4),W        ;set ZPOS
+         00008780     01e0  
+    1682                    
+    1683                            ;* Make A Flash For The Bullet
+    1684 00008790     4d06          move    A8,A6   ;save A8
+    1685 000087a0     0d5f          calla   GETOBJ
+         000087b0 00000000! 
+    1686 000087d0     ca21          jrz     NoFObj
+    1687 000087e0     4c08          move    A0,A8
+    1688 000087f0     09ee          movi    FLAMINIT,A14
+         00008800 000083f0' 
+    1689 00008820     0d5f          calla   STFOBJ
+         00008830 00000000! 
+    1690 00008850     afab          movb    *A13(DIR),A11   ;pass direction of flash
+         00008860     01c8  
+    1691 00008870                   CREATE  0EFFH,Flash     ;SOMETHING TO WATCH THE FLASH
+    1692 000088f0     ca11          jrz     NoFProc
+    1693                    
+    1694 00008900     b088          move    A4,*A8(OXPOS),W
+         00008910     0090  
+    1695 00008920     b068          move    A3,*A8(OZPOS),W
+         00008930     00d0  
+    1696 00008940     b048          move    A2,*A8(OYPOS),W
+         00008950     00b0  
+    1697 00008960     bac8          move    *A6(OXVEL),*A8(OXVEL),L
+         00008970     0040  
+         00008980     0040  
+    1698 00008990     bac8          move    *A6(OZVEL),*A8(OZVEL),L
+         000089a0     00e0  
+         000089b0     00e0  
+    1699 000089c0     bac8          move    *A6(OYVEL),*A8(OYVEL),L
+         000089d0     0060  
+         000089e0     0060  
+    1700 000089f0           NoFObj:
+    1701 000089f0     4cc8          move    A6,A8   ;restore A8
+    1702 00008a00     0960          rets
+    1703                    
+    1704 00008a10           NoFProc:
+    1705 00008a10     0d5f          calla   FREEOBJ
+         00008a20 00000000! 
+    1706 00008a40     c0fa          jruc    NoFObj
+    1707                    **************************************************************************
+    1708                    
+    1709                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   42
+
+    1710                    **************************************************************************
+    1711 00008a50           Flash:
+    1712 00008a50     09e0          MOVI    NARCS,A0
+         00008a60 00000000! 
+    1713 00008a80     0d5f          CALLA   GETFPAL                 ;GET A COLOR MAP ASSIGNMENT
+         00008a90 00000000! 
+    1714 00008ab0     ca31          jrz     PalX
+    1715 00008ac0     b008          MOVE    A0,*A8(OPAL),W
+         00008ad0     0160  
+    1716                    
+    1717 00008ae0     b3a8          move    A13,*A8(OPLINK),L
+         00008af0     01f0  
+    1718                    
+    1719 00008b00     09e9          movi    SFLAMES,A9
+         00008b10 0000a5d0' 
+    1720 00008b30     24cb          sll     6,A11           ;shift by 2 longwords
+    1721 00008b40     4169          add     A11,A9
+    1722 00008b50     1881          movk    4,A1
+    1723 00008b60                   jsrp    FRANIM
+    1724                    
+    1725 00008bd0     b500          move    *A8(OYPOS),A0,W
+         00008be0     00b0  
+    1726 00008bf0     b701          move    *A8(OIMG),A1,L
+         00008c00     0180  
+    1727 00008c10     b421          move    *A1(IANIOFFY),A1,W
+         00008c20     0030  
+    1728 00008c30     4420          sub     A1,A0
+    1729 00008c40     b008          move    A0,*A8(OYPOS),W
+         00008c50     00b0  
+    1730                    
+    1731 00008c60     b500          move    *A8(OFLAGS),A0,W
+         00008c70     0100  
+    1732 00008c80     1de0          btst    M_FLIPH,A0
+    1733 00008c90     cb07          jrnz    SkFlX
+    1734 00008ca0     b500          move    *A8(OXPOS),A0,W
+         00008cb0     0090  
+    1735 00008cc0     b501          move    *A8(OSIZEX),A1,W
+         00008cd0     0140  
+    1736 00008ce0     4420          sub     A1,A0
+    1737 00008cf0     b008          move    A0,*A8(OXPOS),W
+         00008d00     0090  
+    1738 00008d10           SkFlX:
+    1739                    
+    1740 00008d10     4d00          move    A8,A0
+    1741 00008d20     0d5f          calla   INSOBJ
+         00008d30 00000000! 
+    1742                    
+    1743 00008d50                   SLEEP   4
+    1744                    
+    1745 00008d90     4d00          move    A8,A0                   ;GET THE BLOCK
+    1746 00008da0     0d5f          CALLA   DELPAL
+         00008db0 00000000! 
+    1747 00008dd0           PalX:
+    1748 00008dd0     4d00          move    A8,A0
+    1749 00008de0     0d5f          calla   DELOBJ
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   43
+
+         00008df0 00000000! 
+    1750 00008e10                   DIE
+    1751                    **************************************************************************
+    1752                    
+    1753                    
+    1754                    **************************************************************************
+    1755 00008e40           BullXV0:
+    1756 00008e40     098f          mmtm    SP,A3
+         00008e50     1000  
+    1757 00008e60     afa0          movb    *A13(DIR),A0
+         00008e70     01c8  
+    1758 00008e80     2480          sll     4,A0
+    1759 00008e90     0b20          addi    BXVDTbl,A0
+         00008ea0 00008f40' 
+    1760 00008ec0     8400          move    *A0,A0,W
+    1761 00008ed0     09c3          movi    0E00H,A3                ;0E00H << 7  =  070000H
+         00008ee0     0e00  
+    1762 00008ef0     5c03          mpys    A0,A3
+    1763 00008f00     4c60          move    A3,A0
+    1764 00008f10     09af          mmfm    SP,A3
+         00008f20     0008  
+    1765 00008f30     0960          rets
+    1766 00008f40           BXVDTbl:
+    1767                            ;07fH = 1 in .8 fmt, 078H = .94 = cos(20) in .8 fmt
+    1768 00008f40     0078          .word   078H,07EH,07FH,07EH,078H,0,-078H,-07EH,-07FH,-07EH,-078H
+    1769                    **************************************************************************
+    1770                    
+    1771                    **************************************************************************
+    1772 00008ff0           BullZV0:
+    1773 00008ff0     098f          mmtm    SP,A3
+         00009000     1000  
+    1774 00009010     afa0          movb    *A13(DIR),A0
+         00009020     01c8  
+    1775 00009030     2480          sll     4,A0
+    1776 00009040     0b20          addi    BZVDTbl,A0
+         00009050 000090f0' 
+    1777 00009070     8400          move    *A0,A0,W
+    1778 00009080     09c3          movi    0E00H,A3
+         00009090     0e00  
+    1779 000090a0     5c03          mpys    A0,A3
+    1780 000090b0     4c60          move    A3,A0
+    1781 000090c0     09af          mmfm    SP,A3
+         000090d0     0008  
+    1782 000090e0     0960          rets
+    1783 000090f0           BZVDTbl:
+    1784                            ;021H = .26 = sin(12) in .8 fmt
+    1785 000090f0     ffd4          .word   -02CH,-016H,0,016H,02CH,07FH,02CH,016H,0,-016H,-02CH
+    1786 000091a0     0960          rets
+    1787                    **************************************************************************
+    1788                    
+    1789                    
+    1790                    **************************************************************************
+    1791                    *INIT TABLE
+    1792                    *       .LONG   OXVEL,OYVEL,OXVAL,XYVAL
+    1793                    *       .WORD   OZPOS,OZVEL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   44
+
+    1794                    *       .LONG   OIMG,OZSIZ,OCVECT
+    1795                    *       .WORD   OFLAGS,OID
+    1796                    *       .LONG   SCANNERBLIP
+    1797 000091b0           BullInit:
+    1798 000091b0 00000000          .LONG   0,0,0,0
+    1799 00009230     0000          .WORD   0,0
+    1800 00009250 00000180"         .LONG   RAMBBULL,000020002H,BullCol
+    1801 000092b0     8002          .WORD   DMAWNZ,BEOID
+    1802 000092d0 00000000          .LONG   0
+    1803                    **************************************************************************
+    1804                    
+    1805                    **************************************************************************
+    1806 000092f0           BigBull:
+    1807                    ;* Mr. Big Bullet Process
+    1808 000092f0     09e0          MOVI    EBSND,A0
+         00009300 00000000! 
+    1809 00009320     0d5f          CALLA   ONESND          ;make bullet fire sound
+         00009330 00000000! 
+    1810 00009350     0d5f          calla   GETOBJ
+         00009360 00000000! 
+    1811 00009380     ca7d          jrz     BigBullX
+    1812 00009390     4c08          move    A0,A8
+    1813 000093a0     09ee          movi    BullInit,A14
+         000093b0 000091b0' 
+    1814 000093d0     0d5f          calla   STFOBJ
+         000093e0 00000000! 
+    1815                    
+    1816                            ;* get parms from creator
+    1817 00009400     bba8          move    *A13(ETEMP1),*A8(OXVEL),L
+         00009410     0180  
+         00009420     0040  
+    1818 00009430     b7a1          move    *A13(ETEMP2),A1,L
+         00009440     01a0  
+    1819 00009450     b228          move    A1,*A8(OYVEL),L
+         00009460     0060  
+    1820 00009470     09c0          movi    04000H,A0
+         00009480     4000  
+    1821 00009490     0d5f          calla   RANDU
+         000094a0 00000000! 
+    1822 000094c0     0be0          subi    02000H,A0
+         000094d0     dfff  
+    1823 000094e0     4001          add     A0,A1
+    1824 000094f0     b228          move    A1,*A8(OZVEL),L
+         00009500     00e0  
+    1825 00009510     b9a8          move    *A13(ETEMP3),*A8(OXPOS),W
+         00009520     01c0  
+         00009530     0090  
+    1826 00009540     b9a8          move    *A13(ETEMP3+16),*A8(OYPOS),W
+         00009550     01d0  
+         00009560     00b0  
+    1827 00009570     b9a8          move    *A13(ETEMP4),*A8(OZPOS),W
+         00009580     01e0  
+         00009590     00d0  
+    1828                    
+    1829 000095a0     b700          move    *A8(OXVEL),A0,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   45
+
+         000095b0     0040  
+    1830 000095c0     ce04          jrn     NoFlp
+    1831 000095d0     0d5f          calla   YFLP
+         000095e0 00000000! 
+    1832 00009600     c003          jruc    FlpSet
+    1833 00009610           NoFlp:
+    1834 00009610     0d5f          calla   NOYFLP
+         00009620 00000000! 
+    1835 00009640           FlpSet:
+    1836                    
+    1837                            ;* allocate palette
+    1838 00009640     09e0          MOVI    NARCS,A0
+         00009650 00000000! 
+    1839 00009670     0d5f          CALLA   GETFPAL                 ;GET A COLOR MAP ASSIGNMENT
+         00009680 00000000! 
+    1840 000096a0     ca4e          jrz     NoPal
+    1841 000096b0     b008          MOVE    A0,*A8(OPAL),W
+         000096c0     0160  
+    1842                    
+    1843 000096d0     b3a8          move    A13,*A8(OPLINK),L
+         000096e0     01f0  
+    1844 000096f0     4d00          move    A8,A0
+    1845 00009700     0d5f          calla   INSOBJ
+         00009710 00000000! 
+    1846 00009730     09e1          movi    ENEMY_BULLETS,A1
+         00009740 00000000! 
+    1847 00009760     4c2a          move    A1,A10
+    1848 00009770     0d5f          calla   ADDSUPP                 ;ADD TO SUPPLEMENTAL List
+         00009780 00000000! 
+    1849 000097a0     0d5f          calla   SHADST
+         000097b0 00000000! 
+    1850                    
+    1851 000097d0     09c0          movi    70,A0           ;dflt max sleep for bullets
+         000097e0     0046  
+    1852 000097f0     0d5f          calla   BullSlp
+         00009800 00000000! 
+    1853 00009820                   PUSHP   A11
+    1854 00009830     4c0b          move    A0,A11
+    1855                    
+    1856 00009840           BullFly0:
+    1857 00009840     09e9          movi    BIGBULL,A9
+         00009850 0000a890' 
+    1858 00009870           BullFly:
+    1859 00009870     4d6b          move    A11,A11
+    1860 00009880     ca12          jrz     BullDone
+    1861 00009890     1881          movk    4,A1
+    1862 000098a0                   jsrp    FRANIM
+    1863 00009910     480b          cmp     A0,A11
+    1864 00009920     c501          jrge    SlpOk
+    1865 00009930     4d60          move    A11,A0
+    1866 00009940           SlpOk:
+    1867 00009940     440b          sub     A0,A11
+    1868 00009950     0d5f          calla   PRCSLP
+         00009960 00000000! 
+    1869 00009980     8721          move    *A9,A1,L
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   46
+
+    1870 00009990     cbed          jrnz    BullFly
+    1871 000099a0     c0e9          jruc    BullFly0
+    1872                    
+    1873 000099b0           BullDone:
+    1874 000099b0                   PULLP   A11
+    1875 000099d0     4d6b          move    A11,A11
+    1876 000099e0     ca0a          jrz     SkWallHit
+    1877 000099f0     09e1          MOVI    ENEMY_BULLETS,A1
+         00009a00 00000000! 
+    1878 00009a20     4d00          MOVE    A8,A0
+    1879 00009a30     0d5f          CALLA   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         00009a40 00000000! 
+    1880 00009a60     c080          jauc    DINGANI
+         00009a70 00000000! 
+    1881 00009a90           SkWallHit:
+    1882 00009a90     4d00          move    A8,A0                   ;GET THE BLOCK
+    1883 00009aa0     0d5f          CALLA   DELPAL
+         00009ab0 00000000! 
+    1884 00009ad0     09e1          movi    ENEMY_BULLETS,A1
+         00009ae0 00000000! 
+    1885 00009b00     0d5f          calla   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         00009b10 00000000! 
+    1886 00009b30     0d5f          calla   DELSOBJ                 ;ZAP IT
+         00009b40 00000000! 
+    1887 00009b60           BigBullX:
+    1888 00009b60                   DIE
+    1889 00009b90           NoPal:
+    1890 00009b90     0d5f          calla   FREEOBJ
+         00009ba0 00000000! 
+    1891 00009bc0                   DIE
+    1892                    **************************************************************************
+    1893                    
+    1894                    **************************************************************************
+    1895 00009bf0           BullCol:
+    1896 00009bf0     1000          .WORD   P1OID
+    1897 00009c00 0000a190'         .LONG   bcol
+    1898 00009c20     2000          .WORD   P2OID
+    1899 00009c30 0000a190'         .LONG   bcol
+    1900 00009c50     0b10          .WORD   B1OID|BULLETID
+    1901 00009c60 0000a190'         .LONG   bcol
+    1902 00009c80     0b12          .WORD   B1OID|EXPLODID
+    1903 00009c90 0000a190'         .LONG   bcol
+    1904 00009cb0     0b14          .WORD   B1OID|ROCKETID
+    1905 00009cc0 0000a190'         .LONG   bcol
+    1906 00009ce0     0b20          .WORD   B2OID|BULLETID
+    1907 00009cf0 0000a190'         .LONG   bcol
+    1908 00009d10     0b22          .WORD   B2OID|EXPLODID
+    1909 00009d20 0000a190'         .LONG   bcol
+    1910 00009d40     0b24          .WORD   B2OID|ROCKETID
+    1911 00009d50 0000a190'         .LONG   bcol
+    1912                    
+    1913 00009d70     0bc4          .WORD   BGGID
+    1914 00009d80 00000000!         .LONG   BCOLDCAN
+    1915 00009da0     0bc5          .WORD   BGLID
+    1916 00009db0 00000000!         .LONG   BCOLDPST
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   47
+
+    1917 00009dd0     0bc9          .WORD   BGDMPID
+    1918 00009de0 00000000!         .LONG   BCOLDDMP
+    1919 00009e00     0c00          .WORD   C1OID|CBODYID
+    1920 00009e10 00000000!         .LONG   BCOLDDMP
+    1921 00009e30     0c02          .WORD   C1OID|WSHLDID
+    1922 00009e40 00000000!         .LONG   BCOLDDMP
+    1923 00009e60     0c03          .WORD   C1OID|TRUNKID
+    1924 00009e70 00000000!         .LONG   BCOLDDMP
+    1925 00009e90     0b10          .WORD   B1OID|BULLETID
+    1926 00009ea0 00000000!         .LONG   BCOLDPST
+    1927 00009ec0     0b14          .WORD   B1OID|ROCKETID
+    1928 00009ed0 00000000!         .LONG   BCOLDPST
+    1929 00009ef0     0b11          .WORD   B1OID|FLAMEID
+    1930 00009f00 00000000!         .LONG   BCOLL1
+    1931 00009f20     0b20          .WORD   B2OID|BULLETID
+    1932 00009f30 00000000!         .LONG   BCOLDPST
+    1933 00009f50     0b24          .WORD   B2OID|ROCKETID
+    1934 00009f60 00000000!         .LONG   BCOLDPST
+    1935 00009f80     0b21          .WORD   B2OID|FLAMEID
+    1936 00009f90 00000000!         .LONG   BCOLL1
+    1937 00009fb0     0c50          .WORD   INTR1OID|CBODYID
+    1938 00009fc0 00000000!         .LONG   BCOLDDMP
+    1939 00009fe0     0c52          .WORD   INTR1OID|WSHLDID
+    1940 00009ff0 00000000!         .LONG   BCOLDDMP
+    1941 0000a010     0c53          .WORD   INTR1OID|TRUNKID
+    1942 0000a020 00000000!         .LONG   BCOLDDMP
+    1943 0000a040     0c30          .WORD   TRAN1OID|CBODYID
+    1944 0000a050 00000000!         .LONG   BCOLDDMP
+    1945 0000a070     0c32          .WORD   TRAN1OID|WSHLDID
+    1946 0000a080 00000000!         .LONG   BCOLDDMP
+    1947 0000a0a0     0c33          .WORD   TRAN1OID|TRUNKID
+    1948 0000a0b0 00000000!         .LONG   BCOLDDMP
+    1949 0000a0d0     0c70          .WORD   CSTR1OID|CBODYID
+    1950 0000a0e0 00000000!         .LONG   BCOLDDMP
+    1951 0000a100     0c72          .WORD   CSTR1OID|WSHLDID
+    1952 0000a110 00000000!         .LONG   BCOLDDMP
+    1953 0000a130     0c73          .WORD   CSTR1OID|TRUNKID
+    1954 0000a140 00000000!         .LONG   BCOLDDMP
+    1955 0000a160     0000          .WORD   0
+    1956 0000a170 00000000!         .LONG   DUMRTSG
+    1957                    **************************************************************************
+    1958                    
+    1959                    **************************************************************************
+    1960 0000a190           bcol:
+    1961 0000a190     09ee          MOVI    DUMCOLL,A14
+         0000a1a0 00000000! 
+    1962 0000a1c0     b3c0          MOVE    A14,*A0(OCVECT),L       ;COLLISION POINTER
+         0000a1d0     01d0  
+    1963 0000a1e0     0d5f          CALLA   DELPAL
+         0000a1f0 00000000! 
+    1964 0000a210     09e1          movi    ENEMY_BULLETS,A1
+         0000a220 00000000! 
+    1965 0000a240     0d5f          CALLA   DELSUPP                 ;DELETE FROM THE SUPPLEMENTAL LIST
+         0000a250 00000000! 
+    1966 0000a270     0d5f          CALLA   DELSOBJ
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   48
+
+         0000a280 00000000! 
+    1967 0000a2a0     b600          MOVE    *A0(OPLINK),A0,L
+         0000a2b0     01f0  
+    1968 0000a2c0     0d5f          CALLA   KILL                    ;KILL CONTROL
+         0000a2d0 00000000! 
+    1969                            
+    1970 0000a2f0     5600          clr     A0      ;don't teminate collision scan
+    1971 0000a300     0960          rets
+    1972                    **************************************************************************
+    1973                    
+    1974                    
+    1975                    **************************************************************************
+    1976                    ;WALKING JUMPING DEATH FRAGMENT STANDING-SHOOT KNEELING-SHOOT
+    1977                    ;STANDING KNEELING
+    1978                    
+    1979 0000a310     0001  RAMBOFF .WORD   1,3,4,9,18,34,50,50
+    1980                    *ANIMATION PTR TABLE, FIRST LONG WORD IS THE OFFSET PTR
+    1981                    *
+    1982 0000a390 0000a310' RAMBTAB .LONG   RAMBOFF
+    1983 0000a3b0 0000ae60'         .LONG   WALK,WALK,WALK,RAMBDBUL,RAMBDFLA,RAMBDEXP,RAMBDEXP1,RAMBDROCK
+    1984                    
+    1985 0000a4b0 0000b530'         .LONG   RAMBRAG1,RAMBRAG2,RAMBRAG2,RAMBRAG3
+    1986 0000a530 0000b530'         .LONG   RAMBRAG1,RAMBRAG2,RAMBRAG3,RAMBRAG4,0
+    1987                    *************************************************************************
+    1988                    
+    1989                    
+    1990                    
+    1991 0000a5d0           SFLAMES:
+    1992 0000a5d0 00000080"         .long   SFLAME20
+    1993 0000a5f0     4001          .word   FLIPBITS|1,(M_FLIPV)
+    1994 0000a610 00000000"         .long   SFLAME10
+    1995 0000a630     4001          .word   FLIPBITS|1,(M_FLIPV)
+    1996 0000a650 00000000!         .long   SFLAME
+    1997 0000a670     4001          .word   FLIPBITS|1,0
+    1998 0000a690 00000000"         .long   SFLAME10
+    1999 0000a6b0     4001          .word   FLIPBITS|1,0
+    2000 0000a6d0 00000080"         .long   SFLAME20
+    2001 0000a6f0     4001          .word   FLIPBITS|1,0
+    2002 0000a710 00000100"         .long   SFLAME90
+    2003 0000a730     4001          .word   FLIPBITS|1,0
+    2004 0000a750 00000080"         .long   SFLAME20
+    2005 0000a770     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2006 0000a790 00000000"         .long   SFLAME10
+    2007 0000a7b0     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2008 0000a7d0 00000000!         .long   SFLAME
+    2009 0000a7f0     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2010 0000a810 00000000"         .long   SFLAME10
+    2011 0000a830     4001          .word   FLIPBITS|1,(M_FLIPH|M_FLIPV)
+    2012 0000a850 00000080"         .long   SFLAME20
+    2013 0000a870     4001          .word   FLIPBITS|1,(M_FLIPH|M_FLIPV)
+    2014                    
+    2015 0000a890           BIGBULL:
+    2016 0000a890 00000180"         .long   RAMBBULL
+    2017 0000a8b0     00c8          .word   200
+    2018 0000a8c0                   LONGNULL
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   49
+
+    2019                    
+    2020                    
+    2021                    * RAMBO FRAME TABLES    
+    2022                    * NORMAL TABLE ENTRY:
+    2023                    *       AFRAME  FRAME,SLEEPT,CONTROL_WORD
+    2024                    * FIRE FRAME TABLE ENTRY:                   
+    2025                    *       FAFRAME FRAME,SLEEPT,XOFFSET,YOFFSET,PROCID,PROCESS_ADDRESS,CW
+    2026                    
+    2027 0000a8e0           FRANMIN:
+    2028                    
+    2029                    ;TORSO FRAMES
+    2030 0000a8e0           TORSOS:
+    2031 0000a8e0 00000780"         .long   rmshb20
+    2032 0000a900     4001          .word   FLIPBITS|1,0
+    2033 0000a920 00000700"         .long   rmshb10
+    2034 0000a940     4001          .word   FLIPBITS|1,0
+    2035 0000a960 00000600"         .long   rmsh0a
+    2036 0000a980     4001          .word   FLIPBITS|1,0
+    2037 0000a9a0 00000800"         .long   rmshf10
+    2038 0000a9c0     4001          .word   FLIPBITS|1,0
+    2039 0000a9e0 00000880"         .long   rmshf20
+    2040 0000aa00     4001          .word   FLIPBITS|1,0
+    2041 0000aa20 00000900"         .long   rmshf90
+    2042 0000aa40     4001          .word   FLIPBITS|1,0
+    2043 0000aa60 00000880"         .long   rmshf20
+    2044 0000aa80     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2045 0000aaa0 00000800"         .long   rmshf10
+    2046 0000aac0     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2047 0000aae0 00000600"         .long   rmsh0a
+    2048 0000ab00     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2049 0000ab20 00000700"         .long   rmshb10
+    2050 0000ab40     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2051 0000ab60 00000780"         .long   rmshb20
+    2052 0000ab80     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2053 0000aba0           FTORSOS:
+    2054 0000aba0 00000780"         .long   rmshb20
+    2055 0000abc0     4001          .word   FLIPBITS|1,0
+    2056 0000abe0 00000700"         .long   rmshb10
+    2057 0000ac00     4001          .word   FLIPBITS|1,0
+    2058 0000ac20 00000680"         .long   rmsh0b
+    2059 0000ac40     4001          .word   FLIPBITS|1,0
+    2060 0000ac60 00000800"         .long   rmshf10
+    2061 0000ac80     4001          .word   FLIPBITS|1,0
+    2062 0000aca0 00000880"         .long   rmshf20
+    2063 0000acc0     4001          .word   FLIPBITS|1,0
+    2064 0000ace0 00000900"         .long   rmshf90
+    2065 0000ad00     4001          .word   FLIPBITS|1,0
+    2066 0000ad20 00000880"         .long   rmshf20
+    2067 0000ad40     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2068 0000ad60 00000800"         .long   rmshf10
+    2069 0000ad80     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2070 0000ada0 00000680"         .long   rmsh0b
+    2071 0000adc0     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2072 0000ade0 00000700"         .long   rmshb10
+    2073 0000ae00     4001          .word   FLIPBITS|1,(M_FLIPH)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   50
+
+    2074 0000ae20 00000780"         .long   rmshb20
+    2075 0000ae40     4001          .word   FLIPBITS|1,(M_FLIPH)
+    2076                    
+    2077                    
+    2078              0057  WALKDIST        .set    9+13+16+11+6+7+17+8     
+    2079          00018000  WALKVEL .set    018000H
+    2080          00038000  RUNVEL  .set    038000H
+    2081 0000ae60           MOVETBL:
+    2082 0000ae60           WALK:     ;* sleep is 95% of delta
+    2083                    ;       .long   legs1
+    2084                    ;       .word   6
+    2085                    ;       .long   legs2
+    2086                    ;       .word   6
+    2087                    ;       .long   legs3
+    2088                    ;       .word   6
+    2089                    ;       .long   legs4
+    2090                    ;       .word   6
+    2091                    ;       .long   legs5
+    2092                    ;       .word   6
+    2093                    ;       .long   legs6
+    2094                    ;       .word   6
+    2095                    ;       .long   legs7
+    2096                    ;       .word   6
+    2097                    ;       LONGNULL
+    2098 0000ae60           WALKEND:
+    2099 0000ae60           RUN:      ;* sleep is 45% of delta
+    2100 0000ae60 00000380"         .long   rmrun4
+    2101 0000ae80     0005          .word   5
+    2102 0000ae90 00000400"         .long   rmrun5
+    2103 0000aeb0     0005          .word   5
+    2104 0000aec0 00000480"         .long   rmrun6
+    2105 0000aee0     0005          .word   5
+    2106 0000aef0 00000500"         .long   rmrun7
+    2107 0000af10     0005          .word   5
+    2108 0000af20 00000580"         .long   rmrun8
+    2109 0000af40     0005          .word   5
+    2110 0000af50 00000200"         .long   rmrun1
+    2111 0000af70     0005          .word   5
+    2112 0000af80 00000280"         .long   rmrun2
+    2113 0000afa0     0005          .word   5
+    2114 0000afb0 00000300"         .long   rmrun3
+    2115 0000afd0     0005          .word   5
+    2116 0000afe0                   LONGNULL
+    2117 0000b000           RUNEND:
+    2118 0000b000           MOVEEND:
+    2119                    
+    2120 0000b000           RAMBJMP:
+    2121 0000b000 00000500"         .long   rmrun7
+    2122 0000b020     0001          .word   1
+    2123 0000b030 00000580"         .long   rmrun8
+    2124 0000b050     0001          .word   1
+    2125 0000b060 00000200"         .long   rmrun1
+    2126 0000b080     0001          .word   1
+    2127 0000b090 00000300"         .long   rmrun3
+    2128 0000b0b0     0001          .word   1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   51
+
+    2129 0000b0c0                   LONGNULL
+    2130                    
+    2131 0000b0e0           RAMBDBUL:
+    2132 0000b0e0 00000c00"         .long   rmdead1
+    2133 0000b100     0009          .word   9
+    2134 0000b110 00000c80"         .long   rmdead6
+    2135 0000b130     0008          .word   8
+    2136 0000b140 00000d00"         .long   rmdead7
+    2137 0000b160     0007          .word   7
+    2138 0000b170 00000d80"         .long   rmdead8
+    2139 0000b190     0007          .word   7
+    2140 0000b1a0 00000e00"         .long   rmdead9
+    2141 0000b1c0     0007          .word   7
+    2142 0000b1d0                   LONGNULL
+    2143                    
+    2144 0000b1f0           RAMBBLOW:
+    2145 0000b1f0 00000980"         .long   rmdth1
+    2146 0000b210     0014          .word   20
+    2147 0000b220 00000a00"         .long   rmdth2
+    2148 0000b240     0014          .word   20
+    2149 0000b250 00000a80"         .long   rmdth3
+    2150 0000b270     0014          .word   20
+    2151 0000b280 00000b00"         .long   rmdth4
+    2152 0000b2a0     000a          .word   10
+    2153 0000b2b0 00000b80"         .long   rmdth5
+    2154 0000b2d0     0004          .word   4
+    2155 0000b2e0 00000b00"         .long   rmdth4
+    2156 0000b300     0004          .word   4
+    2157 0000b310 00000a80"         .long   rmdth3
+    2158 0000b330     000c          .word   12
+    2159 0000b340 00000b00"         .long   rmdth4
+    2160 0000b360     000a          .word   10
+    2161 0000b370 00000b80"         .long   rmdth5
+    2162 0000b390     000a          .word   10
+    2163 0000b3a0                   LONGNULL
+    2164                    
+    2165 0000b3c0           RAMBDFLA:                               ;DEATH BY FLAME
+    2166 0000b3c0 00000000!         .long   BGDTHF1
+    2167 0000b3e0     2006          .word   NEWPALET|6
+    2168 0000b3f0 00000000!         .LONG   NARCS
+    2169 0000b410 00000000!         .long   BGDTHF2
+    2170 0000b430     0004          .word   4
+    2171 0000b440 00000000!         .long   BGDTHF3
+    2172 0000b460     0004          .word   4
+    2173 0000b470 00000000!         .long   BGDTHF4
+    2174 0000b490     0004          .word   4
+    2175 0000b4a0 00000000          .LONG   0
+    2176                    
+    2177 0000b4c0           RAMBDROCK:                              ;RAMB HIT BY ROCKET
+    2178 0000b4c0 00000000!         .long   LCREOSOTE
+    2179 0000b4e0     2005          .word   NEWPALET|5
+    2180 0000b4f0 00000000!         .LONG   NARCS
+    2181 0000b510 00000000          .LONG   0
+    2182                    
+    2183 0000b530           RAMBRAG1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   52
+
+    2184 0000b530 00000000!         .long   LLEG1
+    2185 0000b550     2002          .word   NEWPALET|2
+    2186 0000b560 00000000!         .LONG   NARCS
+    2187 0000b580 00000000!         .long   LLEG2
+    2188 0000b5a0     0002          .word   2
+    2189 0000b5b0 00000000!         .long   LLEG3
+    2190 0000b5d0     0002          .word   2
+    2191 0000b5e0 00000000!         .long   LLEG4
+    2192 0000b600     0002          .word   2
+    2193 0000b610 00000000!         .long   LLEG5
+    2194 0000b630     0002          .word   2
+    2195 0000b640 00000000!         .long   LLEG6
+    2196 0000b660     0002          .word   2
+    2197 0000b670 00000000!         .long   LLEG7
+    2198 0000b690     0002          .word   2
+    2199 0000b6a0 00000000!         .long   LLEG8
+    2200 0000b6c0     0002          .word   2
+    2201 0000b6d0 00000000          .LONG   0
+    2202                    
+    2203 0000b6f0           RAMBRAG2
+    2204 0000b6f0 00000000!         .long   L4ARM1
+    2205 0000b710     2002          .word   NEWPALET|2
+    2206 0000b720 00000000!         .LONG   NARCS
+    2207 0000b740 00000000!         .long   L4ARM2
+    2208 0000b760     0002          .word   2
+    2209 0000b770 00000000!         .long   L4ARM3
+    2210 0000b790     0002          .word   2
+    2211 0000b7a0 00000000!         .long   L4ARM4
+    2212 0000b7c0     0002          .word   2
+    2213 0000b7d0 00000000!         .long   L4ARM5
+    2214 0000b7f0     0002          .word   2
+    2215 0000b800 00000000!         .long   L4ARM6
+    2216 0000b820     0002          .word   2
+    2217 0000b830 00000000!         .long   L4ARM7
+    2218 0000b850     0002          .word   2
+    2219 0000b860 00000000!         .long   L4ARM8
+    2220 0000b880     0002          .word   2
+    2221 0000b890 00000000          .LONG   0
+    2222                    
+    2223 0000b8b0           RAMBRAG3
+    2224 0000b8b0 00000000!         .long   LSHIN1
+    2225 0000b8d0     2002          .word   NEWPALET|2
+    2226 0000b8e0 00000000!         .LONG   NARCS
+    2227 0000b900 00000000!         .long   LSHIN2
+    2228 0000b920     0002          .word   2
+    2229 0000b930 00000000!         .long   LSHIN3
+    2230 0000b950     0002          .word   2
+    2231 0000b960 00000000!         .long   LSHIN4
+    2232 0000b980     0002          .word   2
+    2233 0000b990 00000000!         .long   LSHIN5
+    2234 0000b9b0     0002          .word   2
+    2235 0000b9c0 00000000!         .long   LSHIN6
+    2236 0000b9e0     0002          .word   2
+    2237 0000b9f0 00000000!         .long   LSHIN7
+    2238 0000ba10     0002          .word   2
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   53
+
+    2239 0000ba20 00000000!         .long   LSHIN8
+    2240 0000ba40     0002          .word   2
+    2241 0000ba50 00000000          .LONG   0
+    2242                    
+    2243 0000ba70           RAMBRAG4
+    2244 0000ba70 00000000!         .long   LGOAT1
+    2245 0000ba90     2002          .word   NEWPALET|2
+    2246 0000baa0 00000000!         .LONG   NARCS
+    2247 0000bac0 00000000!         .long   LGOAT2
+    2248 0000bae0     0002          .word   2
+    2249 0000baf0 00000000!         .long   LGOAT3
+    2250 0000bb10     0002          .word   2
+    2251 0000bb20 00000000!         .long   LGOAT4
+    2252 0000bb40     0002          .word   2
+    2253 0000bb50 00000000!         .long   LGOAT5
+    2254 0000bb70     0002          .word   2
+    2255 0000bb80 00000000!         .long   LGOAT6
+    2256 0000bba0     0002          .word   2
+    2257 0000bbb0 00000000!         .long   LGOAT7
+    2258 0000bbd0     0002          .word   2
+    2259 0000bbe0 00000000!         .long   LGOAT8
+    2260 0000bc00     0002          .word   2
+    2261 0000bc10 00000000!         .long   LGOAT9
+    2262 0000bc30     0002          .word   2
+    2263 0000bc40 00000000!         .long   LGOAT10
+    2264 0000bc60     0002          .word   2
+    2265 0000bc70 00000000          .LONG   0
+    2266                    
+    2267 0000bc90           RAMBDEXP:                               ;DEATH BY EXPLOSION CLOCKWISE SPIN
+    2268 0000bc90 00000000!         .long   BGDF1C
+    2269 0000bcb0     6002          .word   FLIPBITS|NEWPALET|2
+    2270 0000bcc0     0000          .WORD   0
+    2271 0000bcd0 00000000!         .LONG   NARCS
+    2272 0000bcf0 00000000!         .long   BGDF2C
+    2273 0000bd10     4002          .word   FLIPBITS|2,0
+    2274 0000bd30 00000000!         .long   BGDF3C
+    2275 0000bd50     4002          .word   FLIPBITS|2,0
+    2276 0000bd70 00000000!         .long   BGDF4C
+    2277 0000bd90     4002          .word   FLIPBITS|2,0
+    2278 0000bdb0 00000000!         .long   BGDF3C
+    2279 0000bdd0     4002          .word   FLIPBITS|2,M_FLIPV
+    2280 0000bdf0 00000000!         .long   BGDF2C
+    2281 0000be10     4002          .word   FLIPBITS|2,M_FLIPV
+    2282 0000be30 00000000!         .long   BGDF1C
+    2283 0000be50     4002          .word   FLIPBITS|2,M_FLIPV
+    2284 0000be70 00000000!         .long   BGDF1C
+    2285 0000be90     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2286 0000beb0 00000000!         .long   BGDF2C
+    2287 0000bed0     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2288 0000bef0 00000000!         .long   BGDF3C
+    2289 0000bf10     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2290 0000bf30 00000000!         .long   BGDF4C
+    2291 0000bf50     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2292 0000bf70 00000000!         .long   BGDF3C
+    2293 0000bf90     4002          .word   FLIPBITS|2,(M_FLIPH)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   54
+
+    2294 0000bfb0 00000000!         .long   BGDF2C
+    2295 0000bfd0     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2296 0000bff0 00000000!         .long   BGDF1C
+    2297 0000c010     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2298 0000c030 00000000          .LONG   0
+    2299                    
+    2300 0000c050           RAMBDEXP1:                              ;DEATH BY EXPLOSION COUNTER-CLOCK SPIN
+    2301 0000c050 00000000!         .long   BGDF1C
+    2302 0000c070     6002          .word   FLIPBITS|NEWPALET|2
+    2303 0000c080     0010          .WORD   M_FLIPH
+    2304 0000c090 00000000!         .LONG   NARCS
+    2305 0000c0b0 00000000!         .long   BGDF2C
+    2306 0000c0d0     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2307 0000c0f0 00000000!         .long   BGDF3C
+    2308 0000c110     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2309 0000c130 00000000!         .long   BGDF4C
+    2310 0000c150     4002          .word   FLIPBITS|2,(M_FLIPH)
+    2311 0000c170 00000000!         .long   BGDF3C
+    2312 0000c190     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2313 0000c1b0 00000000!         .long   BGDF2C
+    2314 0000c1d0     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2315 0000c1f0 00000000!         .long   BGDF1C
+    2316 0000c210     4002          .word   FLIPBITS|2,(M_FLIPH+M_FLIPV)
+    2317 0000c230 00000000!         .long   BGDF1C
+    2318 0000c250     4002          .word   FLIPBITS|2,M_FLIPV
+    2319 0000c270 00000000!         .long   BGDF2C
+    2320 0000c290     4002          .word   FLIPBITS|2,M_FLIPV
+    2321 0000c2b0 00000000!         .long   BGDF3C
+    2322 0000c2d0     4002          .word   FLIPBITS|2,M_FLIPV
+    2323 0000c2f0 00000000!         .long   BGDF4C
+    2324 0000c310     4002          .word   FLIPBITS|2,0
+    2325 0000c330 00000000!         .long   BGDF3C
+    2326 0000c350     4002          .word   FLIPBITS|2,0
+    2327 0000c370 00000000!         .long   BGDF2C
+    2328 0000c390     4002          .word   FLIPBITS|2,0
+    2329 0000c3b0 00000000!         .long   BGDF1C
+    2330 0000c3d0     4002          .word   FLIPBITS|2,0
+    2331 0000c3f0 00000000          .LONG   0
+    2332 0000c410           FRANMAX:
+    2333                    
+    2334 0000c410           RAMBNUL
+    2335 0000c410 00000000          .LONG   0
+    2336                    
+    2337 0000c430           RAMBPALS:
+    2338 0000c430 00000000!         .long   ram1
+    2339 0000c450 0000c470'         .long   grnram
+    2340                    
+    2341 0000c470           grnram: ;PAL #0
+    2342 0000c470     00f0          .word   240     ;pal size
+    2343 0000c480     0460          .word 0460H,0460H,0480H,0480H,0480H,0480H,04A0H,04A1H,04A0H,04A1H
+    2344 0000c520     04a0          .word 04A0H,04A0H,04C1H,04C1H,04C0H,04C1H,04E2H,04C0H,04E1H,04E2H
+    2345 0000c5c0     0502          .word 0502H,0CC0H,014A0H,014C0H,0CE0H,014E0H,0CE1H,0CE1H,0CE2H,014E1H
+    2346 0000c660     0d02          .word 0D02H,01500H,01501H,01502H,01522H,01501H,01502H,01521H,01522H,0D03H
+    2347 0000c700     0d03          .word 0D03H,01503H,01523H,01503H,01523H,01543H,01544H,01565H,01CE0H,01D01H
+    2348 0000c7a0     1d01          .word 01D01H,01D21H,01D21H,04061H,02500H,02521H,01D02H,01D22H,01D23H,01D24H
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   55
+
+    2349 0000c840     1d02          .word 01D02H,01D22H,01D23H,02502H,02522H,02D22H,01D41H,01D42H,01D43H,01D43H
+    2350 0000c8e0     1d44          .word 01D44H,01D44H,02542H,02542H,02D42H,02543H,02544H,02543H,02D44H,01D63H
+    2351 0000c980     1d64          .word 01D64H,02563H,02564H,02563H,02564H,02584H,02D62H,02D63H,02D63H,02D64H
+    2352 0000ca20     2d83          .word 02D83H,02D84H,02DA4H,01D65H,01D65H,02565H,02566H,02585H,02D85H,02D85H
+    2353 0000cac0     2d86          .word 02D86H,025A7H,02DA6H,02DA7H,02DA6H,02DC6H,04CA2H,03542H,03562H,03583H
+    2354 0000cb60     3583          .word 03583H,035A3H,03584H,03584H,03585H,035A4H,035A4H,035A6H,035A6H,060A2H
+    2355 0000cc00     60e3          .word 060E3H,05CE5H,05944H,06524H,05D46H,07483H,07103H,07D04H,074E6H,07CE6H
+    2356 0000cca0     7527          .word 07527H,07D27H,035C5H,03DC4H,035C6H,03DE6H,035C7H,035E8H,03DE7H,03E07H
+    2357 0000cd40     45c5          .word 045C5H,03DE6H,045E6H,03DE7H,045E7H,04606H,04607H,04628H,04648H,04DE5H
+    2358 0000cde0     55e5          .word 055E5H,04DE7H,05607H,04E27H,04E48H,05627H,05668H,065E4H,06605H,05E26H
+    2359 0000ce80     6646          .word 06646H,05E08H,06647H,05E68H,06668H,0360AH,03E2AH,04629H,0464AH,04E0AH
+    2360 0000cf20     4e4a          .word 04E4AH,0466AH,0468CH,04E6AH,04E8AH,04E8BH,04EABH,04E8CH,05DE9H,05E2AH
+    2361 0000cfc0     5e4a          .word 05E4AH,05669H,06669H,05E6BH,0666BH,056AAH,05E8AH,06689H,0668AH,066AAH
+    2362 0000d060     56ab          .word 056ABH,056ABH,056ADH,066ABH,066ADH,04ECEH,056CCH,056CCH,05ECCH,05F0FH
+    2363 0000d100     5eeb          .word 05EEBH,05EEEH,05F0FH,066CBH,066CCH,066EEH,07ECDH,07ECFH,07ED1H,07EF1H
+    2364 0000d1a0     7f31          .word 07F31H,06EF3H,07B13H,07ED3H,07F34H,07F54H,07FB5H,07F78H,07FBCH,07FF9H
+    2365 0000d240     7ffb          .word 07FFBH,07FFEH,07FFFH,02DE9H,05441H,06021H,06842H,07421H,07942H,07086H
+    2366 0000d2e0     6906          .word 06906H,07145H,06948H,07E68H,07F2EH,07F91H,07FD2H,04821H,05C64H,068C5H
+    2367                    
+    2368                    
+    2369 0000d380           CRMRUN:   ;* sleep is 45% of delta
+    2370 0000d380 00000380"         .long   rmrun4
+    2371 0000d3a0     4001          .word   FLIPBITS|1,0
+    2372 0000d3c0 00000400"         .long   rmrun5
+    2373 0000d3e0     0005          .word   5
+    2374 0000d3f0 00000480"         .long   rmrun6
+    2375 0000d410     0005          .word   5
+    2376 0000d420 00000500"         .long   rmrun7
+    2377 0000d440     0005          .word   5
+    2378 0000d450 00000580"         .long   rmrun8
+    2379 0000d470     0005          .word   5
+    2380 0000d480 00000200"         .long   rmrun1
+    2381 0000d4a0     0005          .word   5
+    2382 0000d4b0 00000280"         .long   rmrun2
+    2383 0000d4d0     0005          .word   5
+    2384 0000d4e0 00000300"         .long   rmrun3
+    2385 0000d500     0005          .word   5
+    2386 0000d510 00000380"         .long   rmrun4
+    2387 0000d530     0005          .word   5
+    2388 0000d540 00000400"         .long   rmrun5
+    2389 0000d560     0005          .word   5
+    2390 0000d570 00000480"         .long   rmrun6
+    2391 0000d590     0005          .word   5
+    2392 0000d5a0 00000500"         .long   rmrun7
+    2393 0000d5c0     0005          .word   5
+    2394 0000d5d0                   LONGNULL
+    2395                    
+    2396 0000d5f0           CRMSHT:   ;* sleep is 45% of delta
+    2397 0000d5f0 00000600"         .long   rmsh0a
+    2398 0000d610     4001          .word   FLIPBITS|1,0
+    2399 0000d630 00000680"         .long   rmsh0b
+    2400 0000d650     0005          .word   5
+    2401 0000d660 00000600"         .long   rmsh0a
+    2402 0000d680     0005          .word   5
+    2403 0000d690 00000680"         .long   rmsh0b
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   56
+
+    2404 0000d6b0     0005          .word   5
+    2405 0000d6c0 00000600"         .long   rmsh0a
+    2406 0000d6e0     0005          .word   5
+    2407 0000d6f0 00000680"         .long   rmsh0b
+    2408 0000d710     0005          .word   5
+    2409 0000d720 00000600"         .long   rmsh0a
+    2410 0000d740     0005          .word   5
+    2411 0000d750 00000680"         .long   rmsh0b
+    2412 0000d770     0005          .word   5
+    2413 0000d780 00000600"         .long   rmsh0a
+    2414 0000d7a0     0005          .word   5
+    2415 0000d7b0 00000680"         .long   rmsh0b
+    2416 0000d7d0     0005          .word   5
+    2417 0000d7e0 00000600"         .long   rmsh0a
+    2418 0000d800     0005          .word   5
+    2419 0000d810 00000680"         .long   rmsh0b
+    2420 0000d830     0005          .word   5
+    2421 0000d840 00000600"         .long   rmsh0a
+    2422 0000d860     0005          .word   5
+    2423 0000d870 00000680"         .long   rmsh0b
+    2424 0000d890     0005          .word   5
+    2425 0000d8a0                   LONGNULL
+    2426                    
+    2427                    
+    2428                    ****************************************************************************
+    2429 0000d8c0           RAMBCRM1:
+    2430 0000d8c0     05a0          move    @(WORLDTLX+16),A0,W                              
+         0000d8d0 00000010! 
+    2431 0000d8f0     0b00          addi    130,A0
+         0000d900     0082  
+    2432 0000d910     05a1          move    @PLYMIN,A1,W                                                                     
+         0000d920 00000000! 
+    2433 0000d940     0b01          addi    10,A1
+         0000d950     000a  
+    2434 0000d960     2601          sll     16,A1
+    2435 0000d970     ec01          movx    A0,A1
+    2436 0000d980     09ee          movi    BodyInit,A14    
+         0000d990 00000560' 
+    2437 0000d9b0     0d5f          calla   ESINITLL
+         0000d9c0 00000000! 
+    2438 0000d9e0                   PUSHP   A8
+    2439 0000d9f0     09ee          movi    LegsInit,A14    
+         0000da00 00000420' 
+    2440 0000da20     0d5f          calla   ESINITLL
+         0000da30 00000000! 
+    2441 0000da50                   PULLP   A10
+    2442                    
+    2443 0000da70     5600          clr     A0
+    2444 0000da80     b208          move    A0,*A8(OBLIPIMG),L
+         0000da90     0260  
+    2445                    
+    2446 0000daa0     5600          clr     A0
+    2447 0000dab0     ac0d          movb    A0,*A13(SNOOZE)
+         0000dac0     01d0  
+    2448                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   57
+
+    2449 0000dad0     0d5f          calla   ClrVel
+         0000dae0 00000000! 
+    2450 0000db00     0d5f          calla   NOYFLP
+         0000db10 00000000! 
+    2451 0000db30     09e0          movi    RUNVEL,A0
+         0000db40 00038000  
+    2452 0000db60     b208          move    A0,*A8(OXVEL),L
+         0000db70     0040  
+    2453                    
+    2454 0000db80     09e9          movi    CRMRUN,A9       
+         0000db90 0000d380' 
+    2455 0000dbb0     09eb          movi    CRMSHT,A11      
+         0000dbc0 0000d5f0' 
+    2456 0000dbe0     1940          movk    10,A0
+    2457 0000dbf0           CrmLp:
+    2458 0000dbf0                   PUSHP   A0
+    2459 0000dc00     1881          movk    4,A1
+    2460 0000dc10                   jsrp    FRANIM
+    2461 0000dc80                   SWAP    A9,A11
+    2462 0000dcb0                   SWAP    A8,A10
+    2463 0000dce0     1881          movk    4,A1
+    2464 0000dcf0                   jsrp    FRANIM
+    2465 0000dd60                   SWAP    A9,A11
+    2466 0000dd90                   SWAP    A8,A10
+    2467 0000ddc0     0d3f          callr   UpdTorso
+         0000ddd0     f4fc  
+    2468 0000dde0     18a0          movk    5,A0
+    2469 0000ddf0     0d5f          calla   PRCSLP
+         0000de00 00000000! 
+    2470 0000de20                   PULLP   A0
+    2471 0000de40     1420          dec     A0
+    2472 0000de50     c1d9          jrp     CrmLp
+    2473                    
+    2474 0000de60     09e1          MOVI    ENEMIES,A1
+         0000de70 00000000! 
+    2475 0000de90     4d00          MOVE    A8,A0
+    2476 0000dea0     0d5f          CALLA   DELSUPP
+         0000deb0 00000000! 
+    2477 0000ded0     b501          move    *A8(OPAL),A1,W
+         0000dee0     0160  
+    2478 0000def0     0581          move    A1,@CRIMEPAL,W
+         0000df00 00000000! 
+    2479 0000df20     0d5f          CALLA   DELSOBJ
+         0000df30 00000000! 
+    2480                    
+    2481 0000df50     4d40          MOVE    A10,A0
+    2482 0000df60     09e1          MOVI    ENEMIES,A1
+         0000df70 00000000! 
+    2483 0000df90     0d5f          CALLA   DELSUPP
+         0000dfa0 00000000! 
+    2484 0000dfc0     0d5f          CALLA   DELSOBJ
+         0000dfd0 00000000! 
+    2485                    
+    2486 0000dff0                   retp
+    2487                    ****************************************************************************
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:13 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C  -- RAMBO >>>                                        PAGE   58
+
+    2488                    
+
+ No Errors,  No Warnings

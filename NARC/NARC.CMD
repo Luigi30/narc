@@ -62,9 +62,9 @@ NARCBLIP.OBJ
 IMGTBL.OBJ
 BGNDTBL.OBJ
 BGNDPAL.OBJ
-\video\MPROC.OBJ		/*MULTI-TASKER*/
-\video\NDSP1.OBJ		/*IMAGE HANDLER*/
-\video\GSPSND.OBJ		/*SOUND PROCESSOR*/
+..\sys\MPROC.OBJ		/*MULTI-TASKER*/
+..\sys\NDSP1.OBJ		/*IMAGE HANDLER*/
+..\sys\GSPSND.OBJ		/*SOUND PROCESSOR*/
 
 MEMORY        			/* set up memory for sdb board */
 {

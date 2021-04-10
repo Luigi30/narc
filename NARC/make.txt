@@ -1,0 +1,3 @@
+GSPLNK NARC.CMD
+>> warning: can't align within GROUP - section .bss not aligned
+>> warning: can't align within GROUP - section .text not aligned

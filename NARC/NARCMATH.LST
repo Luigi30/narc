@@ -1,0 +1,286 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:08 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCMATH.ASM"
+       3                            .WIDTH  132
+       4                            .OPTION B,D,L,T
+       5                            .MNOLIST
+       6                    
+       7                    
+       8                            .INCLUDE        "\video\GSP.INC"        ;GSP assembler equates
+       9                            .INCLUDE        "\video\SYS.INC"        ;Zunit system equates
+      10                            .INCLUDE        "\video\MACROS.HDR"     ;Macros, Yeah!
+      11                    
+      12                    ;       .GLOBL  TEST
+      13                            .GLOBL  LINEPT,LTWRDPT
+      14                    
+      15 00000000                   .EVEN
+      16 00000000                   .TEXT
+      17 00000000           TEST:
+      18 00000000     09e0          movi    00001000AH,A0   ;Y1=1, X1=10 
+         00000010 0001000a  
+      19 00000030     5621          clr     A1              ;Y0=0, X0=0
+      20 00000040     09e2          movi    000018000H,A2   ;XVEL = 2^-9
+         00000050 00018000  
+      21 00000070     09e3          movi    000008000H,A3   ;YVEL = 1.0
+         00000080 00008000  
+      22 000000a0     0d3f          callr   LINEPT
+         000000b0     002e  
+      23 000000c0     c000          jruc    $
+         000000d0     fffe  
+      24                    
+      25 000000e0           testpreinf:
+      26 000000e0     09e0          movi    00001000AH,A0   ;Y1=1, X1=10 
+         000000f0 0001000a  
+      27 00000110     5621          clr     A1              ;Y0=0, X0=0
+      28 00000120     09c2          movi    000000080H,A2   ;XVEL = 2^-9
+         00000130     0080  
+      29 00000140     09e3          movi    000010000H,A3   ;YVEL = 1.0
+         00000150 00010000  
+      30 00000170     0d3f          callr   LINEPT
+         00000180     0021  
+      31 00000190     c000          jruc    $
+         000001a0     fffe  
+      32                    
+      33 000001b0           testprezero:
+      34 000001b0     09e0          movi    00001000AH,A0   ;Y1=1, X1=10 
+         000001c0 0001000a  
+      35 000001e0     5621          clr     A1              ;Y0=0, X0=0
+      36 000001f0     09e2          movi    000010000H,A2   ;XVEL = 1.0
+         00000200 00010000  
+      37 00000220     09c3          movi    000000080H,A3   ;YVEL = 2^-9
+         00000230     0080  
+      38 00000240     0d3f          callr   LINEPT
+         00000250     0014  
+      39 00000260     c000          jruc    $
+         00000270     fffe  
+      40                    
+      41                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:08 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C    M  A  T  H >>>                                    PAGE    2
+
+      42                    ****************************************************************************
+      43 00000280           LTWRDPT:
+      44                    ;* PARMS
+      45                    ;       A0 Y:X coor of a target point     - Y1:X1
+      46                    ;       A1 Y:X start coor of moving obj   - Y0:X0
+      47                    ;       A2 XVEL 16.16 of moving obj
+      48                    ;       A3 YVEL 16.16 of moving obj
+      49                    ;* RETURNS
+      50                    ;       SETC if Line Vels X and Y components are each in the direction
+      51                    ;       from moving obj toward target point
+      52                    
+      53 00000280     e401          cmpxy   A0,A1
+      54 00000290     c503          jrxgt   NdNegXv
+      55 000002a0     4c42          move    A2,A2
+      56 000002b0     ce0c          jrn     WrongWay
+      57 000002c0     c002          jruc    XDOK
+      58 000002d0           NdNegXv:
+      59 000002d0     4c42          move    A2,A2
+      60 000002e0     c109          jrp     WrongWay
+      61                    ;       jruc    XDOK
+      62 000002f0           XDOK:
+      63 000002f0     e401          cmpxy   A0,A1
+      64 00000300     c303          jrygt   NdNegYv
+      65 00000310     4c63          move    A3,A3
+      66 00000320     ce05          jrn     WrongWay
+      67 00000330     c002          jruc    YDOK
+      68 00000340           NdNegYv:
+      69 00000340     4c63          move    A3,A3
+      70 00000350     c102          jrp     WrongWay
+      71                    ;       jruc    XDOK
+      72 00000360           YDOK:
+      73 00000360     0de0          setc
+      74 00000370     0960          rets
+      75                    
+      76 00000380           WrongWay:
+      77 00000380     0320          clrc
+      78 00000390     0960          rets
+      79                    ****************************************************************************
+      80                    
+      81                    
+      82                    ****************************************************************************
+      83 000003a0           LINEPT:
+      84                    ;* PARMS
+      85                    ;       A0 Y:X coor of a target point     - Y1:X1
+      86                    ;       A1 Y:X start coor of moving obj   - Y0:X0
+      87                    ;       A2 XVEL 16.16 of moving obj
+      88                    ;       A3 YVEL 16.16 of moving obj
+      89                    ;* RETURNS
+      90                    ;       A0 Y:X closest point on moving objects path to the target point
+      91                    
+      92 000003a0     098f          mmtm    SP,A1,A2,A3,A4,A5,A6,A7
+         000003b0     7f00  
+      93                    
+      94 000003c0     4c64          move    A3,A4
+      95 000003d0     ca6e          jrz     MZero
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:08 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C    M  A  T  H >>>                                    PAGE    3
+
+      96 000003e0     4c45          move    A2,A5
+      97 000003f0     ca6a          jrz     MInf
+      98 00000400     0384          abs     A4
+      99 00000410     6a84          lmo     A4,A4
+     100 00000420     0385          abs     A5
+     101 00000430     6aa5          lmo     A5,A5
+     102                            ;lmo result is 1's comp, so subtract A4 from A5 instead of vice versa
+     103 00000440     4485          sub     A4,A5   ;A4 is appropriate shift count to normalize YVEL
+     104 00000450     0b45          cmpi    10,A5
+         00000460     fff5  
+     105 00000470     c562          jrge    MInf
+     106 00000480     0b45          cmpi    6,A5
+         00000490     fff9  
+     107 000004a0     c547          jrge    MPreInf
+     108 000004b0     0b45          cmpi    -10,A5
+         000004c0     0009  
+     109 000004d0     c65e          jrle    MZero
+     110 000004e0     0b45          cmpi    -6,A5
+         000004f0     0005  
+     111 00000500     c625          jrle    MPreZero
+     112                    
+     113                    ;* 2^-6 < M < 2^6
+     114                    ;* Xf = ((M^2)X0 + M(Y1 - Y0) + X1) / ((M^2)+1)
+     115                    ;* Yf = Y0 + M(Xf - X0)
+     116                            ;* calc M = YVEL / XVEL
+     117 00000510     2503          sll     8,A3
+     118 00000520     5843          divs    A2,A3   ;A3 = M << 8
+     119 00000530     4c65          move    A3,A5
+     120 00000540     5ca5          mpys    A5,A5   
+     121 00000550     2b05          sra     8,A5    ;A5 = M^2 << 8
+     122 00000560     ee07          movy    A0,A7
+     123 00000570     e227          subxy   A1,A7
+     124 00000580     2a07          sra     16,A7   ;A7 = Y1-Y0
+     125 00000590     5c67          mpys    A3,A7   ;A7 = M(Y1-Y0) << 8
+     126 000005a0     ec02          movx    A0,A2
+     127 000005b0     0502          sext    A2,W
+     128 000005c0     2502          sll     8,A2
+     129 000005d0     40e2          add     A7,A2   ;A2 = M(Y1-Y0)+X1 << 8
+     130 000005e0     ec27          movx    A1,A7
+     131 000005f0     0507          sext    A7,W
+     132 00000600     5ca7          mpys    A5,A7   ;A7 = (M^2)X0 << 8
+     133 00000610     4047          add     A2,A7
+     134 00000620     2507          sll     8,A7    ;A7 << 16
+     135 00000630     0b05          addi    0100H,A5        ;A5 = M^2 + 1 << 8
+         00000640     0100  
+     136 00000650     58a7          divs    A5,A7   ;A7 = Xf << 8
+     137 00000660     4ce2          move    A7,A2
+     138 00000670     0b02          addi    080H,A2 ;round by adding .5
+         00000680     0080  
+     139 00000690     2b02          sra     8,A2
+     140 000006a0     ec40          movx    A2,A0
+     141                    
+     142 000006b0     ec26          movx    A1,A6
+     143 000006c0     0506          sext    A6,W
+     144 000006d0     2506          sll     8,A6
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:08 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C    M  A  T  H >>>                                    PAGE    4
+
+     145 000006e0     44c7          sub     A6,A7   ;A7 = Xf-X0 << 8
+     146 000006f0     5c67          mpys    A3,A7   ;A7 = M*(Xf-X0) << 16
+     147 00000700     0b27          addi    08000H,A7  ;round
+         00000710 00008000  
+     148 00000730     e027          addxy   A1,A7
+     149 00000740     eee0          movy    A7,A0
+     150                    
+     151 00000750     c037          jruc    GotPt
+     152                    
+     153                    
+     154 00000760           MPreZero:
+     155                            ;* 2^-10 < M < 2^-6
+     156                            ;* Xf = X1 + M(Y1 - Y0)
+     157                            ;* Yf = Y0 + M(Xf - X0)
+     158                    
+     159                            ;* calc M = YVEL / XVEL
+     160 00000760     2503          sll     8,A3
+     161 00000770     2b02          sra     8,A2
+     162 00000780     5843          divs    A2,A3   ;A3 = M << 16
+     163 00000790     4c65          move    A3,A5
+     164                    
+     165 000007a0     ee06          movy    A0,A6
+     166 000007b0     e226          subxy   A1,A6
+     167 000007c0     2a06          sra     16,A6
+     168 000007d0     5cc3          mpys    A6,A3   ;A3 = M*(Y1-Y0) << 16
+     169 000007e0     ec07          movx    A0,A7   
+     170 000007f0     2607          sll     16,A7   ;A7 = X1 << 16
+     171 00000800     4067          add     A3,A7   ;A7 = Xf << 16
+     172 00000810     0b23          addi    08000H,A3       ;A3 = (Xf-X1) << 16 + (.5 << 16)
+         00000820 00008000  
+     173 00000840     2a03          sra     16,A3   ;A3 = Xf-X1
+     174 00000850     e060          addxy   A3,A0   ;add in to X1 to give Xf, Y1 could get clobbered
+     175                    
+     176 00000860     ec26          movx    A1,A6
+     177 00000870     2606          sll     16,A6   ;A6 = X0 << 16
+     178 00000880     44c7          sub     A6,A7
+     179 00000890     2b07          sra     8,A7    ;A7 = (Xf-X0) << 8
+     180 000008a0     2b05          sra     8,A5    ;A5 = M << 8    
+     181 000008b0     5ca7          mpys    A5,A7   ;A5 = M*(Xf-X0)
+     182 000008c0     0b27          addi    08000H,A7       ;A7 = M(Xf-X0) << 16 + (.5 << 16)
+         000008d0 00008000  
+     183 000008f0     e0e1          addxy   A7,A1   ;result already << 16
+     184 00000900     ee20          movy    A1,A0
+     185 00000910     c01b          jruc    GotPt
+     186                    
+     187 00000920           MPreInf:
+     188                            ;* 2^6 < M < 2^10
+     189                            ;* Xf = X0 + (Y1 - Y0)/M
+     190                            ;* Yf = (X1 - Xf)/M + Y1
+     191                    
+     192 00000920     ee07          movy    A0,A7
+     193 00000930     ec27          movx    A1,A7
+     194 00000940     e227          subxy   A1,A7   ;A7 = (Y1-Y0) << 16
+     195 00000950     5843          divs    A2,A3   ;A3 = M
+     196 00000960     5867          divs    A3,A7   ;A7 = (Y1-Y0)/M   << 16
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:21:08 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C    M  A  T  H >>>                                    PAGE    5
+
+     197 00000970     ec25          movx    A1,A5
+     198 00000980     2605          sll     16,A5
+     199 00000990     40a7          add     A5,A7   ;A7 = Xf << 16
+     200                    
+     201 000009a0     4ce5          move    A7,A5
+     202 000009b0     0b25          addi    08000H,A5 ;add in round adj .5
+         000009c0 00008000  
+     203 000009e0     2a05          sra     16,A5   ;A5 = Xf
+     204                            
+     205                            ;* Yf = (X1 - Xf)/M + Y1
+     206 000009f0     ec02          movx    A0,A2
+     207 00000a00     2602          sll     16,A2   ;A2 = X1 << 16
+     208 00000a10     44e2          sub     A7,A2
+     209 00000a20     4c47          move    A2,A7
+     210 00000a30     5867          divs    A3,A7   ;A7 = (X1 - Xf)/M << 16
+     211 00000a40     0b27          addi    08000H,A7 ;add in round adj .5
+         00000a50 00008000  
+     212 00000a70     e0e0          addxy   A7,A0
+     213 00000a80     eca0          movx    A5,A0
+     214 00000a90     c003          jruc    GotPt
+     215                    
+     216 00000aa0           MInf:
+     217                            ;* 2^10 < M
+     218                            ;* Xf = X0,  Yf = Y1
+     219 00000aa0     ec20          movx    A1,A0
+     220 00000ab0     c001          jruc    GotPt
+     221                    
+     222 00000ac0           MZero:
+     223                            ;* M < 2^-10
+     224                            ;* Xf = X1,  Yf = Y0
+     225 00000ac0     ee20          movy    A1,A0
+     226                    ;       jruc    GotPt
+     227                    
+     228 00000ad0           GotPt:
+     229 00000ad0     09af          mmfm    SP,A1,A2,A3,A4,A5,A6,A7
+         00000ae0     00fe  
+     230 00000af0     0960          rets
+     231                    
+     232                            .END
+
+ No Errors,  No Warnings

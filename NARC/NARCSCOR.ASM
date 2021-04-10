@@ -1,4 +1,4 @@
-	.FILE	'NARCSCOR.ASM'
+	.FILE	"NARCSCOR.ASM"
 	.TITLE	" <<< N  A  R  C  -- SCORE AREA MAINTENANCE >>>"
 
 **************************************************************************

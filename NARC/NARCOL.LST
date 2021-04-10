@@ -1,0 +1,1260 @@
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+                                                                     PAGE    1
+
+       1                            .FILE   "NARCOL.ASM"
+       3                    
+       4                    **************************************************************************
+       5                    *                                                                        *
+       6                    *       COPYRIGHT (C) 1988 WILLIAMS ELECTRONICS GAMES, INC.              *
+       7                    *       ALL RIGHTS RESERVED.                                             *
+       8                    *                                                                        *
+       9                    **************************************************************************
+      10                    
+      11                            .WIDTH  132
+      12                            .MNOLIST
+      13                    
+      14                            .INCLUDE        "\video\DISPEQU.ASM"    ;Display processor equates
+      15                            .INCLUDE        \video\MACROS.HDR
+      16                            .INCLUDE        \video\GSP.INC
+      17                            .INCLUDE        \video\sys.inc
+      18                            .INCLUDE        \video\MPROCEQU.ASM
+      19                            .INCLUDE        NARCEQU.ASM
+      20                    
+      21                    *
+      22                    *GLOBALS IN THIS FILE
+      23                            .GLOBAL CPCOLADJ
+      24                    
+      25                    *
+      26                    *EXTERNALS
+      27                            .GLOBAL CKLBADJ,P_INBNDS
+      28                    
+      29 00000000                   .TEXT
+      30                    
+      31                    **************************************************************************
+      32                    *                                                                        *
+      33                    * PRESCAN0 - SETS UP OBJECT 0 PARAMETERS FOR COLXY AND COLXYZ            *
+      34                    * A0 = PTR TO OBJECT 0                                                   *
+      35                    * RETURNS:                                                               *
+      36                    *       CARRY CLEAR = DON'T SCAN THIS OBJECT                             *
+      37                    *                       A4 - A5 UNTOUCHED                                *
+      38                    *       CARRY SET = SCAN AWAY                                            *
+      39                    *       A3 = [ULY,ULX]                                                   *
+      40                    *       A4 = [LRY,LRX]                                                   *
+      41                    *       A4 = INWARD Z                                                    *
+      42                    *       A5 = OUTWARD Z                                                   *
+      43                    * NOTE: ALWAYS TRASHES A14                                               *
+      44                    *                                                                        *
+      45                    **************************************************************************
+      46 00000000           PRESCAN0
+      47 00000000     b40e          MOVE    *A0(OFLAGS),A14,W       
+         00000010     0100  
+      48 00000020     1e8e          BTST    B_NOCOLL,A14            ;IS THIS DUDE COLLIDABLE?
+      49 00000030     cb13          JRNE    PRESCANF                ;BR = NO, DON'T WORRY ABOUT HIM
+      50 00000040     278e          SLL     28,A14
+      51 00000050     ca11          JRZ     PRESCANF                ;HE'S NOT EVEN TURNED ON
+      52 00000060     b603          MOVE    *A0(ODMAXY),A3,L        ;SET UP OBJECT 0 BOX ULX,ULY
+         00000070     0210  
+      53 00000080     ca0e          JREQ    PRESCANF                ;DMA VALUES ARE YET UNINITIALIZED
+      54                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    2
+
+      55 00000090     b604          MOVE    *A0(OSIZE),A4,L         ;GET HIS SIZE
+         000000a0     0140  
+      56 000000b0     e064          ADDXY   A3,A4                   ;OBJECT 0 LRX,LRY
+      57                    *Z STUFF
+      58 000000c0     b405          MOVE    *A0(OZPOS),A5,W         ;GET Z MIDPOINT
+         000000d0     00d0  
+      59 000000e0     b40e          MOVE    *A0(OZMINUS),A14,W      ;GET Z SIZE IN NEGATIVE DIRECTION
+         000000f0     01b0  
+      60 00000100     4ca6          MOVE    A5,A6
+      61 00000110     45c5          SUB     A14,A5                  ;INWARD Z
+      62 00000120     b40e          MOVE    *A0(OZPLUS),A14,W       ;Z SIZE IN POSITIVE DIRECTION
+         00000130     01c0  
+      63 00000140     41c6          ADD     A14,A6                  ;OUTWARD Z
+      64 00000150     0de0          SETC
+      65 00000160     0960          RETS
+      66 00000170           PRESCANF
+      67 00000170     0320          CLRC
+      68 00000180     0960          RETS
+      69                    **************************************************************************
+      70                    *                                                                        *
+      71                    * COLLISION CHECK IN 3-SPACE                                             *
+      72                    * A0 =POINTER TO OBJECT BLOCK OF OBJECT TO BE CHECKED(OBJECT 0)          *
+      73                    * A1 =POINTER TO SPECIAL LIST TO SCAN AGAINST (OBJECT 1)                 *
+      74                    * RETURN(S)                                                              *
+      75                    * Z BIT - J*NE = COLLISION, J*EQ = NO COLLISION                          *
+      76                    * IF A COLLISION IS DETECTED, THE OBJECTS COLLISION ROUTINE IS CALLED.   *
+      77                    *                                                                        *
+      78                    **************************************************************************
+      79                    *2-D ENTRY PROVIDING OBJECT 0 PARAMS
+      80 00000190           COLXYP
+      81 00000190     098f          MMTM    SP,A0,A2,A3,A4,A5,A6,A7,A8,A9,A11,A14
+         000001a0     bfd2  
+      82 000001b0     5729          CLR     A9
+      83 000001c0     c020          JRUC    COLLPREG
+      84                    *3-D ENTRY PROVIDING OBJECT 0 PARAMS
+      85 000001d0           COLXYZP
+      86 000001d0     098f          MMTM    SP,A0,A2,A3,A4,A5,A6,A7,A8,A9,A11,A14
+         000001e0     bfd2  
+      87 000001f0     1829          MOVK    1,A9
+      88 00000200     c01c          JRUC    COLLPREG
+      89                    *2-D ENTRY PROVIDING NOTHING
+      90 00000210           COLXY:
+      91 00000210     098f          MMTM    SP,A0,A2,A3,A4,A5,A6,A7,A8,A9,A11,A14
+         00000220     bfd2  
+      92 00000230     5729          CLR     A9                      ;2 SPACE COLLISION
+      93 00000240     c003          JRUC    COLXYZ0
+      94                    *3-D ENTRY PROVIDING NOTHING
+      95 00000250           COLXYZ:
+      96 00000250     098f          MMTM    SP,A0,A2,A3,A4,A5,A6,A7,A8,A9,A11,A14
+         00000260     bfd2  
+      97 00000270     1829          MOVK    1,A9                    ;SET FOR 3 SPACE COLLISION
+      98 00000280           COLXYZ0:
+      99 00000280     b40e          MOVE    *A0(OFLAGS),A14,W       
+         00000290     0100  
+     100 000002a0     1e8e          BTST    B_NOCOLL,A14            ;IS THIS DUDE COLLIDABLE?
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    3
+
+     101 000002b0     cb3a          JRNE    COLLX                   ;BR = NO, DON'T WORRY ABOUT HIM
+     102 000002c0     278e          SLL     28,A14
+     103 000002d0     ca38          JRZ     COLLX                   ;HE'S NOT EVEN TURNED ON
+     104 000002e0     b603          MOVE    *A0(ODMAXY),A3,L        ;SET UP OBJECT 0 BOX ULX,ULY
+         000002f0     0210  
+     105 00000300     ca35          JREQ    COLLX                   ;DMA VALUES ARE YET UNINITIALIZED
+     106 00000310     b604          MOVE    *A0(OSIZE),A4,L         ;GET HIS SIZE
+         00000320     0140  
+     107 00000330     e064          ADDXY   A3,A4                   ;OBJECT 0 LRX,LRY
+     108                    *Z STUFF
+     109 00000340     b405          MOVE    *A0(OZPOS),A5,W         ;GET Z MIDPOINT
+         00000350     00d0  
+     110 00000360     b40e          MOVE    *A0(OZMINUS),A14,W      ;GET Z SIZE IN NEGATIVE DIRECTION
+         00000370     01b0  
+     111 00000380     4ca6          MOVE    A5,A6
+     112 00000390     45c5          SUB     A14,A5                  ;INWARD Z
+     113 000003a0     b40e          MOVE    *A0(OZPLUS),A14,W       ;Z SIZE IN POSITIVE DIRECTION
+         000003b0     01c0  
+     114 000003c0     41c6          ADD     A14,A6                  ;OUTWARD Z
+     115 000003d0           COLLPREG
+     116 000003d0     576b          CLR     A11                     ;CLEAR A11
+     117 000003e0     8628          MOVE    *A1,A8,L                ;GET OBJECT LIST
+     118 000003f0     ca26          JRZ     COLLX                   ;LIST IS NULL
+     119 00000400           COLLP:
+     120 00000400     b50e          MOVE    *A8(OFLAGS),A14,W       
+         00000410     0100  
+     121 00000420     1e8e          BTST    B_NOCOLL,A14            ;IS THIS DUDE COLLIDABLE?
+     122 00000430     cb1f          JRNE    COLLNO                  ;BR = NO, DON'T WORRY ABOUT HIM
+     123 00000440     278e          SLL     28,A14
+     124 00000450     ca1d          JRZ     COLLNO                  ;NOT TURNED ON
+     125 00000460     4808          CMP     A0,A8
+     126 00000470     ca1b          JREQ    COLLNO                  ;BR = SAME DAMN OBJECT DUDE
+     127                    
+     128 00000480     b707          MOVE    *A8(ODMAXY),A7,L        ;GET OBJECT 1 ULY,ULX
+         00000490     0210  
+     129 000004a0     ca18          JREQ    COLLNO                  ;BR = DON'T MESS
+     130 000004b0     e487          CMPXY   A4,A7                   ;COMPARE 0:(LRX,LRY) TO 1:(ULX,ULY)
+     131 000004c0                   JRXGE   COLLNO
+     132 000004d0                   JRYGE   COLLNO
+     133                    
+     134 000004e0     b70e          MOVE    *A8(OSIZE),A14,L        ;GET DISPLAYED SIZE
+         000004f0     0140  
+     135 00000500     e1c7          ADDXY   A14,A7                  ;OBJECT 1 LRX,LRY
+     136                    
+     137 00000510     e467          CMPXY   A3,A7                   ;COMPARE 0:(ULX,ULY) TO 1:(LRX,LRY) 
+     138 00000520     c410          JRXLE   COLLNO
+     139 00000530     c20f          JRYLE   COLLNO
+     140                    
+     141                    *CHECK FOR Z COLLISION
+     142 00000540     4d29          MOVE    A9,A9
+     143 00000550     ca14          JREQ    COLLYES                 ;THIS IS A 2D COLLISION
+     144 00000560     b507          MOVE    *A8(OZPOS),A7           ;GET Z MIDPOINT
+         00000570     00d0  
+     145 00000580     b50e          MOVE    *A8(OZMINUS),A14,W      ;SIZE IN THE MINUS DIRECTION
+         00000590     01b0  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    4
+
+     146                    
+     147 000005a0     45c7          SUB     A14,A7          ;GET INWARD Z1
+     148                    
+     149 000005b0     48e6          CMP     A7,A6           ;COMPARE
+     150 000005c0     c606          JRLE    COLLNO          ;OUTWARD Z0 < INWARD Z1
+     151                    
+     152 000005d0     41c7          ADD     A14,A7          ;GET BACK TO "MIDPOINT"
+     153                    
+     154 000005e0     b50e          MOVE    *A8(OZPLUS),A14,W       ;SIZE IN PLUS DIRECTION
+         000005f0     01c0  
+     155 00000600     41c7          ADD     A14,A7          
+     156                    
+     157 00000610     48e5          CMP     A7,A5
+     158 00000620     c407          JRLT    COLLYES         ;OUTWARD Z1 > INWARD Z0
+     159 00000630           COLLNO:
+     160 00000630     b708          MOVE    *A8(OSLINK),A8,L
+         00000640     0020  
+     161 00000650     cbda          JRNZ    COLLP
+     162 00000660           COLLX:
+     163 00000660     4d6b          MOVE    A11,A11
+     164 00000670     09af          MMFM    SP,A0,A2,A3,A4,A5,A6,A7,A8,A9,A11,A14
+         00000680     4bfd  
+     165 00000690     0960          RETS
+     166                    
+     167 000006a0           COLLYES:
+     168                    *
+     169                    *COLLISION VECTOR IS CALLED WITH THESE PARAMETERS
+     170                    *A0 = PTR TO OBJECT 0
+     171                    *A1 = I.D. OF OBJECT THAT COLLIDED WITH YOU (0 = DEFAULT CASE)
+     172                    *A8 = PTR TO OBJECT 1
+     173                    *A14 = TYPE OF COLLISION (FOR COMPATIBILITY WITH THE OLD COLLISION ROUTINES)
+     174                    *    IF = 0 THEN THIS IS A COLLISION CALL AS OBJECT 0
+     175                    *    IF = 1 THEN THIS IS A COLLISION CALL AS OBJECT 1
+     176 000006a0     0d3f          CALLR   PIXSCAN         ;CHECK PIXEL SCAN
+         000006b0     003c  
+     177 000006c0     c9f6          JRNC    COLLNO          ;NO COLLISION ...
+     178 000006d0     102b          INC     A11             ;RETURN A COLLISION
+     179 000006e0                   PUSH    A10
+     180 000006f0     b70a          MOVE    *A8(OSLINK),A10,L       ;GET THE NEXT OBJECT IN THE LIST NOW!
+         00000700     0020  
+     181 00000710     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14
+         00000720     fffe  
+     182 00000730     098f          MMTM    SP,A0,A8        ;SAVE THESE JUST IN CASE
+         00000740     8080  
+     183 00000750     b606          MOVE    *A0(OCVECT),A6,L
+         00000760     01d0  
+     184 00000770     b501          MOVE    *A8(OID),A1,W   ;GET THE OBJECT I.D. TO MATCH
+         00000780     01a0  
+     185 00000790     57ce          CLR     A14             ;MARK AS COLLISION 0 ROUTINE
+     186 000007a0     0d3f          CALLR   COLLCALL
+         000007b0     0024  
+     187 000007c0     09af          MMFM    SP,A0,A8
+         000007d0     0101  
+     188 000007e0     cb12          JRNE    COLLENDR        ;THIS MEANS END SCAN AFTER THE NEXT VECTOR CALL
+     189                    
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    5
+
+     190 000007f0                   SWAP    A0,A8
+     191 00000820     b606          MOVE    *A0(OCVECT),A6,L
+         00000830     01d0  
+     192 00000840     b501          MOVE    *A8(OID),A1,W   ;GET THE OBJECT I.D. TO MATCH
+         00000850     01a0  
+     193 00000860     182e          MOVK    1,A14
+     194 00000870     0d3f          CALLR   COLLCALL
+         00000880     0017  
+     195 00000890     cb11          JRNE    COLLNDR1        ;BR = NO, TIME TO END SCAN
+     196 000008a0     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14
+         000008b0     7fff  
+     197 000008c0     4d48          MOVE    A10,A8          ;NEXT OBJECT, IS IT ZERO?
+     198 000008d0     09af          MMFM    SP,A10
+         000008e0     0400  
+     199 000008f0     cbb0          JRNZ    COLLP           ;NO, KEEP ON TRUCKIN'
+     200 00000900     c0d5          JRUC    COLLX           
+     201                    *
+     202                    *CEASE SCAN AFTER THIS COLLISION VECTOR CALL
+     203 00000910           COLLENDR
+     204 00000910                   SWAP    A0,A8
+     205 00000940     b606          MOVE    *A0(OCVECT),A6,L
+         00000950     01d0  
+     206 00000960     b501          MOVE    *A8(OID),A1,W   ;GET THE OBJECT I.D. TO MATCH
+         00000970     01a0  
+     207 00000980     182e          MOVK    1,A14
+     208 00000990     0d3f          CALLR   COLLCALL
+         000009a0     0005  
+     209 000009b0           COLLNDR1
+     210 000009b0     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14
+         000009c0     7fff  
+     211 000009d0     09af          MMFM    SP,A10
+         000009e0     0400  
+     212 000009f0     c0c6          JRUC    COLLX
+     213                    
+     214                    *
+     215                    *COLLCALL - CALL THE CORRECT COLLISION ROUTINE
+     216                    *A0 = PTR TO OBJECT 0
+     217                    *A1 = I.D. TO SCAN FOR IN THE VECTOR LIST
+     218                    *A6 = COLLISION VECTOR LIST
+     219                    *A8 = PTR TO OBJECT 1
+     220                    *A14 = COLLISION TYPE FLAG
+     221                    *NOTE: IF ROUTINE CALLED RETURNS WITH THE Z BIT CLEAR THEN THE
+     222                    *       COLLISION SCAN WILL END AFTER THIS.
+     223 00000a00           COLLCALL
+     224 00000a00     94c2          MOVE    *A6+,A2,W               ;GET THE FIRST MATCH I.D.
+     225 00000a10     ca04          JREQ    COLLDEF                 ;AHHH THE DEFAULT CASE
+     226 00000a20     4822          CMP     A1,A2
+     227 00000a30     ca02          JREQ    COLLDEF
+     228 00000a40     1006          ADDK    32,A6                   ;SKIP PAST COLLISION VECTOR
+     229 00000a50     c0fa          JRUC    COLLCALL                
+     230 00000a60           COLLDEF
+     231 00000a60     86c6          MOVE    *A6,A6,L                ;GET THE VECTOR
+     232 00000a70     0166          JUMP    A6                      ;CALL THE ROUTINE
+     233                    
+     234              0180  ODMAIMG .SET    OIMG
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    6
+
+     235              0100  ODMAFLG .SET    OFLAGS
+     236                    *
+     237                    *COLLISION ROUTINE
+     238                    *A0=OBJECT ZERO
+     239                    *A8=OBJECT ONE
+     240                    *RETURNS: CS= COLLISION, CC= NO COLLISION
+     241                    *
+     242 00000a80           PIXSCAN:
+     243 00000a80     098f          MMTM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14
+         00000a90     fffe  
+     244 00000aa0     099f          MMTM    SP,B0,B1
+         00000ab0     c000  
+     245 00000ac0     b40e          MOVE    *A0(OFLAGS),A14,W
+         00000ad0     0100  
+     246 00000ae0     1eae          BTST    B_PIXSCAN,A14
+     247 00000af0     cb05          JRNE    PIXSCANG                ;BR = THIS GUY WANTS TO SCAN FOR SURE
+     248 00000b00     b50e          MOVE    *A8(OFLAGS),A14,W
+         00000b10     0100  
+     249 00000b20     1eae          BTST    B_PIXSCAN,A14           ;CHECK TO SEE IF OBJECT 1 IS PIXABLE
+     250 00000b30     ca00          JREQ    CSFLAGS                 ;BR = NO PIXSCAN, JUST RETURN YES
+         00000b40     0106  
+     251                    *CREATE TIME SLICE WHILE LOCKING OUT INTERRUPTS
+     252 00000b50           PIXSCANG
+     253 00000b50     01e0          PUSHST
+     254 00000b60     0360          DINT
+     255 00000b70     b609          MOVE    *A0(ODMAIMG),A9,L               ;GET IMAGE 0 POINTER
+         00000b80     0180  
+     256 00000b90     b707          MOVE    *A8(ODMAIMG),A7,L               ;GET IMAGE 1 POINTER
+         00000ba0     0180  
+     257 00000bb0     b603          MOVE    *A0(ODMAXY),A3,L                ;SET UP OBJECT BOX ULX,ULY
+         00000bc0     0210  
+     258 00000bd0     b704          MOVE    *A8(ODMAXY),A4,L
+         00000be0     0210  
+     259 00000bf0     b406          MOVE    *A0(ODMAFLG),A6
+         00000c00     0100  
+     260 00000c10     4ec0          MOVE    A6,B0                           ;FLAGS FOR OBJECT 0
+     261 00000c20     b506          MOVE    *A8(ODMAFLG),A6
+         00000c30     0100  
+     262 00000c40     4ec1          MOVE    A6,B1                           ;FLAGS OBJECT 1
+     263 00000c50     01c0          POPST
+     264                    
+     265 00000c60     b725          MOVE    *A9(ISIZE),A5,L
+         00000c70     0000  
+     266 00000c80     b6e6          MOVE    *A7(ISIZE),A6,L
+         00000c90     0000  
+     267 00000ca0     e065          ADDXY   A3,A5                           ;NOW WE HAVE LRX0 AND LRY0
+     268 00000cb0     e086          ADDXY   A4,A6                           ;LRX1,LRY1
+     269 00000cc0     e4c3          CMPXY   A6,A3           ;COMPARE (LRX1,LRY1) TO (TLX0,TLY0)
+     270 00000cd0                   JRXGE   CSFAIL
+     271 00000cf0                   JRYGE   CSFAIL
+     272 00000d10     e485          CMPXY   A4,A5           ;COMPARE (TLX1,TLY1) TO (LRX0,LRY0) 
+     273 00000d20     c400          JRXLE   CSFAIL
+         00000d30     00c9  
+     274 00000d40     c200          JRYLE   CSFAIL
+         00000d50     00c7  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    7
+
+     275 00000d60     4c0a          MOVE    A0,A10
+     276                    *
+     277                    *BOX HAS INTERSECTED
+     278                    *PERFORM PIXEL SCAN
+     279                    *A3=TLX0,TLY0
+     280                    *A4=TLX1,TLY1
+     281                    *A5=LRX0,LRX1
+     282                    *A6=LRX1,LRY1
+     283                    *A7=IMAGE 1 DATA HEADER POINTER
+     284                    *A8=IMAGE 1 OBJECT POINTER
+     285                    *A9=IMAGE 0 DATA HEADER POINTER
+     286                    *A10=IMAGE 0 OBJECT POINTER
+     287                    *B0=FLAGS OBJECT 0
+     288                    *B1=FLAGS OBJECT 1
+     289                    *
+     290                    *CALCULATE XOFF0,XOFF1,XSCAN
+     291                    *A11=XOFF0
+     292                    *A12=XOFF1
+     293                    *A13=XSCAN
+     294                    *
+     295 00000d70     4c62          MOVE    A3,A2   
+     296 00000d80     e282          SUBXY   A4,A2
+     297 00000d90     0502          SEXT    A2,W
+     298 00000da0     cf05          JRNN    CLX1    
+     299 00000db0     03a2          NEG     A2
+     300 00000dc0     4c4b          MOVE    A2,A11  ;OBJECT 1 TO THE RIGHT
+     301 00000dd0     578c          CLR     A12
+     302 00000de0     4c8d          MOVE    A4,A13  ;RIGHTMOST TOP LEFT
+     303 00000df0     c003          JRUC    CLX2
+     304 00000e00           CLX1:                   ;OBJECT 0 TO THE RIGHT
+     305 00000e00     4c4c          MOVE    A2,A12
+     306 00000e10     576b          CLR     A11
+     307 00000e20     4c6d          MOVE    A3,A13  ;RIGHTMOST TOP LEFT
+     308 00000e30           CLX2:
+     309 00000e30     e4a6          CMPXY   A5,A6   ;FIND LEFTMOST LOWER RIGHT
+     310 00000e40     cc02          JRXN    CLX3
+     311 00000e50     e2ad          SUBXY   A5,A13
+     312 00000e60     c001          JRUC    CLX4
+     313 00000e70           CLX3:
+     314 00000e70     e2cd          SUBXY   A6,A13
+     315 00000e80           CLX4:
+     316 00000e80     050d          SEXT    A13,W
+     317 00000e90     03ad          NEG     A13
+     318                    
+     319                    *CALCULATE YOFF0,YOFF1,YSCAN
+     320                    *A3=TLX0,TLY0
+     321                    *A4=TLX1,TLY1
+     322                    *A5=LRX0,LRX1
+     323                    *A6=LRX1,LRY1
+     324                    *COMPUTE:
+     325                    *A2=YOFF0
+     326                    *A3=YOFF1
+     327                    *A14=YSCAN
+     328 00000ea0     2a03          SRA     16,A3   ;BLOW AWAY X COORDS
+     329 00000eb0     2a04          SRA     16,A4
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    8
+
+     330 00000ec0     2a05          SRA     16,A5
+     331 00000ed0     2a06          SRA     16,A6
+     332 00000ee0     4c62          MOVE    A3,A2
+     333 00000ef0     4482          SUB     A4,A2
+     334 00000f00     cf04          JRNN    CLY1    
+     335 00000f10     03a2          NEG     A2
+     336 00000f20     5663          CLR     A3      ;OBJECT 1 TO THE RIGHT
+     337 00000f30     4c8e          MOVE    A4,A14  ;RIGHTMOST TOP LEFT
+     338 00000f40     c003          JRUC    CLY2
+     339 00000f50           CLY1:                   ;OBJECT 0 TO THE RIGHT
+     340 00000f50     4c6e          MOVE    A3,A14
+     341 00000f60     4c43          MOVE    A2,A3
+     342 00000f70     5642          CLR     A2
+     343 00000f80           CLY2:
+     344 00000f80     48a6          CMP     A5,A6   ;FIND LEFTMOST LOWER RIGHT
+     345 00000f90     ce02          JRN     CLY3
+     346 00000fa0     44ae          SUB     A5,A14
+     347 00000fb0     c001          JRUC    CLY4
+     348 00000fc0           CLY3:
+     349 00000fc0     44ce          SUB     A6,A14
+     350 00000fd0           CLY4:
+     351 00000fd0     03ae          NEG     A14
+     352                    *
+     353                    *A2=YOFF0
+     354                    *A3=YOFF1
+     355                    *A4=IMAGE SOURCE ADDRESS TEMP
+     356                    *A5=WIDTH TEMP
+     357                    *A7=IMAGE 1 DATA HEADER POINTER
+     358                    *A8=IMAGE 1 OBJECT POINTER
+     359                    *A9=IMAGE 0 DATA HEADER POINTER
+     360                    *A10=IMAGE 0 OBJECT POINTER
+     361                    *A11=XOFF0
+     362                    *A12=XOFF1
+     363                    *A13=XSCAN
+     364                    *A14=YSCAN
+     365                    *
+     366                    *CALCULATE OBJECT 0 STARTAD, HINC0, VINC0
+     367                    *
+     368 00000fe0     b724          MOVE    *A9(ISAG),A4,L  ;GET IMAGE SOURCE ADDRESS
+         00000ff0     0040  
+     369 00001000     b525          MOVE    *A9(ISIZE),A5,W
+         00001010     0000  
+     370 00001020     1065          ADDK    3,A5            ;CORRECT ERRONEOUS WIDTH (THANX, WARREN)
+     371 00001030     0b85          ANDI    0FFFFFFFCH,A5
+         00001040 00000003  
+     372                            
+     373                    *CHECK OBJECT 0 FLIPS
+     374                    *
+     375 00001060     1f70          BTST    B_FLIPH,B0
+     376 00001070     cb0b          JRNE    CL0HF           ;HORIZONTAL FLIP
+     377 00001080     1f50          BTST    B_FLIPV,B0
+     378 00001090     cb17          JRNE    CL0VF           ;VERTICAL FLIP
+     379                    *       
+     380                    *NO FLIP CASE
+     381                    *A2=HINC0=8 (BYTE AT A TIME)
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE    9
+
+     382                    *A5=VINC0=W0-XSCAN
+     383                    *A4=STARTAD0=IMAGEAD0+(YOFF0 X W0) + XOFF
+     384                    *
+     385 000010a0     4ca1          MOVE    A5,A1           ;GET WIDTH
+     386 000010b0     5e41          MPYU    A2,A1           ;MULT WIDTH X YOFF
+     387 000010c0     4161          ADD     A11,A1          ;ADD IN X OFFSET
+     388 000010d0     2461          SLL     3,A1            ;CORRECT FOR BYTE ADDRESSING
+     389 000010e0     4024          ADD     A1,A4           ;ADD TO SOURCE ADDRESS
+     390 000010f0     1902          MOVK    8,A2            ;HINC0
+     391 00001100     45a5          SUB     A13,A5          ;VINC0=W0-XSCAN
+     392 00001110     2465          SLL     3,A5            ;CORRECT FOR PIXEL ADDRESSING
+     393 00001120     c02a          JRUC    CLOBJ1
+     394                    *
+     395                    *HORIZONTAL FLIP
+     396                    *
+     397                    *A2=HINC0=-8
+     398                    *A5=VINC0=W0+XSCAN
+     399                    *A4=STARTAD0=IMAGEAD0+(YOFF0 X W0) + W0-XOFF0-1
+     400 00001130     1f50  CL0HF   BTST    B_FLIPV,B0      ;VERT FLIP TOO?
+     401 00001140     cb19          JRNE    CL0HVF          ;HORIZ AND VERT FLIP
+     402 00001150     4ca1          MOVE    A5,A1           ;GET WIDTH
+     403 00001160     5e41          MPYU    A2,A1           ;MULT WIDTH X Y OFFSET
+     404 00001170     40a1          ADD     A5,A1           ;ADD IN WIDTH
+     405 00001180     4561          SUB     A11,A1          ;SUBTRACT X OFFSET
+     406 00001190     1421          DEC     A1              ;-1 MORE
+     407 000011a0     2461          SLL     3,A1            ;CORRECT FOR BYTE ADDRESSING
+     408 000011b0     4024          ADD     A1,A4
+     409 000011c0     09c2          MOVI    -8,A2           ;HINC0
+         000011d0     fff8  
+     410 000011e0     41a5          ADD     A13,A5          ;VINC0=W0+XSCAN
+     411 000011f0     2465          SLL     3,A5            ;CORRECT FOR PIXEL ADDRESSING
+     412 00001200     c01c          JRUC    CLOBJ1
+     413                    *
+     414                    *VERTICAL FLIP
+     415                    *
+     416                    *A2=HINC0=8
+     417                    *A5=VINC0=-W0-XSCAN
+     418                    *A4=STARTAD0=IMAGEAD0+(H0-YOFF0-1)W0+XOFF0
+     419 00001210     b521  CL0VF:  MOVE    *A9(ISIZE+010H),A1      ;GET HEIGHT
+         00001220     0010  
+     420 00001230     4441          SUB     A2,A1                   ;SUBTRACT YOFF0
+     421 00001240     1421          DEC     A1
+     422 00001250     5ea1          MPYU    A5,A1           ;MULTIPLY BY WIDTH
+     423 00001260     4161          ADD     A11,A1          ;ADD IN X OFFSET
+     424 00001270     2461          SLL     3,A1            ;CORRECT FOR PIXEL ADDRESSING
+     425 00001280     4024          ADD     A1,A4           ;ADD TO SOURCE ADDRESS
+     426 00001290     03a5          NEG     A5              ;-W0
+     427 000012a0     45a5          SUB     A13,A5          ;-XSCAN
+     428 000012b0     2465          SLL     3,A5            ;CORRECT FOR PIXEL ADDRESSING
+     429 000012c0     1902          MOVK    8,A2            ;HINC0
+     430 000012d0     c00f          JRUC    CLOBJ1
+     431                    *
+     432                    *VERTICAL AND HORIZONTAL FLIP
+     433                    *
+     434                    *A2=HINC0=-8
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   10
+
+     435                    *A5=VINC0=-W0-XSCAN
+     436                    *A4=STARTAD0=(H0-YOFF0-1)W0+W0-XOFF0-1
+     437 000012e0     b521  CL0HVF: MOVE    *A9(ISIZE+010H),A1      ;GET HEIGHT
+         000012f0     0010  
+     438 00001300     4441          SUB     A2,A1                   ;SUBTRACT YOFF0
+     439 00001310     1421          DEC     A1
+     440 00001320     5ea1          MPYU    A5,A1           ;MULTIPLY BY WIDTH
+     441 00001330     40a1          ADD     A5,A1           ;ADD IN WIDTH (W0)
+     442 00001340     4561          SUB     A11,A1          ;SUBTRACT XOFF0
+     443 00001350     1421          DEC     A1
+     444 00001360     2461          SLL     3,A1            ;CORRECT FOR PIXEL ADDRESSING
+     445 00001370     4024          ADD     A1,A4           ;ADD TO SOURCE ADDRESS
+     446 00001380     03a5          NEG     A5              ;-W0
+     447 00001390     41a5          ADD     A13,A5          ;+XSCAN
+     448 000013a0     2465          SLL     3,A5            ;CORRECT FOR PIXEL ADDRESSING
+     449 000013b0     09c2          MOVI    -8,A2           ;HINC0
+         000013c0     fff8  
+     450                    *
+     451                    *CALCULATE OBJECT 1 STARTAD, HJUMP, VJUMP               
+     452                    *       
+     453                    *
+     454                    *A2=HINC0
+     455                    *A3=YOFF1, HINC1
+     456                    *A4=STARTAD0
+     457                    *A5=VINC0
+     458                    *A6=STARTAD1
+     459                    *A7=IMAGE 1 DATA HEADER POINTER
+     460                    *A8=IMAGE 1 OBJECT POINTER
+     461                    *A9=IMAGE 0 DATA HEADER POINTER
+     462                    *A10=IMAGE 0 OBJECT POINTER
+     463                    *A11=W1, VINC1
+     464                    *A12=XOFF1
+     465                    *A13=XSCAN
+     466                    *A14=YSCAN
+     467 000013d0           CLOBJ1:
+     468 000013d0     b6e6          MOVE    *A7(ISAG),A6,L  ;GET IMAGE SOURCE ADDRESS
+         000013e0     0040  
+     469 000013f0     b4eb          MOVE    *A7(ISIZE),A11
+         00001400     0000  
+     470 00001410     106b          ADDK    3,A11           ;CORRECT ERRONEOUS WIDTH (THANX, WARREN)
+     471 00001420     0b8b          ANDI    0FFFFFFFCH,A11
+         00001430 00000003  
+     472                    *       
+     473                    *CHECK OBJECT 1 FLIPS
+     474                    *
+     475 00001450     1f71          BTST    B_FLIPH,B1
+     476 00001460     cb0b          JRNE    CL1HF           ;HORIZONTAL FLIP
+     477 00001470     1f51          BTST    B_FLIPV,B1
+     478 00001480     cb17          JRNE    CL1VF           ;VERTICAL FLIP
+     479                    *       
+     480                    *NO FLIP CASE
+     481                    *A3=HINC1=8 (BYTE AT A TIME)
+     482                    *A11=VINC1=W1-XSCAN
+     483                    *A6=STARTAD1=IMAGEAD1+(YOFF1 X W1) + XOFF1
+     484                    *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   11
+
+     485 00001490     4d61          MOVE    A11,A1          ;GET WIDTH
+     486 000014a0     5e61          MPYU    A3,A1           ;MULT WIDTH X YOFF
+     487 000014b0     4181          ADD     A12,A1          ;ADD IN X OFFSET
+     488 000014c0     2461          SLL     3,A1            ;CORRECT FOR BYTE ADDRESSING
+     489 000014d0     4026          ADD     A1,A6           ;ADD TO SOURCE ADDRESS
+     490 000014e0     1903          MOVK    8,A3            ;HINC1
+     491 000014f0     45ab          SUB     A13,A11         ;VINC1=W1-XSCAN
+     492 00001500     246b          SLL     3,A11           ;CORRECT FOR PIXEL ADDRESSING
+     493 00001510     c02a          JRUC    CSH
+     494                    *
+     495                    *HORIZONTAL FLIP
+     496                    *
+     497                    *A3=HINC1=-8
+     498                    *A11=VINC1=W1+XSCAN
+     499                    *A6=STARTAD1=IMAGEAD1+(YOFF1 X W1) + W1-XOFF1-1
+     500 00001520     1f51  CL1HF   BTST    B_FLIPV,B1      ;VERT FLIP TOO?
+     501 00001530     cb19          JRNE    CL1HVF          ;HORIZ AND VERT FLIP
+     502 00001540     4d61          MOVE    A11,A1          ;GET WIDTH
+     503 00001550     5e61          MPYU    A3,A1           ;MULT WIDTH X Y OFFSET
+     504 00001560     4161          ADD     A11,A1          ;ADD IN WIDTH
+     505 00001570     4581          SUB     A12,A1          ;SUBTRACT X OFFSET
+     506 00001580     1421          DEC     A1              ;-1 MORE
+     507 00001590     2461          SLL     3,A1            ;CORRECT FOR BYTE ADDRESSING
+     508 000015a0     4026          ADD     A1,A6
+     509 000015b0     09c3          MOVI    -8,A3           ;HINC1
+         000015c0     fff8  
+     510 000015d0     41ab          ADD     A13,A11         ;VINC1=W1+XSCAN
+     511 000015e0     246b          SLL     3,A11           ;CORRECT FOR PIXEL ADDRESSING
+     512 000015f0     c01c          JRUC    CSH
+     513                    *
+     514                    *VERTICAL FLIP
+     515                    *
+     516                    *A3=HINC1=8
+     517                    *A11=VINC1=-W1-XSCAN
+     518                    *A6=STARTAD1=IMAGEAD1+(H1-YOFF1-1)W1+XOFF1
+     519 00001600     b4e1  CL1VF:  MOVE    *A7(ISIZE+010H),A1      ;GET HEIGHT
+         00001610     0010  
+     520 00001620     4461          SUB     A3,A1                   ;SUBTRACT YOFF1
+     521 00001630     1421          DEC     A1
+     522 00001640     5f61          MPYU    A11,A1          ;MULTIPLY BY WIDTH
+     523 00001650     4181          ADD     A12,A1          ;ADD IN X OFFSET
+     524 00001660     2461          SLL     3,A1            ;CORRECT FOR PIXEL ADDRESSING
+     525 00001670     4026          ADD     A1,A6           ;ADD TO SOURCE ADDRESS
+     526 00001680     03ab          NEG     A11             ;-W1
+     527 00001690     45ab          SUB     A13,A11         ;-XSCAN
+     528 000016a0     246b          SLL     3,A11           ;CORRECT FOR PIXEL ADDRESSING
+     529 000016b0     1903          MOVK    8,A3            ;HINC1
+     530 000016c0     c00f          JRUC    CSH
+     531                    *
+     532                    *VERTICAL AND HORIZONTAL FLIP
+     533                    *
+     534                    *A3=HINC1=-8
+     535                    *A11=VINC1=-W1-XSCAN
+     536                    *A6=STARTAD1=(H1-YOFF1-1)W1+W1-XOFF1-1
+     537 000016d0     b4e1  CL1HVF: MOVE    *A7(ISIZE+010H),A1      ;GET HEIGHT
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   12
+
+         000016e0     0010  
+     538 000016f0     4461          SUB     A3,A1                   ;SUBTRACT YOFF1
+     539 00001700     1421          DEC     A1
+     540 00001710     5f61          MPYU    A11,A1          ;MULTIPLY BY WIDTH
+     541 00001720     4161          ADD     A11,A1          ;ADD IN WIDTH (W1)
+     542 00001730     4581          SUB     A12,A1          ;SUBTRACT XOFF1
+     543 00001740     1421          DEC     A1
+     544 00001750     2461          SLL     3,A1            ;CORRECT FOR PIXEL ADDRESSING
+     545 00001760     4026          ADD     A1,A6           ;ADD TO SOURCE ADDRESS
+     546 00001770     03ab          NEG     A11             ;-W1
+     547 00001780     41ab          ADD     A13,A11         ;+XSCAN
+     548 00001790     246b          SLL     3,A11           ;CORRECT FOR PIXEL ADDRESSING
+     549 000017a0     09c3          MOVI    -8,A3           ;HINC1
+         000017b0     fff8  
+     550                    *
+     551                    *SCAN COLLISION BOX AREA
+     552                    *
+     553                    *A0= TEMP DATA HOLDER
+     554                    *A1= WIDTH COUNTER XSCAN
+     555                    *A2=H INCREMENT IMAGE 0
+     556                    *A3=H INCREMENT IMAGE 1
+     557                    *A4=INDEX TO IMAGE 0
+     558                    *A5=V INCREMENT IMAGE 0
+     559                    *A6=INDEX TO IMAGE 1
+     560                    *A7=IMAGE 1 DATA HEADER POINTER
+     561                    *A8=IMAGE 1 OBJECT POINTER
+     562                    *A9=IMAGE 0 DATA HEADER POINTER
+     563                    *A10=IMAGE 0 OBJECT POINTER
+     564                    *A11=V INCREMENT IMAGE 1
+     565                    *A13=WIDTH COUNT XSCAN
+     566                    *A14=HEIGHT COUNT YSCAN
+     567                    *
+     568 000017c0           CSH:
+     569 000017c0     0b4e          CMPI    080H,A14                ;NO SCAN IF XSCAN, YSCAN VALUES OUT OF RANGE
+         000017d0     ff7f  
+     570 000017e0     c91e          JRHS    CSFAIL
+     571 000017f0     0b4d          CMPI    080H,A13
+         00001800     ff7f  
+     572 00001810     c91b          JRHS    CSFAIL
+     573 00001820     01e0          PUSHST
+     574 00001830     0360          DINT                    ;STOP DMA FUCK
+     575 00001840     05a0          MOVE    @INTENB,A0,W
+         00001850 c0000110  
+     576 00001870     0b80          ANDNI   X1E,A0
+         00001880 00000002  
+     577 000018a0     0580          MOVE    A0,@INTENB,W
+         000018b0 c0000110  
+     578 000018d0     01c0          POPST
+     579 000018e0           CSH0:   
+     580 000018e0     05a0          MOVE    @DMACTRL,A0,W   ;DMA BUSY?
+         000018f0 01a80000  
+     581 00001910     cefc          JRN     CSH0            ;YES, WAIT
+     582 00001920           CSH1:
+     583 00001920     4da1          MOVE    A13,A1          ;LOAD LINE COUNTDOWN HORIZ COUNTER
+     584 00001930     8e80  CSHL:   MOVB    *A4,A0          ;CHECK IMAGE 0 CORRESPONDING NON ZEROES
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   13
+
+     585 00001940     ca02          JREQ    CSNXH
+     586 00001950     8ec0          MOVB    *A6,A0          ;CHECK IMAGE 1
+     587 00001960     cb16          JRNE    CSHIT           ;GOT A HIT
+     588 00001970           CSNXH:
+     589 00001970     4044          ADD     A2,A4           ;ADD HORIZ INCREMENTS HINC0
+     590 00001980     4066          ADD     A3,A6           ;HINC1
+     591 00001990     3ce1          DSJS    A1,CSHL         ;LOOP UNTIL HOR LINE DONE
+     592                    
+     593 000019a0     40a4          ADD     A5,A4           ;ADD VERT INCREMENTS
+     594 000019b0     4166          ADD     A11,A6
+     595 000019c0     3d6e          DSJS    A14,CSH1                ;LOOP UNTIL VERT DONE
+     596 000019d0           CSFAIL:
+     597 000019d0     4dbd          MOVE    B13,B13
+     598 000019e0     ca0c          JRZ     CSFNODMA        ;DON'T REACTIVATE DMA INTS
+     599 000019f0     01e0          PUSHST
+     600 00001a00     0360          DINT
+     601 00001a10     05a0          MOVE    @INTENB,A0,W
+         00001a20 c0000110  
+     602 00001a40     0ba0          ORI     X1E,A0
+         00001a50 00000002  
+     603 00001a70     0580          MOVE    A0,@INTENB,W
+         00001a80 c0000110  
+     604 00001aa0     01c0          POPST
+     605                    ****    EINT
+     606 00001ab0           CSFNODMA
+     607 00001ab0     0320          CLRC
+     608 00001ac0     c00f          JRUC    CSHXXX
+     609 00001ad0           CSHIT: 
+     610 00001ad0     4dbd          MOVE    B13,B13
+     611 00001ae0     ca0c          JRZ     CSFLAGS         ;DON'T REACTIVATE DMA INTS
+     612 00001af0     01e0          PUSHST
+     613 00001b00     0360          DINT
+     614 00001b10     05a0          MOVE    @INTENB,A0,W
+         00001b20 c0000110  
+     615 00001b40     0ba0          ORI     X1E,A0
+         00001b50 00000002  
+     616 00001b70     0580          MOVE    A0,@INTENB,W
+         00001b80 c0000110  
+     617 00001ba0     01c0          POPST
+     618                    ****    EINT
+     619 00001bb0           CSFLAGS
+     620 00001bb0     0de0          SETC
+     621 00001bc0           CSHXXX:
+     622 00001bc0     09bf          MMFM    SP,B0,B1
+         00001bd0     0003  
+     623 00001be0     09af          MMFM    SP,A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14
+         00001bf0     7fff  
+     624 00001c00     0960          RETS
+     625                    
+     626                    **************************************************************************
+     627                    *                                                                        *
+     628                    * COLLISION CHECK IN 3-SPACE, SCAN STOPS AFTER FIRST COLLISION.          *
+     629                    *   THIS SCAN WILL NOT CALL ANY COLLISION VECTORS.                       *
+     630                    *       THE OBJECT IN A0'S COLLISION CUBE IS CREATED USING THE YSIZ,ZSIZ *
+     631                    *       OF THE OBJECT AND A FUDGED X SIZE.                               *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   14
+
+     632                    *       ALSO, XVAL & YVAL ARE USED RATHER THAN THE DMA UPPER LEFT.       *
+     633                    * A0 =POINTER TO OBJECT BLOCK OF OBJECT TO BE CHECKED(OBJECT 0)          *
+     634                    * A1 =POINTER TO SUPPLEMENTAL LIST TO SCAN AGAINST (OBJECT 1)            *
+     635                    * RETURN(S)                                                              *
+     636                    * Z BIT - J*NE = COLLISION, J*EQ = NO COLLISION                          *
+     637                    *  CASE: COLLISION                                                       *
+     638                    *  A5 = [ULY,ULX] OF OBJECT 1                                            *
+     639                    *  A6 = [LRY,LRX] OF OBJECT 1                                            *
+     640                    *  A7 = [INZ,OUTZ] OF OBJECT 1                                           *
+     641                    *  A8 = PTR TO OBJECT COLLIDED WITH                                      *
+     642                    *  CASE: NO COLLISION                                                    *
+     643                    *  A5-A7 = GARBAGE                                                       *
+     644                    *  A8 = NULL                                                             *
+     645                    *                                                                        *
+     646                    **************************************************************************
+     647 00001c10           COLSCAN1
+     648 00001c10     098f          MMTM    SP,A0,A2,A3,A4,A9,A11,A13,A14
+         00001c20     b856  
+     649 00001c30     576b          CLR     A11                     ;CLEAR COLLISION FLAG
+     650 00001c40     4d05          MOVE    A8,A5
+     651 00001c50     4c08          MOVE    A0,A8
+     652 00001c60     0d5f          CALLA   GETANIXY                ;GET THE ANIMATION POINT
+         00001c70 00000000! 
+     653 00001c90                   SWAP    A5,A8
+     654 00001cc0     b402          MOVE    *A0(OYPOS),A2,W
+         00001cd0     00b0  
+     655 00001ce0     2602          SLL     16,A2
+     656 00001cf0     2e03          SRL     16,A3
+     657 00001d00     ec62          MOVX    A3,A2
+     658 00001d10     4c43          MOVE    A2,A3                   ;COPY FOR LOWER
+     659 00001d20     1582          SUBK    12,A2                   ;A2 = [ULY,ULX]
+     660 00001d30     b404          MOVE    *A0(OSIZEY),A4,W
+         00001d40     0150  
+     661 00001d50     2604          SLL     16,A4
+     662 00001d60     1184          ADDK    12,A4                   ;ADD SIZE FUDGE FACTOR
+     663 00001d70     e083          ADDXY   A4,A3                   ;A3 = [LRY,LRX]
+     664 00001d80     b404          MOVE    *A0(OZPOS),A4,W         ;GET Z MIDPOINT
+         00001d90     00d0  
+     665 00001da0     4c85          MOVE    A4,A5
+     666 00001db0     b40e          MOVE    *A0(OZMINUS),A14,W      ;GET Z SIZE IN NEGATIVE DIRECTION
+         00001dc0     01b0  
+     667 00001dd0     45c5          SUB     A14,A5                  ;INWARD Z
+     668 00001de0     b40e          MOVE    *A0(OZPLUS),A14,W       ;Z SIZE IN POSITIVE DIRECTION
+         00001df0     01c0  
+     669 00001e00     41c4          ADD     A14,A4                  ;OUTWARD Z
+     670 00001e10     2604          SLL     16,A4
+     671 00001e20     eca4          MOVX    A5,A4                   ;A4 = [OUTZ,INZ]
+     672 00001e30     8628          MOVE    *A1,A8,L                ;GET OBJECT LIST
+     673 00001e40     ca24          JRZ     COLSCANX                ;LIST IS NULL
+     674 00001e50           COLSCANP:
+     675 00001e50     b50e          MOVE    *A8(OFLAGS),A14,W       
+         00001e60     0100  
+     676 00001e70     1e8e          BTST    B_NOCOLL,A14            ;IS THIS DUDE COLLIDABLE?
+     677 00001e80     cb24          JRNE    COLSCANNO               ;BR = NO, DON'T WORRY ABOUT HIM
+     678 00001e90     278e          SLL     28,A14
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   15
+
+     679 00001ea0     ca22          JRZ     COLSCANNO               ;NOT TURNED ON
+     680 00001eb0     4808          CMP     A0,A8
+     681 00001ec0     ca20          JREQ    COLSCANNO               ;BR = SAME DAMN OBJECT DUDE
+     682 00001ed0     b705          MOVE    *A8(ODMAXY),A5,L        ;GET OBJECT 1 ULY,ULX
+         00001ee0     0210  
+     683 00001ef0     ca1d          JREQ    COLSCANNO               ;BR = DON'T MESS
+     684 00001f00     e465          CMPXY   A3,A5                   ;COMPARE 0:(LRX,LRY) TO 1:(ULX,ULY)
+     685 00001f10                   JRXGE   COLSCANNO
+     686 00001f20                   JRYGE   COLSCANNO
+     687 00001f30     b70e          MOVE    *A8(OSIZE),A14,L        ;GET DISPLAYED SIZE
+         00001f40     0140  
+     688 00001f50     4ca6          MOVE    A5,A6
+     689 00001f60     e1c6          ADDXY   A14,A6                  ;OBJECT 1 LRX,LRY
+     690 00001f70     e446          CMPXY   A2,A6                   ;COMPARE 0:(ULX,ULY) TO 1:(LRX,LRY) 
+     691 00001f80     c414          JRXLE   COLSCANNO
+     692 00001f90     c213          JRYLE   COLSCANNO
+     693                    *CHECK FOR Z COLLISION
+     694 00001fa0     b507          MOVE    *A8(OZPOS),A7,W         ;GET Z MIDPOINT
+         00001fb0     00d0  
+     695 00001fc0     4ced          MOVE    A7,A13
+     696 00001fd0     b50e          MOVE    *A8(OZPLUS),A14,W       ;GET Z SIZE IN NEGATIVE DIRECTION
+         00001fe0     01c0  
+     697 00001ff0     41cd          ADD     A14,A13                 ;OUTWARD Z
+     698 00002000     b50e          MOVE    *A8(OZMINUS),A14,W      ;Z SIZE IN POSITIVE DIRECTION
+         00002010     01b0  
+     699 00002020     45c7          SUB     A14,A7                  ;INWARD Z
+     700 00002030     2607          SLL     16,A7
+     701 00002040     eda7          MOVX    A13,A7                  ;A7 = [INZ,OUTZ]
+     702 00002050     e4e4          CMPXY   A7,A4
+     703 00002060                   JRXGE   COLSCANNO               ;INWARD Z0 >= OUTWARD Z1
+     704 00002070     c205          JRYLE   COLSCANNO               ;OUTWARD Z0 <= INWARD Z1
+     705 00002080     102b          INC     A11                     ;COLLISION
+     706 00002090           COLSCANX:
+     707 00002090     4d6b          MOVE    A11,A11
+     708 000020a0     09af          MMFM    SP,A0,A2,A3,A4,A9,A11,A13,A14
+         000020b0     6a1d  
+     709 000020c0     0960          RETS
+     710 000020d0           COLSCANNO:
+     711 000020d0     b708          MOVE    *A8(OSLINK),A8,L
+         000020e0     0020  
+     712 000020f0     cbd5          JRNZ    COLSCANP
+     713 00002100     c0f8          JRUC    COLSCANX
+     714                    
+     715                    **************************************************************************
+     716                    *                                                                        *
+     717                    * CKOBJXY - CHECK FOR A COLLISION BETWEEN TWO OBJECTS IN THREE SPACE.    *
+     718                    *           A0 OBJECT USES A FUDGED XSIZ CENTERED BY THE ANIMATION PNT.  *
+     719                    *           AND WITH FUDGED SIZE. POSITIONS ARE TAKEN FROM XVAL & YVAL.  *
+     720                    * A0 = OBJECT TO CHECK                                                   *
+     721                    * A5 = [ULY,ULX] TO CHECK AGAINST                                        *
+     722                    * A6 = [LRY,LRX] TO CHECK AGAINST                                        *
+     723                    * A7 = [INZ,OUTZ] TO CHECK AGAINST                                       *
+     724                    * RETURNS:                                                               *
+     725                    * A0 INTACT                                                              *
+     726                    * Z BIT SET, NO COLLISION(JxEQ)                                          *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   16
+
+     727                    * Z BIT CLR, COLLISION(JxNE)                                             *
+     728                    *                                                                        *
+     729                    **************************************************************************
+     730 00002110           CKOBJXY
+     731 00002110     098f          MMTM    SP,A1,A2,A3,A4,A8,A11,A14
+         00002120     7892  
+     732 00002130     576b          CLR     A11                     ;CLEAR COLLISION FLAG
+     733 00002140     4c08          MOVE    A0,A8
+     734 00002150     0d5f          CALLA   GETANIXY                ;GET THE ANIMATION POINT
+         00002160 00000000! 
+     735 00002180     b402          MOVE    *A0(OYPOS),A2,W
+         00002190     00b0  
+     736 000021a0     2602          SLL     16,A2
+     737 000021b0     2e03          SRL     16,A3
+     738 000021c0     ec62          MOVX    A3,A2
+     739 000021d0     4c43          MOVE    A2,A3                   ;COPY FOR LOWER
+     740 000021e0     1582          SUBK    12,A2                   ;A2 = [ULY,ULX]
+     741 000021f0     b404          MOVE    *A0(OSIZEY),A4,W
+         00002200     0150  
+     742 00002210     2604          SLL     16,A4
+     743 00002220     1184          ADDK    12,A4                   ;ADD SIZE FUDGE FACTOR
+     744 00002230     e083          ADDXY   A4,A3                   ;A3 = [LRY,LRX]
+     745 00002240     b404          MOVE    *A0(OZPOS),A4,W         ;GET Z MIDPOINT
+         00002250     00d0  
+     746 00002260     4c81          MOVE    A4,A1
+     747 00002270     b40e          MOVE    *A0(OZMINUS),A14,W      ;GET Z SIZE IN NEGATIVE DIRECTION
+         00002280     01b0  
+     748 00002290     45c1          SUB     A14,A1                  ;INWARD Z
+     749 000022a0     b40e          MOVE    *A0(OZPLUS),A14,W       ;Z SIZE IN POSITIVE DIRECTION
+         000022b0     01c0  
+     750 000022c0     41c4          ADD     A14,A4                  ;OUTWARD Z
+     751 000022d0     2604          SLL     16,A4
+     752 000022e0     ec24          MOVX    A1,A4                   ;[OUTZ,INZ]
+     753                    *SCAN FOR A 2D BOX COLLISION
+     754 000022f0     e465          CMPXY   A3,A5                   ;COMPARE 0:(LRX,LRY) TO 1:(ULX,ULY)
+     755 00002300                   JRXGE   CKOBJXYN
+     756 00002310                   JRYGE   CKOBJXYN
+     757 00002320     e446          CMPXY   A2,A6                   ;COMPARE 0:(ULX,ULY) TO 1:(LRX,LRY) 
+     758 00002330     c405          JRXLE   CKOBJXYN
+     759 00002340     c204          JRYLE   CKOBJXYN
+     760                    *CHECK FOR Z COLLISION
+     761 00002350     e4e4          CMPXY   A7,A4
+     762 00002360                   JRXGE   CKOBJXYN                ;INWARD Z0 >= OUTWARD Z1
+     763 00002370     c201          JRYLE   CKOBJXYN                ;OUTWARD Z0 <= INWARD Z1
+     764 00002380     102b          INC     A11                     ;COLLISION
+     765 00002390           CKOBJXYN
+     766 00002390     4d6b          MOVE    A11,A11
+     767 000023a0     09af          MMFM    SP,A1,A2,A3,A4,A8,A11,A14
+         000023b0     491e  
+     768 000023c0     0960          RETS
+     769                    
+     770                    
+     771                    **************************************************************************
+     772                    *                                                                        *
+     773                    * COLLISION DETECT PROCESS FOR THE PLAYERS                               *
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   17
+
+     774                    *                                                                        *
+     775                    **************************************************************************
+     776                    *
+     777                    *THIS PROCESS WILL ADJUST THE PLAYER IN BOUNDS IF THEY ARE OUT, EVERY
+     778                    *SECOND, AND SCAN FOR PLAYER COLLISIONS EVERY TICK.
+     779 000023d0           CPCOLADJ
+     780 000023d0     5600          CLR     A0
+     781 000023e0     b00d          MOVE    A0,*A13(PDATA),W        ;KEEP THE PLAYER RESET COUNTER HERE
+         000023f0     0060  
+     782 00002400           CPDETECT
+     783 00002400                   SLEEP   1
+     784                    *CHECK TO SEE IF WE SHOULD ADJUST PLAYERS IN BOUNDS
+     785 00002440     b5a0          MOVE    *A13(PDATA),A0,W
+         00002450     0060  
+     786 00002460     1020          INC     A0
+     787 00002470     0b40          CMPI    60,A0                   ;READY TO RESET?
+         00002480     ffc3  
+     788 00002490     c815          JRLO    CPDRS1                  ;BR = NO
+     789 000024a0     09e2          MOVI    P1DATA,A2
+         000024b0 00000000! 
+     790 000024d0     0d5f          CALLA   P_INBNDS                ;SHOULD WE RESET PLAYER 1?
+         000024e0 00000000! 
+     791 00002500     c903          JRNC    CPDNRS1                 ;BR = NO
+     792 00002510     0d5f          CALLA   CKLBADJ                 ;COME TO ME PLAYER 1
+         00002520 00000000! 
+     793 00002540           CPDNRS1
+     794 00002540     09e2          MOVI    P2DATA,A2
+         00002550 00000000! 
+     795 00002570     0d5f          CALLA   P_INBNDS                ;HOWS ABOUT PLAYER 2
+         00002580 00000000! 
+     796 000025a0     c903          JRNC    CPDNRS2                 ;BR = NO
+     797 000025b0     0d5f          CALLA   CKLBADJ                 ;BRING PLAYER 2 INTO THE LIGHT
+         000025c0 00000000! 
+     798 000025e0           CPDNRS2
+     799 000025e0     5600          CLR     A0                      ;NOW RESET THE ADJUST COUNTER   
+     800 000025f0           CPDRS1
+     801 000025f0     b00d          MOVE    A0,*A13(PDATA),W
+         00002600     0060  
+     802                    
+     803 00002610     09e0          MOVI    PLAYERS,A0              
+         00002620 00000000! 
+     804 00002640     8600          MOVE    *A0,A0,L
+     805 00002650     ca18          JREQ    CPD3                    ;THERE ARE NO PLAYERS
+     806 00002660     c003          JRUC    CPD2
+     807 00002670     b600  CPD1    MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00002680     0020  
+     808 00002690     ca14          JREQ    CPD3                    ;END OF LIST
+     809 000026a0           CPD2
+     810 000026a0     0d3f          CALLR   PRESCAN0
+         000026b0     fd94  
+     811 000026c0     c9fa          JRNC    CPD1
+     812 000026d0     09e1          MOVI    ENEMY_BULLETS,A1
+         000026e0 00000000! 
+     813 00002700     0d3f          CALLR   COLXYZP
+         00002710     fdab  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   18
+
+     814 00002720     cb0b          JRNE    CPD3
+     815 00002730     09e1          MOVI    EXPLOSIONS,A1
+         00002740 00000000! 
+     816 00002760     0d3f          CALLR   COLXYZP
+         00002770     fda5  
+     817 00002780     09e1          MOVI    CARLIST,A1
+         00002790 00000000! 
+     818 000027b0     0d3f          CALLR   COLXYZP
+         000027c0     fda0  
+     819 000027d0     c0e9          JRUC    CPD1                    ;CONTINUE PROCESSING
+     820 000027e0           CPD3
+     821 000027e0     09e0          MOVI    PLAYER_BULLETS,A0               
+         000027f0 00000000! 
+     822 00002810     8600          MOVE    *A0,A0,L
+     823 00002820     cabd          JREQ    CPDETECT                ;SCAN BULLETS AGAINST BULLETS
+     824 00002830     c003          JRUC    CPD5
+     825 00002840     b600  CPD4    MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00002850     0020  
+     826 00002860     cab9          JREQ    CPDETECT                ;END OF LIST
+     827 00002870           CPD5
+     828 00002870     0d3f          CALLR   PRESCAN0
+         00002880     fd77  
+     829 00002890     c9fa          JRNC    CPD4
+     830                    
+     831 000028a0     09e1          MOVI    CARLIST,A1
+         000028b0 00000000! 
+     832 000028d0     0d3f          CALLR   COLXYZP
+         000028e0     fd8e  
+     833 000028f0     cbb0          JRNE    CPDETECT
+     834                    
+     835 00002900     09e1          MOVI    ENEMIES,A1
+         00002910 00000000! 
+     836 00002930     0d3f          CALLR   COLXYZP
+         00002940     fd88  
+     837 00002950     cbaa          JRNE    CPDETECT
+     838                    
+     839 00002960     09e1          MOVI    ENEMY_BULLETS,A1
+         00002970 00000000! 
+     840 00002990     0d3f          CALLR   COLXYZP
+         000029a0     fd82  
+     841 000029b0     cba4          JRNE    CPDETECT
+     842                    
+     843 000029c0     09e1          MOVI    BACKSLST,A1
+         000029d0 00000000! 
+     844 000029f0     0d3f          CALLR   COLXYZP
+         00002a00     fd7c  
+     845 00002a10     cb9e          JRNE    CPDETECT
+     846                    
+     847 00002a20     09e1          MOVI    PLAYERS,A1
+         00002a30 00000000! 
+     848 00002a50     0d3f          CALLR   COLXYZP
+         00002a60     fd76  
+     849 00002a70     cb98          JRNE    CPDETECT
+     850                    
+     851 00002a80     09e1          MOVI    EXPLOSIONS,A1
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   19
+
+         00002a90 00000000! 
+     852 00002ab0     0d3f          CALLR   COLXYZP
+         00002ac0     fd70  
+     853 00002ad0     cb92          JRNE    CPDETECT
+     854                    
+     855 00002ae0     c0d5          JRUC    CPD4                    ;CONTINUE PROCESSING
+     856                    
+     857                    **************************************************************************
+     858                    *                                                                        *
+     859                    * ENEMY COLLISION DETECT PROCESS                                         *
+     860                    *                                                                        *
+     861                    **************************************************************************
+     862 00002af0           CEDETECT
+     863 00002af0                   SLEEP   3
+     864 00002b30     09e0          MOVI    ENEMIES,A0
+         00002b40 00000000! 
+     865 00002b60     8600          MOVE    *A0,A0,L
+     866 00002b70     caf7          JREQ    CEDETECT                ;THERE ARE NO ENEMIES
+     867 00002b80     c003          JRUC    CED2
+     868 00002b90     b600  CED1    MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00002ba0     0020  
+     869 00002bb0     caf3          JREQ    CEDETECT                ;END OF LIST
+     870 00002bc0           CED2
+     871 00002bc0     0d3f          CALLR   PRESCAN0
+         00002bd0     fd42  
+     872 00002be0     c9fa          JRNC    CED1
+     873 00002bf0     09e1          MOVI    PLAYERS,A1
+         00002c00 00000000! 
+     874 00002c20     0d3f          CALLR   COLXYZP
+         00002c30     fd59  
+     875 00002c40     09e1          MOVI    EXPLOSIONS,A1
+         00002c50 00000000! 
+     876 00002c70     0d3f          CALLR   COLXYZP
+         00002c80     fd54  
+     877 00002c90     09e1          MOVI    CARLIST,A1
+         00002ca0 00000000! 
+     878 00002cc0     0d3f          CALLR   COLXYZP
+         00002cd0     fd4f  
+     879 00002ce0     c0ea          JRUC    CED1                    ;CONTINUE PROCESSING
+     880                    
+     881                    **************************************************************************
+     882                    *                                                                        *
+     883                    * CBDETECT - BACKGROUND COLLISION DETECT PROCESS                         *
+     884                    *                                                                        *
+     885                    **************************************************************************
+     886 00002cf0           CBDETECT
+     887 00002cf0                   SLEEP   3
+     888 00002d30     09e0          MOVI    BACKSLST,A0
+         00002d40 00000000! 
+     889 00002d60     8600          MOVE    *A0,A0,L
+     890 00002d70     ca21          JREQ    CBDTECT1                ;THERE ARE NO BACKGROUND OBJECTS
+     891 00002d80     c003          JRUC    CBD2
+     892                    
+     893 00002d90     b600  CBD1    MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00002da0     0020  
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   20
+
+     894 00002db0     ca1d          JREQ    CBDTECT1                ;END OF LIST
+     895 00002dc0           CBD2
+     896 00002dc0     0d3f          CALLR   PRESCAN0                ;THRASHES A3-A6,A14
+         00002dd0     fd22  
+     897 00002de0     c9fa          JRNC    CBD1                    ;DON'T SCAN     
+     898 00002df0     09e1          MOVI    ENEMY_BULLETS,A1
+         00002e00 00000000! 
+     899 00002e20     0d3f          CALLR   COLXYZP                 ;SCAN AGAINST BULLETS
+         00002e30     fd39  
+     900 00002e40     09e1          MOVI    PLAYERS,A1
+         00002e50 00000000! 
+     901 00002e70     0d3f          CALLR   COLXYZP                 ;SCAN AGAINST PLAYERS
+         00002e80     fd34  
+     902 00002e90     09e1          MOVI    ENEMIES,A1
+         00002ea0 00000000! 
+     903 00002ec0     0d3f          CALLR   COLXYZP                 ;SCAN AGAINST ENEMIES
+         00002ed0     fd2f  
+     904 00002ee0     09e1          MOVI    CARLIST,A1
+         00002ef0 00000000! 
+     905 00002f10     0d3f          CALLR   COLXYZP                 ;SCAN AGAINST ENEMIES
+         00002f20     fd2a  
+     906 00002f30     09e1          MOVI    EXPLOSIONS,A1
+         00002f40 00000000! 
+     907 00002f60     0d3f          CALLR   COLXYZP                 ;SCAN AGAINST BULLETS
+         00002f70     fd25  
+     908 00002f80     c0e0          JRUC    CBD1                    ;CONTINUE PROCESSING
+     909                    
+     910 00002f90           CBDTECT1
+     911 00002f90     09e0          MOVI    BOOTY,A0
+         00002fa0 00000000! 
+     912 00002fc0     8600          MOVE    *A0,A0,L
+     913 00002fd0     cad1          JREQ    CBDETECT                ;THERE IS NO BOOTY 
+     914 00002fe0     c003          JRUC    CBD4
+     915 00002ff0     b600  CBD3    MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00003000     0020  
+     916 00003010     cacd          JREQ    CBDETECT                ;END OF LIST
+     917 00003020           CBD4
+     918 00003020     0d3f          CALLR   PRESCAN0                ;THRASHES A3-A6,A14
+         00003030     fcfc  
+     919 00003040     c9fa          JRNC    CBD3                    ;DON'T SCAN     
+     920                    
+     921 00003050     09e1          MOVI    PLAYERS,A1
+         00003060 00000000! 
+     922 00003080     0d3f          CALLR   COLXYZP                 ;SCAN FOR FIRST COLLISION
+         00003090     fd13  
+     923 000030a0     cbc4          JRNE    CBDETECT
+     924                    
+     925 000030b0     09e1          MOVI    CARLIST,A1
+         000030c0 00000000! 
+     926 000030e0     0d3f          CALLR   COLXYZP                 ;NOW AGAINST VEHICLES
+         000030f0     fd0d  
+     927 00003100     cbbe          JRNE    CBDETECT
+     928                    
+     929 00003110     09e1          MOVI    EXPLOSIONS,A1
+         00003120 00000000! 
+TMS340 COFF Macro Assembler Version 6.10     Sat Apr 10 02:19:15 2021
+ Copyright (c) 1985-1991  Texas Instruments Incorporated 
+
+ <<< N  A  R  C -- COLLISION ROUTINES >>>                            PAGE   21
+
+     930 00003140     0d3f          CALLR   COLXYZP                 ;ENEMY BULLETS
+         00003150     fd07  
+     931                    
+     932 00003160     c0e8          JRUC    CBD3                    ;CONTINUE PROCESSING
+     933                    
+     934                    **************************************************************************
+     935                    *                                                                        *
+     936                    * CEBDETCT - ENEMY BULLET COLLISION DETECT ROUTINE                       *
+     937                    *                                                                        *
+     938                    **************************************************************************
+     939 00003170           CEBDETCT
+     940 00003170                   SLEEP   4
+     941 000031b0     09e0          MOVI    EXPLOSIONS,A0
+         000031c0 00000000! 
+     942 000031e0     8600          MOVE    *A0,A0,L
+     943 000031f0     ca0d          JREQ    CEXDETCT                ;THERE ARE NO EXPLOSIONS
+     944 00003200     c003          JRUC    CEBD2
+     945 00003210     b600  CEBD1   MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00003220     0020  
+     946 00003230     ca09          JREQ    CEXDETCT                ;END OF LIST
+     947 00003240           CEBD2
+     948 00003240     0d3f          CALLR   PRESCAN0                ;THRASHES A3-A6,A14
+         00003250     fcda  
+     949 00003260     c9fa          JRNC    CEBD1                   ;DON'T SCAN     
+     950                    
+     951 00003270     09e1          MOVI    CARLIST,A1
+         00003280 00000000! 
+     952 000032a0     0d3f          CALLR   COLXYZP
+         000032b0     fcf1  
+     953 000032c0     caf4          JREQ    CEBD1                   ;CONTINUE PROCESSING
+     954                    
+     955 000032d0           CEXDETCT
+     956 000032d0     09e0          MOVI    ENEMY_BULLETS,A0
+         000032e0 00000000! 
+     957 00003300     8600          MOVE    *A0,A0,L
+     958 00003310     cae5          JREQ    CEBDETCT                ;THERE ARE NO ENEMY BULLETS
+     959 00003320     c003          JRUC    CEXD2
+     960 00003330     b600  CEXD1   MOVE    *A0(OSLINK),A0,L        ;SCAN ENEMY LIST FOR OBJECTS
+         00003340     0020  
+     961 00003350     cae1          JREQ    CEBDETCT                ;END OF LIST
+     962 00003360           CEXD2
+     963 00003360     0d3f          CALLR   PRESCAN0                ;THRASHES A3-A6,A14
+         00003370     fcc8  
+     964 00003380     c9fa          JRNC    CEXD1                   ;DON'T SCAN     
+     965                    
+     966 00003390     09e1          MOVI    CARLIST,A1
+         000033a0 00000000! 
+     967 000033c0     0d3f          CALLR   COLXYZP
+         000033d0     fcdf  
+     968 000033e0     cbd8          JRNE    CEBDETCT
+     969 000033f0     c0f3          JRUC    CEXD1
+     970                    
+     971                            .END
+
+ No Errors,  No Warnings
