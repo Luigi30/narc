@@ -17,7 +17,7 @@ incfiles = glob.glob("*.INC")
 
 for asmfile in (asmfiles + tblfiles + macfiles + hdrfiles + incfiles):
     print(asmfile)
-    f = open("old\{0}".format(asmfile), "r")
+    f = open("old/{0}".format(asmfile), "r")
     out = open("{0}".format(asmfile), "w")
     print(f)
     lines = f.readlines()
@@ -33,11 +33,19 @@ for asmfile in (asmfiles + tblfiles + macfiles + hdrfiles + incfiles):
         elif ".TITLE" in line:
             out.write(line.replace("'", "\""))          # GSPA 6.10
             
-        elif "$END" in line and "$ENDM" not in line:
+        elif "$END" in line and "$ENDM" not in line and "$ENDIF" not in line:
             out.write(line.replace("$END", "$ENDM"))    # GSPA 6.10
             
         elif "INIT_M" in line or "S_CHAR" in line:
-            out.write(line.replace("\"", "'"))           # GSPA 6.10
+            out.write(line.replace("\"", "'"))          # GSPA 6.10
+            
+        # We don't have a VIDEO folder in our global PATH. Make it relative to the narc repo.
+        elif "\"\\video\\" in line.lower():
+            out.write(line.lower().replace("\"\\video\\", "\"..\\sys\\"))
+        elif "\\video\\" in line.lower():
+            out.write(line.lower().replace("\\video\\", "..\\sys\\"))
+        elif "video\\" in line.lower():
+            out.write(line.lower().replace("video\\", "..\\sys\\"))
         
         # Check for old-style hex literals, convert to new-style.
         elif len(hexliterals) > 0:

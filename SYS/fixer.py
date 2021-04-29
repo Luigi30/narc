@@ -12,11 +12,12 @@ hexmatcher = re.compile("(>)([0-9A-Fa-f]{1,8})(,?)")
 asmfiles = glob.glob("*.ASM")
 tblfiles = glob.glob("*.TBL")
 macfiles = glob.glob("*.MAC")
-hdrfiles = glob.glob("*.H")
+hdrfiles = glob.glob("*.HDR")
+incfiles = glob.glob("*.INC")
 
-for asmfile in (asmfiles + tblfiles + macfiles + hdrfiles):
+for asmfile in (asmfiles + tblfiles + macfiles + hdrfiles + incfiles):
     print(asmfile)
-    f = open("old\{0}".format(asmfile), "r")
+    f = open("old/{0}".format(asmfile), "r")
     out = open("{0}".format(asmfile), "w")
     print(f)
     lines = f.readlines()
@@ -32,7 +33,7 @@ for asmfile in (asmfiles + tblfiles + macfiles + hdrfiles):
         elif ".TITLE" in line:
             out.write(line.replace("'", "\""))
             
-        elif "$END" in line and "$ENDM" not in line:
+        elif "$END" in line and "$ENDM" not in line and "$ENDIF" not in line:
             out.write(line.replace("$END", "$ENDM"))
         
         # Check for old-style hex literals, convert to new-style.
