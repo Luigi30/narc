@@ -65,7 +65,8 @@ extern void exe_std$outcstring( char * );		/* ** TEMP m/b defined in exe_routine
 extern void exe_std$outcrlf();			/* ** TEMP m/b defined in exe_routines.h */
 
 typedef struct {
-    UCB    ucb$r_ucb;                   /* Generic UCB */
+    UCB     ucb$r_ucb;                   /* Generic UCB */
+    uint64  hIO;
 } SST_UCB;
 
 void SST$struc_init(CRB *crb, DDB *ddb, IDB *idb, ORB *orb, SST_UCB *ucb);
@@ -74,3 +75,6 @@ int SST$unit_init(IDB *idb, SST_UCB *ucb);
 void SST$struc_reinit (CRB *crb, DDB *ddb, IDB *idb, ORB *orb, UCB *ucb);
 
 void SST$print_message(SST_UCB *ucb, char *message, int severity, int crlf);
+
+int SST$write (IRP *irp, PCB *pcb, SST_UCB *ucb, CCB *ccb);
+int SST$read (IRP *irp, PCB *pcb, SST_UCB *ucb, CCB *ccb);

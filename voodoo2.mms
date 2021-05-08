@@ -2,7 +2,8 @@
 ! Do not modify this file. It may be overwritten automatically.               !auto
 ! includes                                                                    !auto
 INCLUDES= -                                                                   !auto
-FXDRIVER.H                                                                    !auto
+FXDRIVER.H -                                                                  !auto
+V2PCI.H                                                                       !auto
 ! sources                                                                     !auto
 SOURCES= -                                                                    !auto
 FXDRIVER.C -                                                                  !auto

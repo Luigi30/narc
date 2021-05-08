@@ -5,10 +5,7 @@ INCLUDES= -                                                                   !a
 FXDRIVER.H                                                                    !auto
 ! sources                                                                     !auto
 SOURCES= -                                                                    !auto
-CONNECT.COM -                                                                 !auto
 FXDRIVER.C -                                                                  !auto
-FXDRIVER.COM -                                                                !auto
-LRDRIVER.COM -                                                                !auto
 [.example]driver.c                                                            !auto
 ! dependencies                                                                !auto
 .FIRST                                                                        !auto
@@ -86,17 +83,11 @@ OBJ_DIR = $(OUT_DIR).obj                                                      !a
                                                                               !auto
 ! main target                                                                 !auto
 [$(OUT_DIR)]$(NAME).EXE :  -                                                  !auto
-[$(OBJ_DIR)]CONNECT.obj -                                                     !auto
 [$(OBJ_DIR)]FXDRIVER.obj -                                                    !auto
-[$(OBJ_DIR)]FXDRIVER.obj -                                                    !auto
-[$(OBJ_DIR)]LRDRIVER.obj -                                                    !auto
 [$(OBJ_DIR).example]driver.obj                                                !auto
     CXXLINK $(LINKFLAGS) $(MMS$SOURCE_LIST)                                   !auto
                                                                               !auto
 ! objects                                                                     !auto
-[$(OBJ_DIR)]CONNECT.obj : CONNECT.COM $(INCLUDES)                             !auto
 [$(OBJ_DIR)]FXDRIVER.obj : FXDRIVER.C $(INCLUDES)                             !auto
-[$(OBJ_DIR)]FXDRIVER.obj : FXDRIVER.COM $(INCLUDES)                           !auto
-[$(OBJ_DIR)]LRDRIVER.obj : LRDRIVER.COM $(INCLUDES)                           !auto
 [$(OBJ_DIR).example]driver.obj : [.example]driver.c $(INCLUDES)               !auto
                                                                              
