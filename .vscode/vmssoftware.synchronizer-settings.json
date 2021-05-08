@@ -1,0 +1,43 @@
+{
+    "project": {
+        "break": "C",
+        "builders": "*.{mms,com,opt}",
+        "exclude": "**/{.vscode}/**",
+        "headers": "*.h",
+        "listing": "*.lis,*.map",
+        "outdir": "out",
+        "projectName": "voodoo2",
+        "projectType": "executable",
+        "resource": "**/resource/**",
+        "root": "vmside/voodoo2",
+        "source": "*.{cpp,c,cld,msg}",
+        "addCompQual": "",
+        "addCompDef": "",
+        "addLibraries": "",
+        "addIncludes": ""
+    },
+    "synchronize": {
+        "downloadNewFiles": "overwrite",
+        "keepAlive": false,
+        "preferZip": false,
+        "forceLocalTime": true,
+        "purge": false,
+        "setTimeAttempts": 3
+    },
+    "builds": {
+        "configurations": [
+            {
+                "label": "DEBUG",
+                "description": "DEBUG",
+                "command": "",
+                "parameter": "DEBUG"
+            },
+            {
+                "label": "RELEASE",
+                "description": "RELEASE",
+                "command": "",
+                "parameter": "RELEASE"
+            }
+        ]
+    }
+}
